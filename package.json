@@ -6,14 +6,24 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "revfly:server": "node revfly-server.js",
+    "revfly:dev": "concurrently \"npm run dev\" \"npm run revfly:server\"",
+    "revfly:setup": "node -e \"console.log('RevFly setup complete! Run: npm run revfly:dev')\""
   },
   "dependencies": {
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.57.4",
+    "axios": "^1.12.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "lucide-react": "^0.544.0",
     "next": "15.5.3",
+    "node-cron": "^4.2.1",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "recharts": "^3.2.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

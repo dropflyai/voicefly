@@ -1,0 +1,66 @@
+{
+  "name": "dropfly-beauty-booking-platform",
+  "version": "2.0.0",
+  "description": "Complete voice AI booking platform for beauty businesses - nail salons, spas, and beauty clinics",
+  "main": "server.js",
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "production-setup": "node scripts/production-setup.js",
+    "deploy": "node scripts/deploy.js",
+    "test": "node scripts/test.js",
+    "test-database": "node scripts/test-database.js",
+    "register-business": "node src/business-registration.js",
+    "register": "node src/enhanced-registration.js",
+    "register-demo": "node src/enhanced-registration.js --demo",
+    "onboard": "node src/automated-onboarding.js --demo",
+    "start": "node webhook-server.js",
+    "one-click-deploy": "node scripts/one-click-deploy.js",
+    "vapi:setup": "node scripts/vapi-setup.js",
+    "vapi:list": "node scripts/vapi-setup.js --list",
+    "vapi:create": "node scripts/vapi-setup.js --create",
+    "dashboard": "cd dashboard && npm run dev",
+    "dashboard:build": "cd dashboard && npm run build",
+    "dashboard:install": "cd dashboard && npm install",
+    "demo": "node scripts/simple-demo-test.js",
+    "demo-full": "npm run register-demo",
+    "webhook": "node webhook-server.js",
+    "quick-start": "npm install && npm run register",
+    "help": "echo 'Available commands:' && echo '  npm run quick-start - Complete automated salon setup' && echo '  npm run register - Interactive salon registration' && echo '  npm run demo - Try with demo data' && echo '  npm run onboard - Test automated onboarding' && echo '  npm run dashboard - Start admin dashboard' && echo '  npm run help - Show this help'",
+    "docs": "echo 'Documentation: https://github.com/dropfly/vapi-nail-salon-agent#readme'",
+    "support": "echo 'Support: https://github.com/dropfly/vapi-nail-salon-agent/issues'",
+    "production": "NODE_ENV=production node webhook-server.js"
+  },
+  "keywords": [
+    "vapi",
+    "voice-ai",
+    "appointment-booking",
+    "nail-salon",
+    "n8n",
+    "automation"
+  ],
+  "author": "DropFly AI",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.2",
+    "axios": "^1.11.0",
+    "chalk": "^4.1.2",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.0",
+    "express-rate-limit": "^8.0.1",
+    "inquirer": "^8.2.7",
+    "jsonwebtoken": "^9.0.2",
+    "ora": "^5.4.1",
+    "twilio": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dropfly/vapi-nail-salon-agent.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dropfly/vapi-nail-salon-agent/issues"
+  },
+  "homepage": "https://github.com/dropfly/vapi-nail-salon-agent#readme"
+}

@@ -1,6 +1,3 @@
--- Enable RLS
-ALTER DATABASE postgres SET "app.jwt_secret" TO 'your-jwt-secret-here';
-
 -- Users table (extends Supabase auth.users)
 CREATE TABLE users (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
