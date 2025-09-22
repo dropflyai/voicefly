@@ -15,15 +15,22 @@
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.57.4",
     "axios": "^1.12.2",
+    "chalk": "^4.1.2",
+    "concurrently": "^9.2.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.0.1",
+    "inquirer": "^8.2.7",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.544.0",
     "next": "15.5.3",
     "node-cron": "^4.2.1",
+    "ora": "^5.4.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "recharts": "^3.2.1"
+    "recharts": "^3.2.1",
+    "twilio": "^5.9.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

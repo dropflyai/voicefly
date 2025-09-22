@@ -1,0 +1,203 @@
+{
+  "name": "Multi-Tenant Nail Salon Booking Router",
+  "active": true,
+  "version": 2,
+  "settings": { 
+    "executionTimeout": 300,
+    "saveExecutionProgress": false
+  },
+  "nodes": [
+    {
+      "id": "webhook-router",
+      "name": "Business Webhook Router", 
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/{{$parameter.businessSlug}}",
+        "responseMode": "onReceived",
+        "options": {
+          "rawBody": true
+        }
+      }
+    },
+    {
+      "id": "extract-business",
+      "name": "Extract Business Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [400, 300],
+      "parameters": {
+        "functionCode": "// Extract business slug from webhook path\nconst webhookPath = $node['Business Webhook Router'].json.headers['x-n8n-webhook-url'] || '';\nconst pathMatch = webhookPath.match(/\\/webhook\\/([a-zA-Z0-9-]+)/);\nconst businessSlug = pathMatch ? pathMatch[1] : null;\n\nif (!businessSlug) {\n  throw new Error('Invalid webhook path - business slug not found');\n}\n\n// Get the business data from Supabase\nconst supabaseUrl = $env.SUPABASE_URL;\nconst supabaseKey = $env.SUPABASE_SERVICE_ROLE_KEY;\n\nconst axios = require('axios');\n\ntry {\n  const response = await axios.get(\n    `${supabaseUrl}/rest/v1/businesses?slug=eq.${businessSlug}&select=*`,\n    {\n      headers: {\n        'apikey': supabaseKey,\n        'Authorization': `Bearer ${supabaseKey}`\n      }\n    }\n  );\n  \n  if (response.data.length === 0) {\n    throw new Error(`Business not found for slug: ${businessSlug}`);\n  }\n  \n  const business = response.data[0];\n  \n  // Verify webhook token\n  const authHeader = $headers.authorization || '';\n  const token = authHeader.replace('Bearer ', '');\n  \n  if (token !== business.webhook_token) {\n    throw new Error('Invalid webhook token');\n  }\n  \n  return [{\n    json: {\n      business,\n      request: $input.all()[0].json,\n      tool: $input.all()[0].json.tool || $input.all()[0].json.name,\n      parameters: $input.all()[0].json.parameters || $input.all()[0].json\n    }\n  }];\n  \n} catch (error) {\n  throw new Error(`Business lookup failed: ${error.message}`);\n}"
+      }
+    },
+    {
+      "id": "route-by-tool",
+      "name": "Route by Tool Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [600, 300],
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{$json.tool}}",
+                    "operation": "equals",
+                    "value2": "check_availability"
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{$json.tool}}",
+                    "operation": "equals", 
+                    "value2": "book_appointment"
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{$json.tool}}",
+                    "operation": "equals",
+                    "value2": "check_appointments"
+                  }
+                ]
+              }
+            },
+            {
+              "conditions": {
+                "string": [
+                  {
+                    "value1": "={{$json.tool}}",
+                    "operation": "equals",
+                    "value2": "cancel_appointment"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "fallbackOutput": 4
+      }
+    },
+    {
+      "id": "check-availability",
+      "name": "Check Availability",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [800, 200],
+      "parameters": {
+        "functionCode": "// Check availability for specific business\nconst business = $json.business;\nconst params = $json.parameters;\n\n// Load business-specific schedule and bookings\nconst supabaseUrl = $env.SUPABASE_URL;\nconst supabaseKey = $env.SUPABASE_SERVICE_ROLE_KEY;\nconst axios = require('axios');\n\ntry {\n  // Check existing appointments for the requested date\n  const appointmentsResponse = await axios.get(\n    `${supabaseUrl}/rest/v1/appointments?business_id=eq.${business.id}&appointment_date=eq.${params.preferred_date}&status=neq.cancelled`,\n    {\n      headers: {\n        'apikey': supabaseKey,\n        'Authorization': `Bearer ${supabaseKey}`\n      }\n    }\n  );\n  \n  // Get business hours for the day\n  const date = new Date(params.preferred_date);\n  const dayOfWeek = date.getDay();\n  \n  const hoursResponse = await axios.get(\n    `${supabaseUrl}/rest/v1/business_hours?business_id=eq.${business.id}&day_of_week=eq.${dayOfWeek}`,\n    {\n      headers: {\n        'apikey': supabaseKey,\n        'Authorization': `Bearer ${supabaseKey}`\n      }\n    }\n  );\n  \n  const businessHours = hoursResponse.data[0];\n  if (!businessHours || !businessHours.is_open) {\n    return [{\n      json: {\n        result: `We're closed on ${date.toLocaleDateString('en-US', { weekday: 'long' })}s. Please choose another date.`,\n        available_slots: []\n      }\n    }];\n  }\n  \n  // Calculate available time slots\n  const existingAppointments = appointmentsResponse.data;\n  const serviceDuration = this.getServiceDuration(params.service_type);\n  const availableSlots = this.calculateAvailableSlots(businessHours, existingAppointments, serviceDuration);\n  \n  return [{\n    json: {\n      result: availableSlots.length > 0 \n        ? `I found ${availableSlots.length} available slots for ${params.service_type} on ${params.preferred_date}: ${availableSlots.slice(0, 3).join(', ')}${availableSlots.length > 3 ? ' and more' : ''}.`\n        : `Sorry, we're fully booked for ${params.service_type} on ${params.preferred_date}. Would you like to try a different date?`,\n      available_slots: availableSlots,\n      business_name: business.name\n    }\n  }];\n  \n} catch (error) {\n  return [{\n    json: {\n      result: `I'm having trouble checking availability right now. Please call us directly at ${business.phone}.`,\n      error: error.message\n    }\n  }];\n}\n\n// Helper function to get service duration\nfunction getServiceDuration(serviceType) {\n  const durations = {\n    'manicure_signature': 60,\n    'manicure_gel': 75,\n    'pedicure': 90,\n    'combo': 150,\n    'enhancement': 120\n  };\n  return durations[serviceType] || 60;\n}\n\n// Helper function to calculate available slots\nfunction calculateAvailableSlots(businessHours, existingAppointments, serviceDuration) {\n  const slots = [];\n  const openTime = businessHours.open_time;\n  const closeTime = businessHours.close_time;\n  \n  // Convert times to minutes for easier calculation\n  const openMinutes = this.timeToMinutes(openTime);\n  const closeMinutes = this.timeToMinutes(closeTime);\n  \n  // Generate 30-minute slots\n  for (let time = openMinutes; time + serviceDuration <= closeMinutes; time += 30) {\n    const timeString = this.minutesToTime(time);\n    \n    // Check if this slot conflicts with existing appointments\n    const hasConflict = existingAppointments.some(apt => {\n      const aptStart = this.timeToMinutes(apt.start_time);\n      const aptEnd = aptStart + apt.duration;\n      return (time < aptEnd && time + serviceDuration > aptStart);\n    });\n    \n    if (!hasConflict) {\n      slots.push(timeString);\n    }\n  }\n  \n  return slots;\n}\n\nfunction timeToMinutes(timeStr) {\n  const [hours, minutes] = timeStr.split(':').map(Number);\n  return hours * 60 + minutes;\n}\n\nfunction minutesToTime(minutes) {\n  const hours = Math.floor(minutes / 60);\n  const mins = minutes % 60;\n  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;\n}"
+      }
+    },
+    {
+      "id": "book-appointment",
+      "name": "Book Appointment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [800, 320],
+      "parameters": {
+        "functionCode": "// Book appointment for specific business\nconst business = $json.business;\nconst params = $json.parameters;\n\nconst supabaseUrl = $env.SUPABASE_URL;\nconst supabaseKey = $env.SUPABASE_SERVICE_ROLE_KEY;\nconst axios = require('axios');\n\ntry {\n  // First, find or create customer\n  let customer;\n  const customerResponse = await axios.get(\n    `${supabaseUrl}/rest/v1/customers?email=eq.${params.customer_email}`,\n    {\n      headers: {\n        'apikey': supabaseKey,\n        'Authorization': `Bearer ${supabaseKey}`\n      }\n    }\n  );\n  \n  if (customerResponse.data.length > 0) {\n    customer = customerResponse.data[0];\n  } else {\n    // Create new customer\n    const nameParts = params.customer_name.split(' ');\n    const newCustomer = {\n      first_name: nameParts[0],\n      last_name: nameParts.slice(1).join(' ') || '',\n      email: params.customer_email,\n      phone: params.customer_phone,\n      created_at: new Date().toISOString()\n    };\n    \n    const createResponse = await axios.post(\n      `${supabaseUrl}/rest/v1/customers`,\n      newCustomer,\n      {\n        headers: {\n          'apikey': supabaseKey,\n          'Authorization': `Bearer ${supabaseKey}`,\n          'Content-Type': 'application/json',\n          'Prefer': 'return=representation'\n        }\n      }\n    );\n    customer = createResponse.data[0];\n  }\n  \n  // Create business-customer relationship if it doesn't exist\n  await axios.post(\n    `${supabaseUrl}/rest/v1/business_customers`,\n    {\n      business_id: business.id,\n      customer_id: customer.id,\n      first_visit_date: params.appointment_date\n    },\n    {\n      headers: {\n        'apikey': supabaseKey,\n        'Authorization': `Bearer ${supabaseKey}`,\n        'Content-Type': 'application/json'\n      }\n    }\n  ).catch(() => {}); // Ignore if relationship already exists\n  \n  // Create the appointment\n  const servicePrices = {\n    'manicure_signature': 45,\n    'manicure_gel': 55,\n    'pedicure': 65,\n    'combo': 95,\n    'enhancement': 85\n  };\n  \n  const serviceDurations = {\n    'manicure_signature': 60,\n    'manicure_gel': 75,\n    'pedicure': 90,\n    'combo': 150,\n    'enhancement': 120\n  };\n  \n  const appointment = {\n    business_id: business.id,\n    customer_id: customer.id,\n    service_name: params.service_type.replace('_', ' '),\n    appointment_date: params.appointment_date,\n    start_time: params.start_time,\n    duration: serviceDurations[params.service_type] || 60,\n    total_amount: servicePrices[params.service_type] || 45,\n    status: 'confirmed',\n    booking_source: 'voice_ai',\n    created_at: new Date().toISOString()\n  };\n  \n  const appointmentResponse = await axios.post(\n    `${supabaseUrl}/rest/v1/appointments`,\n    appointment,\n    {\n      headers: {\n        'apikey': supabaseKey,\n        'Authorization': `Bearer ${supabaseKey}`,\n        'Content-Type': 'application/json',\n        'Prefer': 'return=representation'\n      }\n    }\n  );\n  \n  const createdAppointment = appointmentResponse.data[0];\n  \n  // Send confirmation email (simplified)\n  const emailContent = {\n    to: customer.email,\n    subject: `Appointment Confirmed - ${business.name}`,\n    body: `Hi ${customer.first_name}!\\n\\nYour appointment is confirmed:\\n\\n📅 ${params.appointment_date} at ${params.start_time}\\n💅 ${appointment.service_name}\\n🏢 ${business.name}\\n📍 ${business.address_line1}\\n💰 $${appointment.total_amount}\\n\\nSee you soon!`\n  };\n  \n  return [{\n    json: {\n      result: `Perfect! I've booked your ${appointment.service_name} for ${params.appointment_date} at ${params.start_time}. You'll receive a confirmation email at ${customer.email}. Your appointment ID is ${createdAppointment.id.slice(0, 8)}. See you at ${business.name}!`,\n      appointment_id: createdAppointment.id,\n      confirmation_email: emailContent\n    }\n  }];\n  \n} catch (error) {\n  return [{\n    json: {\n      result: `I'm sorry, I couldn't complete your booking right now. Please call us directly at ${business.phone} and we'll help you right away.`,\n      error: error.message\n    }\n  }];\n}"
+      }
+    },
+    {
+      "id": "check-appointments",
+      "name": "Check Appointments", 
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [800, 440],
+      "parameters": {
+        "functionCode": "// Check appointments for specific business\nconst business = $json.business;\nconst params = $json.parameters;\n\nconst supabaseUrl = $env.SUPABASE_URL;\nconst supabaseKey = $env.SUPABASE_SERVICE_ROLE_KEY;\nconst axios = require('axios');\n\ntry {\n  // Find customer by email or phone\n  let whereClause = '';\n  if (params.customer_email) {\n    whereClause = `email=eq.${params.customer_email}`;\n  } else if (params.customer_phone) {\n    whereClause = `phone=eq.${params.customer_phone}`;\n  } else {\n    return [{\n      json: {\n        result: \"I'll need your email address or phone number to look up your appointments.\"\n      }\n    }];\n  }\n  \n  const customerResponse = await axios.get(\n    `${supabaseUrl}/rest/v1/customers?${whereClause}`,\n    {\n      headers: {\n        'apikey': supabaseKey,\n        'Authorization': `Bearer ${supabaseKey}`\n      }\n    }\n  );\n  \n  if (customerResponse.data.length === 0) {\n    return [{\n      json: {\n        result: \"I don't see any appointments under that information. Could you double-check your email or phone number?\"\n      }\n    }];\n  }\n  \n  const customer = customerResponse.data[0];\n  \n  // Get appointments for this customer at this business\n  let dateFilter = '';\n  const today = new Date().toISOString().split('T')[0];\n  \n  switch (params.date_range || 'upcoming') {\n    case 'upcoming':\n      dateFilter = `&appointment_date=gte.${today}`;\n      break;\n    case 'past':\n      dateFilter = `&appointment_date=lt.${today}`;\n      break;\n    case 'today':\n      dateFilter = `&appointment_date=eq.${today}`;\n      break;\n    case 'all':\n      dateFilter = '';\n      break;\n  }\n  \n  const appointmentsResponse = await axios.get(\n    `${supabaseUrl}/rest/v1/appointments?business_id=eq.${business.id}&customer_id=eq.${customer.id}${dateFilter}&order=appointment_date.asc,start_time.asc`,\n    {\n      headers: {\n        'apikey': supabaseKey,\n        'Authorization': `Bearer ${supabaseKey}`\n      }\n    }\n  );\n  \n  const appointments = appointmentsResponse.data;\n  \n  if (appointments.length === 0) {\n    return [{\n      json: {\n        result: `I don't see any ${params.date_range || 'upcoming'} appointments for you at ${business.name}.`\n      }\n    }];\n  }\n  \n  // Format appointment list\n  const appointmentList = appointments.map(apt => \n    `${apt.appointment_date} at ${apt.start_time} - ${apt.service_name} (${apt.status})`\n  ).join('\\n');\n  \n  return [{\n    json: {\n      result: `Here are your ${params.date_range || 'upcoming'} appointments at ${business.name}:\\n\\n${appointmentList}`,\n      appointments: appointments\n    }\n  }];\n  \n} catch (error) {\n  return [{\n    json: {\n      result: `I'm having trouble looking up your appointments. Please call us at ${business.phone}.`,\n      error: error.message\n    }\n  }];\n}"
+      }
+    },
+    {
+      "id": "cancel-appointment",
+      "name": "Cancel Appointment",
+      "type": "n8n-nodes-base.code", 
+      "typeVersion": 1,
+      "position": [800, 560],
+      "parameters": {
+        "functionCode": "// Cancel appointment for specific business\nconst business = $json.business;\nconst params = $json.parameters;\n\nconst supabaseUrl = $env.SUPABASE_URL;\nconst supabaseKey = $env.SUPABASE_SERVICE_ROLE_KEY;\nconst axios = require('axios');\n\ntry {\n  // Find customer\n  const customerResponse = await axios.get(\n    `${supabaseUrl}/rest/v1/customers?email=eq.${params.customer_email}`,\n    {\n      headers: {\n        'apikey': supabaseKey,\n        'Authorization': `Bearer ${supabaseKey}`\n      }\n    }\n  );\n  \n  if (customerResponse.data.length === 0) {\n    return [{\n      json: {\n        result: \"I can't find any appointments under that email address. Could you double-check?\"\n      }\n    }];\n  }\n  \n  const customer = customerResponse.data[0];\n  \n  // Find appointments to cancel\n  let whereClause = `business_id=eq.${business.id}&customer_id=eq.${customer.id}&status=neq.cancelled`;\n  \n  if (params.appointment_date) {\n    whereClause += `&appointment_date=eq.${params.appointment_date}`;\n  }\n  \n  const appointmentsResponse = await axios.get(\n    `${supabaseUrl}/rest/v1/appointments?${whereClause}&order=appointment_date.desc`,\n    {\n      headers: {\n        'apikey': supabaseKey,\n        'Authorization': `Bearer ${supabaseKey}`\n      }\n    }\n  );\n  \n  const appointments = appointmentsResponse.data;\n  \n  if (appointments.length === 0) {\n    return [{\n      json: {\n        result: \"I don't see any appointments to cancel. Please call us if you need assistance.\"\n      }\n    }];\n  }\n  \n  // Cancel the most recent matching appointment\n  const appointmentToCancel = appointments[0];\n  \n  await axios.patch(\n    `${supabaseUrl}/rest/v1/appointments?id=eq.${appointmentToCancel.id}`,\n    {\n      status: 'cancelled',\n      cancellation_reason: params.cancellation_reason || 'Customer requested',\n      cancelled_at: new Date().toISOString()\n    },\n    {\n      headers: {\n        'apikey': supabaseKey,\n        'Authorization': `Bearer ${supabaseKey}`,\n        'Content-Type': 'application/json'\n      }\n    }\n  );\n  \n  return [{\n    json: {\n      result: `I've cancelled your ${appointmentToCancel.service_name} appointment on ${appointmentToCancel.appointment_date} at ${appointmentToCancel.start_time}. You should receive a cancellation confirmation email shortly.`,\n      cancelled_appointment: appointmentToCancel\n    }\n  }];\n  \n} catch (error) {\n  return [{\n    json: {\n      result: `I'm having trouble cancelling your appointment. Please call us directly at ${business.phone}.`,\n      error: error.message\n    }\n  }];\n}"
+      }
+    },
+    {
+      "id": "response-formatter",
+      "name": "Format Response for Vapi",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [1000, 300],
+      "parameters": {
+        "functionCode": "// Format response for Vapi (simple result object)\nconst result = $json.result || 'Operation completed';\n\nreturn [{\n  json: {\n    result: result\n  }\n}];"
+      }
+    },
+    {
+      "id": "respond-to-vapi",
+      "name": "Respond to Vapi",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1200, 300],
+      "parameters": {
+        "responseCode": 200,
+        "responseHeaders": {
+          "Content-Type": "application/json"
+        },
+        "responseBody": "={{JSON.stringify($json)}}"
+      }
+    },
+    {
+      "id": "error-handler",
+      "name": "Error Handler",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [800, 680],
+      "parameters": {
+        "functionCode": "// Handle any errors gracefully\nconst error = $json.error || 'Unknown error occurred';\n\nreturn [{\n  json: {\n    result: \"I'm experiencing a technical issue right now. Please call us directly and we'll be happy to help you book your appointment.\"\n  }\n}];"
+      }
+    }
+  ],
+  "connections": {
+    "Business Webhook Router": {
+      "main": [[{ "node": "Extract Business Context", "type": "main", "index": 0 }]]
+    },
+    "Extract Business Context": {
+      "main": [[{ "node": "Route by Tool Type", "type": "main", "index": 0 }]]
+    },
+    "Route by Tool Type": {
+      "main": [
+        [{ "node": "Check Availability", "type": "main", "index": 0 }],
+        [{ "node": "Book Appointment", "type": "main", "index": 0 }],
+        [{ "node": "Check Appointments", "type": "main", "index": 0 }],
+        [{ "node": "Cancel Appointment", "type": "main", "index": 0 }],
+        [{ "node": "Error Handler", "type": "main", "index": 0 }]
+      ]
+    },
+    "Check Availability": {
+      "main": [[{ "node": "Format Response for Vapi", "type": "main", "index": 0 }]]
+    },
+    "Book Appointment": {
+      "main": [[{ "node": "Format Response for Vapi", "type": "main", "index": 0 }]]
+    },
+    "Check Appointments": {
+      "main": [[{ "node": "Format Response for Vapi", "type": "main", "index": 0 }]]
+    },
+    "Cancel Appointment": {
+      "main": [[{ "node": "Format Response for Vapi", "type": "main", "index": 0 }]]
+    },
+    "Format Response for Vapi": {
+      "main": [[{ "node": "Respond to Vapi", "type": "main", "index": 0 }]]
+    },
+    "Error Handler": {
+      "main": [[{ "node": "Respond to Vapi", "type": "main", "index": 0 }]]
+    }
+  }
+}

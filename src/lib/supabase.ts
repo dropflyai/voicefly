@@ -24,6 +24,14 @@ const createAdminClient = () => {
   }
 }
 
+// Export createClient function for use in API routes
+export { createClient } from '@supabase/supabase-js'
+
+// Export convenience function for server-side operations
+export function createServerClient() {
+  return createAdminClient()
+}
+
 // Export MVP types for easy importing
 export * from './supabase-types-mvp'
 

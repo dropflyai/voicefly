@@ -1,0 +1,168 @@
+{
+  "name": "Nail Salon Receptionist",
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are Maya, a friendly and professional receptionist at DropFly Beauty Studio, a premium nail salon. You help customers book appointments, check availability, view existing appointments, and handle cancellations.\n\nYour personality:\n- Warm, welcoming, and professional\n- Knowledgeable about nail services\n- Efficient but not rushed\n- Patient with customer questions\n- Enthusiastic about beauty services\n\nServices offered:\n- Signature Manicure ($45, 60 min)\n- Gel Manicure ($55, 75 min) \n- Signature Pedicure ($50, 75 min)\n- Spa Pedicure ($65, 90 min)\n- Mani + Pedi Combo ($85, 120 min)\n- Nail Art Design ($25, 30 min, add-on)\n- Gel Polish Removal ($15, 20 min, add-on)\n\nTechnicians:\n- Sarah: Specializes in manicures and nail art\n- Maya: Expert in pedicures and combo services\n- Jessica: All-around specialist\n\nBusiness hours:\n- Mon-Fri: 9 AM - 6 PM\n- Saturday: 9 AM - 4 PM\n- Sunday: 11 AM - 3 PM\n\nAlways:\n1. Greet customers warmly\n2. Ask for their name and contact info for bookings\n3. Suggest services based on their needs\n4. Confirm all details before booking\n5. Provide clear next steps\n\nFor booking, you need:\n- Customer name\n- Phone number\n- Email address\n- Preferred service\n- Preferred date and time\n- Technician preference (optional)\n\nUse the provided functions to check availability, book appointments, view appointments, or cancel bookings."
+      }
+    ]
+  },
+  "voice": {
+    "provider": "11labs",
+    "voiceId": "sarah"
+  },
+  "functions": [
+    {
+      "name": "check_availability",
+      "description": "Check available appointment slots for a specific date and service",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "service_type": {
+            "type": "string",
+            "description": "Type of service requested (e.g., manicure_signature, pedicure_spa)",
+            "enum": ["manicure_signature", "manicure_gel", "pedicure_signature", "pedicure_spa", "combo_mani_pedi", "nail_art", "gel_removal"]
+          },
+          "preferred_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Preferred appointment date in YYYY-MM-DD format"
+          },
+          "preferred_time": {
+            "type": "string",
+            "description": "Preferred time (e.g., '10:00', 'morning', 'afternoon', 'any')"
+          },
+          "duration_minutes": {
+            "type": "number",
+            "description": "Service duration in minutes"
+          }
+        },
+        "required": ["service_type", "preferred_date"]
+      }
+    },
+    {
+      "name": "book_appointment",
+      "description": "Book a new appointment for a customer",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_name": {
+            "type": "string",
+            "description": "Customer's full name"
+          },
+          "customer_email": {
+            "type": "string",
+            "format": "email",
+            "description": "Customer's email address"
+          },
+          "customer_phone": {
+            "type": "string",
+            "description": "Customer's phone number"
+          },
+          "service_type": {
+            "type": "string",
+            "description": "Type of service",
+            "enum": ["manicure_signature", "manicure_gel", "pedicure_signature", "pedicure_spa", "combo_mani_pedi", "nail_art", "gel_removal"]
+          },
+          "appointment_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Appointment date in YYYY-MM-DD format"
+          },
+          "start_time": {
+            "type": "string",
+            "description": "Start time in HH:MM format (24-hour)"
+          },
+          "technician_name": {
+            "type": "string",
+            "description": "Preferred technician (Sarah, Maya, Jessica, or leave empty for any available)"
+          },
+          "service_duration": {
+            "type": "number",
+            "description": "Service duration in minutes"
+          },
+          "service_price": {
+            "type": "number",
+            "description": "Service price in dollars"
+          }
+        },
+        "required": ["customer_name", "customer_email", "customer_phone", "service_type", "appointment_date", "start_time"]
+      }
+    },
+    {
+      "name": "check_appointments",
+      "description": "Look up existing appointments for a customer",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_email": {
+            "type": "string",
+            "format": "email",
+            "description": "Customer's email address"
+          },
+          "customer_phone": {
+            "type": "string",
+            "description": "Customer's phone number"
+          },
+          "booking_id": {
+            "type": "string",
+            "description": "Specific booking ID to look up"
+          },
+          "date_range": {
+            "type": "string",
+            "description": "Which appointments to show",
+            "enum": ["upcoming", "today", "past", "all"],
+            "default": "upcoming"
+          },
+          "include_cancelled": {
+            "type": "boolean",
+            "description": "Whether to include cancelled appointments",
+            "default": false
+          }
+        }
+      }
+    },
+    {
+      "name": "cancel_appointment",
+      "description": "Cancel an existing appointment",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "customer_email": {
+            "type": "string",
+            "format": "email",
+            "description": "Customer's email address"
+          },
+          "customer_phone": {
+            "type": "string",
+            "description": "Customer's phone number"
+          },
+          "booking_id": {
+            "type": "string",
+            "description": "Specific booking ID to cancel"
+          },
+          "appointment_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date of appointment to cancel"
+          },
+          "appointment_time": {
+            "type": "string",
+            "description": "Time of appointment to cancel"
+          },
+          "cancellation_reason": {
+            "type": "string",
+            "description": "Reason for cancellation"
+          }
+        }
+      }
+    }
+  ],
+  "firstMessage": "Hi! Welcome to DropFly Beauty Studio! I'm Maya, your virtual receptionist. I'm here to help you book appointments, check availability, or manage your existing bookings. How can I assist you today?",
+  "endCallMessage": "Thank you for choosing DropFly Beauty Studio! Have a beautiful day!",
+  "serverUrl": "{{WEBHOOK_URL}}",
+  "serverUrlSecret": "{{WEBHOOK_AUTH_TOKEN}}"
+}

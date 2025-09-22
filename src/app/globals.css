@@ -22,5 +22,53 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* FORCE ALL TEXT TO BE READABLE - OVERRIDE EVERYTHING */
+.text-gray-600,
+.text-gray-500,
+.text-gray-400,
+.text-gray-300,
+.text-gray-200,
+.text-blue-200,
+.text-blue-300,
+.text-blue-400,
+.text-blue-500 {
+  color: #000000 !important;
+}
+
+/* Keep dark text dark */
+.text-gray-900,
+.text-gray-800,
+.text-gray-700,
+.text-black {
+  color: #000000 !important;
+}
+
+/* Keep white text white on dark backgrounds */
+.text-white,
+.bg-gray-900 .text-white,
+.bg-blue-600 .text-white,
+.bg-blue-700 .text-white,
+.bg-blue-800 .text-white {
+  color: #ffffff !important;
+}
+
+/* Navigation text - force visible */
+nav a,
+nav button,
+nav span,
+.text-blue-600,
+.text-blue-700,
+.text-blue-800,
+.text-blue-900 {
+  color: #000000 !important;
+}
+
+/* Force all text in navigation to be black */
+header a,
+header button,
+header span {
+  color: #000000 !important;
 }

@@ -25,60 +25,60 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
     {
       title: 'Main',
       items: [
-        { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-        { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+        { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
       ]
     },
     {
       title: 'Voice AI',
       items: [
-        { name: 'Live Calls', href: '/calls/live', icon: Phone },
-        { name: 'Call History', href: '/calls/history', icon: MessageSquare },
-        { name: 'Voice Scripts', href: '/scripts', icon: Mic },
-        { name: 'AI Training', href: '/ai-training', icon: Brain },
+        { name: 'Live Calls', href: '/dashboard/calls/live', icon: Phone },
+        { name: 'Call History', href: '/dashboard/calls/history', icon: MessageSquare },
+        { name: 'Voice Scripts', href: '/dashboard/scripts', icon: Mic },
+        { name: 'AI Training', href: '/dashboard/ai-training', icon: Brain },
       ]
     },
     {
       title: 'Lead Management',
       items: [
-        { name: 'Lead Database', href: '/leads', icon: Database },
-        { name: 'Campaigns', href: '/campaigns', icon: Target },
-        { name: 'Qualification', href: '/qualification', icon: UserCheck },
-        { name: 'Lead Sources', href: '/lead-sources', icon: UserPlus },
+        { name: 'Lead Database', href: '/dashboard/leads', icon: Database },
+        { name: 'Campaigns', href: '/dashboard/campaigns', icon: Target },
+        { name: 'Qualification', href: '/dashboard/qualification', icon: UserCheck },
+        { name: 'Lead Sources', href: '/dashboard/lead-sources', icon: UserPlus },
       ]
     },
     {
       title: 'Appointments',
       items: [
-        { name: 'Appointments', href: '/appointments', icon: Calendar },
-        { name: 'Services', href: '/services', icon: Settings },
-        { name: 'Staff', href: '/staff', icon: Users },
-        { name: 'Customers', href: '/customers', icon: Headphones },
+        { name: 'Appointments', href: '/dashboard/appointments', icon: Calendar },
+        { name: 'Services', href: '/dashboard/services', icon: Settings },
+        { name: 'Staff', href: '/dashboard/staff', icon: Users },
+        { name: 'Customers', href: '/dashboard/customers', icon: Headphones },
       ]
     },
     {
       title: 'Business',
       items: [
-        { name: 'Revenue', href: '/revenue', icon: DollarSign },
-        { name: 'Payments', href: '/payments', icon: CreditCard },
-        { name: 'Loyalty Program', href: '/loyalty', icon: Gift },
-        { name: 'Locations', href: '/locations', icon: MapPin },
+        { name: 'Revenue', href: '/dashboard/revenue', icon: DollarSign },
+        { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
+        { name: 'Loyalty Program', href: '/dashboard/loyalty', icon: Gift },
+        { name: 'Locations', href: '/dashboard/locations', icon: MapPin },
       ]
     },
     {
       title: 'Automation',
       items: [
-        { name: 'Workflows', href: '/workflows', icon: Workflow },
-        { name: 'Email Marketing', href: '/email', icon: Mail },
-        { name: 'Integrations', href: '/integrations', icon: Plug },
-        { name: 'Automations', href: '/automations', icon: Zap },
+        { name: 'Workflows', href: '/dashboard/workflows', icon: Workflow },
+        { name: 'Email Marketing', href: '/dashboard/email', icon: Mail },
+        { name: 'Integrations', href: '/dashboard/integrations', icon: Plug },
+        { name: 'Automations', href: '/dashboard/automations', icon: Zap },
       ]
     },
     {
       title: 'System',
       items: [
-        { name: 'Reports', href: '/reports', icon: FileText },
-        { name: 'Settings', href: '/settings', icon: Settings },
+        { name: 'Reports', href: '/dashboard/reports', icon: FileText },
+        { name: 'Settings', href: '/dashboard/settings', icon: Settings },
       ]
     }
   ]

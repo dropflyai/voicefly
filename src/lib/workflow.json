@@ -1,0 +1,1505 @@
+{
+  "name": "Vapi Nail Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "maya",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -928,
+        1184
+      ],
+      "id": "0bb6137c-f77e-4a51-a551-37af82b74f36",
+      "name": "MCP Webhook Entry",
+      "webhookId": "85d4c48e-dba1-4675-b14d-7a2bdc98b948",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Jjm6IJwn6QQuLyLl",
+          "name": "Voice App Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f0c05d17-abeb-4e2a-b426-ac5c98a78be8",
+                    "leftValue": "={{ $json.tool }}",
+                    "rightValue": "check_availability",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Check Availability"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "49a86b61-162c-42d4-b116-c2d15b02b0f2",
+                    "leftValue": "={{ $json.tool }}",
+                    "rightValue": "book_appointment",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Book Appointment"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "c7e40530-a8b4-45d1-86b8-9339d03bd654",
+                    "leftValue": "=={{ $json.tool }}",
+                    "rightValue": "check_appointments",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Check Appointment"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "loose",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "67fa8c8f-0d29-4fc5-bb24-a686f288026e",
+                    "leftValue": "={{ $json.tool }}",
+                    "rightValue": "cancel_appointment",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Cancel Appointment"
+            }
+          ]
+        },
+        "looseTypeValidation": true,
+        "options": {
+          "fallbackOutput": "none",
+          "ignoreCase": true,
+          "allMatchingOutputs": false
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -336,
+        1152
+      ],
+      "id": "84c69330-2f54-4e77-8da5-f54e145e378a",
+      "name": "Tool Router"
+    },
+    {
+      "parameters": {
+        "numberInputs": 5
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        32,
+        1136
+      ],
+      "id": "3032c008-cb73-4192-9369-10151d5e7127",
+      "name": "Collect Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "  // Vapi Function Response Formatter\n  const result = $json;\n\n  // Format response based on tool type\n  let responseMessage = \"\";\n\n  if (result.success === true) {\n    // Success responses\n    switch(result.tool) {\n      case 'book_appointment':\n        responseMessage = `Perfect! I've successfully booked your\n  ${result.booking?.service_type || 'appointment'} for\n  ${result.booking?.appointment_date || 'the requested date'} at\n  ${result.booking?.start_time || 'the requested time'}. You should receive a\n  confirmation email shortly. Your booking reference is ${result.booking_id ||        \n  'pending'}.`;\n        break;\n\n      case 'check_availability':\n        const slots = result.available_slots || [];\n        if (slots.length > 0) {\n          const slotList = slots.slice(0, 3).map(slot => `${slot.display_time}        \n  with ${slot.technician}`).join(', ');\n          responseMessage = `Great! I found ${slots.length} available time slots.     \n   Here are some options: ${slotList}. Would you like me to book one of these\n  times?`;\n        } else {\n          responseMessage = \"I don't see any available slots for that time. Let       \n  me suggest some alternative dates and times that work better.\";\n        }\n        break;\n\n      case 'check_appointments':\n        const upcoming = result.upcoming_appointments || [];\n        if (upcoming.length > 0) {\n          const nextAppt = upcoming[0];\n          responseMessage = `You have ${upcoming.length} upcoming\n  appointment${upcoming.length > 1 ? 's' : ''}. Your next appointment is\n  ${nextAppt.service} on ${nextAppt.date} at ${nextAppt.time} with\n  ${nextAppt.technician}.`;\n        } else {\n          responseMessage = \"You don't have any upcoming appointments\n  scheduled.\";\n        }\n        break;\n\n      case 'cancel_appointment':\n        responseMessage = `Your appointment has been successfully cancelled. You      \n  should receive a confirmation email shortly.`;\n        break;\n\n      default:\n        responseMessage = result.message || \"Operation completed successfully.\";      \n    }\n  } else {\n    // Error responses\n    responseMessage = result.message || result.error || \"I'm sorry, I encountered     \n   an issue processing your request. Please try again or contact us directly.\";       \n  }\n\n  // Return simple format for Vapi\n  return [{\n    json: {\n      result: responseMessage\n    }\n  }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        1184
+      ],
+      "id": "de5f685e-8ce6-41ee-a294-17f69444b93a",
+      "name": "Format MCP Response"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        464,
+        1184
+      ],
+      "id": "a000f5c3-70c1-474f-9349-af8aa1eeaa43",
+      "name": "Send MCP Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Vapi Function Call - All Tools\n  const input = $json || {};\n\n  // Helper to safely get nested values\n  function getValue(obj, path, defaultValue = null) {\n    try {\n      return path.split('.').reduce((current, key) => current?.[key], obj) ||\n  defaultValue;\n    } catch {\n      return defaultValue;\n    }\n  }\n\n  // Helper to find values in multiple locations (Vapi format)\n  function findValue(key, defaultValue = null) {\n    return getValue(input, `parameters.${key}`) ||\n           input[key] ||\n           getValue(input, `body.${key}`) ||\n           getValue(input, `data.${key}`) ||\n           getValue(input, `payload.${key}`) ||\n           defaultValue;\n  }\n\n  // Generate UUID\n  function generateUUID() {\n    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {      \n      const r = Math.random() * 16 | 0;\n      const v = c == 'x' ? r : (r & 0x3 | 0x8);\n      return v.toString(16);\n    });\n  }\n\n  // Extract tool name (Vapi uses 'name' field for function name)\n  const tool = input.name || findValue('tool') || findValue('tool_name') ||\n  findValue('action') || 'book_appointment';\n\n  // Build comprehensive object for all tools\n  const result = {\n    tool: tool,\n\n    // For book_appointment\n    booking_id: generateUUID(),\n    customer_name: findValue('customer_name'),\n    customer_email: findValue('customer_email'),\n    customer_phone: findValue('customer_phone'),\n    service_type: findValue('service_type'),\n    service_duration: findValue('service_duration') ||\n  findValue('duration_minutes') || findValue('duration') || 60,\n    service_price: findValue('service_price'),\n    appointment_date: findValue('appointment_date'),\n    start_time: findValue('start_time'),\n    end_time: findValue('end_time'),\n    technician_name: findValue('technician_name') ||\n  findValue('technician_preference'),\n    status: findValue('status') || 'pending',\n    business_location: findValue('business_location') || 'Main Location',\n\n    // For check_availability\n    preferred_date: findValue('preferred_date') || findValue('appointment_date'),     \n    preferred_time: findValue('preferred_time') || findValue('start_time') ||\n  'any',\n    duration_minutes: findValue('duration_minutes') ||\n  findValue('service_duration') || findValue('duration') || 60,\n\n    // For check_appointments\n    booking_id: findValue('booking_id'),\n    date_range: findValue('date_range') || 'upcoming',\n    specific_date: findValue('specific_date'),\n    include_cancelled: findValue('include_cancelled') || false,\n\n    // For cancel_appointment\n    appointment_time: findValue('appointment_time') || findValue('start_time'),       \n    cancellation_reason: findValue('cancellation_reason') || findValue('reason')      \n  || 'Customer requested cancellation'\n  };\n\n  // Clean up data\n  if (result.customer_phone) {\n    result.customer_phone = String(result.customer_phone).replace(/[^\\d+()-\\s]/g,     \n   '');\n  }\n\n  if (result.customer_email) {\n    result.customer_email = String(result.customer_email).toLowerCase().trim();       \n  }\n\n  // Ensure duration is a number\n  result.service_duration = parseInt(result.service_duration) || 60;\n  result.duration_minutes = result.service_duration;\n  result.duration = result.service_duration;\n\n  // Add success flag for book_appointment\n  if (tool === 'book_appointment') {\n    const hasRequiredFields = Boolean(\n      result.customer_name &&\n      result.customer_email &&\n      result.service_type &&\n      result.appointment_date &&\n      result.start_time\n    );\n    result.success = hasRequiredFields;\n  }\n\n  console.log(`Vapi Function: ${tool}, Customer: ${result.customer_name ||\n  'N/A'}, Service: ${result.service_type || 'N/A'}`);\n\n  return [{ json: result }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -752,
+        1184
+      ],
+      "id": "feb62b84-565a-41d1-9c0f-b5bbef66d433",
+      "name": "Parse MCP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Fixed Booking Processor - Complete Version\nconst inputData = $json || {};\n\nconsole.log('=== PROCESSING BOOKING ===');\n\n// Helper functions\nfunction pad(n) { \n  return String(n).padStart(2, '0'); \n}\n\nfunction addMinutes(dateStr, timeStr, mins) {\n  if (!dateStr || !timeStr || !mins) return null;\n  const [hh, mm] = String(timeStr).split(':').map(x => parseInt(x, 10));\n  if (Number.isNaN(hh) || Number.isNaN(mm)) return null;\n  const d = new Date(`${dateStr}T${pad(hh)}:${pad(mm)}:00`);\n  if (isNaN(d.getTime())) return null;\n  d.setMinutes(d.getMinutes() + Number(mins));\n  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;\n}\n\n// Use input data directly\nconst booking = {\n  booking_id: inputData.booking_id,\n  customer_name: inputData.customer_name || '',\n  customer_email: inputData.customer_email || '',\n  customer_phone: inputData.customer_phone || '',\n  service_type: inputData.service_type || '',\n  service_duration: inputData.service_duration || 60,\n  service_price: inputData.service_price,\n  appointment_date: inputData.appointment_date || '',\n  start_time: inputData.start_time || '',\n  technician_name: inputData.technician_name || '',\n  status: inputData.status || 'pending',\n  business_location: inputData.business_location || 'Main Location'\n};\n\n// FORCE calculate end_time\nif (booking.appointment_date && booking.start_time && booking.service_duration) {\n  booking.end_time = addMinutes(booking.appointment_date, booking.start_time, booking.service_duration);\n}\n\n// Fallback if calculation fails\nif (!booking.end_time) {\n  const [hh, mm] = String(booking.start_time || '09:00').split(':').map(x => parseInt(x, 10));\n  const endHour = (hh + 1) % 24;\n  booking.end_time = `${pad(endHour)}:${pad(mm || 0)}`;\n}\n\n// Calculate datetime fields for Calendar\nconst startISO = booking.appointment_date && booking.start_time ? \n  `${booking.appointment_date}T${booking.start_time}:00` : null;\nconst endISO = booking.appointment_date && booking.end_time ? \n  `${booking.appointment_date}T${booking.end_time}:00` : null;\n\nbooking.start_datetime = startISO;\nbooking.end_datetime = endISO;\n\n// Calendar fields\nbooking.calendar_summary = `${booking.service_type || 'Service'} for ${booking.customer_name || 'Customer'}`;\nbooking.calendar_description = [\n  `Customer: ${booking.customer_name || 'N/A'}`,\n  `Email: ${booking.customer_email || 'N/A'}`,\n  `Phone: ${booking.customer_phone || 'N/A'}`,\n  `Service: ${booking.service_type || 'N/A'}`,\n  `Duration: ${booking.service_duration || 'N/A'} min`,\n  `Tech: ${booking.technician_name || 'N/A'}`\n].join('\\n');\n\n// Email validation with null checks\nlet email = String(booking.customer_email || '').toLowerCase().trim();\nbooking.customer_email = email;\n\nconst emailValid = !!email && /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email);\n\n// Business details - CUSTOMIZE THESE\nconst businessName = \"DropFly Beauty Studio\";\nconst businessPhone = \"(555) 123-4567\";\nconst businessAddress = \"123 Beauty Lane, Inglewood, CA 90301\";\nconst businessWebsite = \"www.dropflybeauty.com\";\n\n// Format date and time nicely\nfunction formatDate(dateStr) {\n  if (!dateStr) return 'TBD';\n  const date = new Date(dateStr);\n  return date.toLocaleDateString('en-US', { \n    weekday: 'long', \n    year: 'numeric', \n    month: 'long', \n    day: 'numeric' \n  });\n}\n\nfunction formatTime(timeStr) {\n  if (!timeStr) return 'TBD';\n  const [hours, minutes] = timeStr.split(':');\n  const hour = parseInt(hours);\n  const ampm = hour >= 12 ? 'PM' : 'AM';\n  const displayHour = hour % 12 || 12;\n  return `${displayHour}:${minutes} ${ampm}`;\n}\n\nfunction calculateEndTime(startTime, duration) {\n  if (!startTime || !duration) return 'TBD';\n  const [hours, minutes] = startTime.split(':');\n  const startMinutes = parseInt(hours) * 60 + parseInt(minutes);\n  const endMinutes = startMinutes + parseInt(duration);\n  const endHours = Math.floor(endMinutes / 60) % 24;\n  const endMins = endMinutes % 60;\n  const endTimeStr = `${String(endHours).padStart(2, '0')}:${String(endMins).padStart(2, '0')}`;\n  return formatTime(endTimeStr);\n}\n\n// Beautiful email subject and HTML\nbooking.email_subject = `✨ Your ${booking.service_type || 'Service'} Appointment is Confirmed! | ${businessName}`;\n\nbooking.email_html = `<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Appointment Confirmation</title>\n</head>\n<body style=\"margin: 0; padding: 0; background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\">\n    <div style=\"max-width: 600px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\">\n        \n        <!-- Header -->\n        <div style=\"background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center;\">\n            <h1 style=\"margin: 0; font-size: 28px; font-weight: 300; letter-spacing: 1px;\">${businessName}</h1>\n            <p style=\"margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;\">Premium Beauty Services</p>\n        </div>\n        \n        <!-- Confirmation Badge -->\n        <div style=\"text-align: center; margin: -20px 0 0 0; position: relative; z-index: 1;\">\n            <div style=\"display: inline-block; background-color: #28a745; color: white; padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);\">\n                ✓ APPOINTMENT CONFIRMED\n            </div>\n        </div>\n        \n        <!-- Main Content -->\n        <div style=\"padding: 40px 30px;\">\n            <h2 style=\"color: #333; margin: 0 0 20px 0; font-size: 24px; font-weight: 400;\">Hello ${booking.customer_name || 'Valued Customer'}!</h2>\n            \n            <p style=\"color: #666; line-height: 1.6; margin: 0 0 30px 0; font-size: 16px;\">\n                We're excited to confirm your upcoming appointment. Here are all the details:\n            </p>\n            \n            <!-- Appointment Details Card -->\n            <div style=\"background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 25px; margin: 20px 0; border-radius: 8px;\">\n                <h3 style=\"margin: 0 0 20px 0; color: #333; font-size: 20px; font-weight: 500;\">Appointment Details</h3>\n                \n                <table style=\"width: 100%; border-collapse: collapse;\">\n                    <tr>\n                        <td style=\"padding: 8px 0; border-bottom: 1px solid #eee; font-weight: 600; color: #555; width: 30%;\">Service:</td>\n                        <td style=\"padding: 8px 0; border-bottom: 1px solid #eee; color: #333;\">${booking.service_type || 'Service'}</td>\n                    </tr>\n                    <tr>\n                        <td style=\"padding: 8px 0; border-bottom: 1px solid #eee; font-weight: 600; color: #555;\">Date:</td>\n                        <td style=\"padding: 8px 0; border-bottom: 1px solid #eee; color: #333;\">${formatDate(booking.appointment_date)}</td>\n                    </tr>\n                    <tr>\n                        <td style=\"padding: 8px 0; border-bottom: 1px solid #eee; font-weight: 600; color: #555;\">Time:</td>\n                        <td style=\"padding: 8px 0; border-bottom: 1px solid #eee; color: #333;\">${formatTime(booking.start_time)} - ${calculateEndTime(booking.start_time, booking.service_duration)}</td>\n                    </tr>\n                    <tr>\n                        <td style=\"padding: 8px 0; border-bottom: 1px solid #eee; font-weight: 600; color: #555;\">Duration:</td>\n                        <td style=\"padding: 8px 0; border-bottom: 1px solid #eee; color: #333;\">${booking.service_duration || 60} minutes</td>\n                    </tr>\n                    <tr>\n                        <td style=\"padding: 8px 0; border-bottom: 1px solid #eee; font-weight: 600; color: #555;\">Technician:</td>\n                        <td style=\"padding: 8px 0; border-bottom: 1px solid #eee; color: #333;\">${booking.technician_name || 'Our Expert Team'}</td>\n                    </tr>\n                    <tr>\n                        <td style=\"padding: 8px 0; font-weight: 600; color: #555;\">Reference #:</td>\n                        <td style=\"padding: 8px 0; color: #667eea; font-family: monospace; font-size: 14px;\">${booking.booking_id}</td>\n                    </tr>\n                </table>\n            </div>\n            \n            <!-- Location Info -->\n            <div style=\"background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; margin: 25px 0;\">\n                <h4 style=\"margin: 0 0 10px 0; color: #856404; font-size: 18px;\">📍 Location</h4>\n                <p style=\"margin: 0; color: #856404; line-height: 1.5;\">\n                    <strong>${businessName}</strong><br>\n                    ${businessAddress}<br>\n                    Phone: ${businessPhone}\n                </p>\n            </div>\n            \n            <!-- Action Buttons -->\n            <div style=\"text-align: center; margin: 30px 0;\">\n                <a href=\"tel:${businessPhone}\" style=\"display: inline-block; background-color: #667eea; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin: 0 10px; font-weight: 500;\">📞 Call Us</a>\n                <a href=\"https://${businessWebsite}\" style=\"display: inline-block; background-color: #28a745; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; margin: 0 10px; font-weight: 500;\">🌐 Visit Website</a>\n            </div>\n            \n            <p style=\"color: #666; line-height: 1.6; margin: 30px 0 0 0; font-size: 16px; text-align: center;\">\n                Need to reschedule or have questions? Just reply to this email or give us a call!\n            </p>\n        </div>\n        \n        <!-- Footer -->\n        <div style=\"background-color: #2c3e50; color: #ecf0f1; padding: 25px 30px; text-align: center;\">\n            <p style=\"margin: 0 0 10px 0; font-size: 16px; font-weight: 500;\">${businessName}</p>\n            <p style=\"margin: 0; font-size: 14px; opacity: 0.8;\">\n                ${businessAddress} | ${businessPhone}<br>\n                Follow us for beauty tips and special offers!\n            </p>\n            <div style=\"margin-top: 15px;\">\n                <span style=\"font-size: 12px; opacity: 0.7;\">\n                    This email was sent to ${booking.customer_email}\n                </span>\n            </div>\n        </div>\n    </div>\n</body>\n</html>`;\n\n// Final validation\nconst requiredFields = ['booking_id', 'customer_name', 'customer_email', 'service_type', 'appointment_date', 'start_time', 'end_time'];\nconst missing = requiredFields.filter(field => !booking[field]);\nconst success = (missing.length === 0 && emailValid) ? true : '';\n\nconsole.log('End time:', booking.end_time);\nconsole.log('Missing fields:', missing);\nconsole.log('Email valid:', emailValid);\n\nreturn [{ json: { ...booking, success } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        1968
+      ],
+      "id": "5a854b0f-22b0-4319-9233-a1653a193e57",
+      "name": "Process & Validate Booking Data"
+    },
+    {
+      "parameters": {
+        "tableId": "appointments",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "booking_id",
+              "fieldValue": "={{ $json.booking_id }}"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $json.customer_name }}"
+            },
+            {
+              "fieldId": "customer_email",
+              "fieldValue": "={{ $json.customer_email }}"
+            },
+            {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $json.customer_phone }}"
+            },
+            {
+              "fieldId": "service_type",
+              "fieldValue": "={{ $json.service_type }}"
+            },
+            {
+              "fieldId": "service_duration",
+              "fieldValue": "={{ $json.service_duration }}"
+            },
+            {
+              "fieldId": "service_price",
+              "fieldValue": "={{ $json.service_price }}"
+            },
+            {
+              "fieldId": "appointment_date",
+              "fieldValue": "={{ $json.appointment_date }}"
+            },
+            {
+              "fieldId": "start_time",
+              "fieldValue": "={{ $json.start_time }}"
+            },
+            {
+              "fieldId": "end_time",
+              "fieldValue": "={{ $json.end_time }}"
+            },
+            {
+              "fieldId": "technician_name",
+              "fieldValue": "={{ $json.technician_name }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.status }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        992,
+        1776
+      ],
+      "id": "2c32f179-6e5f-4694-a656-3b11303f87f7",
+      "name": "Store Booking in Database",
+      "credentials": {
+        "supabaseApi": {
+          "id": "JvPq1OuLEBxtVuR9",
+          "name": "Supabase account 2"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "dropflyai@gmail.com",
+          "mode": "list",
+          "cachedResultName": "dropflyai@gmail.com"
+        },
+        "start": "={{ $json.start_datetime }}",
+        "end": "={{ $json.end_datetime }}",
+        "additionalFields": {
+          "description": "={{ $json.calendar_description }}",
+          "location": "={{ $json.business_location }}",
+          "summary": "={{ $json.calendar_summary }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        992,
+        2144
+      ],
+      "id": "bbef45ee-9ef8-41d3-a84b-680422ef7aac",
+      "name": "Create Calendar Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "dhgVfQmjQ52CeZof",
+          "name": "Google Calendar account"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customer_email }}",
+        "subject": "={{ $json.email_subject || 'Appointment Confirmation' }}",
+        "message": "={{ $json.email_html || '<p>Appointment confirmed</p>' }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        992,
+        1968
+      ],
+      "id": "a1706cfd-66c4-41a3-a79a-2d5a10db30d0",
+      "name": "Send Confirmation Email",
+      "webhookId": "30a3a7f3-2043-49b9-9247-f5ba483b64c5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SNLbKy2DdxN6mPaw",
+          "name": "Gmail send email"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate final workflow response\nconst items = $input.all();\nlet bookingData = items[0]?.json || {};\nlet emailResult = null;\nlet smsResult = null;\n\n// Process notification results\nitems.forEach(item => {\n  const data = item.json;\n  \n  if (data.id && data.threadId) {\n    // Gmail result\n    emailResult = { success: true, message_id: data.id };\n  } else if (data.sid || data.status) {\n    // Twilio result\n    smsResult = { success: true, message_sid: data.sid };\n  }\n  \n  if (item.error) {\n    console.warn('Notification failed:', item.error);\n  }\n});\n\n// Build comprehensive response\nconst response = {\n  success: true,\n  booking_id: bookingData.booking_id,\n  timestamp: new Date().toISOString(),\n  \n  // Booking summary\n  booking: {\n    customer_name: bookingData.customer_name,\n    service_type: bookingData.service_type,\n    appointment_date: bookingData.appointment_date,\n    start_time: bookingData.start_time,\n    technician_name: bookingData.technician_name,\n    status: 'confirmed'\n  },\n  \n  // Operation results\n  operations: {\n    database: bookingData.supabase_result || { success: false },\n    calendar: bookingData.calendar_result || { success: false },\n    email: emailResult || { success: false },\n    sms: smsResult || { success: false }\n  },\n  \n  // Links and references\n  references: {\n    calendar_link: bookingData.calendar_link || null,\n    google_event_id: bookingData.google_event_id || null\n  },\n  \n  // Status summary\n  summary: {\n    all_operations_successful: !!(bookingData.supabase_result?.success && \n                                   bookingData.calendar_result?.success && \n                                   emailResult?.success && \n                                   smsResult?.success),\n    critical_operations_successful: !!(bookingData.supabase_result?.success),\n    notifications_sent: !!(emailResult?.success || smsResult?.success)\n  }\n};\n\n// Log final status\nif (response.summary.all_operations_successful) {\n  console.log('✅ Booking workflow completed successfully');\n} else if (response.summary.critical_operations_successful) {\n  console.log('⚠️ Booking created but some notifications failed');\n} else {\n  console.error('❌ Critical booking operations failed');\n}\n\nreturn [{ json: response }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        1968
+      ],
+      "id": "ec83b862-c905-4308-aeb4-56e3b50fd9ed",
+      "name": "Generate Final Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Handle validation errors\nconst errorData = $json;\n\nconsole.error('❌ Booking validation failed:', errorData.details);\n\nreturn [{\n  json: {\n    success: false,\n    error: 'Booking validation failed',\n    details: errorData.details || ['Unknown validation error'],\n    timestamp: new Date().toISOString(),\n    booking_id: null\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        2144
+      ],
+      "id": "7f9a0fb8-fd36-4785-a218-84e23db7a339",
+      "name": "Handle Validation Error"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Debug: See what data we're getting\nconsole.log('=== DEBUG: Input Data ===');\nconsole.log('Full JSON:', JSON.stringify($json, null, 2));\nconsole.log('Customer name:', $json.customer_name);\nconsole.log('Customer email:', $json.customer_email);\nconsole.log('Customer phone:', $json.customer_phone);\nconsole.log('Service type:', $json.service_type);\nconsole.log('========================');\n\n// Pass the data through unchanged\nreturn [$json];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        1968
+      ],
+      "id": "5d26812e-db65-4be9-943e-20fb28814dcc",
+      "name": "Data Test"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "=$json.success",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              },
+              "id": "7029e855-5a79-43d3-bd2f-711828fada5d"
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        656,
+        1824
+      ],
+      "id": "26d66596-f421-4591-b4b4-b5800256a66c",
+      "name": "Validation Gate"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "calendar": {
+          "__rl": true,
+          "value": "dropflyai@gmail.com",
+          "mode": "list",
+          "cachedResultName": "dropflyai@gmail.com"
+        },
+        "eventId": "={{ $json.first_event?.id || 'no-event-found' }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -288,
+        1888
+      ],
+      "id": "ec8cf310-caaa-4517-aa2d-9e48625a374e",
+      "name": "Delete Calendar Event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "dhgVfQmjQ52CeZof",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Debug what Tool Router is sending to cancel workflow\nconst input = $json || {};\n\nconsole.log('=== CANCEL TOOL INPUT DEBUG ===');\nconsole.log('Full JSON received:', JSON.stringify(input, null, 2));\nconsole.log('Direct fields:');\nconsole.log('- customer_email:', input.customer_email);\nconsole.log('- appointment_date:', input.appointment_date);\nconsole.log('- appointment_time:', input.appointment_time);\nconsole.log('- cancellation_reason:', input.cancellation_reason);\nconsole.log('==============================');\n\n// Pass through for now\nreturn [{ json: input }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1008,
+        1968
+      ],
+      "id": "70b215e9-e54d-4fc1-8eab-a5e2bb8700cd",
+      "name": "Process Search Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get input from Execute Workflow trigger\nconst input = $json;\n\n// Extract identification info with null checks\nconst bookingId = input.booking_id || null;\nconst customerEmail = input.customer_email || null;\nconst customerPhone = input.customer_phone || null;\nconst appointmentDate = input.appointment_date || null;\nconst appointmentTime = input.appointment_time || null;\n\n// Extract cancellation details\nconst cancellationReason = input.cancellation_reason || 'Customer requested cancellation';\n\n// Determine search method based on available data\nlet searchType = 'by_email_only'; // default fallback\n\nif (bookingId) {\n  searchType = 'by_id';\n} else if (customerPhone) {\n  searchType = 'by_phone';  \n} else if (customerEmail && appointmentDate) {\n  searchType = 'by_email_date';\n} else if (customerEmail) {\n  searchType = 'by_email_only';\n}\n\n// Create search criteria (only non-null values)\nconst searchCriteria = {};\nif (bookingId) searchCriteria.booking_id = bookingId;\nif (customerEmail) searchCriteria.customer_email = customerEmail;\nif (customerPhone) searchCriteria.customer_phone = customerPhone;\nif (appointmentDate) searchCriteria.appointment_date = appointmentDate;\nif (appointmentTime) searchCriteria.start_time = appointmentTime;\n\nreturn [{\n  json: {\n    // Identification (cleaned)\n    booking_id: bookingId,\n    customer_email: customerEmail,\n    customer_phone: customerPhone,\n    appointment_date: appointmentDate,\n    appointment_time: appointmentTime,\n    \n    // Search routing\n    search_type: searchType,\n    has_date: appointmentDate !== null,\n    has_phone: customerPhone !== null,\n    has_id: bookingId !== null,\n    \n    // Cancellation details\n    cancellation_reason: cancellationReason,\n    cancelled_at: new Date().toISOString(),\n    new_status: 'cancelled',\n    \n    // Search criteria (only non-null values)\n    search_criteria: searchCriteria,\n    \n    // For Supabase update\n    update_data: {\n      status: 'cancelled',\n      cancellation_reason: cancellationReason,\n      cancelled_at: new Date().toISOString(),\n      updated_at: new Date().toISOString()\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1472,
+        1968
+      ],
+      "id": "c42bdeaf-e795-490c-bd5d-9619476220eb",
+      "name": "Parse Cancel Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Only use data that's directly available - no node references\nconst triggerData = $input.first().json || {};\n\n// For safety, also try to get trigger data directly\nlet inputData;\ntry {\n  inputData = $('When Executed by Another Workflow').first().json;\n} catch (e) {\n  inputData = triggerData;\n}\n\n// Extract parameters safely\nconst params = inputData.parameters || inputData || {};\n\nreturn [{\n  json: {\n    success: true,\n    message: \"Appointment cancelled successfully!\",\n    cancelled_appointment: {\n      customer_email: params.customer_email || \"unknown\",\n      customer_name: params.customer_name || \"Customer\",\n      service: params.service_type || \"unknown\",\n      date: params.appointment_date || \"unknown\", \n      time: params.start_time || \"unknown\",\n      status: \"cancelled\",\n      cancelled_at: new Date().toISOString()\n    },\n    operation_completed: \"calendar_event_deleted\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -112,
+        1888
+      ],
+      "id": "f21c8323-097b-4dce-aed5-3c6f9c911eda",
+      "name": "Return Response 1"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    success: false,\n    error: $json.error || \"appointment_not_found\",\n    message: $json.message || \"No appointment found to cancel\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        2096
+      ],
+      "id": "4a7e2af2-fc6b-4709-8fde-a0a29c9c3eb0",
+      "name": "Check If Found1"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "dropflyai@gmail.com",
+          "mode": "list",
+          "cachedResultName": "dropflyai@gmail.com"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -1232,
+        1968
+      ],
+      "id": "b15a283e-85de-4f87-86f7-0a62a1ff82a3",
+      "name": "Search Google Calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "dhgVfQmjQ52CeZof",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;console.log('=== DELETE NODE INPUT ===');\nconsole.log('Full data:', JSON.stringify($json, null, 2));\nconsole.log('eventId:', $json.eventId);\nconsole.log('google_event_id:', $json.google_event_id);\nconsole.log('========================');\nreturn [{ json: $json }];\n}\n\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        1888
+      ],
+      "id": "9b4e7119-6170-40cb-834e-96cc465e10fe",
+      "name": "Debugger"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.cancelled_appointment.customer_email }}",
+        "subject": "={{ $json.cancelled_appointment }}",
+        "message": "={{ $json.cancelled_appointment }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        48,
+        1888
+      ],
+      "id": "977a1c27-5915-4d82-9fbc-e0025f8dc4b7",
+      "name": "Send Confirmation Email1",
+      "webhookId": "30a3a7f3-2043-49b9-9247-f5ba483b64c5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "SNLbKy2DdxN6mPaw",
+          "name": "Gmail send email"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "=$json.success",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              },
+              "id": "7029e855-5a79-43d3-bd2f-711828fada5d"
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -832,
+        1968
+      ],
+      "id": "263f07db-57f8-44e3-a9fc-e864f50bff7b",
+      "name": "Validation Gate1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Handle Execute Workflow data\nconst input = $json || {};\n\n// Set defaults\nconst serviceType = input.service_type || 'manicure_signature';\nconst duration = 60;\nconst preferredDate = input.preferred_date || new Date().toISOString().split('T')[0];\nconst preferredTime = input.preferred_time || 'any';\n\n// Simple response\nreturn [{\n  json: {\n    service_type: serviceType,\n    duration_minutes: duration,\n    preferred_date: preferredDate,\n    preferred_time: preferredTime,\n    day_of_week: new Date(preferredDate).getDay()\n  }\n}];"
+      },
+      "id": "fa408b68-ba31-4c19-befb-16903c4da2a4",
+      "name": "Parse & Validate Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1360,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "dropflyai@gmail.com",
+          "mode": "list",
+          "cachedResultName": "dropflyai@gmail.com"
+        },
+        "options": {
+          "singleEvents": true,
+          "orderBy": "startTime"
+        }
+      },
+      "id": "0b09f33d-7ab3-4cae-97b1-5dbbd5e21884",
+      "name": "Get Google Calendar Events",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1,
+      "position": [
+        -1184,
+        432
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "dhgVfQmjQ52CeZof",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get ALL appointment inputs (n8n splits arrays into individual items)\nconst allInputs = $input.all();\nconsole.log('Total inputs:', allInputs.length);\n\n// Collect all appointments \nconst existingAppointments = allInputs.filter(input => input.json.appointment_date);\nconsole.log('Found appointments:', existingAppointments.length);\n\n// Service and date info\nconst serviceType = 'manicure_signature';\nconst preferredDate = '2025-08-06';\nconst serviceDuration = 60;\n\n// Technician specialties\nconst technicianSpecialties = {\n  'Sarah': ['manicure', 'enhancement'],\n  'Maya': ['pedicure', 'combo'], \n  'Jessica': ['combo', 'manicure', 'pedicure'],\n  'Zoe': ['manicure', 'waxing'],\n  'Alex': ['enhancement', 'manicure'],\n  'Riley': ['lashes', 'waxing']\n};\n\nconst serviceCategory = serviceType.split('_')[0];\nconst qualifiedTechs = Object.keys(technicianSpecialties).filter(tech => \n  technicianSpecialties[tech].includes(serviceCategory)\n);\n\n// Filter appointments for today\nconst todaysAppointments = existingAppointments\n  .map(input => input.json)\n  .filter(apt => apt.appointment_date === preferredDate);\n\nconsole.log('Today appointments:', todaysAppointments.length);\n\n// Check conflicts function\nfunction hasConflict(tech, startTime, endTime) {\n  return todaysAppointments.some(apt => {\n    if (apt.technician_name !== tech) return false;\n    return (startTime >= apt.start_time && startTime < apt.end_time) || \n           (endTime > apt.start_time && endTime <= apt.end_time) ||\n           (startTime <= apt.start_time && endTime >= apt.end_time);\n  });\n}\n\n// Generate available slots\nconst availableSlots = [];\nfor (let hour = 9; hour < 18; hour++) {\n  const timeSlot = `${hour.toString().padStart(2, '0')}:00`;\n  const endTimeSlot = `${(hour + 1).toString().padStart(2, '0')}:00`;\n  \n  const availableTechs = qualifiedTechs.filter(tech => \n    !hasConflict(tech, timeSlot, endTimeSlot)\n  );\n  \n  if (availableTechs.length > 0) {\n    const displayHour = hour > 12 ? hour - 12 : hour;\n    const ampm = hour >= 12 ? 'PM' : 'AM';\n    \n    availableSlots.push({\n      start_time: timeSlot,\n      display_time: `${displayHour}:00 ${ampm}`,\n      technician: availableTechs[0],\n      available_techs: availableTechs\n    });\n  }\n}\n\nconst bookedSlots = todaysAppointments.slice(0, 5).map(apt => ({\n  time: apt.start_time,\n  technician: apt.technician_name,\n  customer: apt.customer_name\n}));\n\nreturn [{\n  json: {\n    success: true,\n    available_slots: availableSlots.slice(0, 8),\n    message: `Found ${availableSlots.length} available slots for ${preferredDate}`,\n    service_requested: serviceType,\n    qualified_technicians: qualifiedTechs,\n    booked_appointments: bookedSlots,\n    debug: {\n      total_appointments_found: existingAppointments.length,\n      appointments_for_date: todaysAppointments.length\n    }\n  }\n}];"
+      },
+      "id": "2204e45a-368d-45fe-aa67-c48e0bc664d0",
+      "name": "Calculate Available Slots",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -816,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "appointments",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "appointment_date",
+              "condition": "eq",
+              "keyValue": "=2025-08-06"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1008,
+        432
+      ],
+      "id": "9b2ac88c-a57e-4fd6-9fe2-5f97dbbaf041",
+      "name": "Get Existing Appointments",
+      "credentials": {
+        "supabaseApi": {
+          "id": "JvPq1OuLEBxtVuR9",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get input from Execute Workflow trigger\nconst input = $json;\n\n// Extract search criteria\nconst customerEmail = input.customer_email;\nconst customerPhone = input.customer_phone;\nconst bookingId = input.booking_id;\nconst dateRange = input.date_range || 'upcoming';\nconst specificDate = input.specific_date;\nconst includeCancelled = input.include_cancelled || false;\n\n// Build flexible search criteria\nconst searchCriteria = {};\n\n// Add customer identification\nif (customerEmail) searchCriteria.customer_email = customerEmail;\nif (customerPhone) searchCriteria.customer_phone = customerPhone;\nif (bookingId) searchCriteria.id = bookingId;\n\n// Add date filtering\nconst today = new Date().toISOString().split('T')[0];\nif (specificDate) {\n  searchCriteria.appointment_date = specificDate;\n} else {\n  switch(dateRange) {\n    case 'today':\n      searchCriteria.appointment_date = today;\n      break;\n    case 'upcoming':\n      // Will filter in code since Supabase needs >= comparison\n      searchCriteria.date_filter = 'upcoming';\n      break;\n    case 'past':\n      // Will filter in code since Supabase needs < comparison  \n      searchCriteria.date_filter = 'past';\n      break;\n    // 'all' means no date filter\n  }\n}\n\n// Status filtering\nif (!includeCancelled) {\n  searchCriteria.status_filter = 'active'; // confirmed, rescheduled\n}\n\n// Determine search method based on available data\nlet searchType = 'by_email'; // default\n\nif (bookingId) {\n  searchType = 'by_id';\n} else if (customerPhone) {\n  searchType = 'by_phone';\n} else if (customerEmail) {\n  searchType = 'by_email';\n}\n\nreturn [{\n  json: {\n    // Search parameters\n    customer_email: customerEmail,\n    customer_phone: customerPhone,\n    booking_id: bookingId,\n    date_range: dateRange,\n    specific_date: specificDate,\n    include_cancelled: includeCancelled,\n    today: today,\n    \n    // Search routing\n    search_type: searchType,\n    \n    // For Supabase query\n    search_criteria: searchCriteria,\n    \n    // Query settings\n    limit: 10, // Don't return too many results\n    order_by: 'appointment_date, start_time'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        112,
+        304
+      ],
+      "id": "b60d8a94-43f8-428f-9b8a-42bc8291a945",
+      "name": "Parse Lookup Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "search-by-id",
+              "leftValue": "={{ $json.search_type }}",
+              "rightValue": "by_id",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "search-by-phone",
+              "leftValue": "={{ $json.search_type }}",
+              "rightValue": "by_phone",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        304,
+        304
+      ],
+      "id": "be968253-993b-477e-8251-efcf908b60e3",
+      "name": "Route Lookup Method"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "appointments",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "id",
+              "condition": "eq",
+              "keyValue": "={{ $json.booking_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        528,
+        80
+      ],
+      "id": "ca4e275e-6252-4fb7-aeff-ca1d339c3166",
+      "name": "Get Appointment by ID",
+      "credentials": {
+        "supabaseApi": {
+          "id": "JvPq1OuLEBxtVuR9",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "appointments",
+        "limit": 10,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_phone",
+              "condition": "eq",
+              "keyValue": "={{ $json.customer_phone }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        528,
+        272
+      ],
+      "id": "00e1f926-e468-4d33-bed5-b90c10d45db9",
+      "name": "Get Appointments by Phone",
+      "credentials": {
+        "supabaseApi": {
+          "id": "JvPq1OuLEBxtVuR9",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "appointments",
+        "limit": 10,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_email",
+              "condition": "eq",
+              "keyValue": "={{ $json.customer_email }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        528,
+        464
+      ],
+      "id": "6ed8d445-7d84-4eac-a741-d0116b57cff6",
+      "name": "Get Appointments by Email",
+      "credentials": {
+        "supabaseApi": {
+          "id": "JvPq1OuLEBxtVuR9",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "appointments",
+        "limit": 10,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_name",
+              "condition": "eq",
+              "keyValue": "={{ $json.customer_name }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        528,
+        640
+      ],
+      "id": "0247f0e5-da5e-4c55-81f1-f2398373d898",
+      "name": "Get Appointments by Name",
+      "credentials": {
+        "supabaseApi": {
+          "id": "JvPq1OuLEBxtVuR9",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process and format appointment results\nconst allInputs = $input.all();\nconst searchCriteria = $('Parse Lookup Request').item.json;\n\nconsole.log('Processing search results:', allInputs.length);\n\n// Collect all appointments from different search methods\nlet appointments = [];\n\nallInputs.forEach(input => {\n  if (input.json && Array.isArray(input.json)) {\n    appointments = appointments.concat(input.json);\n  } else if (input.json && input.json.id) {\n    appointments.push(input.json);\n  }\n});\n\nconsole.log('Total appointments found:', appointments.length);\n\nif (appointments.length === 0) {\n  return [{\n    json: {\n      success: false,\n      error: 'no_appointments_found',\n      message: 'No appointments found with the provided information',\n      search_criteria: searchCriteria\n    }\n  }];\n}\n\n// Remove duplicates (in case multiple search methods return same appointment)\nconst uniqueAppointments = appointments.filter((apt, index, self) => \n  index === self.findIndex(a => a.id === apt.id)\n);\n\n// Sort by appointment date (newest first)\nuniqueAppointments.sort((a, b) => new Date(b.appointment_date) - new Date(a.appointment_date));\n\n// Separate upcoming and past appointments\nconst today = new Date().toISOString().split('T')[0];\nconst upcomingAppointments = uniqueAppointments.filter(apt => \n  apt.appointment_date >= today && apt.status !== 'cancelled'\n);\nconst pastAppointments = uniqueAppointments.filter(apt => \n  apt.appointment_date < today || apt.status === 'cancelled'\n);\n\n// Format appointments for response\nconst formatAppointment = (apt) => ({\n  booking_id: apt.id,\n  customer_name: apt.customer_name,\n  service: apt.service_type,\n  date: apt.appointment_date,\n  time: apt.start_time,\n  duration: `${apt.service_duration} minutes`,\n  price: `$${apt.service_price}`,\n  technician: apt.technician_name,\n  status: apt.status,\n  created: apt.created_at?.split('T')[0] || 'N/A'\n});\n\nconst response = {\n  success: true,\n  total_appointments: uniqueAppointments.length,\n  upcoming_appointments: upcomingAppointments.map(formatAppointment),\n  past_appointments: searchCriteria.include_history ? pastAppointments.map(formatAppointment) : [],\n  summary: {\n    upcoming_count: upcomingAppointments.length,\n    past_count: pastAppointments.length,\n    cancelled_count: uniqueAppointments.filter(apt => apt.status === 'cancelled').length\n  }\n};\n\n// If searching by ID and found exactly one, return detailed info\nif (searchCriteria.search_type === 'by_id' && uniqueAppointments.length === 1) {\n  const apt = uniqueAppointments[0];\n  response.appointment_details = {\n    ...formatAppointment(apt),\n    customer_phone: apt.customer_phone,\n    customer_email: apt.customer_email,\n    end_time: apt.end_time,\n    last_updated: apt.updated_at?.split('T')[0] || 'N/A'\n  };\n}\n\nreturn [{ json: response }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        304
+      ],
+      "id": "1c5b95f7-f5df-4e16-b565-3b896f760bb5",
+      "name": "Format Appointment Results"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "appointments-found",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        912,
+        304
+      ],
+      "id": "5990d6b8-64a9-473f-8949-58d83e786ae4",
+      "name": "Check Results"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    success: false,\n    error: $json.error || \"no_appointments_found\",\n    message: $json.message || \"No appointments found with the provided information\",\n    total_appointments: 0,\n    upcoming_appointments: [],\n    past_appointments: [],\n    summary: {\n      upcoming_count: 0,\n      past_count: 0,\n      cancelled_count: 0\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        928,
+        528
+      ],
+      "id": "1ca0e69e-012b-4965-a20e-a8afd2d1486c",
+      "name": "Error Response"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    success: $json.success,\n    total_appointments: $json.total_appointments,\n    upcoming_appointments: $json.upcoming_appointments,\n    past_appointments: $json.past_appointments,\n    summary: $json.summary,\n    appointment_details: $json.appointment_details || null,\n    message: `Found ${$json.total_appointments} appointment(s)`\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        304
+      ],
+      "id": "cf5b9f0c-8339-4489-bfee-51895d69c4f2",
+      "name": "Success Response"
+    },
+    {
+      "parameters": {
+        "content": "## Appointment and Availability Checker",
+        "height": 832,
+        "width": 1424,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -112,
+        32
+      ],
+      "typeVersion": 1,
+      "id": "f1bafc81-39d0-4cca-82fa-7b36b6ca2b36",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Availability Checker",
+        "height": 544,
+        "width": 1056,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1520,
+        224
+      ],
+      "typeVersion": 1,
+      "id": "53e24c12-9006-43c1-b8eb-be9f20d56411",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Booking Tool\n",
+        "height": 656,
+        "width": 1056,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        352,
+        1696
+      ],
+      "typeVersion": 1,
+      "id": "7055fed7-97f8-4d71-9a8a-1ff50502049b",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Cancel Booking Tool",
+        "height": 592,
+        "width": 1840
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1584,
+        1728
+      ],
+      "typeVersion": 1,
+      "id": "20df16f3-f1d5-460b-89d7-b469845de842",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## MCP Tool Handler",
+        "height": 544,
+        "width": 1888,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1120,
+        1008
+      ],
+      "typeVersion": 1,
+      "id": "f15c8eff-4a36-4add-bfd8-00e15a762e6e",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Debug data going to Supabase/Gmail\nconsole.log('=== DATA FOR SUPABASE/GMAIL ===');\nconsole.log('Full object:', JSON.stringify($json, null, 2));\nconsole.log('Customer email:', $json.customer_email);\nconsole.log('Email valid?', /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test($json.customer_email || ''));\nconsole.log('Booking ID:', $json.booking_id);\nconsole.log('Service duration:', $json.service_duration, typeof $json.service_duration);\nconsole.log('==============================');\n\nreturn [{ json: $json }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        832,
+        1792
+      ],
+      "id": "0c5a781f-4bd3-4b8b-9394-6307fcac9fb7",
+      "name": "Debugger1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Debug what's reaching the Tool Router\nconsole.log('=== TOOL ROUTER INPUT DEBUG ===');\nconsole.log('Tool value:', JSON.stringify($json.tool));\nconsole.log('Tool type:', typeof $json.tool);\nconsole.log('Tool length:', $json.tool?.length);\nconsole.log('Full object:', JSON.stringify($json, null, 2));\nconsole.log('================================');\n\nreturn [{ json: $json }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        1184
+      ],
+      "id": "d3f477e7-2ade-4ddd-a775-85c89f9a3374",
+      "name": "Code"
+    }
+  ],
+  "pinData": {
+    "MCP Webhook Entry": [
+      {
+        "json": {
+          "tool": "check_appointments",
+          "parameters": {
+            "customer_email": "sarah.wilson@email.com",
+            "customer_phone": "5553334444",
+            "date_range": "upcoming",
+            "include_cancelled": false
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "MCP Webhook Entry": {
+      "main": [
+        [
+          {
+            "node": "Parse MCP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool Router": {
+      "main": [
+        [
+          {
+            "node": "Parse & Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Data Test",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Lookup Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Parse Cancel Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect Results": {
+      "main": [
+        [
+          {
+            "node": "Format MCP Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format MCP Response": {
+      "main": [
+        [
+          {
+            "node": "Send MCP Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse MCP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process & Validate Booking Data": {
+      "main": [
+        [
+          {
+            "node": "Validation Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Confirmation Email": {
+      "main": [
+        [
+          {
+            "node": "Generate Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Final Response": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Data Test": {
+      "main": [
+        [
+          {
+            "node": "Process & Validate Booking Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validation Gate": {
+      "main": [
+        [
+          {
+            "node": "Create Calendar Event",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Debugger1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Validation Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Calendar Event": {
+      "main": [
+        [
+          {
+            "node": "Return Response 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Search Results": {
+      "main": [
+        [
+          {
+            "node": "Validation Gate1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Cancel Request": {
+      "main": [
+        [
+          {
+            "node": "Search Google Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Response 1": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation Email1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Google Calendar": {
+      "main": [
+        [
+          {
+            "node": "Process Search Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Debugger": {
+      "main": [
+        [
+          {
+            "node": "Delete Calendar Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Confirmation Email1": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Validation Gate1": {
+      "main": [
+        [
+          {
+            "node": "Debugger",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check If Found1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Get Google Calendar Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Google Calendar Events": {
+      "main": [
+        [
+          {
+            "node": "Get Existing Appointments",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Available Slots": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Existing Appointments": {
+      "main": [
+        [
+          {
+            "node": "Calculate Available Slots",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Lookup Request": {
+      "main": [
+        [
+          {
+            "node": "Route Lookup Method",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Lookup Method": {
+      "main": [
+        [
+          {
+            "node": "Get Appointment by ID",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Appointments by Phone",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Appointments by Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Appointments by Name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Appointment by ID": {
+      "main": [
+        [
+          {
+            "node": "Format Appointment Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Appointments by Phone": {
+      "main": [
+        [
+          {
+            "node": "Format Appointment Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Appointments by Email": {
+      "main": [
+        [
+          {
+            "node": "Format Appointment Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Appointments by Name": {
+      "main": [
+        [
+          {
+            "node": "Format Appointment Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Appointment Results": {
+      "main": [
+        [
+          {
+            "node": "Check Results",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Results": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Success Response": {
+      "main": [
+        [
+          {
+            "node": "Collect Results",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Debugger1": {
+      "main": [
+        [
+          {
+            "node": "Store Booking in Database",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Confirmation Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Tool Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "155c253c-71ba-4f05-b787-8cdd1cb40cae",
+  "meta": {
+    "instanceId": "83903a6e7e2bc5032020f93d8cb22541a5a2ce0b3ab298a60a6215480c3273c1"
+  },
+  "id": "mHulCjHogk6T9rp1",
+  "tags": []
+}
