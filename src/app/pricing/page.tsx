@@ -32,45 +32,60 @@ export default function PricingPage() {
       id: 'starter',
       name: 'Starter',
       subtitle: 'Perfect for small teams',
-      monthlyPrice: 29,
-      yearlyPrice: 25,
+      monthlyPrice: 147,
+      yearlyPrice: 125,
       description: 'Get started with essential voice AI features',
       features: [
-        '500 minutes/month',
-        '10 realistic voices',
-        'Basic integrations (5)',
+        '300 voice minutes/month',
+        '25 Maya research queries/month',
+        '1 phone number included',
+        '3 basic integrations',
+        '• Google Calendar sync',
+        '• Basic CRM (HubSpot/Pipedrive)',
+        '• Email integration (Gmail/Outlook)',
         'Email support',
-        'Call analytics',
-        'Lead qualification',
-        'Basic CRM sync',
+        'Call analytics dashboard',
+        'Lead qualification AI',
         'Mobile app access'
       ],
       limitations: [
         'Advanced voice cloning',
         'Priority support',
         'Custom integrations',
-        'Advanced analytics'
+        'Advanced analytics',
+        'Multi-channel campaigns'
       ],
-      cta: 'Start Free Trial',
-      popular: false
+      cta: 'Start 3-Day Trial',
+      popular: false,
+      overage: {
+        minutes: '$0.40/minute',
+        research: '$0.15/query',
+        phones: '$9/month each'
+      }
     },
     {
       id: 'professional',
       name: 'Professional',
       subtitle: 'Most popular for growing businesses',
-      monthlyPrice: 99,
-      yearlyPrice: 83,
+      monthlyPrice: 397,
+      yearlyPrice: 337,
       description: 'Everything you need to scale your voice AI operations',
       features: [
-        '2,000 minutes/month',
-        '100+ premium voices',
-        'Advanced integrations (50+)',
+        '1,000 voice minutes/month',
+        '100 Maya research queries/month',
+        '3 phone numbers included',
+        '15 advanced integrations',
+        '• All basic integrations',
+        '• Advanced CRM (Salesforce, Zoho)',
+        '• Marketing tools (Mailchimp, ActiveCampaign)',
+        '• Business tools (Slack, Teams, Zapier)',
+        '• Custom webhooks (5)',
         'Priority chat support',
-        'Advanced analytics',
+        'Advanced analytics dashboard',
         'Voice cloning included',
         'A/B testing tools',
-        'Custom scripts',
-        'Multi-language support',
+        'Custom call scripts',
+        'Multi-language support (25+)',
         'API access',
         'Team collaboration',
         'Custom branding'
@@ -78,38 +93,57 @@ export default function PricingPage() {
       limitations: [
         'Dedicated account manager',
         'Custom voice training',
-        'White-label solution'
+        'White-label solution',
+        'Enterprise security'
       ],
-      cta: 'Start Free Trial',
+      cta: 'Start 3-Day Trial',
       popular: true,
-      savings: 'Save 40% vs competitors'
+      savings: 'Most Popular Choice',
+      overage: {
+        minutes: '$0.40/minute',
+        research: '$0.15/query',
+        phones: '$9/month each'
+      }
     },
     {
       id: 'enterprise',
       name: 'Enterprise',
       subtitle: 'For large organizations',
-      monthlyPrice: 299,
-      yearlyPrice: 249,
+      monthlyPrice: 997,
+      yearlyPrice: 847,
       description: 'Complete solution with dedicated support',
       features: [
-        'Unlimited minutes',
-        'Custom voice creation',
+        '3,000 voice minutes/month',
+        '300 Maya research queries/month',
+        '10 phone numbers included',
         'Unlimited integrations',
+        '• All professional integrations',
+        '• Custom API development',
+        '• ERP systems (SAP, Oracle)',
+        '• Enterprise CRM (unlimited objects)',
+        '• Advanced webhooks (unlimited)',
+        '• White-label API access',
         'Dedicated account manager',
         '24/7 phone support',
-        'Advanced security (SOC 2)',
-        'Custom onboarding',
+        'Advanced security (SOC 2 + HIPAA)',
+        'Custom voice training',
+        'Custom onboarding & training',
         'Priority feature requests',
         'White-label solution',
-        'Custom SLA',
-        'Advanced reporting',
+        'Custom SLA (99.9% uptime)',
+        'Advanced reporting & BI tools',
         'Multi-region hosting',
-        'Custom contracts',
-        'Training & consulting'
+        'Custom contracts available',
+        'Consulting & optimization'
       ],
       limitations: [],
       cta: 'Contact Sales',
-      popular: false
+      popular: false,
+      overage: {
+        minutes: '$0.35/minute',
+        research: '$0.12/query',
+        phones: '$7/month each'
+      }
     }
   ]
 
@@ -117,7 +151,9 @@ export default function PricingPage() {
     {
       category: 'Voice & Audio',
       items: [
-        { name: 'Minutes per month', starter: '500', professional: '2,000', enterprise: 'Unlimited' },
+        { name: 'Voice minutes per month', starter: '300', professional: '1,000', enterprise: '3,000' },
+        { name: 'Maya research queries', starter: '25', professional: '100', enterprise: '300' },
+        { name: 'Phone numbers included', starter: '1', professional: '3', enterprise: '10' },
         { name: 'Voice library', starter: '10 voices', professional: '100+ voices', enterprise: 'Custom voices' },
         { name: 'Voice cloning', starter: false, professional: true, enterprise: true },
         { name: 'Custom voice training', starter: false, professional: false, enterprise: true },
@@ -139,10 +175,17 @@ export default function PricingPage() {
     {
       category: 'Integrations & API',
       items: [
-        { name: 'CRM integrations', starter: '5', professional: '50+', enterprise: 'Unlimited' },
+        { name: 'Total integrations', starter: '3 basic', professional: '15 advanced', enterprise: 'Unlimited' },
+        { name: 'Google Calendar', starter: true, professional: true, enterprise: true },
+        { name: 'Basic CRM (HubSpot/Pipedrive)', starter: true, professional: true, enterprise: true },
+        { name: 'Email integration', starter: true, professional: true, enterprise: true },
+        { name: 'Advanced CRM (Salesforce/Zoho)', starter: false, professional: true, enterprise: true },
+        { name: 'Marketing tools', starter: false, professional: true, enterprise: true },
+        { name: 'Business tools (Slack/Teams)', starter: false, professional: true, enterprise: true },
         { name: 'API access', starter: false, professional: true, enterprise: true },
-        { name: 'Webhooks', starter: false, professional: true, enterprise: true },
-        { name: 'Custom integrations', starter: false, professional: false, enterprise: true },
+        { name: 'Custom webhooks', starter: false, professional: '5', enterprise: 'Unlimited' },
+        { name: 'Custom API development', starter: false, professional: false, enterprise: true },
+        { name: 'ERP systems', starter: false, professional: false, enterprise: true },
         { name: 'White-label solution', starter: false, professional: false, enterprise: true }
       ]
     },
@@ -198,12 +241,20 @@ export default function PricingPage() {
       answer: "Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate any billing differences."
     },
     {
-      question: "What happens if I exceed my monthly minutes?",
-      answer: "We'll notify you when you reach 80% of your limit. Additional minutes are charged at $0.08/minute for Professional and $0.05/minute for Enterprise plans."
+      question: "What happens if I exceed my monthly limits?",
+      answer: "We'll notify you when you reach 80% of your limits. Overage pricing applies: voice minutes at $0.35-0.40 each, Maya research queries at $0.12-0.15 each, and additional phone numbers at $7-9/month."
+    },
+    {
+      question: "How does the 3-day free trial work?",
+      answer: "Your trial includes limited usage: 50-150 voice minutes and 5-15 Maya research queries depending on the plan. No credit card required to start, and you can upgrade anytime during or after the trial."
+    },
+    {
+      question: "What are the 3 basic integrations in the Starter plan?",
+      answer: "Starter includes Google Calendar sync, basic CRM integration (HubSpot or Pipedrive), and email integration (Gmail or Outlook). Professional and Enterprise plans include many more advanced integrations."
     },
     {
       question: "Do you offer custom pricing for high-volume users?",
-      answer: "Yes, we offer custom pricing for customers who need more than 10,000 minutes per month. Contact our sales team for a personalized quote."
+      answer: "Yes, we offer custom pricing for customers who need more than 3,000 minutes per month. Contact our sales team for a personalized Enterprise quote."
     },
     {
       question: "Is there a setup fee?",
@@ -264,7 +315,7 @@ export default function PricingPage() {
             Simple, Transparent Pricing That Grows With You
           </h1>
           <p className="text-xl text-gray-600 mb-8">
-            All plans include 14-day free trial, no credit card required
+            All plans include 3-day free trial, no credit card required
           </p>
 
           {/* Billing Toggle */}
@@ -361,9 +412,21 @@ export default function PricingPage() {
                     {plan.cta}
                   </button>
 
+                  {/* Overage Pricing */}
+                  {plan.overage && (
+                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                      <h4 className="text-sm font-semibold text-gray-900 mb-2">Overage Pricing</h4>
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <div>Extra minutes: {plan.overage.minutes}</div>
+                        <div>Extra research: {plan.overage.research}</div>
+                        <div>Extra phone numbers: {plan.overage.phones}</div>
+                      </div>
+                    </div>
+                  )}
+
                   {plan.id !== 'enterprise' && (
                     <p className="text-center text-sm text-gray-500 mt-4">
-                      14-day free trial • No credit card required
+                      3-day free trial • No credit card required
                     </p>
                   )}
                 </div>
@@ -392,18 +455,18 @@ export default function PricingPage() {
                 <div className="font-bold text-gray-900">Features</div>
                 <div className="text-center">
                   <div className="font-bold text-gray-900">Starter</div>
-                  <div className="text-xs text-gray-600">$29/mo</div>
+                  <div className="text-xs text-gray-600">$147/mo</div>
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-blue-600 flex items-center justify-center">
                     <Star className="h-3 w-3 mr-1" />
                     Professional
                   </div>
-                  <div className="text-xs text-gray-600">$99/mo</div>
+                  <div className="text-xs text-gray-600">$397/mo</div>
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-purple-600">Enterprise</div>
-                  <div className="text-xs text-gray-600">$299/mo</div>
+                  <div className="text-xs text-gray-600">$997/mo</div>
                 </div>
               </div>
             </div>
@@ -566,7 +629,7 @@ export default function PricingPage() {
             Ready to Transform Your Business Communication?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Start your 14-day free trial today. No credit card required.
+            Start your 3-day free trial today. No credit card required.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
@@ -582,7 +645,7 @@ export default function PricingPage() {
           <div className="flex items-center justify-center space-x-6 text-blue-100 text-sm">
             <span className="flex items-center">
               <CheckCircle className="h-4 w-4 mr-1" />
-              14-day free trial
+              3-day free trial
             </span>
             <span className="flex items-center">
               <CheckCircle className="h-4 w-4 mr-1" />

@@ -46,7 +46,9 @@ interface LeadData {
 }
 
 export class LeadFlyIntegration {
-  private static supabase = createServerClient()
+  private static getSupabase() {
+    return createServerClient()
+  }
   private static dropflyBusinessId = process.env.DEFAULT_BUSINESS_ID || 'c9b1b506-57b7-44c0-b873-48165a3f0b9c'
 
   // ==============================================
@@ -185,7 +187,7 @@ export class LeadFlyIntegration {
     score: number,
     priority: 'hot' | 'warm' | 'cold'
   ): Promise<string | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await this.getSupabase()
       .from('leads')
       .upsert({
         business_id: this.dropflyBusinessId,
@@ -443,7 +445,7 @@ export class LeadFlyIntegration {
     // Schedule a VAPI call for lead qualification
     const callTime = new Date(Date.now() + delayMinutes * 60 * 1000)
 
-    await this.supabase
+    await this.getSupabase()
       .from('scheduled_calls')
       .insert({
         business_id: this.dropflyBusinessId,
@@ -493,7 +495,7 @@ export class LeadFlyIntegration {
 
   private static async addToEmailSequence(leadId: string, sequenceName: string): Promise<void> {
     // Add lead to automated email sequence
-    await this.supabase
+    await this.getSupabase()
       .from('email_sequences')
       .insert({
         business_id: this.dropflyBusinessId,
@@ -509,7 +511,7 @@ export class LeadFlyIntegration {
 
   private static async addLeadTags(leadId: string, tags: string[]): Promise<void> {
     // Add tags to lead for better organization
-    const { data: existingLead } = await this.supabase
+    const { data: existingLead } = await this.getSupabase()
       .from('leads')
       .select('tags')
       .eq('id', leadId)
@@ -518,7 +520,7 @@ export class LeadFlyIntegration {
     const currentTags = existingLead?.tags || []
     const newTags = [...new Set([...currentTags, ...tags])]
 
-    await this.supabase
+    await this.getSupabase()
       .from('leads')
       .update({ tags: newTags })
       .eq('id', leadId)
@@ -529,7 +531,7 @@ export class LeadFlyIntegration {
     activityType: string,
     data: any
   ): Promise<void> {
-    await this.supabase
+    await this.getSupabase()
       .from('lead_activities')
       .insert({
         business_id: this.dropflyBusinessId,
