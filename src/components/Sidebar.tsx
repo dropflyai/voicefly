@@ -85,29 +85,22 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
 
       {/* Sidebar */}
       <aside className={`
         fixed top-0 left-0 z-50 h-full bg-gray-900 text-white transition-all duration-300
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
-        w-64 lg:translate-x-0 lg:static lg:z-30
+        w-64 lg:translate-x-0 lg:static lg:z-40
       `}>
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full relative z-10">
           {/* Header */}
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-800">
+          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-800 relative z-20">
             <div className={`flex items-center ${isCollapsed && 'lg:justify-center'}`}>
               {!isCollapsed ? (
                 <div>
-                  <h1 className="text-xl font-bold">VoiceFly</h1>
-                  <p className="text-xs text-gray-400">Enterprise Edition</p>
+                  <h1 className="text-xl font-bold" style={{ color: 'white !important' }}>VoiceFly</h1>
+                  <p className="text-xs" style={{ color: 'white !important' }}>Enterprise Edition</p>
                 </div>
               ) : (
                 <span className="text-xl font-bold hidden lg:block">V</span>
@@ -132,11 +125,11 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 overflow-y-auto py-4">
+          <nav className="flex-1 overflow-y-auto py-4 relative z-10">
             {navigation.map((section) => (
               <div key={section.title} className="mb-6">
                 {!isCollapsed && (
-                  <h3 className="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  <h3 className="px-4 text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'white !important' }}>
                     {section.title}
                   </h3>
                 )}
@@ -152,12 +145,13 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
                             flex items-center px-4 py-2.5 text-sm font-medium transition-colors
                             ${isActive
                               ? 'bg-blue-600 text-white'
-                              : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                              : 'text-white hover:bg-gray-800 hover:text-white'
                             }
                           `}
+                          style={{ color: 'white !important' }}
                         >
-                          <Icon className={`h-5 w-5 ${!isCollapsed && 'mr-3'}`} />
-                          {!isCollapsed && <span>{item.name}</span>}
+                          <Icon className={`h-5 w-5 ${!isCollapsed && 'mr-3'}`} style={{ color: 'white !important' }} />
+                          {!isCollapsed && <span style={{ color: 'white !important' }}>{item.name}</span>}
                         </Link>
                       </li>
                     )
@@ -168,7 +162,7 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-gray-800 p-4">
+          <div className="border-t border-gray-800 p-4 relative z-20">
             <div className={`flex items-center ${isCollapsed && 'justify-center'}`}>
               <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
                 <span className="text-sm font-medium">JD</span>

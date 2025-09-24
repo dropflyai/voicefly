@@ -55,10 +55,7 @@ body {
   color: #ffffff !important;
 }
 
-/* Navigation text - force visible */
-nav a,
-nav button,
-nav span,
+/* Navigation text - force visible - except sidebar */
 .text-blue-600,
 .text-blue-700,
 .text-blue-800,
@@ -66,9 +63,21 @@ nav span,
   color: #000000 !important;
 }
 
-/* Force all text in navigation to be black */
+/* Main navigation links should be black except in sidebar */
+main nav a,
+main nav button,
+main nav span {
+  color: #000000 !important;
+}
+
+/* Force all text in navigation to be black - except dark sidebar */
 header a,
 header button,
 header span {
-  color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* LEFT SIDEBAR - Force all text to be white */
+aside * {
+  color: #ffffff !important;
 }
