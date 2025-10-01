@@ -1,358 +1,388 @@
-"use client"
+'use client'
 
 import { useState, useEffect } from 'react'
-import { MapPin, Phone, Clock, Users, Plus, Edit, Trash2, Settings, Building, Mail } from 'lucide-react'
+import { PlusIcon, BuildingStorefrontIcon } from '@heroicons/react/24/outline'
+import LocationCard from '../../../components/LocationCard'
+import LocationForm from '../../../components/LocationForm'
+import Layout from '../../../components/Layout'
+import { LocationAPIImpl, BusinessAPI } from '../../../lib/supabase'
+import { BrandedSMSService } from '../../../lib/branded-sms-service'
+import { BrandedEmailService } from '../../../lib/branded-email-service'
+import type { Location, CreateLocationRequest, Business } from '../../../lib/supabase-types-mvp'
 
-interface Location {
-  id: string
-  name: string
-  address: string
-  city: string
-  state: string
-  zipCode: string
-  phone: string
-  email: string
-  hours: {
-    [key: string]: string
-  }
-  staff_count: number
-  services: string[]
-  status: 'active' | 'inactive' | 'maintenance'
-  manager: string
-  established: string
-}
+// Mock business ID - in real app, this would come from auth context
+const DEMO_BUSINESS_ID = '8424aa26-4fd5-4d4b-92aa-8a9c5ba77dad'
 
 export default function LocationsPage() {
   const [locations, setLocations] = useState<Location[]>([])
+  const [business, setBusiness] = useState<Business | null>(null)
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null)
-  const [isEditing, setIsEditing] = useState(false)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [isPageLoading, setIsPageLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
+  const locationAPI = new LocationAPIImpl()
+
+  // Load initial data
   useEffect(() => {
-    // Demo location data
-    const demoLocations: Location[] = [
-      {
-        id: 'loc_1',
-        name: 'Downtown Voice Center',
-        address: '123 Business District Blvd',
-        city: 'San Francisco',
-        state: 'CA',
-        zipCode: '94102',
-        phone: '+1 (555) 123-4567',
-        email: 'downtown@voicefly.ai',
-        hours: {
-          monday: '9:00 AM - 6:00 PM',
-          tuesday: '9:00 AM - 6:00 PM',
-          wednesday: '9:00 AM - 6:00 PM',
-          thursday: '9:00 AM - 6:00 PM',
-          friday: '9:00 AM - 5:00 PM',
-          saturday: '10:00 AM - 2:00 PM',
-          sunday: 'Closed'
-        },
-        staff_count: 25,
-        services: ['Voice AI Setup', 'Training', 'Technical Support', 'Consultations'],
-        status: 'active',
-        manager: 'Sarah Johnson',
-        established: '2023-01-15'
-      },
-      {
-        id: 'loc_2',
-        name: 'Tech Hub Branch',
-        address: '456 Innovation Drive',
-        city: 'Austin',
-        state: 'TX',
-        zipCode: '73301',
-        phone: '+1 (555) 234-5678',
-        email: 'austin@voicefly.ai',
-        hours: {
-          monday: '8:00 AM - 7:00 PM',
-          tuesday: '8:00 AM - 7:00 PM',
-          wednesday: '8:00 AM - 7:00 PM',
-          thursday: '8:00 AM - 7:00 PM',
-          friday: '8:00 AM - 6:00 PM',
-          saturday: '9:00 AM - 3:00 PM',
-          sunday: 'Closed'
-        },
-        staff_count: 18,
-        services: ['Enterprise Solutions', 'Custom Integrations', 'Advanced Training'],
-        status: 'active',
-        manager: 'Michael Chen',
-        established: '2023-06-20'
-      },
-      {
-        id: 'loc_3',
-        name: 'East Coast Operations',
-        address: '789 Corporate Plaza',
-        city: 'New York',
-        state: 'NY',
-        zipCode: '10001',
-        phone: '+1 (555) 345-6789',
-        email: 'nyc@voicefly.ai',
-        hours: {
-          monday: '9:00 AM - 6:00 PM',
-          tuesday: '9:00 AM - 6:00 PM',
-          wednesday: '9:00 AM - 6:00 PM',
-          thursday: '9:00 AM - 6:00 PM',
-          friday: '9:00 AM - 5:00 PM',
-          saturday: 'Closed',
-          sunday: 'Closed'
-        },
-        staff_count: 32,
-        services: ['Voice AI Setup', 'Training', 'Support', 'Sales', 'Account Management'],
-        status: 'active',
-        manager: 'Jennifer Walsh',
-        established: '2022-11-10'
-      },
-      {
-        id: 'loc_4',
-        name: 'West Coast Service Center',
-        address: '321 Tech Valley Road',
-        city: 'Seattle',
-        state: 'WA',
-        zipCode: '98101',
-        phone: '+1 (555) 456-7890',
-        email: 'seattle@voicefly.ai',
-        hours: {
-          monday: '8:30 AM - 5:30 PM',
-          tuesday: '8:30 AM - 5:30 PM',
-          wednesday: '8:30 AM - 5:30 PM',
-          thursday: '8:30 AM - 5:30 PM',
-          friday: '8:30 AM - 4:30 PM',
-          saturday: 'Closed',
-          sunday: 'Closed'
-        },
-        staff_count: 15,
-        services: ['Technical Support', 'Maintenance', 'Remote Assistance'],
-        status: 'maintenance',
-        manager: 'David Rodriguez',
-        established: '2024-03-01'
-      }
-    ]
-    setLocations(demoLocations)
+    loadData()
   }, [])
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'text-green-600 bg-green-100'
-      case 'inactive': return 'text-red-600 bg-red-100'
-      case 'maintenance': return 'text-yellow-600 bg-yellow-100'
-      default: return 'text-gray-600 bg-gray-100'
+  const loadData = async () => {
+    try {
+      setIsPageLoading(true)
+      setError(null)
+
+      // Load business info
+      const businessData = await BusinessAPI.getBusiness(DEMO_BUSINESS_ID)
+      if (businessData) {
+        setBusiness(businessData)
+      }
+
+      // Load locations
+      const locationsData = await locationAPI.getLocations(DEMO_BUSINESS_ID)
+      setLocations(locationsData)
+
+    } catch (error) {
+      console.error('Failed to load locations:', error)
+      setError('Failed to load locations. Please try again.')
+    } finally {
+      setIsPageLoading(false)
     }
   }
 
-  const formatAddress = (location: Location) => {
-    return `${location.address}, ${location.city}, ${location.state} ${location.zipCode}`
+  const handleAddLocation = () => {
+    setSelectedLocation(null)
+    setIsFormOpen(true)
   }
 
-  const getTotalStaff = () => locations.reduce((sum, loc) => sum + loc.staff_count, 0)
-  const getActiveLocations = () => locations.filter(loc => loc.status === 'active').length
+  const handleEditLocation = (location: Location) => {
+    setSelectedLocation(location)
+    setIsFormOpen(true)
+  }
+
+  const handleDeleteLocation = async (locationId: string) => {
+    const location = locations.find(loc => loc.id === locationId)
+    
+    if (!location) return
+    
+    if (!confirm(`Are you sure you want to delete "${location.name}"? This will:\n\n• Cancel all upcoming appointments at this location\n• Notify affected customers via SMS and email\n• Remove all location-specific data\n\nThis action cannot be undone.`)) {
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      
+      // First, send notifications to customers about location closure
+      if (business) {
+        await BrandedSMSService.sendEmergencyLocationBroadcast(
+          DEMO_BUSINESS_ID,
+          `Important: Our ${location.name} location is permanently closing. We will contact you personally to reschedule your appointments at our other locations. Thank you for your understanding.`,
+          [locationId]
+        )
+      }
+      
+      // Delete the location
+      await locationAPI.deleteLocation(locationId)
+      
+      // Remove from local state
+      setLocations(prev => prev.filter(loc => loc.id !== locationId))
+      
+      // Show success message
+      setError(`Successfully closed ${location.name}. Customer notifications have been sent.`)
+    } catch (error) {
+      console.error('Failed to delete location:', error)
+      setError('Failed to delete location. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSetPrimary = async (locationId: string) => {
+    try {
+      const location = locations.find(loc => loc.id === locationId)
+      if (!location) return
+      
+      await locationAPI.setAsPrimary(locationId)
+      
+      // Update local state
+      setLocations(prev => prev.map(loc => ({
+        ...loc,
+        is_primary: loc.id === locationId
+      })))
+      
+      // Send notification to staff about primary location change
+      if (business) {
+        // This would integrate with staff notification system in a real implementation
+        console.log(`Primary location changed to: ${location.name}`)
+        
+        // Example of how staff notifications would work:
+        // await BrandedSMSService.sendStaffLocationAlert(
+        //   staffPhoneNumber,
+        //   `Primary location has been changed to ${location.name}. Please update your schedules accordingly.`,
+        //   locationId,
+        //   DEMO_BUSINESS_ID
+        // )
+      }
+      
+      setError(`Successfully set ${location.name} as the primary location.`)
+      
+    } catch (error) {
+      console.error('Failed to set primary location:', error)
+      setError('Failed to set primary location. Please try again.')
+    }
+  }
+
+  const handleFormSubmit = async (data: CreateLocationRequest) => {
+    try {
+      setIsLoading(true)
+      
+      if (selectedLocation) {
+        // Update existing location
+        const updated = await locationAPI.updateLocation(selectedLocation.id, data)
+        setLocations(prev => prev.map(loc => 
+          loc.id === selectedLocation.id ? updated : loc
+        ))
+        
+        setError(`Successfully updated ${data.name} location details.`)
+      } else {
+        // Create new location
+        const newLocation = await locationAPI.createLocation(DEMO_BUSINESS_ID, data)
+        setLocations(prev => [...prev, newLocation])
+        
+        // Send notification about new location opening
+        if (business && locations.length > 0) {
+          // This would notify existing customers about the new location
+          // In a real implementation, this would be more targeted
+          console.log(`New location ${data.name} has been added!`)
+          
+          // Example of promotional SMS for new location:
+          // await BrandedSMSService.sendCrossLocationPromotion(
+          //   customerPhone,
+          //   DEMO_BUSINESS_ID,
+          //   `🎉 Exciting news! We've opened a new location at ${data.address_line1}, ${data.city}! Book your next appointment at any of our convenient locations.`,
+          //   [newLocation.id]
+          // )
+        }
+        
+        setError(`Successfully added ${data.name} as a new location! ${locations.length === 0 ? 'This is now your primary location.' : ''}`)
+      }
+
+      setIsFormOpen(false)
+      setSelectedLocation(null)
+    } catch (error) {
+      console.error('Failed to save location:', error)
+      setError('Failed to save location. Please try again.')
+      throw error // Re-throw to let form handle it
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getPrimaryLocation = () => {
+    return locations.find(loc => loc.is_primary) || null
+  }
+
+  const getSecondaryLocations = () => {
+    return locations.filter(loc => !loc.is_primary)
+  }
+
+  const canAddMoreLocations = () => {
+    if (!business) return false
+    
+    const limits = {
+      starter: 1,
+      professional: 1,
+      business: 3,
+      enterprise: -1 // unlimited
+    }
+    
+    const limit = limits[business.subscription_tier as keyof typeof limits] || 1
+    return limit === -1 || locations.length < limit
+  }
+
+  const getMaxLocationsText = () => {
+    if (!business) return ''
+    
+    const limits = {
+      starter: '1 location',
+      professional: '1 location', 
+      business: '3 locations',
+      enterprise: 'unlimited locations'
+    }
+    
+    return limits[business.subscription_tier as keyof typeof limits] || '1 location'
+  }
+
+  if (isPageLoading) {
+    return (
+      <Layout business={business}>
+        <div className="p-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="space-y-4">
+              <div className="h-32 bg-gray-200 rounded"></div>
+              <div className="h-32 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Locations</h1>
-          <p className="text-gray-600">Manage your business locations and service centers</p>
+    <Layout business={business}>
+      <div className="p-6 max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Location Management</h1>
+            <p className="text-gray-600 mt-1">
+              Manage your salon locations. Your plan allows {getMaxLocationsText()}.
+            </p>
+          </div>
+          
+          {canAddMoreLocations() && (
+            <button
+              onClick={handleAddLocation}
+              disabled={isLoading}
+              className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+            >
+              <PlusIcon className="w-5 h-5 mr-2" />
+              Add Location
+            </button>
+          )}
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Total Locations</p>
-                <p className="text-2xl font-bold text-gray-900">{locations.length}</p>
-              </div>
-              <Building className="h-8 w-8 text-blue-500" />
-            </div>
+        {/* Error Message */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-red-600 text-sm">{error}</p>
+            <button 
+              onClick={() => setError(null)} 
+              className="text-red-600 hover:text-red-700 underline text-sm mt-1"
+            >
+              Dismiss
+            </button>
           </div>
+        )}
 
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Active Locations</p>
-                <p className="text-2xl font-bold text-gray-900">{getActiveLocations()}</p>
-              </div>
-              <MapPin className="h-8 w-8 text-green-500" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Total Staff</p>
-                <p className="text-2xl font-bold text-gray-900">{getTotalStaff()}</p>
-              </div>
-              <Users className="h-8 w-8 text-purple-500" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Avg Staff/Location</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {locations.length > 0 ? Math.round(getTotalStaff() / locations.length) : 0}
-                </p>
-              </div>
-              <Settings className="h-8 w-8 text-orange-500" />
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Locations List */}
-          <div className="bg-white rounded-lg shadow-md">
-            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-900">All Locations</h3>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 text-sm">
-                <Plus className="h-4 w-4" />
-                Add Location
-              </button>
-            </div>
-            <div className="divide-y divide-gray-200">
-              {locations.map((location) => (
-                <div
-                  key={location.id}
-                  className={`p-6 cursor-pointer hover:bg-gray-50 ${
-                    selectedLocation?.id === location.id ? 'bg-blue-50 border-l-4 border-blue-500' : ''
-                  }`}
-                  onClick={() => setSelectedLocation(location)}
+        {/* Locations List */}
+        {locations.length === 0 ? (
+          <div className="text-center py-12">
+            <BuildingStorefrontIcon className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No locations</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Get started by adding your first location.
+            </p>
+            {canAddMoreLocations() && (
+              <div className="mt-6">
+                <button
+                  onClick={handleAddLocation}
+                  className="inline-flex items-center px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="text-sm font-medium text-gray-900">{location.name}</h4>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(location.status)}`}>
-                          {location.status}
-                        </span>
-                      </div>
-                      <div className="flex items-center text-sm text-gray-500 mb-1">
-                        <MapPin className="h-4 w-4 mr-1" />
-                        {location.city}, {location.state}
-                      </div>
-                      <div className="flex items-center text-sm text-gray-500 mb-1">
-                        <Users className="h-4 w-4 mr-1" />
-                        {location.staff_count} staff members
-                      </div>
-                      <div className="flex items-center text-sm text-gray-500">
-                        <Phone className="h-4 w-4 mr-1" />
-                        {location.phone}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      <button className="p-1 text-gray-400 hover:text-blue-600">
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button className="p-1 text-gray-400 hover:text-red-600">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Location Details */}
-          <div className="bg-white rounded-lg shadow-md">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {selectedLocation ? 'Location Details' : 'Select a Location'}
-                </h3>
-                {selectedLocation && (
-                  <button
-                    onClick={() => setIsEditing(!isEditing)}
-                    className="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded-lg"
-                  >
-                    {isEditing ? 'Cancel' : 'Edit'}
-                  </button>
-                )}
+                  <PlusIcon className="w-5 h-5 mr-2" />
+                  Add Your First Location
+                </button>
               </div>
-            </div>
-
-            <div className="p-6">
-              {selectedLocation ? (
-                <div className="space-y-6">
-                  {/* Basic Info */}
-                  <div>
-                    <h4 className="text-lg font-medium text-gray-900 mb-4">{selectedLocation.name}</h4>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                        <p className="text-sm text-gray-600">{formatAddress(selectedLocation)}</p>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                          <p className="text-sm text-gray-600">{selectedLocation.phone}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                          <p className="text-sm text-gray-600">{selectedLocation.email}</p>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Manager</label>
-                          <p className="text-sm text-gray-600">{selectedLocation.manager}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Staff Count</label>
-                          <p className="text-sm text-gray-600">{selectedLocation.staff_count} members</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Services */}
-                  <div>
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">Services Offered</h5>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedLocation.services.map((service, index) => (
-                        <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                          {service}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Hours */}
-                  <div>
-                    <h5 className="text-sm font-medium text-gray-700 mb-2">Operating Hours</h5>
-                    <div className="grid grid-cols-1 gap-1">
-                      {Object.entries(selectedLocation.hours).map(([day, hours]) => (
-                        <div key={day} className="flex justify-between text-sm">
-                          <span className="capitalize text-gray-600">{day}:</span>
-                          <span className="text-gray-900">{hours}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-4 border-t">
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
-                      View on Map
-                    </button>
-                    <button className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 text-sm">
-                      Contact Location
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <MapPin className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-4 text-sm font-medium text-gray-900">No location selected</h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Choose a location from the list to view its details.
-                  </p>
-                </div>
-              )}
-            </div>
+            )}
           </div>
-        </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Primary Location */}
+            {getPrimaryLocation() && (
+              <div>
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Primary Location</h2>
+                <LocationCard
+                  location={getPrimaryLocation()!}
+                  isPrimary={true}
+                  onEdit={handleEditLocation}
+                  onDelete={handleDeleteLocation}
+                  onSetPrimary={handleSetPrimary}
+                />
+              </div>
+            )}
+
+            {/* Secondary Locations */}
+            {getSecondaryLocations().length > 0 && (
+              <div>
+                <h2 className="text-lg font-medium text-gray-900 mb-4">Additional Locations</h2>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {getSecondaryLocations().map(location => (
+                    <LocationCard
+                      key={location.id}
+                      location={location}
+                      isPrimary={false}
+                      onEdit={handleEditLocation}
+                      onDelete={handleDeleteLocation}
+                      onSetPrimary={handleSetPrimary}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add More Button */}
+            {canAddMoreLocations() && (
+              <div className="flex justify-center pt-6">
+                <button
+                  onClick={handleAddLocation}
+                  disabled={isLoading}
+                  className="inline-flex items-center px-6 py-3 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                >
+                  <PlusIcon className="w-5 h-5 mr-2" />
+                  Add Another Location
+                </button>
+              </div>
+            )}
+
+            {/* Plan Limit Notice */}
+            {!canAddMoreLocations() && business?.subscription_tier !== 'enterprise' && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <BuildingStorefrontIcon className="h-5 w-5 text-yellow-400" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-800">
+                      Location Limit Reached
+                    </h3>
+                    <div className="mt-2 text-sm text-yellow-700">
+                      <p>
+                        Your {business?.subscription_tier} plan allows {getMaxLocationsText()}. 
+                        Upgrade to add more locations.
+                      </p>
+                    </div>
+                    <div className="mt-4">
+                      <div className="-mx-2 -my-1.5 flex">
+                        <button
+                          type="button"
+                          className="bg-yellow-50 px-2 py-1.5 rounded-md text-sm font-medium text-yellow-800 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-600"
+                        >
+                          Upgrade Plan
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Location Form Modal */}
+        <LocationForm
+          location={selectedLocation}
+          isOpen={isFormOpen}
+          onClose={() => {
+            setIsFormOpen(false)
+            setSelectedLocation(null)
+          }}
+          onSubmit={handleFormSubmit}
+          isLoading={isLoading}
+        />
       </div>
-    </div>
+    </Layout>
   )
 }

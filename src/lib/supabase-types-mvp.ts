@@ -1,7 +1,9 @@
 // ==============================================
 // MVP FEATURES TYPE DEFINITIONS
-// Payment Processing + Multi-Location + Loyalty Program + Voice AI
+// Payment Processing + Multi-Location + Loyalty Program
 // ==============================================
+
+import { Business, Customer, Appointment, Service, Staff } from './supabase'
 
 // ==============================================
 // 1. LOCATION MANAGEMENT TYPES
@@ -12,7 +14,7 @@ export interface Location {
   business_id: string
   name: string
   slug: string
-
+  
   // Address
   address_line1: string
   address_line2?: string
@@ -20,36 +22,30 @@ export interface Location {
   state: string
   postal_code: string
   country: string
-
+  
   // Contact
   phone?: string
   email?: string
-
+  
   // Settings
   timezone: string
   is_active: boolean
   is_primary: boolean
-
+  
   // Integration IDs
   square_location_id?: string
   stripe_account_id?: string
-
+  
   created_at: string
   updated_at: string
 }
 
 // Extended business type with location limits
-export interface BusinessWithLocations {
-  id: string
-  name: string
-  business_type: string
-  subscription_tier: 'starter' | 'professional' | 'business' | 'enterprise'
+export interface BusinessWithLocations extends Business {
   max_locations: number
   payment_processors_enabled: string[]
   loyalty_program_enabled: boolean
   locations?: Location[]
-  created_at: string
-  updated_at: string
 }
 
 // ==============================================
@@ -61,25 +57,25 @@ export interface PaymentProcessor {
   business_id: string
   location_id: string
   processor_type: 'square' | 'stripe' | 'paypal'
-
+  
   // Status
   is_active: boolean
   is_live_mode: boolean
-
+  
   // API Configuration
   api_key_public: string
   api_key_secret: string // Should be encrypted in production
   webhook_secret: string
-
+  
   // Processor-specific
   account_id: string
   application_id?: string
-
+  
   // Settings
   auto_capture: boolean
   allow_tips: boolean
   default_tip_percentages: number[]
-
+  
   created_at: string
   updated_at: string
 }
@@ -90,20 +86,20 @@ export interface PaymentWithDetails {
   location_id?: string
   appointment_id?: string
   customer_id?: string
-
+  
   // Amounts (in cents)
   subtotal_amount: number
   tip_amount: number
   tax_amount: number
   discount_amount: number
   total_amount: number
-
+  
   // Processing
   processor_type: 'square' | 'stripe' | 'paypal' | 'cash'
   processor_transaction_id?: string
   processor_fee_amount: number
   currency: string
-
+  
   // Status
   status: 'pending' | 'processing' | 'paid' | 'failed' | 'refunded' | 'partially_refunded'
   payment_method?: string
@@ -113,24 +109,24 @@ export interface PaymentWithDetails {
     exp_month?: number
     exp_year?: number
   }
-
+  
   // Timestamps
   authorized_at?: string
   captured_at?: string
   refunded_at?: string
-
+  
   // Additional
   receipt_url?: string
   refund_reason?: string
   processor_webhook_data: any
   notes?: string
-
+  
   created_at: string
   updated_at: string
-
+  
   // Related data
-  appointment?: any
-  customer?: any
+  appointment?: Appointment
+  customer?: Customer
   location?: Location
 }
 
@@ -141,30 +137,30 @@ export interface PaymentWithDetails {
 export interface LoyaltyProgram {
   id: string
   business_id: string
-
+  
   // Program settings
   is_active: boolean
   program_name: string
-
+  
   // Points configuration
   points_per_dollar: number
   points_per_visit: number
-
+  
   // Reward tiers
   reward_tiers: LoyaltyRewardTier[]
-
+  
   // Rules
   points_expire_days: number
   minimum_purchase_for_points: number
   max_points_per_transaction?: number
-
+  
   // UI compatibility properties (optional for backwards compatibility)
   name?: string
   description?: string
   tiers?: LoyaltyRewardTier[]
   referral_points?: number
   birthday_bonus_points?: number
-
+  
   created_at: string
   updated_at: string
 }
@@ -173,7 +169,7 @@ export interface LoyaltyRewardTier {
   points: number
   reward: string
   discount_amount: number // in cents
-
+  
   // UI compatibility properties (optional)
   id?: string
   name?: string
@@ -192,21 +188,21 @@ export interface CustomerLoyaltyPoints {
   id: string
   business_id: string
   customer_id: string
-
+  
   // Points balance
   total_points_earned: number
   total_points_redeemed: number
   current_balance: number
-
+  
   // Tracking
   last_earned_at?: string
   last_redeemed_at?: string
-
+  
   created_at: string
   updated_at: string
-
+  
   // Related data
-  customer?: any
+  customer?: Customer
   transactions?: LoyaltyTransaction[]
 }
 
@@ -216,19 +212,19 @@ export interface LoyaltyTransaction {
   customer_id: string
   appointment_id?: string
   payment_id?: string
-
+  
   // Transaction details
   transaction_type: 'earned' | 'redeemed' | 'expired' | 'adjusted'
   points_amount: number
   description: string
   reference_amount?: number
   balance_after: number
-
+  
   created_at: string
-
+  
   // Related data
-  customer?: any
-  appointment?: any
+  customer?: Customer
+  appointment?: Appointment
   payment?: PaymentWithDetails
 }
 
@@ -236,20 +232,26 @@ export interface LoyaltyTransaction {
 // 4. EXTENDED TYPES WITH MULTI-LOCATION
 // ==============================================
 
-export interface CustomerWithLoyalty {
-  id: string
-  business_id: string
-  first_name: string
-  last_name: string
-  email?: string
-  phone: string
+export interface StaffWithLocation extends Staff {
+  location_id?: string
+  location?: Location
+}
+
+export interface AppointmentWithLocation extends Appointment {
+  location_id?: string
+  location?: Location
+  payment?: PaymentWithDetails
+  loyalty_points_earned?: number
+}
+
+export interface CustomerWithLoyalty extends Customer {
   loyalty_points?: CustomerLoyaltyPoints
   lifetime_points_earned?: number
   current_points_balance?: number
   loyalty_tier?: string
-
+  
   // UI compatibility properties (optional)
-  customer?: any
+  customer?: Customer
   total_points?: number
   points_earned?: number
   points_redeemed?: number
@@ -257,8 +259,6 @@ export interface CustomerWithLoyalty {
   is_active?: boolean
   lifetime_spent?: number
   joined_at?: string
-  created_at: string
-  updated_at: string
 }
 
 // ==============================================
@@ -313,18 +313,18 @@ export interface CreatePaymentRequest {
   appointment_id?: string
   customer_id: string
   location_id?: string
-
+  
   amount: number
   tip_amount?: number
   tax_amount?: number
   discount_amount?: number
-
+  
   payment_method: string
   processor_type: 'square' | 'stripe' | 'paypal' | 'cash'
-
+  
   // For loyalty point redemption
   loyalty_points_to_redeem?: number
-
+  
   notes?: string
 }
 
@@ -438,10 +438,10 @@ export interface PaymentAPI {
     status?: string
     limit?: number
   }): Promise<PaymentWithDetails[]>
-
+  
   createPayment(data: CreatePaymentRequest): Promise<ProcessPaymentResponse>
   refundPayment(paymentId: string, amount?: number, reason?: string): Promise<ProcessPaymentResponse>
-
+  
   getPaymentProcessors(businessId: string): Promise<PaymentProcessor[]>
   configureProcessor(businessId: string, locationId: string, config: Partial<PaymentProcessor>): Promise<PaymentProcessor>
 }
@@ -449,12 +449,12 @@ export interface PaymentAPI {
 export interface LoyaltyAPI {
   getLoyaltyProgram(businessId: string): Promise<LoyaltyProgram | null>
   updateLoyaltyProgram(businessId: string, data: Partial<LoyaltyProgram>): Promise<LoyaltyProgram>
-
+  
   getCustomerPoints(businessId: string, customerId: string): Promise<CustomerLoyaltyPoints | null>
   getPointsHistory(businessId: string, customerId: string): Promise<LoyaltyTransaction[]>
   getLoyaltyCustomers(businessId: string): Promise<LoyaltyCustomer[]>
   getLoyaltyStats(businessId: string): Promise<any>
-
+  
   redeemPoints(data: LoyaltyRedemptionRequest): Promise<boolean>
   adjustPoints(customerId: string, points: number, reason: string): Promise<boolean>
   adjustCustomerPoints(customerId: string, points: number, reason: string): Promise<boolean>
@@ -495,3 +495,6 @@ export interface LoyaltyProgramFormData {
   minimum_purchase_for_points: number
   max_points_per_transaction?: number
 }
+
+// Export all existing types as well
+export * from './supabase'

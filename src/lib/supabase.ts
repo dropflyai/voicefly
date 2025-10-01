@@ -24,27 +24,13 @@ const createAdminClient = () => {
   }
 }
 
-// Export createClient function for use in API routes
-export { createClient } from '@supabase/supabase-js'
-
-// Export convenience function for server-side operations
-export function createServerClient() {
-  return createAdminClient()
-}
-
 // Export MVP types for easy importing
 export * from './supabase-types-mvp'
 
 // Helper function to validate business ID format
 function validateBusinessId(businessId: string): boolean {
-  if (!businessId) return false
-
-  // Accept demo business IDs for development
-  if (businessId.startsWith('demo-')) return true
-
-  // Accept UUID format for production
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  return uuidRegex.test(businessId)
+  return businessId && uuidRegex.test(businessId)
 }
 
 // Database types that match our schema
@@ -174,78 +160,18 @@ export interface Payment {
   updated_at: string
 }
 
-// Voice AI and Lead Management types for VoiceFly integration
-export interface CallLog {
-  id: string
-  business_id: string
-  customer_id?: string
-  lead_id?: string
-  call_duration: number
-  call_type: 'inbound' | 'outbound'
-  status: 'answered' | 'missed' | 'voicemail'
-  transcript?: string
-  sentiment_score?: number
-  ai_summary?: string
-  follow_up_required: boolean
-  priority: 'low' | 'medium' | 'high' | 'urgent'
-  created_at: string
-  updated_at: string
-}
-
-export interface Lead {
-  id: string
-  business_id: string
-  company_name: string
-  contact_name?: string
-  email?: string
-  phone?: string
-  website?: string
-  industry?: string
-  company_size?: string
-  qualification_score?: number
-  research_data?: any
-  source: 'voice_ai' | 'leadfly' | 'manual' | 'csv_upload' | 'crm_sync'
-  status: 'new' | 'contacted' | 'qualified' | 'proposal' | 'won' | 'lost'
-  assigned_to?: string
-  next_follow_up?: string
-  created_at: string
-  updated_at: string
-}
-
-export interface Campaign {
-  id: string
-  business_id: string
-  name: string
-  description?: string
-  type: 'voice' | 'email' | 'sms' | 'multi_channel'
-  status: 'draft' | 'active' | 'paused' | 'completed'
-  target_audience?: any
-  total_leads: number
-  completed_calls: number
-  success_rate: number
-  roi?: number
-  budget?: number
-  created_at: string
-  updated_at: string
-}
-
 // Analytics and dashboard types
 export interface DashboardStats {
   totalAppointments: number
   todayAppointments: number
   monthlyRevenue: number
   activeCustomers: number
-  totalCalls?: number
-  qualifiedLeads?: number
-  campaignSuccess?: number
 }
 
 export interface RevenueData {
   month: string
   revenue: number
   appointments: number
-  calls?: number
-  leads?: number
 }
 
 export interface ServicePopularity {
@@ -259,7 +185,6 @@ export interface StaffPerformance {
   appointments: number
   revenue: number
   rating: number
-  calls_handled?: number
 }
 
 // API class with real database operations
@@ -278,17 +203,17 @@ export class BusinessAPI {
       .select('*')
       .eq('id', businessId)
       .single()
-
+    
     if (error) {
       console.error('Error fetching business:', error)
       return null
     }
-
+    
     // Default subscription tier to professional if not set
     if (data && !data.subscription_tier) {
       data.subscription_tier = 'professional'
     }
-
+    
     return data
   }
 
@@ -302,7 +227,7 @@ export class BusinessAPI {
       console.error('Invalid business ID format for getAppointments:', businessId)
       return []
     }
-
+    
     let query = supabase
       .from('appointments')
       .select(`
@@ -336,303 +261,9 @@ export class BusinessAPI {
     return data || []
   }
 
-  static async getCallLogs(businessId: string, filters?: {
-    date?: string
-    status?: string
-    priority?: string
-    limit?: number
-  }): Promise<CallLog[]> {
-    if (!validateBusinessId(businessId)) {
-      console.error('Invalid business ID format for getCallLogs:', businessId)
-      return []
-    }
-
-    let query = supabase
-      .from('call_logs')
-      .select('*')
-      .eq('business_id', businessId)
-      .order('created_at', { ascending: false })
-
-    if (filters?.date) {
-      query = query.gte('created_at', filters.date)
-    }
-    if (filters?.status) {
-      query = query.eq('status', filters.status)
-    }
-    if (filters?.priority) {
-      query = query.eq('priority', filters.priority)
-    }
-    if (filters?.limit) {
-      query = query.limit(filters.limit)
-    }
-
-    const { data, error } = await query
-    if (error) {
-      console.error('Error fetching call logs:', error)
-      return []
-    }
-    return data || []
-  }
-
-  static async getLeads(businessId: string, filters?: {
-    status?: string
-    source?: string
-    qualification_score?: number
-    limit?: number
-  }): Promise<Lead[]> {
-    if (!validateBusinessId(businessId)) {
-      console.error('Invalid business ID format for getLeads:', businessId)
-      return []
-    }
-
-    // Return demo lead data for development
-    try {
-      const demoLeads: Lead[] = [
-        {
-          id: 'lead_1',
-          business_id: businessId,
-          first_name: 'Sarah',
-          last_name: 'Johnson',
-          email: 'sarah.johnson@email.com',
-          phone: '+1 (555) 123-4567',
-          company: 'Tech Solutions Inc',
-          source: 'google_ads',
-          status: 'qualified',
-          qualification_score: 85,
-          interest_level: 'high',
-          budget_range: '$10,000-$25,000',
-          timeline: 'immediate',
-          notes: 'Interested in voice AI for customer service automation',
-          last_contact: '2024-06-15T14:30:00Z',
-          next_follow_up: '2024-06-20T10:00:00Z',
-          assigned_to: 'Maya AI',
-          tags: ['enterprise', 'customer_service', 'automation'],
-          created_at: '2024-06-10T09:15:00Z',
-          updated_at: '2024-06-15T14:30:00Z'
-        },
-        {
-          id: 'lead_2',
-          business_id: businessId,
-          first_name: 'Michael',
-          last_name: 'Chen',
-          email: 'michael.chen@bizorp.com',
-          phone: '+1 (555) 234-5678',
-          company: 'BizCorp Solutions',
-          source: 'facebook_ads',
-          status: 'new',
-          qualification_score: 72,
-          interest_level: 'medium',
-          budget_range: '$5,000-$15,000',
-          timeline: '3-6 months',
-          notes: 'Looking for appointment scheduling automation',
-          last_contact: '2024-06-14T11:20:00Z',
-          next_follow_up: '2024-06-18T15:00:00Z',
-          assigned_to: 'Maya AI',
-          tags: ['small_business', 'scheduling', 'healthcare'],
-          created_at: '2024-06-14T11:20:00Z',
-          updated_at: '2024-06-14T11:20:00Z'
-        },
-        {
-          id: 'lead_3',
-          business_id: businessId,
-          first_name: 'Jennifer',
-          last_name: 'Walsh',
-          email: 'j.walsh@startup.io',
-          phone: '+1 (555) 345-6789',
-          company: 'StartupTech',
-          source: 'organic_search',
-          status: 'contacted',
-          qualification_score: 91,
-          interest_level: 'high',
-          budget_range: '$25,000+',
-          timeline: 'immediate',
-          notes: 'Needs comprehensive voice AI solution for sales team',
-          last_contact: '2024-06-12T16:45:00Z',
-          next_follow_up: '2024-06-17T09:30:00Z',
-          assigned_to: 'Maya AI',
-          tags: ['startup', 'sales_automation', 'lead_generation'],
-          created_at: '2024-06-08T13:22:00Z',
-          updated_at: '2024-06-12T16:45:00Z'
-        },
-        {
-          id: 'lead_4',
-          business_id: businessId,
-          first_name: 'David',
-          last_name: 'Rodriguez',
-          email: 'david.r@consulting.com',
-          phone: '+1 (555) 456-7890',
-          company: 'Rodriguez Consulting',
-          source: 'referral',
-          status: 'unqualified',
-          qualification_score: 45,
-          interest_level: 'low',
-          budget_range: 'under $5,000',
-          timeline: '6+ months',
-          notes: 'Budget constraints, may revisit in future',
-          last_contact: '2024-06-11T10:15:00Z',
-          next_follow_up: '2024-09-01T10:00:00Z',
-          assigned_to: 'Maya AI',
-          tags: ['consulting', 'budget_constrained'],
-          created_at: '2024-06-11T10:15:00Z',
-          updated_at: '2024-06-11T10:15:00Z'
-        },
-        {
-          id: 'lead_5',
-          business_id: businessId,
-          first_name: 'Emily',
-          last_name: 'Foster',
-          email: 'emily.foster@retailco.com',
-          phone: '+1 (555) 567-8901',
-          company: 'RetailCo',
-          source: 'linkedin',
-          status: 'nurturing',
-          qualification_score: 68,
-          interest_level: 'medium',
-          budget_range: '$15,000-$30,000',
-          timeline: '1-3 months',
-          notes: 'Interested in voice AI for retail customer support',
-          last_contact: '2024-06-13T08:30:00Z',
-          next_follow_up: '2024-06-19T14:00:00Z',
-          assigned_to: 'Maya AI',
-          tags: ['retail', 'customer_support', 'e-commerce'],
-          created_at: '2024-06-09T15:45:00Z',
-          updated_at: '2024-06-13T08:30:00Z'
-        }
-      ]
-
-      // Apply filters if provided
-      let filteredLeads = demoLeads
-
-      if (filters?.status) {
-        filteredLeads = filteredLeads.filter(lead => lead.status === filters.status)
-      }
-      if (filters?.source) {
-        filteredLeads = filteredLeads.filter(lead => lead.source === filters.source)
-      }
-      if (filters?.qualification_score) {
-        filteredLeads = filteredLeads.filter(lead => lead.qualification_score >= filters.qualification_score)
-      }
-      if (filters?.limit) {
-        filteredLeads = filteredLeads.slice(0, filters.limit)
-      }
-
-      return filteredLeads
-    } catch (error) {
-      console.error('Error in getLeads:', error)
-      return []
-    }
-  }
-
-  static async getCampaigns(businessId: string, filters?: {
-    type?: string
-    status?: string
-    limit?: number
-  }): Promise<Campaign[]> {
-    if (!validateBusinessId(businessId)) {
-      console.error('Invalid business ID format for getCampaigns:', businessId)
-      return []
-    }
-
-    // Return demo campaign data for development
-    try {
-      const demoCampaigns: Campaign[] = [
-        {
-          id: 'camp_1',
-          business_id: businessId,
-          name: 'Summer Promotion 2024',
-          description: 'Voice AI campaign targeting new customer acquisition',
-          type: 'voice_outbound',
-          status: 'active',
-          target_audience: 'new_customers',
-          script_id: 'script_1',
-          schedule: {
-            start_date: '2024-06-01',
-            end_date: '2024-08-31',
-            time_slots: ['09:00-12:00', '14:00-17:00']
-          },
-          metrics: {
-            calls_made: 1247,
-            calls_answered: 892,
-            appointments_booked: 234,
-            conversion_rate: 26.2,
-            cost_per_lead: 12.50
-          },
-          created_at: '2024-06-01T09:00:00Z',
-          updated_at: '2024-06-15T14:30:00Z'
-        },
-        {
-          id: 'camp_2',
-          business_id: businessId,
-          name: 'Holiday Special Campaign',
-          description: 'End-of-year promotional campaign with special offers',
-          type: 'voice_inbound',
-          status: 'paused',
-          target_audience: 'existing_customers',
-          script_id: 'script_2',
-          schedule: {
-            start_date: '2024-11-01',
-            end_date: '2024-12-31',
-            time_slots: ['10:00-16:00']
-          },
-          metrics: {
-            calls_made: 856,
-            calls_answered: 634,
-            appointments_booked: 189,
-            conversion_rate: 29.8,
-            cost_per_lead: 9.75
-          },
-          created_at: '2024-11-01T08:00:00Z',
-          updated_at: '2024-11-15T16:20:00Z'
-        },
-        {
-          id: 'camp_3',
-          business_id: businessId,
-          name: 'New Service Launch',
-          description: 'Campaign to introduce new service offerings',
-          type: 'mixed',
-          status: 'scheduled',
-          target_audience: 'qualified_leads',
-          script_id: 'script_3',
-          schedule: {
-            start_date: '2024-07-01',
-            end_date: '2024-09-30',
-            time_slots: ['09:00-18:00']
-          },
-          metrics: {
-            calls_made: 0,
-            calls_answered: 0,
-            appointments_booked: 0,
-            conversion_rate: 0,
-            cost_per_lead: 0
-          },
-          created_at: '2024-06-20T10:00:00Z',
-          updated_at: '2024-06-20T10:00:00Z'
-        }
-      ]
-
-      // Apply filters if provided
-      let filteredCampaigns = demoCampaigns
-
-      if (filters?.type) {
-        filteredCampaigns = filteredCampaigns.filter(campaign => campaign.type === filters.type)
-      }
-      if (filters?.status) {
-        filteredCampaigns = filteredCampaigns.filter(campaign => campaign.status === filters.status)
-      }
-      if (filters?.limit) {
-        filteredCampaigns = filteredCampaigns.slice(0, filters.limit)
-      }
-
-      return filteredCampaigns
-    } catch (error) {
-      console.error('Error in getCampaigns:', error)
-      return []
-    }
-  }
-
   static async getUpcomingAppointments(businessId: string, limit = 10): Promise<Appointment[]> {
     const today = new Date().toISOString().split('T')[0]
-
+    
     const { data, error } = await supabase
       .from('appointments')
       .select(`
@@ -792,51 +423,104 @@ export class BusinessAPI {
   }
 
   static async getDashboardStats(businessId: string): Promise<DashboardStats> {
-    // Return demo data for development until database is properly set up
+    const today = new Date().toISOString().split('T')[0]
+    const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]
+
     try {
+      // Get total appointments count
+      const { count: totalAppointments } = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact', head: true })
+        .eq('business_id', businessId)
+
+      // Get today's appointments
+      const { count: todayAppointments } = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact', head: true })
+        .eq('business_id', businessId)
+        .eq('appointment_date', today)
+        .in('status', ['confirmed', 'in_progress'])
+
+      // Get monthly revenue from payments
+      const { data: monthlyPayments } = await supabase
+        .from('payments')
+        .select('total_amount')
+        .eq('business_id', businessId)
+        .eq('status', 'paid')
+        .gte('created_at', startOfMonth)
+
+      const monthlyRevenue = monthlyPayments?.reduce((sum, payment) => sum + payment.total_amount, 0) || 0
+
+      // Get active customers count
+      const { count: activeCustomers } = await supabase
+        .from('customers')
+        .select('*', { count: 'exact', head: true })
+        .eq('business_id', businessId)
+        .gt('total_visits', 0)
+
       return {
-        totalAppointments: 2847,
-        todayAppointments: 12,
-        monthlyRevenue: 8650000, // In cents ($86,500)
-        activeCustomers: 1247,
-        totalCalls: 4827,
-        qualifiedLeads: 1247,
-        campaignSuccess: 73.8
+        totalAppointments: totalAppointments || 0,
+        todayAppointments: todayAppointments || 0,
+        monthlyRevenue: monthlyRevenue || 0,
+        activeCustomers: activeCustomers || 0
       }
     } catch (error) {
-      console.error('Error in getDashboardStats:', error)
+      console.error('Error fetching dashboard stats:', error)
       return {
         totalAppointments: 0,
         todayAppointments: 0,
         monthlyRevenue: 0,
-        activeCustomers: 0,
-        totalCalls: 0,
-        qualifiedLeads: 0,
-        campaignSuccess: 0
+        activeCustomers: 0
       }
     }
   }
 
   static async getRevenueData(businessId: string, months = 6): Promise<RevenueData[]> {
-    // Return demo data for development until database is properly set up
-    try {
-      return [
-        { month: 'Jan', revenue: 45000, appointments: 120, calls: 350, leads: 78 },
-        { month: 'Feb', revenue: 52000, appointments: 142, calls: 420, leads: 89 },
-        { month: 'Mar', revenue: 61000, appointments: 168, calls: 485, leads: 102 },
-        { month: 'Apr', revenue: 58000, appointments: 155, calls: 462, leads: 94 },
-        { month: 'May', revenue: 72000, appointments: 198, calls: 567, leads: 125 },
-        { month: 'Jun', revenue: 89000, appointments: 245, calls: 678, leads: 156 },
-      ]
-    } catch (error) {
-      console.error('Error in getRevenueData:', error)
+    const startDate = new Date()
+    startDate.setMonth(startDate.getMonth() - months)
+    
+    const { data: payments, error } = await supabase
+      .from('payments')
+      .select(`
+        total_amount,
+        created_at,
+        appointment:appointments(appointment_date)
+      `)
+      .eq('business_id', businessId)
+      .eq('status', 'paid')
+      .gte('created_at', startDate.toISOString())
+      .order('created_at', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching revenue data:', error)
       return []
     }
+
+    // Group by month
+    const monthlyData: { [key: string]: { revenue: number; appointments: number } } = {}
+    
+    payments?.forEach(payment => {
+      const date = new Date(payment.created_at)
+      const monthKey = date.toLocaleDateString('en-US', { month: 'short' })
+      
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = { revenue: 0, appointments: 0 }
+      }
+      
+      monthlyData[monthKey].revenue += payment.total_amount
+      monthlyData[monthKey].appointments += 1
+    })
+
+    return Object.entries(monthlyData).map(([month, data]) => ({
+      month,
+      revenue: data.revenue,
+      appointments: data.appointments
+    }))
   }
 
   static async getStaffPerformance(businessId: string, limit = 10): Promise<StaffPerformance[]> {
     const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
-
+    
     const { data, error } = await supabase
       .from('staff')
       .select(`
@@ -861,15 +545,14 @@ export class BusinessAPI {
 
     return data?.map(staff => {
       const appointments = staff.appointments?.length || 0
-      const revenue = staff.appointments?.reduce((sum: number, apt: any) =>
+      const revenue = staff.appointments?.reduce((sum: number, apt: any) => 
         sum + (apt.payments?.[0]?.total_amount || 0), 0) || 0
-
+      
       return {
         name: `${staff.first_name} ${staff.last_name}`,
         appointments,
         revenue,
-        rating: 4.5 + Math.random() * 0.5, // Mock rating for now
-        calls_handled: Math.floor(appointments * 1.5) // Mock calls handled
+        rating: 4.5 + Math.random() * 0.5 // Mock rating for now
       }
     }).slice(0, limit) || []
   }
@@ -881,13 +564,13 @@ export class BusinessAPI {
         .from('customers')
         .select('*')
         .eq('phone', phone)
-
+      
       if (businessId) {
         query = query.eq('business_id', businessId)
       }
-
+      
       const { data, error } = await query.single()
-
+      
       if (error) {
         console.error('Error fetching customer by phone:', error)
         return null
@@ -929,7 +612,7 @@ export class BusinessAPI {
   }): Promise<Customer | null> {
     try {
       console.log('Looking for existing customer...', { businessId, phone: customerData.phone })
-
+      
       // First try to find existing customer
       const { data: existing, error: searchError } = await supabase
         .from('customers')
@@ -937,19 +620,19 @@ export class BusinessAPI {
         .eq('business_id', businessId)
         .eq('phone', customerData.phone)
         .single()
-
+      
       if (existing) {
         console.log('Found existing customer:', existing)
         return existing
       }
-
+      
       console.log('Customer not found, creating new one...', { searchError })
 
       // Create new customer
       const nameParts = customerData.first_name.split(' ')
       const firstName = nameParts[0]
       const lastName = customerData.last_name || nameParts.slice(1).join(' ') || ''
-
+      
       const customerInsert = {
         business_id: businessId,
         first_name: firstName,
@@ -960,20 +643,20 @@ export class BusinessAPI {
         total_spent: 0,
         created_at: new Date().toISOString()
       }
-
+      
       console.log('Inserting customer:', customerInsert)
-
+      
       const { data: newCustomer, error } = await supabase
         .from('customers')
         .insert(customerInsert)
         .select()
         .single()
-
+      
       if (error) {
         console.error('Error creating customer:', error)
         throw new Error(`Database error creating customer: ${error.message}`)
       }
-
+      
       console.log('Created new customer:', newCustomer)
       return newCustomer
     } catch (error) {
@@ -1000,9 +683,9 @@ export class BusinessAPI {
         reminder_sent: false,
         created_at: new Date().toISOString()
       }
-
+      
       console.log('Inserting appointment:', appointmentInsert)
-
+      
       const { data, error } = await supabase
         .from('appointments')
         .insert(appointmentInsert)
@@ -1013,12 +696,12 @@ export class BusinessAPI {
           service:services(*)
         `)
         .single()
-
+      
       if (error) {
         console.error('Error creating appointment:', error)
         throw new Error(`Database error creating appointment: ${error.message}`)
       }
-
+      
       console.log('Created appointment:', data)
       return data
     } catch (error) {
@@ -1039,7 +722,7 @@ export class BusinessAPI {
   }): Promise<Appointment | null> {
     try {
       console.log('Updating appointment:', appointmentId, updateData)
-
+      
       // Get original appointment data first for reschedule comparison
       const { data: originalData } = await supabase
         .from('appointments')
@@ -1051,7 +734,7 @@ export class BusinessAPI {
         `)
         .eq('id', appointmentId)
         .single()
-
+      
       const { data, error } = await supabase
         .from('appointments')
         .update({
@@ -1067,30 +750,29 @@ export class BusinessAPI {
           business:businesses(*)
         `)
         .single()
-
+      
       if (error) {
         console.error('Error updating appointment:', error)
         throw new Error(`Database error updating appointment: ${error.message}`)
       }
-
+      
       console.log('Appointment updated successfully:', data)
-
+      
       // Send SMS reschedule notice if date or time changed
       if ((updateData.appointment_date || updateData.start_time) && originalData) {
         try {
-          // const { SMSService } = await import('./sms-service')
+          const { SMSService } = await import('./sms-service')
           const oldDateTime = {
             date: new Date(originalData.appointment_date).toLocaleDateString(),
             time: originalData.start_time || 'scheduled time'
           }
-          // await SMSService.sendRescheduleNotice(data, oldDateTime)
-          console.log('SMS reschedule notice would be sent for appointment:', data.id)
+          await SMSService.sendRescheduleNotice(data, oldDateTime)
         } catch (smsError) {
           console.error('Failed to send reschedule SMS:', smsError)
           // Don't fail the entire operation if SMS fails
         }
       }
-
+      
       return data
     } catch (error) {
       console.error('updateAppointment failed:', error)
@@ -1102,7 +784,7 @@ export class BusinessAPI {
   static async cancelAppointment(appointmentId: string, reason?: string): Promise<Appointment | null> {
     try {
       console.log('Cancelling appointment:', appointmentId)
-
+      
       const { data, error } = await supabase
         .from('appointments')
         .update({
@@ -1119,19 +801,18 @@ export class BusinessAPI {
           business:businesses(*)
         `)
         .single()
-
+      
       if (error) {
         console.error('Error cancelling appointment:', error)
         throw new Error(`Database error cancelling appointment: ${error.message}`)
       }
-
+      
       console.log('Appointment cancelled successfully:', data)
-
+      
       // Send SMS cancellation notice
       try {
-        // const { SMSService } = await import('./sms-service')
-        // await SMSService.sendCancellationNotice(data)
-        console.log('SMS cancellation notice would be sent for appointment:', data.id)
+        const { SMSService } = await import('./sms-service')
+        await SMSService.sendCancellationNotice(data)
       } catch (smsError) {
         console.error('Failed to send cancellation SMS:', smsError)
         // Don't fail the entire operation if SMS fails
@@ -1140,15 +821,14 @@ export class BusinessAPI {
       // Send email cancellation notice
       if (data.customer?.email) {
         try {
-          // const { EmailService } = await import('./email-service')
-          // await EmailService.sendCancellationEmail(data, reason)
-          console.log('Email cancellation would be sent for appointment:', data.id)
+          const { EmailService } = await import('./email-service')
+          await EmailService.sendCancellationEmail(data, reason)
         } catch (emailError) {
           console.error('Failed to send cancellation email:', emailError)
           // Don't fail the entire operation if email fails
         }
       }
-
+      
       return data
     } catch (error) {
       console.error('cancelAppointment failed:', error)
@@ -1165,28 +845,28 @@ export class BusinessAPI {
         .select('preferences, total_spent, total_visits')
         .eq('id', customerId)
         .single()
-
+      
       if (fetchError) {
         console.error('Error fetching customer for loyalty:', fetchError)
         return
       }
-
+      
       // Calculate points (1 point per dollar + 10 points per visit)
       const pointsFromSpending = Math.floor(amount)
       const pointsFromVisit = visitCount * 10
       const pointsEarned = pointsFromSpending + pointsFromVisit
-
+      
       // Get current loyalty data
       const currentLoyalty = customer.preferences?.loyalty || {
         current_balance: 0,
         total_earned: 0,
         transactions: []
       }
-
+      
       // Update loyalty data
       const newBalance = (currentLoyalty.current_balance || 0) + pointsEarned
       const totalEarned = (currentLoyalty.total_earned || 0) + pointsEarned
-
+      
       // Add transaction record
       const transaction = {
         date: new Date().toISOString(),
@@ -1195,11 +875,11 @@ export class BusinessAPI {
         description: `Earned from service ($${amount})`,
         balance_after: newBalance
       }
-
+      
       const transactions = currentLoyalty.transactions || []
       transactions.unshift(transaction) // Add to beginning
       if (transactions.length > 50) transactions.pop() // Keep only last 50
-
+      
       // Update customer with new loyalty data
       const { error: updateError } = await supabase
         .from('customers')
@@ -1218,12 +898,12 @@ export class BusinessAPI {
           updated_at: new Date().toISOString()
         })
         .eq('id', customerId)
-
+      
       if (updateError) {
         console.error('Error updating loyalty points:', updateError)
       } else {
         console.log(`✅ Awarded ${pointsEarned} loyalty points to customer ${customerId}`)
-
+        
         // Send email notification if customer has email
         // Temporarily disabled for build - customer object structure mismatch
         if (false && pointsEarned > 0) {
@@ -1233,15 +913,14 @@ export class BusinessAPI {
               .from('businesses')
               .select('*')
               .single()
-
-            // const { EmailService } = await import('./email-service')
-            // await EmailService.sendLoyaltyPointsEarned(
-            //   { ...customer, id: customerId },
-            //   pointsEarned,
-            //   newBalance,
-            //   businessData || { name: 'Your Business' }
-            // )
-            console.log('Loyalty points email would be sent to customer:', customerId)
+            
+            const { EmailService } = await import('./email-service')
+            await EmailService.sendLoyaltyPointsEarned(
+              { ...customer, id: customerId },
+              pointsEarned,
+              newBalance,
+              businessData || { name: 'Your Business' }
+            )
           } catch (emailError) {
             console.error('Failed to send loyalty points email:', emailError)
           }
@@ -1263,7 +942,7 @@ export class BusinessAPI {
   }): Promise<Customer | null> {
     try {
       console.log('Updating customer:', customerId, updateData)
-
+      
       const { data, error } = await supabase
         .from('customers')
         .update({
@@ -1273,12 +952,12 @@ export class BusinessAPI {
         .eq('id', customerId)
         .select()
         .single()
-
+      
       if (error) {
         console.error('Error updating customer:', error)
         throw new Error(`Database error updating customer: ${error.message}`)
       }
-
+      
       console.log('Customer updated successfully:', data)
       return data
     } catch (error) {
@@ -1288,7 +967,7 @@ export class BusinessAPI {
   }
 }
 
-// MVP Feature API Classes
+// MVP Feature API Classes  
 export class LocationAPIImpl implements LocationAPI {
   static async getLocations(businessId: string): Promise<Location[]> {
     const instance = new LocationAPIImpl()
@@ -1313,7 +992,7 @@ export class LocationAPIImpl implements LocationAPI {
   async createLocation(businessId: string, data: CreateLocationRequest): Promise<Location> {
     // Create slug from name
     const slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-
+    
     const { data: location, error } = await supabase
       .from('locations')
       .insert({
@@ -1502,12 +1181,12 @@ export class LoyaltyAPIImpl implements LoyaltyAPI {
     const instance = new LoyaltyAPIImpl()
     return instance.getLoyaltyStats(businessId)
   }
-
+  
   static async getCustomerPoints(businessId: string, customerId: string): Promise<CustomerLoyaltyPoints | null> {
     const instance = new LoyaltyAPIImpl()
     return instance.getCustomerPoints(businessId, customerId)
   }
-
+  
   static async getLoyaltyCustomers(businessId: string): Promise<LoyaltyCustomer[]> {
     const instance = new LoyaltyAPIImpl()
     return instance.getLoyaltyCustomers(businessId)
@@ -1539,10 +1218,10 @@ export class LoyaltyAPIImpl implements LoyaltyAPI {
           name: data.program_name,
           tiers: data.reward_tiers?.map((tier: any, index: number) => ({
             id: `tier-${index}`,
-            name: tier.reward.includes('Bronze') ? 'Bronze' :
+            name: tier.reward.includes('Bronze') ? 'Bronze' : 
                   tier.reward.includes('Silver') ? 'Silver' :
                   tier.reward.includes('Gold') ? 'Gold' :
-                  tier.reward.includes('Platinum') ? 'Platinum' :
+                  tier.reward.includes('Platinum') ? 'Platinum' : 
                   `Tier ${index + 1}`,
             min_points: tier.points,
             discount_percentage: Math.floor(tier.discount_amount / 100),
@@ -1551,7 +1230,7 @@ export class LoyaltyAPIImpl implements LoyaltyAPI {
           })) || []
         } as LoyaltyProgram
       }
-
+      
       return data
     } catch (error) {
       console.error('Error in getLoyaltyProgram:', error)
@@ -1606,17 +1285,17 @@ export class LoyaltyAPIImpl implements LoyaltyAPI {
         }
         throw new Error(`Failed to update loyalty program: ${error.message}`)
       }
-
+      
       // Transform response back to frontend format
       const transformedProgram = {
         ...program,
         name: program.program_name,
         tiers: program.reward_tiers?.map((tier: any, index: number) => ({
           id: `tier-${index}`,
-          name: tier.reward.includes('Bronze') ? 'Bronze' :
+          name: tier.reward.includes('Bronze') ? 'Bronze' : 
                 tier.reward.includes('Silver') ? 'Silver' :
                 tier.reward.includes('Gold') ? 'Gold' :
-                tier.reward.includes('Platinum') ? 'Platinum' :
+                tier.reward.includes('Platinum') ? 'Platinum' : 
                 `Tier ${index + 1}`,
           min_points: tier.points,
           discount_percentage: Math.floor(tier.discount_amount / 100),
@@ -1624,7 +1303,7 @@ export class LoyaltyAPIImpl implements LoyaltyAPI {
           benefits: [`${Math.floor(tier.discount_amount / 100)}% discount on all services`, 'Priority booking']
         })) || []
       }
-
+      
       return transformedProgram
     } catch (error) {
       console.error('Error in updateLoyaltyProgram:', error)
@@ -1645,7 +1324,7 @@ export class LoyaltyAPIImpl implements LoyaltyAPI {
       },
       {
         id: 'tier-1',
-        name: 'Silver',
+        name: 'Silver', 
         min_points: 250,
         discount_percentage: 5,
         color: '#C0C0C0',
@@ -1760,7 +1439,7 @@ export class LoyaltyAPIImpl implements LoyaltyAPI {
     // Mock implementation - would update specific tier
     return {
       points: data.points || 100,
-      reward: data.reward || 'Default reward',
+      reward: data.reward || 'Default reward', 
       discount_amount: data.discount_amount || 500,
       ...data
     }
@@ -1836,80 +1515,5 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     priority_support: true,
     dedicated_support: true, // Dedicated account manager
     custom_integrations: true // Custom development
-  }
-}
-
-// Database types for VoiceFly integration
-export type Database = {
-  public: {
-    Tables: {
-      users: {
-        Row: {
-          id: string
-          email: string
-          full_name: string
-          avatar_url?: string
-          created_at: string
-          updated_at: string
-        }
-      }
-      businesses: {
-        Row: Business
-      }
-      staff: {
-        Row: Staff
-      }
-      services: {
-        Row: Service
-      }
-      customers: {
-        Row: Customer
-      }
-      appointments: {
-        Row: Appointment
-      }
-      payments: {
-        Row: Payment
-      }
-      call_logs: {
-        Row: CallLog
-      }
-      leads: {
-        Row: Lead
-      }
-      campaigns: {
-        Row: Campaign
-      }
-      voice_campaigns: {
-        Row: {
-          id: string
-          user_id: string
-          name: string
-          description?: string
-          status: 'draft' | 'active' | 'paused' | 'completed'
-          total_leads: number
-          completed_calls: number
-          success_rate: number
-          created_at: string
-          updated_at: string
-        }
-      }
-      voice_calls: {
-        Row: {
-          id: string
-          campaign_id: string
-          lead_id: string
-          status: 'pending' | 'calling' | 'completed' | 'failed'
-          duration?: number
-          transcript?: string
-          sentiment_score?: number
-          outcome: 'qualified' | 'not_qualified' | 'callback' | 'no_answer'
-          research_data?: any
-          recording_url?: string
-          created_at: string
-          updated_at: string
-        }
-      }
-    }
   }
 }

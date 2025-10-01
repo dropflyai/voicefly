@@ -1,297 +1,362 @@
-// Email Service for VoiceFly Platform
-// Integrates with various email providers (SendGrid, Mailgun, etc.)
+// Defensive import to avoid build-time errors
+let Resend: any = null;
+let resend: any = null;
 
-interface EmailTemplate {
-  id: string
-  name: string
-  subject: string
-  htmlContent: string
-  textContent: string
-  variables: string[]
-}
-
-interface EmailRecipient {
-  email: string
-  name?: string
-  variables?: Record<string, any>
-}
-
-interface EmailOptions {
-  from?: string
-  replyTo?: string
-  template?: string
-  variables?: Record<string, any>
-  trackOpens?: boolean
-  trackClicks?: boolean
+try {
+  // Only import Resend if needed (not at build time)
+  if (typeof window === 'undefined' && process.env.RESEND_API_KEY) {
+    Resend = require('resend').Resend;
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+} catch (error) {
+  console.log('Resend not available:', error.message);
 }
 
 export class EmailService {
-  private static apiKey = process.env.SENDGRID_API_KEY || process.env.MAILGUN_API_KEY
-  private static provider = process.env.EMAIL_PROVIDER || 'sendgrid'
-  private static fromEmail = process.env.FROM_EMAIL || 'noreply@voicefly.ai'
-  private static fromName = process.env.FROM_NAME || 'VoiceFly'
+  static async sendEmail(to: string, subject: string, html: string, from?: string) {
+    if (!resend || !process.env.RESEND_API_KEY) {
+      console.log('Resend not configured, email not sent:', { to, subject })
+      return { success: false, error: 'Resend not configured' }
+    }
 
-  static async sendEmail(
-    to: string | EmailRecipient[],
-    subject: string,
-    content: string,
-    options: EmailOptions = {}
-  ): Promise<boolean> {
     try {
-      const recipients = Array.isArray(to) ? to : [{ email: to }]
-
-      // Log email attempt
-      console.log(`Sending email to ${recipients.length} recipients: ${subject}`)
-
-      // In production, integrate with actual email service
-      if (this.provider === 'sendgrid') {
-        return await this.sendWithSendGrid(recipients, subject, content, options)
-      } else if (this.provider === 'mailgun') {
-        return await this.sendWithMailgun(recipients, subject, content, options)
-      }
-
-      // Fallback for development
-      console.log('Email sent successfully (development mode)')
-      return true
+      const fromAddress = from || process.env.EMAIL_FROM || 'Bella Nails <notifications@yourdomain.com>'
+      
+      const data = await resend.emails.send({
+        from: fromAddress,
+        to: [to],
+        subject: subject,
+        html: html
+      })
+      
+      console.log('Email sent successfully:', data.id)
+      return { success: true, id: data.id }
     } catch (error) {
-      console.error('Failed to send email:', error)
-      return false
+      console.error('Email failed:', error)
+      return { success: false, error: error.message }
     }
   }
 
-  static async sendTemplate(
-    to: string | EmailRecipient[],
-    templateId: string,
-    variables: Record<string, any> = {},
-    options: EmailOptions = {}
-  ): Promise<boolean> {
-    try {
-      const template = await this.getTemplate(templateId)
-      if (!template) {
-        throw new Error(`Template ${templateId} not found`)
-      }
+  static async sendAppointmentConfirmation(appointment: any, branding?: any) {
+    const customerName = appointment.customer?.first_name || 'there'
+    const businessName = appointment.business?.name || 'your salon'
+    const appointmentDate = new Date(appointment.appointment_date).toLocaleDateString()
+    const startTime = appointment.start_time || 'your scheduled time'
+    const serviceName = appointment.service?.name || 'your service'
+    const servicePrice = appointment.service?.base_price || 0
 
-      let subject = template.subject
-      let content = template.htmlContent
+    // Use business branding colors or defaults
+    const primaryColor = branding?.primary_color || '#8b5cf6'
+    const secondaryColor = branding?.secondary_color || '#ec4899'
+    const accentColor = branding?.accent_color || '#f59e0b'
+    const logoUrl = branding?.logo_url
+    const fontFamily = branding?.font_family || 'Inter, Arial, sans-serif'
 
-      // Replace variables
-      for (const [key, value] of Object.entries(variables)) {
-        const placeholder = `{{${key}}}`
-        subject = subject.replace(new RegExp(placeholder, 'g'), value)
-        content = content.replace(new RegExp(placeholder, 'g'), value)
-      }
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Appointment Confirmation</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=${fontFamily.replace(' ', '+')}:wght@400;600;700&display=swap');
+          </style>
+        </head>
+        <body style="font-family: '${fontFamily}', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0;">
+            ${logoUrl ? `<img src="${logoUrl}" alt="${businessName}" style="height: 60px; margin-bottom: 20px;">` : ''}
+            <h1 style="margin: 0; font-size: 28px; font-family: '${fontFamily}', Arial, sans-serif;">Appointment Confirmed!</h1>
+            <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Your booking at ${businessName} is all set</p>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+            <div style="background: white; padding: 25px; border-radius: 8px; margin-bottom: 20px;">
+              <h2 style="color: #667eea; margin-top: 0;">Hello ${customerName}!</h2>
+              <p>We're excited to see you! Your appointment has been confirmed with the following details:</p>
+              
+              <div style="background: #f0f2f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;"><strong>📅 Date:</strong></td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;">${appointmentDate}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;"><strong>⏰ Time:</strong></td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;">${startTime}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;"><strong>💅 Service:</strong></td>
+                    <td style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;">${serviceName}</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 8px 0;"><strong>💰 Price:</strong></td>
+                    <td style="padding: 8px 0;">$${servicePrice}</td>
+                  </tr>
+                </table>
+              </div>
+              
+              <p style="margin-top: 25px;">Need to make changes? You can manage your appointment in our customer portal.</p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="https://vapi-nail-salon-agent-git-main-dropflyai.vercel.app/customer/portal" 
+                   style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                  Manage Appointment
+                </a>
+              </div>
+            </div>
+            
+            <div style="text-align: center; color: #666; font-size: 14px;">
+              <p>Thank you for choosing ${businessName}!</p>
+              <p style="margin-top: 15px;">
+                <a href="#" style="color: #667eea; text-decoration: none;">Unsubscribe</a> |
+                <a href="#" style="color: #667eea; text-decoration: none;">Contact Us</a>
+              </p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
 
-      return await this.sendEmail(to, subject, content, options)
-    } catch (error) {
-      console.error('Failed to send template email:', error)
-      return false
-    }
-  }
-
-  // Appointment-related emails
-  static async sendAppointmentConfirmation(appointmentData: any): Promise<boolean> {
-    const template = {
-      subject: 'Appointment Confirmed - {{business_name}}',
-      content: `
-        <h2>Your appointment has been confirmed!</h2>
-        <p>Hi {{customer_name}},</p>
-        <p>Your appointment with {{business_name}} has been confirmed for:</p>
-        <ul>
-          <li><strong>Date:</strong> {{appointment_date}}</li>
-          <li><strong>Time:</strong> {{appointment_time}}</li>
-          <li><strong>Service:</strong> {{service_name}}</li>
-          <li><strong>Staff:</strong> {{staff_name}}</li>
-        </ul>
-        <p>If you need to reschedule or cancel, please contact us at least 24 hours in advance.</p>
-        <p>Thank you for choosing {{business_name}}!</p>
-      `
-    }
-
-    return await this.sendTemplate(
-      appointmentData.customer.email,
-      'appointment_confirmation',
-      {
-        customer_name: `${appointmentData.customer.first_name} ${appointmentData.customer.last_name}`,
-        business_name: appointmentData.business?.name || 'VoiceFly Business',
-        appointment_date: new Date(appointmentData.scheduled_at).toLocaleDateString(),
-        appointment_time: new Date(appointmentData.scheduled_at).toLocaleTimeString(),
-        service_name: appointmentData.service?.name || 'Service',
-        staff_name: appointmentData.staff ? `${appointmentData.staff.first_name} ${appointmentData.staff.last_name}` : 'Our team'
-      }
+    return this.sendEmail(
+      appointment.customer?.email,
+      `Appointment Confirmed - ${businessName}`,
+      html
     )
   }
 
-  static async sendAppointmentReminder(appointmentData: any): Promise<boolean> {
-    const template = {
-      subject: 'Appointment Reminder - Tomorrow at {{appointment_time}}',
-      content: `
-        <h2>Reminder: Your appointment is tomorrow!</h2>
-        <p>Hi {{customer_name}},</p>
-        <p>This is a friendly reminder that you have an appointment tomorrow:</p>
-        <ul>
-          <li><strong>Date:</strong> {{appointment_date}}</li>
-          <li><strong>Time:</strong> {{appointment_time}}</li>
-          <li><strong>Service:</strong> {{service_name}}</li>
-          <li><strong>Staff:</strong> {{staff_name}}</li>
-        </ul>
-        <p>If you need to reschedule or cancel, please contact us as soon as possible.</p>
-        <p>We look forward to seeing you!</p>
-      `
-    }
+  static async sendCancellationEmail(appointment: any, reason?: string) {
+    const customerName = appointment.customer?.first_name || 'there'
+    const businessName = appointment.business?.name || 'your salon'
+    const appointmentDate = new Date(appointment.appointment_date).toLocaleDateString()
+    const startTime = appointment.start_time || 'your scheduled time'
+    const serviceName = appointment.service?.name || 'your service'
 
-    return await this.sendTemplate(
-      appointmentData.customer.email,
-      'appointment_reminder',
-      {
-        customer_name: `${appointmentData.customer.first_name} ${appointmentData.customer.last_name}`,
-        appointment_date: new Date(appointmentData.scheduled_at).toLocaleDateString(),
-        appointment_time: new Date(appointmentData.scheduled_at).toLocaleTimeString(),
-        service_name: appointmentData.service?.name || 'Service',
-        staff_name: appointmentData.staff ? `${appointmentData.staff.first_name} ${appointmentData.staff.last_name}` : 'Our team'
-      }
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Appointment Cancelled</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; font-size: 28px;">Appointment Cancelled</h1>
+            <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">We're sorry to see this appointment cancelled</p>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+            <div style="background: white; padding: 25px; border-radius: 8px; margin-bottom: 20px;">
+              <h2 style="color: #f5576c; margin-top: 0;">Hello ${customerName},</h2>
+              <p>Your appointment has been cancelled. Here are the details:</p>
+              
+              <div style="background: #fff3f3; padding: 20px; border-radius: 8px; border-left: 4px solid #f5576c; margin: 20px 0;">
+                <p><strong>📅 Date:</strong> ${appointmentDate}</p>
+                <p><strong>⏰ Time:</strong> ${startTime}</p>
+                <p><strong>💅 Service:</strong> ${serviceName}</p>
+                ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
+              </div>
+              
+              <p>We apologize for any inconvenience. We'd love to reschedule you for another time!</p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="https://vapi-nail-salon-agent-git-main-dropflyai.vercel.app/customer/portal" 
+                   style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                  Book New Appointment
+                </a>
+              </div>
+            </div>
+            
+            <div style="text-align: center; color: #666; font-size: 14px;">
+              <p>Thank you for understanding - ${businessName}</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    return this.sendEmail(
+      appointment.customer?.email,
+      `Appointment Cancelled - ${businessName}`,
+      html
     )
   }
 
-  static async sendCancellationEmail(appointmentData: any, reason?: string): Promise<boolean> {
-    const template = {
-      subject: 'Appointment Cancelled - {{business_name}}',
-      content: `
-        <h2>Your appointment has been cancelled</h2>
-        <p>Hi {{customer_name}},</p>
-        <p>Your appointment scheduled for {{appointment_date}} at {{appointment_time}} has been cancelled.</p>
-        {{#if reason}}<p><strong>Reason:</strong> {{reason}}</p>{{/if}}
-        <p>If you'd like to reschedule, please contact us or book a new appointment through our website.</p>
-        <p>We apologize for any inconvenience.</p>
-        <p>Best regards,<br>{{business_name}}</p>
-      `
-    }
+  static async sendWelcomeEmail(customer: any, business: any) {
+    const customerName = customer.first_name || 'there'
+    const businessName = business.name || 'your salon'
 
-    return await this.sendTemplate(
-      appointmentData.customer.email,
-      'appointment_cancellation',
-      {
-        customer_name: `${appointmentData.customer.first_name} ${appointmentData.customer.last_name}`,
-        business_name: appointmentData.business?.name || 'VoiceFly Business',
-        appointment_date: new Date(appointmentData.scheduled_at).toLocaleDateString(),
-        appointment_time: new Date(appointmentData.scheduled_at).toLocaleTimeString(),
-        reason: reason || ''
-      }
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>Welcome to ${businessName}!</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; font-size: 28px;">Welcome to ${businessName}!</h1>
+            <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">We're excited to have you as a customer</p>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+            <div style="background: white; padding: 25px; border-radius: 8px; margin-bottom: 20px;">
+              <h2 style="color: #667eea; margin-top: 0;">Hello ${customerName}!</h2>
+              <p>Thank you for choosing ${businessName}! We're thrilled to welcome you to our salon family.</p>
+              
+              <div style="background: #f0f8ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="color: #667eea; margin-top: 0;">What's next?</h3>
+                <ul style="padding-left: 20px;">
+                  <li>Browse our services and book your next appointment</li>
+                  <li>Earn loyalty points with every visit</li>
+                  <li>Get exclusive member offers and updates</li>
+                  <li>Manage your appointments in our customer portal</li>
+                </ul>
+              </div>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="https://vapi-nail-salon-agent-git-main-dropflyai.vercel.app/customer/portal" 
+                   style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                  Visit Customer Portal
+                </a>
+              </div>
+              
+              <p style="margin-top: 25px;">Questions? Just reply to this email or give us a call. We're here to help!</p>
+            </div>
+            
+            <div style="text-align: center; color: #666; font-size: 14px;">
+              <p>Welcome to the ${businessName} family!</p>
+              <p style="margin-top: 15px;">
+                <a href="#" style="color: #667eea; text-decoration: none;">Unsubscribe</a> |
+                <a href="#" style="color: #667eea; text-decoration: none;">Contact Us</a>
+              </p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    return this.sendEmail(
+      customer.email,
+      `Welcome to ${businessName}!`,
+      html
     )
   }
 
-  // Lead nurturing emails
-  static async sendWelcomeEmail(leadData: any): Promise<boolean> {
-    const template = {
-      subject: 'Welcome to {{business_name}} - Let\'s Get Started!',
-      content: `
-        <h2>Welcome to {{business_name}}!</h2>
-        <p>Hi {{lead_name}},</p>
-        <p>Thank you for your interest in our voice AI solutions. We're excited to help transform your business with intelligent automation.</p>
-        <p>Here's what happens next:</p>
-        <ul>
-          <li>Our AI specialist will review your requirements</li>
-          <li>We'll schedule a personalized demo of Maya, our voice AI assistant</li>
-          <li>You'll see exactly how voice AI can benefit your business</li>
-        </ul>
-        <p>In the meantime, feel free to explore our resources or contact us with any questions.</p>
-        <p>Best regards,<br>The VoiceFly Team</p>
-      `
+  static async sendMarketingCampaign(recipients: string[], subject: string, content: string, businessName: string = 'your salon') {
+    if (!Array.isArray(recipients) || recipients.length === 0) {
+      return { success: false, error: 'No recipients provided' }
     }
 
-    return await this.sendTemplate(
-      leadData.email,
-      'welcome_lead',
-      {
-        lead_name: `${leadData.first_name} ${leadData.last_name}`,
-        business_name: 'VoiceFly'
-      }
-    )
-  }
+    const results = []
 
-  static async sendFollowUpEmail(leadData: any, followUpType: string): Promise<boolean> {
-    const templates = {
-      demo_request: {
-        subject: 'Ready for Your VoiceFly Demo?',
-        content: `
-          <h2>Let's show you Maya in action!</h2>
-          <p>Hi {{lead_name}},</p>
-          <p>Thanks for requesting a demo of our voice AI technology. Maya is ready to show you how she can transform your business operations.</p>
-          <p>During your demo, you'll see:</p>
-          <ul>
-            <li>Live voice AI conversations with prospects</li>
-            <li>Intelligent lead qualification and routing</li>
-            <li>Automated appointment scheduling</li>
-            <li>Real-time analytics and insights</li>
-          </ul>
-          <p>Click below to schedule your personalized demo:</p>
-          <p><a href="{{demo_link}}" style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px;">Schedule My Demo</a></p>
+    for (const email of recipients) {
+      try {
+        const html = `
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+              <title>${subject}</title>
+            </head>
+            <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0;">
+                <h1 style="margin: 0; font-size: 24px;">${businessName}</h1>
+              </div>
+              
+              <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+                <div style="background: white; padding: 25px; border-radius: 8px; margin-bottom: 20px;">
+                  ${content}
+                </div>
+                
+                <div style="text-align: center; color: #666; font-size: 14px; margin-top: 30px;">
+                  <p>
+                    <a href="#" style="color: #667eea; text-decoration: none;">Unsubscribe</a> |
+                    <a href="#" style="color: #667eea; text-decoration: none;">Update Preferences</a>
+                  </p>
+                  <p style="margin-top: 15px;">${businessName}</p>
+                </div>
+              </div>
+            </body>
+          </html>
         `
-      },
-      pricing_inquiry: {
-        subject: 'VoiceFly Pricing - Customized for Your Business',
-        content: `
-          <h2>Pricing tailored to your needs</h2>
-          <p>Hi {{lead_name}},</p>
-          <p>Thank you for your interest in VoiceFly pricing. Our voice AI solutions are designed to deliver ROI from day one.</p>
-          <p>Our flexible pricing plans include:</p>
-          <ul>
-            <li><strong>Starter:</strong> Perfect for small businesses getting started</li>
-            <li><strong>Professional:</strong> Advanced features for growing companies</li>
-            <li><strong>Enterprise:</strong> Full customization for large organizations</li>
-          </ul>
-          <p>Let's discuss which plan would work best for your specific needs.</p>
-        `
+
+        const result = await this.sendEmail(email, subject, html)
+        results.push({ email, success: result.success, error: result.error })
+      } catch (error) {
+        results.push({ email, success: false, error: error.message })
       }
     }
 
-    const template = templates[followUpType as keyof typeof templates] || templates.demo_request
+    const successCount = results.filter(r => r.success).length
+    const failureCount = results.filter(r => !r.success).length
 
-    return await this.sendTemplate(
-      leadData.email,
-      `follow_up_${followUpType}`,
-      {
-        lead_name: `${leadData.first_name} ${leadData.last_name}`,
-        demo_link: `${process.env.NEXT_PUBLIC_APP_URL}/demo?lead=${leadData.id}`
+    return {
+      success: successCount > 0,
+      results,
+      summary: {
+        total: recipients.length,
+        sent: successCount,
+        failed: failureCount
       }
+    }
+  }
+
+  static async sendLoyaltyPointsEarned(customer: any, points: number, totalPoints: number, business: any) {
+    const customerName = customer.first_name || 'there'
+    const businessName = business.name || 'your salon'
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <title>You Earned Loyalty Points!</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; font-size: 28px;">🎉 Points Earned!</h1>
+            <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Your loyalty has been rewarded</p>
+          </div>
+          
+          <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
+            <div style="background: white; padding: 25px; border-radius: 8px; margin-bottom: 20px;">
+              <h2 style="color: #f5576c; margin-top: 0;">Congratulations ${customerName}!</h2>
+              <p>You just earned <strong style="color: #f5576c;">${points} loyalty points</strong> from your recent visit!</p>
+              
+              <div style="background: #fff8f8; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+                <div style="font-size: 32px; color: #f5576c; font-weight: bold; margin-bottom: 10px;">
+                  ${totalPoints} Points
+                </div>
+                <div style="color: #666;">Total Balance</div>
+              </div>
+              
+              <p>Keep collecting points to unlock amazing rewards!</p>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="https://vapi-nail-salon-agent-git-main-dropflyai.vercel.app/customer/portal" 
+                   style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                  View Your Rewards
+                </a>
+              </div>
+            </div>
+            
+            <div style="text-align: center; color: #666; font-size: 14px;">
+              <p>Thank you for your loyalty - ${businessName}</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    return this.sendEmail(
+      customer.email,
+      `🎉 You earned ${points} loyalty points!`,
+      html
     )
-  }
-
-  // Private methods for different email providers
-  private static async sendWithSendGrid(
-    recipients: EmailRecipient[],
-    subject: string,
-    content: string,
-    options: EmailOptions
-  ): Promise<boolean> {
-    // In production, implement SendGrid API integration
-    console.log('SendGrid email sent:', { recipients: recipients.length, subject })
-    return true
-  }
-
-  private static async sendWithMailgun(
-    recipients: EmailRecipient[],
-    subject: string,
-    content: string,
-    options: EmailOptions
-  ): Promise<boolean> {
-    // In production, implement Mailgun API integration
-    console.log('Mailgun email sent:', { recipients: recipients.length, subject })
-    return true
-  }
-
-  private static async getTemplate(templateId: string): Promise<EmailTemplate | null> {
-    // In production, fetch from database or template service
-    const templates: Record<string, EmailTemplate> = {
-      appointment_confirmation: {
-        id: 'appointment_confirmation',
-        name: 'Appointment Confirmation',
-        subject: 'Appointment Confirmed - {{business_name}}',
-        htmlContent: '',
-        textContent: '',
-        variables: ['customer_name', 'business_name', 'appointment_date']
-      }
-    }
-
-    return templates[templateId] || null
   }
 }

@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceFly Customer Acquisition Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8fafc;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .stat-card.revenue {
+            border-color: #10b981;
+        }
+
+        .stat-card.outreach {
+            border-color: #3b82f6;
+        }
+
+        .stat-card.demos {
+            border-color: #f59e0b;
+        }
+
+        .stat-card.conversion {
+            border-color: #8b5cf6;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: #f8fafc;
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .section-header p {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .section-content {
+            padding: 20px;
+        }
+
+        .prospect-form {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+
+        .prospect-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .prospect-item {
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            transition: background-color 0.3s ease;
+        }
+
+        .prospect-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .prospect-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .prospect-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1rem;
+        }
+
+        .prospect-company {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .prospect-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-new {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-contacted {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-demo {
+            background: #d1fae5;
+            color: #047857;
+        }
+
+        .status-customer {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+
+        .prospect-meta {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .prospect-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .targets {
+            padding: 20px;
+        }
+
+        .target-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .target-label {
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .target-progress {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .target-bar {
+            width: 100px;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .target-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+            transition: width 0.3s ease;
+        }
+
+        .target-text {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .quick-actions {
+            display: grid;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            background: white;
+            border: 2px solid #e5e7eb;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+
+        .action-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .action-desc {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 VoiceFly Customer Acquisition Tracker</h1>
+            <p>Transform prospects into paying customers - Track your path to $10K MRR</p>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card revenue">
+                <div class="stat-number" id="monthly-revenue">$0</div>
+                <div class="stat-label">Monthly Revenue</div>
+            </div>
+            <div class="stat-card outreach">
+                <div class="stat-number" id="total-outreach">0</div>
+                <div class="stat-label">LinkedIn Messages</div>
+            </div>
+            <div class="stat-card demos">
+                <div class="stat-number" id="total-demos">0</div>
+                <div class="stat-label">Demos Completed</div>
+            </div>
+            <div class="stat-card conversion">
+                <div class="stat-number" id="conversion-rate">0%</div>
+                <div class="stat-label">Demo → Customer</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="section">
+                <div class="section-header">
+                    <h2>🎯 Add New Prospect</h2>
+                    <p>Track every LinkedIn message, demo, and conversion</p>
+                </div>
+                <div class="section-content">
+                    <form class="prospect-form" id="prospect-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="name">Contact Name</label>
+                                <input type="text" id="name" required placeholder="Dr. Sarah Johnson">
+                            </div>
+                            <div class="form-group">
+                                <label for="company">Business Name</label>
+                                <input type="text" id="company" required placeholder="Johnson Dental Practice">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="industry">Industry</label>
+                                <select id="industry" required>
+                                    <option value="">Select Industry</option>
+                                    <option value="dental">Dental Practice</option>
+                                    <option value="medical">Medical Practice</option>
+                                    <option value="beauty">Beauty Salon/Spa</option>
+                                    <option value="urgent-care">Urgent Care</option>
+                                    <option value="other">Other Healthcare</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="status">Status</label>
+                                <select id="status" required>
+                                    <option value="new">New Prospect</option>
+                                    <option value="contacted">LinkedIn Sent</option>
+                                    <option value="responded">Responded</option>
+                                    <option value="demo-booked">Demo Booked</option>
+                                    <option value="demo-completed">Demo Completed</option>
+                                    <option value="customer">Customer</option>
+                                    <option value="lost">Lost</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="phone">Phone</label>
+                                <input type="tel" id="phone" placeholder="(555) 123-4567">
+                            </div>
+                            <div class="form-group">
+                                <label for="email">Email</label>
+                                <input type="email" id="email" placeholder="sarah@johnsondental.com">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="notes">Notes</label>
+                            <textarea id="notes" rows="3" placeholder="Pain points, interests, follow-up needed..."></textarea>
+                        </div>
+                        <button type="submit" class="btn">Add Prospect</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-header">
+                    <h2>📊 Weekly Targets</h2>
+                    <p>Stay on track for 10 customers by week end</p>
+                </div>
+                <div class="targets">
+                    <div class="target-item">
+                        <span class="target-label">LinkedIn Messages</span>
+                        <div class="target-progress">
+                            <div class="target-bar">
+                                <div class="target-fill" id="linkedin-progress" style="width: 0%"></div>
+                            </div>
+                            <span class="target-text" id="linkedin-text">0/350</span>
+                        </div>
+                    </div>
+                    <div class="target-item">
+                        <span class="target-label">Demos Booked</span>
+                        <div class="target-progress">
+                            <div class="target-bar">
+                                <div class="target-fill" id="demos-progress" style="width: 0%"></div>
+                            </div>
+                            <span class="target-text" id="demos-text">0/25</span>
+                        </div>
+                    </div>
+                    <div class="target-item">
+                        <span class="target-label">Customers Closed</span>
+                        <div class="target-progress">
+                            <div class="target-bar">
+                                <div class="target-fill" id="customers-progress" style="width: 0%"></div>
+                            </div>
+                            <span class="target-text" id="customers-text">0/10</span>
+                        </div>
+                    </div>
+                    <div class="target-item">
+                        <span class="target-label">Monthly Revenue</span>
+                        <div class="target-progress">
+                            <div class="target-bar">
+                                <div class="target-fill" id="revenue-progress" style="width: 0%"></div>
+                            </div>
+                            <span class="target-text" id="revenue-text">$0/$3,970</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <div class="action-btn" onclick="openLinkedIn()">
+                        <div class="action-title">🔗 Send LinkedIn Messages</div>
+                        <div class="action-desc">Open LinkedIn Sales Navigator to find prospects</div>
+                    </div>
+                    <div class="action-btn" onclick="openCalendly()">
+                        <div class="action-title">📅 Check Demo Calendar</div>
+                        <div class="action-desc">View today's demos and availability</div>
+                    </div>
+                    <div class="action-btn" onclick="testVoiceFly()">
+                        <div class="action-title">📞 Test VoiceFly Demo</div>
+                        <div class="action-desc">Call (424) 351-9304 to test Maya</div>
+                    </div>
+                    <div class="action-btn" onclick="exportData()">
+                        <div class="action-title">📊 Export Data</div>
+                        <div class="action-desc">Download prospect list as CSV</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" style="margin: 0 30px 30px;">
+            <div class="section-header">
+                <h2>👥 Prospect Pipeline</h2>
+                <p>All prospects and their current status</p>
+            </div>
+            <div class="prospect-list" id="prospect-list">
+                <div class="prospect-item">
+                    <div class="prospect-header">
+                        <div>
+                            <div class="prospect-name">Demo Prospect</div>
+                            <div class="prospect-company">Sample Dental Practice</div>
+                        </div>
+                        <span class="prospect-status status-new">New</span>
+                    </div>
+                    <div class="prospect-meta">
+                        <span>📧 demo@example.com</span>
+                        <span>📱 (555) 123-4567</span>
+                        <span>🏥 Dental</span>
+                        <span>📅 Added today</span>
+                    </div>
+                    <div class="prospect-actions">
+                        <button class="btn btn-small" onclick="updateStatus(0, 'contacted')">Mark Contacted</button>
+                        <button class="btn btn-small" onclick="scheduleDemo(0)">Schedule Demo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        let prospects = JSON.parse(localStorage.getItem('voicefly-prospects')) || [];
+        let targets = {
+            linkedin: 350,
+            demos: 25,
+            customers: 10,
+            revenue: 3970
+        };
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            renderProspects();
+            updateStats();
+            updateTargets();
+        });
+
+        // Form submission
+        document.getElementById('prospect-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            addProspect();
+        });
+
+        function addProspect() {
+            const formData = {
+                id: Date.now(),
+                name: document.getElementById('name').value,
+                company: document.getElementById('company').value,
+                industry: document.getElementById('industry').value,
+                status: document.getElementById('status').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                notes: document.getElementById('notes').value,
+                dateAdded: new Date().toISOString(),
+                lastUpdated: new Date().toISOString()
+            };
+
+            prospects.push(formData);
+            saveProspects();
+            renderProspects();
+            updateStats();
+            updateTargets();
+
+            // Reset form
+            document.getElementById('prospect-form').reset();
+
+            // Show success
+            alert('Prospect added successfully!');
+        }
+
+        function renderProspects() {
+            const list = document.getElementById('prospect-list');
+
+            if (prospects.length === 0) {
+                list.innerHTML = `
+                    <div class="prospect-item" style="text-align: center; color: #64748b;">
+                        <p>No prospects yet. Add your first prospect using the form above!</p>
+                        <p style="margin-top: 10px; font-size: 0.9rem;">💡 Tip: Start by researching dental practices on LinkedIn</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = prospects.map((prospect, index) => `
+                <div class="prospect-item">
+                    <div class="prospect-header">
+                        <div>
+                            <div class="prospect-name">${prospect.name}</div>
+                            <div class="prospect-company">${prospect.company}</div>
+                        </div>
+                        <span class="prospect-status status-${prospect.status.replace('-', '')}">${formatStatus(prospect.status)}</span>
+                    </div>
+                    <div class="prospect-meta">
+                        ${prospect.email ? `<span>📧 ${prospect.email}</span>` : ''}
+                        ${prospect.phone ? `<span>📱 ${prospect.phone}</span>` : ''}
+                        <span>🏥 ${formatIndustry(prospect.industry)}</span>
+                        <span>📅 ${formatDate(prospect.dateAdded)}</span>
+                    </div>
+                    ${prospect.notes ? `<div style="margin-top: 10px; font-size: 0.9rem; color: #64748b;">💬 ${prospect.notes}</div>` : ''}
+                    <div class="prospect-actions">
+                        ${getActionButtons(prospect, index)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getActionButtons(prospect, index) {
+            switch(prospect.status) {
+                case 'new':
+                    return `
+                        <button class="btn btn-small" onclick="updateStatus(${index}, 'contacted')">Send LinkedIn</button>
+                        <button class="btn btn-small" onclick="deleteProspect(${index})">Delete</button>
+                    `;
+                case 'contacted':
+                    return `
+                        <button class="btn btn-small" onclick="updateStatus(${index}, 'responded')">Mark Responded</button>
+                        <button class="btn btn-small" onclick="updateStatus(${index}, 'lost')">Mark Lost</button>
+                    `;
+                case 'responded':
+                    return `
+                        <button class="btn btn-small" onclick="updateStatus(${index}, 'demo-booked')">Demo Booked</button>
+                        <button class="btn btn-small" onclick="updateStatus(${index}, 'lost')">Mark Lost</button>
+                    `;
+                case 'demo-booked':
+                    return `
+                        <button class="btn btn-small" onclick="updateStatus(${index}, 'demo-completed')">Demo Done</button>
+                        <button class="btn btn-small" onclick="updateStatus(${index}, 'lost')">No Show</button>
+                    `;
+                case 'demo-completed':
+                    return `
+                        <button class="btn btn-small" onclick="updateStatus(${index}, 'customer')">Closed Customer</button>
+                        <button class="btn btn-small" onclick="updateStatus(${index}, 'lost')">Mark Lost</button>
+                    `;
+                case 'customer':
+                    return `<span style="color: #10b981; font-weight: 600;">💰 Customer Acquired!</span>`;
+                case 'lost':
+                    return `<span style="color: #ef4444; font-weight: 600;">❌ Lost</span>`;
+                default:
+                    return '';
+            }
+        }
+
+        function updateStatus(index, newStatus) {
+            prospects[index].status = newStatus;
+            prospects[index].lastUpdated = new Date().toISOString();
+            saveProspects();
+            renderProspects();
+            updateStats();
+            updateTargets();
+        }
+
+        function deleteProspect(index) {
+            if (confirm('Are you sure you want to delete this prospect?')) {
+                prospects.splice(index, 1);
+                saveProspects();
+                renderProspects();
+                updateStats();
+                updateTargets();
+            }
+        }
+
+        function updateStats() {
+            const contacted = prospects.filter(p => ['contacted', 'responded', 'demo-booked', 'demo-completed', 'customer'].includes(p.status)).length;
+            const demos = prospects.filter(p => ['demo-completed', 'customer'].includes(p.status)).length;
+            const customers = prospects.filter(p => p.status === 'customer').length;
+            const revenue = customers * 297;
+            const conversionRate = demos > 0 ? Math.round((customers / demos) * 100) : 0;
+
+            document.getElementById('monthly-revenue').textContent = '$' + revenue.toLocaleString();
+            document.getElementById('total-outreach').textContent = contacted;
+            document.getElementById('total-demos').textContent = demos;
+            document.getElementById('conversion-rate').textContent = conversionRate + '%';
+        }
+
+        function updateTargets() {
+            const contacted = prospects.filter(p => ['contacted', 'responded', 'demo-booked', 'demo-completed', 'customer'].includes(p.status)).length;
+            const demosBooked = prospects.filter(p => ['demo-booked', 'demo-completed', 'customer'].includes(p.status)).length;
+            const customers = prospects.filter(p => p.status === 'customer').length;
+            const revenue = customers * 297;
+
+            updateProgress('linkedin', contacted, targets.linkedin);
+            updateProgress('demos', demosBooked, targets.demos);
+            updateProgress('customers', customers, targets.customers);
+            updateProgress('revenue', revenue, targets.revenue);
+        }
+
+        function updateProgress(type, current, target) {
+            const percentage = Math.min((current / target) * 100, 100);
+            const progressBar = document.getElementById(type + '-progress');
+            const progressText = document.getElementById(type + '-text');
+
+            progressBar.style.width = percentage + '%';
+
+            if (type === 'revenue') {
+                progressText.textContent = `$${current.toLocaleString()}/$${target.toLocaleString()}`;
+            } else {
+                progressText.textContent = `${current}/${target}`;
+            }
+        }
+
+        function formatStatus(status) {
+            const statusMap = {
+                'new': 'New',
+                'contacted': 'Contacted',
+                'responded': 'Responded',
+                'demo-booked': 'Demo Booked',
+                'demo-completed': 'Demo Done',
+                'customer': 'Customer',
+                'lost': 'Lost'
+            };
+            return statusMap[status] || status;
+        }
+
+        function formatIndustry(industry) {
+            const industryMap = {
+                'dental': 'Dental',
+                'medical': 'Medical',
+                'beauty': 'Beauty',
+                'urgent-care': 'Urgent Care',
+                'other': 'Other'
+            };
+            return industryMap[industry] || industry;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays === 1) return 'Today';
+            if (diffDays === 2) return 'Yesterday';
+            if (diffDays <= 7) return `${diffDays - 1} days ago`;
+            return date.toLocaleDateString();
+        }
+
+        function saveProspects() {
+            localStorage.setItem('voicefly-prospects', JSON.stringify(prospects));
+        }
+
+        // Quick actions
+        function openLinkedIn() {
+            window.open('https://www.linkedin.com/sales/search/people', '_blank');
+        }
+
+        function openCalendly() {
+            // Replace with your actual Calendly URL
+            window.open('https://calendly.com/your-username', '_blank');
+        }
+
+        function testVoiceFly() {
+            window.open('tel:+14243519304', '_self');
+        }
+
+        function exportData() {
+            const csv = convertToCSV(prospects);
+            downloadCSV(csv, 'voicefly-prospects.csv');
+        }
+
+        function convertToCSV(data) {
+            const headers = ['Name', 'Company', 'Industry', 'Status', 'Phone', 'Email', 'Notes', 'Date Added'];
+            const rows = data.map(p => [
+                p.name,
+                p.company,
+                formatIndustry(p.industry),
+                formatStatus(p.status),
+                p.phone || '',
+                p.email || '',
+                p.notes || '',
+                new Date(p.dateAdded).toLocaleDateString()
+            ]);
+
+            return [headers, ...rows].map(row =>
+                row.map(field => `"${field}"`).join(',')
+            ).join('\n');
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', filename);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>
