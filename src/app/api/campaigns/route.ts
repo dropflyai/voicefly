@@ -1,59 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { ResearchAPI } from '@/lib/research-api'
 
-export async function GET(request: NextRequest) {
-  try {
-    const { data: campaigns, error } = await supabase
-      .from('voice_campaigns')
-      .select(`
-        *,
-        voice_calls(count)
-      `)
-      .order('created_at', { ascending: false })
+export const dynamic = 'force-dynamic'
 
-    if (error) {
-      console.error('Error fetching campaigns:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    return NextResponse.json({ campaigns })
-  } catch (error) {
-    console.error('Unexpected error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-  }
-}
-
+// Create marketing campaign
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, description, script_template, voice_settings } = body
+    const {
+      business_id,
+      name,
+      campaign_type,
+      subject_line,
+      preview_text,
+      email_content,
+      source_research_id,
+      research_insights,
+      target_segment,
+      target_lead_status,
+      target_tags
+    } = body
 
-    // TODO: Get user_id from authentication
-    const user_id = '00000000-0000-0000-0000-000000000000' // Placeholder
-
-    const { data: campaign, error } = await supabase
-      .from('voice_campaigns')
-      .insert([
-        {
-          user_id,
-          name,
-          description,
-          script_template,
-          voice_settings,
-          status: 'draft'
-        }
-      ])
-      .select()
-      .single()
-
-    if (error) {
-      console.error('Error creating campaign:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (!business_id || !name) {
+      return NextResponse.json(
+        { error: 'business_id and name are required' },
+        { status: 400 }
+      )
     }
 
-    return NextResponse.json({ campaign })
+    const campaign = await ResearchAPI.createCampaign({
+      business_id,
+      name,
+      campaign_type: campaign_type || 'email',
+      status: 'draft',
+      subject_line,
+      preview_text,
+      email_content,
+      source_research_id,
+      research_insights,
+      target_segment: target_segment || 'all_customers',
+      target_lead_status,
+      target_tags
+    })
+
+    if (!campaign) {
+      return NextResponse.json(
+        { error: 'Failed to create campaign' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      campaign,
+      message: 'Campaign created successfully'
+    })
   } catch (error) {
-    console.error('Unexpected error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('Error creating campaign:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+// Get campaigns
+export async function GET(request: NextRequest) {
+  try {
+    const business_id = request.nextUrl.searchParams.get('business_id')
+    const campaign_type = request.nextUrl.searchParams.get('campaign_type') as 'email' | 'sms' | 'voice' | undefined
+    const status = request.nextUrl.searchParams.get('status') || undefined
+    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '50')
+
+    if (!business_id) {
+      return NextResponse.json(
+        { error: 'business_id is required' },
+        { status: 400 }
+      )
+    }
+
+    const campaigns = await ResearchAPI.getCampaigns(business_id, {
+      campaign_type,
+      status,
+      limit
+    })
+
+    return NextResponse.json({
+      campaigns,
+      count: campaigns.length
+    })
+  } catch (error) {
+    console.error('Error fetching campaigns:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
   }
 }

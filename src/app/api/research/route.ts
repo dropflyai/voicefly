@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { ResearchAPI } from '@/lib/research-api'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60 // 60 second timeout for research
 
 interface ResearchRequest {
   query: string
   mode: 'deep' | 'quick' | 'prospect' | 'competitor' | 'market'
   businessId?: string
+  relatedLeadId?: string
+  relatedCustomerId?: string
+  pageContext?: string
 }
 
 async function performWebSearch(query: string): Promise<any> {
-  // In production, integrate with your WebSearch tool
+  // TODO: Integrate with WebSearch tool when available
   // For now, return mock data
   return {
     results: [
@@ -25,9 +30,63 @@ async function performWebSearch(query: string): Promise<any> {
 }
 
 async function analyzeWithAI(query: string, searchResults: any[], mode: string): Promise<string> {
-  // In production, call OpenAI or Claude API
-  // For MVP, return structured mock response
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
 
+  // If Claude API key is configured, use real AI
+  if (ANTHROPIC_API_KEY) {
+    try {
+      return await callClaudeAPI(query, searchResults, mode)
+    } catch (error) {
+      console.error('Claude API failed, falling back to templates:', error)
+      // Fall through to templates
+    }
+  }
+
+  // Fallback to templates (MVP mode)
+  return generateTemplateResponse(query, mode)
+}
+
+async function callClaudeAPI(query: string, searchResults: any[], mode: string): Promise<string> {
+  const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
+
+  const systemPrompts: Record<string, string> = {
+    deep: 'You are a deep research analyst. Provide comprehensive, multi-source analysis with citations, confidence scores, and actionable recommendations. Format in markdown with clear sections.',
+    quick: 'You are a quick research assistant. Provide concise, actionable answers in 2-3 key points. Be direct and specific.',
+    prospect: 'You are a B2B sales intelligence analyst. Research prospects and provide: company profile, pain points, buying signals, decision makers, and recommended approach.',
+    competitor: 'You are a competitive intelligence analyst. Provide feature comparison, pricing analysis, strengths/weaknesses, and win strategies.',
+    market: 'You are a market research analyst. Provide TAM/SAM/SOM analysis, growth trends, customer segments, opportunities, and market timing.'
+  }
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY!,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: mode === 'deep' ? 4000 : mode === 'quick' ? 1000 : 2000,
+      system: systemPrompts[mode] || systemPrompts.quick,
+      messages: [
+        {
+          role: 'user',
+          content: `${query}\n\nSearch results: ${JSON.stringify(searchResults, null, 2)}\n\nProvide your analysis in markdown format.`
+        }
+      ]
+    })
+  })
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`Claude API error: ${error}`)
+  }
+
+  const data = await response.json()
+  return data.content[0].text
+}
+
+function generateTemplateResponse(query: string, mode: string): string {
   const templates: Record<string, string> = {
     deep: `# Deep Research Report
 
@@ -322,9 +381,11 @@ We sit between basic software (too limited) and enterprise solutions (too expens
 }
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now()
+
   try {
     const body: ResearchRequest = await request.json()
-    const { query, mode } = body
+    const { query, mode, businessId, relatedLeadId, relatedCustomerId, pageContext } = body
 
     if (!query || !mode) {
       return NextResponse.json(
@@ -338,6 +399,33 @@ export async function POST(request: NextRequest) {
 
     // Analyze with AI
     const analysis = await analyzeWithAI(query, searchResults, mode)
+
+    // Save to database in background (don't await to keep stream fast)
+    if (businessId) {
+      const duration = Date.now() - startTime
+
+      // Extract summary (first 200 chars)
+      const summary = analysis
+        .replace(/[#*`]/g, '') // Remove markdown
+        .split('\n')
+        .find(line => line.trim().length > 20)
+        ?.substring(0, 200) || query
+
+      ResearchAPI.saveResearch({
+        business_id: businessId,
+        query,
+        mode,
+        result_content: analysis,
+        result_summary: summary,
+        sources_count: searchResults?.results?.length || 0,
+        confidence_score: 0.9, // Mock for now
+        related_lead_id: relatedLeadId,
+        related_customer_id: relatedCustomerId,
+        page_context: pageContext,
+        duration_ms: duration,
+        tokens_used: Math.floor(analysis.length / 4) // Rough estimate
+      }).catch(err => console.error('Failed to save research:', err))
+    }
 
     // Return streaming response
     const encoder = new TextEncoder()
@@ -370,12 +458,32 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  // Get saved research history
-  const businessId = request.nextUrl.searchParams.get('businessId')
+  try {
+    const businessId = request.nextUrl.searchParams.get('businessId')
+    const mode = request.nextUrl.searchParams.get('mode')
+    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '20')
 
-  // In production, fetch from database
-  return NextResponse.json({
-    research: [],
-    message: 'Research history endpoint'
-  })
+    if (!businessId) {
+      return NextResponse.json(
+        { error: 'businessId is required' },
+        { status: 400 }
+      )
+    }
+
+    const research = await ResearchAPI.getResearchHistory(businessId, {
+      mode: mode || undefined,
+      limit
+    })
+
+    return NextResponse.json({
+      research,
+      count: research.length
+    })
+  } catch (error) {
+    console.error('Error fetching research history:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch research history' },
+      { status: 500 }
+    )
+  }
 }
