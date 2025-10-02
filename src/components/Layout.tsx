@@ -318,10 +318,11 @@ function SidebarContent({ business }: { business?: LayoutProps['business'] }) {
               className={clsx(
                 'nav-item group',
                 isActive ? 'nav-item-active' : 'nav-item-inactive',
-                isUpgradeRequired ? 'opacity-60' : ''
+                isUpgradeRequired ? 'opacity-60' : '',
+                isActive ? 'text-brand-700' : 'text-gray-700'
               )}
             >
-              <item.icon className="mr-3 h-5 w-5" aria-hidden="true" />
+              <item.icon className={clsx("mr-3 h-5 w-5", isActive ? 'text-brand-600' : 'text-gray-500')} aria-hidden="true" />
               {item.name}
               {isUpgradeRequired && (
                 <span className="ml-auto text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full group-hover:scale-105 transition-transform">
@@ -376,9 +377,9 @@ function getUpgradePrompt(subscriptionTier: string) {
   if (subscriptionTier === 'starter') {
     return (
       <div className="flex-shrink-0 p-4">
-        <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg p-4 text-white">
-          <h3 className="text-sm font-medium">Unlock Analytics & More</h3>
-          <p className="text-xs mt-1 opacity-90">
+        <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-white">Unlock Analytics & More</h3>
+          <p className="text-xs mt-1 text-white opacity-90">
             Upgrade to AI Professional for unlimited appointments, analytics & loyalty
           </p>
           <Link href="/dashboard/settings?tab=billing">
@@ -394,9 +395,9 @@ function getUpgradePrompt(subscriptionTier: string) {
   if (subscriptionTier === 'professional') {
     return (
       <div className="flex-shrink-0 p-4">
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-4 text-white">
-          <h3 className="text-sm font-medium">Get Custom AI & Scale</h3>
-          <p className="text-xs mt-1 opacity-90">
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-white">Get Custom AI & Scale</h3>
+          <p className="text-xs mt-1 text-white opacity-90">
             Upgrade to AI Business for custom assistant & multi-location
           </p>
           <Link href="/dashboard/settings?tab=billing">
