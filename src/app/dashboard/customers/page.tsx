@@ -176,7 +176,37 @@ export default function CustomersPage() {
       const businessId = getCurrentBusinessId()
       if (!businessId) return
 
-      const businessData = await BusinessAPI.getBusiness(businessId) as BusinessWithLocations
+      // Check if this is a demo business (created by login page)
+      const isDemoMode = businessId.startsWith('demo-business-')
+
+      let businessData
+      if (isDemoMode) {
+        // Create mock business data for demo mode
+        console.log('🎭 Customers page running in DEMO mode')
+        businessData = {
+          id: businessId,
+          name: 'VoiceFly Demo Business',
+          slug: 'voicefly-demo',
+          business_type: 'nail_salon',
+          phone: '(555) 123-4567',
+          email: 'demo@voicefly.ai',
+          website: 'https://voicefly.ai',
+          address_line1: '123 Demo Street',
+          city: 'San Francisco',
+          state: 'CA',
+          postal_code: '94102',
+          country: 'US',
+          timezone: 'America/Los_Angeles',
+          subscription_tier: 'professional' as const,
+          subscription_status: 'active' as const,
+          trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        } as BusinessWithLocations
+      } else {
+        businessData = await BusinessAPI.getBusiness(businessId) as BusinessWithLocations
+      }
+
       setBusiness(businessData)
     } catch (error) {
       console.error('Error loading business data:', error)
