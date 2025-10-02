@@ -326,11 +326,11 @@ export default function SolutionsPage() {
           </Link>
           <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
             <Link href="/" style={{ color: '#4b5563', textDecoration: 'none' }}>Home</Link>
-            <Link href="/solutions" style={{ color: '#6366f1', fontWeight: '500', textDecoration: 'none' }}>Solutions</Link>
+            <Link href="/solutions" style={{ color: '#2563eb', fontWeight: '500', textDecoration: 'none' }}>Solutions</Link>
             <Link href="/features" style={{ color: '#4b5563', textDecoration: 'none' }}>Features</Link>
             <Link href="/pricing" style={{ color: '#4b5563', textDecoration: 'none' }}>Pricing</Link>
             <Link href="/testimonials" style={{ color: '#4b5563', textDecoration: 'none' }}>Testimonials</Link>
-            <Link href="/login" style={{ padding: '8px 16px', backgroundColor: '#6366f1', color: '#ffffff', borderRadius: '8px', textDecoration: 'none', fontWeight: '500' }}>
+            <Link href="/login" style={{ padding: '8px 16px', backgroundColor: '#2563eb', color: '#ffffff', borderRadius: '8px', textDecoration: 'none', fontWeight: '500' }}>
               Get Started
             </Link>
           </div>
@@ -338,7 +338,7 @@ export default function SolutionsPage() {
       </nav>
 
       {/* Hero Section */}
-      <div style={{ background: 'linear-gradient(to right, #6366f1, #8b5cf6)', padding: '64px 24px', color: '#ffffff' }}>
+      <div style={{ background: 'linear-gradient(to right, #2563eb, #1d4ed8)', padding: '64px 24px', color: '#ffffff' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
           <h1 style={{ fontSize: '48px', fontWeight: 'bold', marginBottom: '16px', color: '#ffffff' }}>
             Industry-Specific AI Receptionists
@@ -500,7 +500,7 @@ export default function SolutionsPage() {
               gap: '8px',
               padding: '16px 32px',
               backgroundColor: '#ffffff',
-              color: '#059669',
+              color: '#2563eb',
               borderRadius: '12px',
               fontSize: '18px',
               fontWeight: '600',

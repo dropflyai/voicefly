@@ -298,7 +298,7 @@ function DashboardPage() {
         {/* AI Voice System Hero Section - Simplified Clean Design */}
         <div style={{ marginBottom: '32px' }}>
           <div style={{
-            background: 'linear-gradient(to right, #9333ea, #ec4899)',
+            background: 'linear-gradient(to right, #2563eb, #1d4ed8)',
             borderRadius: '16px',
             padding: '32px',
             color: '#ffffff'
