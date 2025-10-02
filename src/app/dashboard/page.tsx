@@ -297,65 +297,66 @@ function DashboardPage() {
       <div className="p-8">
         {/* AI Voice System Hero Section */}
         <div className="mb-8">
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-8 text-white relative overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-8 relative overflow-hidden" style={{ color: 'white' }}>
             {/* Background Pattern */}
             <div className="absolute inset-0 bg-black bg-opacity-10"></div>
             <div className="absolute -top-4 -right-4 w-24 h-24 bg-white bg-opacity-10 rounded-full"></div>
             <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-white bg-opacity-5 rounded-full"></div>
-            
+
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center">
                   <div className="p-3 bg-white bg-opacity-20 rounded-xl mr-4">
-                    <PhoneIcon className="h-8 w-8 text-white" />
+                    <PhoneIcon className="h-8 w-8" style={{ color: 'white' }} />
                   </div>
                   <div>
-                    <h1 className="text-3xl font-bold mb-2">Your AI Receptionist is Working! 🚀</h1>
-                    <p className="text-purple-100 text-lg">Never miss another booking • Available 24/7 • Sounds completely human</p>
+                    <h1 className="text-3xl font-bold mb-2" style={{ color: 'white' }}>Your AI Receptionist is Working! 🚀</h1>
+                    <p className="text-lg" style={{ color: '#e9d5ff' }}>Never miss another booking • Available 24/7 • Sounds completely human</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="flex items-center text-green-300 mb-2">
-                    <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse mr-2"></div>
+                  <div className="flex items-center mb-2" style={{ color: '#86efac' }}>
+                    <div className="w-3 h-3 rounded-full animate-pulse mr-2" style={{ backgroundColor: '#4ade80' }}></div>
                     <span className="text-sm font-medium">LIVE & ACTIVE</span>
                   </div>
-                  <p className="text-purple-200 text-sm">Phone: (424) 351-9304</p>
+                  <p className="text-sm" style={{ color: '#e9d5ff' }}>Phone: (424) 351-9304</p>
                 </div>
               </div>
 
               {/* AI Impact Metrics */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-6 text-center">
-                  <div className="text-3xl font-bold text-white mb-1">{stats.todayAppointments}</div>
-                  <div className="text-purple-200 text-sm">Bookings Today</div>
-                  <div className="text-green-300 text-xs mt-1">+{Math.floor(stats.todayAppointments * 0.6)} After Hours</div>
+                  <div className="text-3xl font-bold mb-1" style={{ color: 'white' }}>{stats.todayAppointments}</div>
+                  <div className="text-sm" style={{ color: '#e9d5ff' }}>Bookings Today</div>
+                  <div className="text-xs mt-1" style={{ color: '#86efac' }}>+{Math.floor(stats.todayAppointments * 0.6)} After Hours</div>
                 </div>
                 <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-6 text-center">
-                  <div className="text-3xl font-bold text-white mb-1">{Math.floor(stats.monthlyRevenue / 100)}</div>
-                  <div className="text-purple-200 text-sm">Calls Handled</div>
-                  <div className="text-green-300 text-xs mt-1">This Month</div>
+                  <div className="text-3xl font-bold mb-1" style={{ color: 'white' }}>{Math.floor(stats.monthlyRevenue / 100)}</div>
+                  <div className="text-sm" style={{ color: '#e9d5ff' }}>Calls Handled</div>
+                  <div className="text-xs mt-1" style={{ color: '#86efac' }}>This Month</div>
                 </div>
                 <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-6 text-center">
-                  <div className="text-3xl font-bold text-white mb-1">$0</div>
-                  <div className="text-purple-200 text-sm">Missed Revenue</div>
-                  <div className="text-green-300 text-xs mt-1">vs $8,000 avg lost</div>
+                  <div className="text-3xl font-bold mb-1" style={{ color: 'white' }}>$0</div>
+                  <div className="text-sm" style={{ color: '#e9d5ff' }}>Missed Revenue</div>
+                  <div className="text-xs mt-1" style={{ color: '#86efac' }}>vs $8,000 avg lost</div>
                 </div>
                 <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-6 text-center">
-                  <div className="text-3xl font-bold text-white mb-1">98%</div>
-                  <div className="text-purple-200 text-sm">Success Rate</div>
-                  <div className="text-green-300 text-xs mt-1">Calls → Bookings</div>
+                  <div className="text-3xl font-bold mb-1" style={{ color: 'white' }}>98%</div>
+                  <div className="text-sm" style={{ color: '#e9d5ff' }}>Success Rate</div>
+                  <div className="text-xs mt-1" style={{ color: '#86efac' }}>Calls → Bookings</div>
                 </div>
               </div>
 
               {/* Call to Action */}
               <div className="mt-6 flex items-center justify-between">
-                <div className="text-purple-100">
+                <div style={{ color: '#e9d5ff' }}>
                   <span className="text-sm">💰 Revenue generated by AI this month: </span>
-                  <span className="text-xl font-bold text-white">${(stats.monthlyRevenue * 1.4).toLocaleString()}</span>
+                  <span className="text-xl font-bold" style={{ color: 'white' }}>${(stats.monthlyRevenue * 1.4).toLocaleString()}</span>
                 </div>
-                <a 
+                <a
                   href="/dashboard/voice-ai"
-                  className="inline-flex items-center px-4 py-2 bg-white text-purple-600 rounded-lg hover:bg-opacity-90 transition-all text-sm font-medium"
+                  className="inline-flex items-center px-4 py-2 bg-white rounded-lg hover:bg-opacity-90 transition-all text-sm font-medium"
+                  style={{ color: '#9333ea' }}
                 >
                   📊 View Call Analytics
                 </a>
