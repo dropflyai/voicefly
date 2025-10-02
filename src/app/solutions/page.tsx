@@ -325,8 +325,11 @@ export default function SolutionsPage() {
             🎙️ VoiceFly
           </Link>
           <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+            <Link href="/" style={{ color: '#4b5563', textDecoration: 'none' }}>Home</Link>
             <Link href="/solutions" style={{ color: '#6366f1', fontWeight: '500', textDecoration: 'none' }}>Solutions</Link>
+            <Link href="/features" style={{ color: '#4b5563', textDecoration: 'none' }}>Features</Link>
             <Link href="/pricing" style={{ color: '#4b5563', textDecoration: 'none' }}>Pricing</Link>
+            <Link href="/testimonials" style={{ color: '#4b5563', textDecoration: 'none' }}>Testimonials</Link>
             <Link href="/login" style={{ padding: '8px 16px', backgroundColor: '#6366f1', color: '#ffffff', borderRadius: '8px', textDecoration: 'none', fontWeight: '500' }}>
               Get Started
             </Link>

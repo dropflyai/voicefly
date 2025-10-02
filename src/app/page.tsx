@@ -23,6 +23,7 @@ export default function HomePage() {
             </div>
             <nav className="hidden md:flex items-center space-x-8">
               <Link href="/" className="text-blue-600 font-medium">Home</Link>
+              <Link href="/solutions" className="text-gray-700 hover:text-blue-600 font-medium">Solutions</Link>
               <Link href="/features" className="text-gray-700 hover:text-blue-600 font-medium">Features</Link>
               <Link href="/pricing" className="text-gray-700 hover:text-blue-600 font-medium">Pricing</Link>
               <Link href="/testimonials" className="text-gray-700 hover:text-blue-600 font-medium">Testimonials</Link>
