@@ -295,72 +295,138 @@ function DashboardPage() {
   return (
     <Layout business={business}>
       <div className="p-8">
-        {/* AI Voice System Hero Section */}
-        <div className="mb-8">
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-8 relative overflow-hidden" style={{ color: 'white' }}>
-            {/* Background Pattern */}
-            <div className="absolute inset-0 bg-black bg-opacity-10"></div>
-            <div className="absolute -top-4 -right-4 w-24 h-24 bg-white bg-opacity-10 rounded-full"></div>
-            <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-white bg-opacity-5 rounded-full"></div>
+        {/* AI Voice System Hero Section - Simplified Clean Design */}
+        <div style={{ marginBottom: '32px' }}>
+          <div style={{
+            background: 'linear-gradient(to right, #9333ea, #ec4899)',
+            borderRadius: '16px',
+            padding: '32px',
+            color: '#ffffff'
+          }}>
+            {/* Header */}
+            <div style={{ marginBottom: '24px' }}>
+              <h1 style={{
+                fontSize: '28px',
+                fontWeight: 'bold',
+                marginBottom: '8px',
+                color: '#ffffff'
+              }}>
+                🎯 Your AI Receptionist is Working!
+              </h1>
+              <p style={{ fontSize: '16px', color: '#ffffff', opacity: 0.9 }}>
+                Never miss another booking • Available 24/7 • Sounds completely human
+              </p>
+              <p style={{ fontSize: '14px', color: '#ffffff', opacity: 0.8, marginTop: '8px' }}>
+                📞 Phone: (424) 351-9304 • <span style={{ color: '#86efac' }}>● LIVE & ACTIVE</span>
+              </p>
+            </div>
 
-            <div className="relative z-10">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center">
-                  <div className="p-3 bg-white bg-opacity-20 rounded-xl mr-4">
-                    <PhoneIcon className="h-8 w-8" style={{ color: 'white' }} />
-                  </div>
-                  <div>
-                    <h1 className="text-3xl font-bold mb-2" style={{ color: 'white' }}>Your AI Receptionist is Working! 🚀</h1>
-                    <p className="text-lg" style={{ color: '#e9d5ff' }}>Never miss another booking • Available 24/7 • Sounds completely human</p>
-                  </div>
+            {/* Stats Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '16px',
+              marginBottom: '24px'
+            }}>
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffffff' }}>
+                  {stats.todayAppointments}
                 </div>
-                <div className="text-right">
-                  <div className="flex items-center mb-2" style={{ color: '#86efac' }}>
-                    <div className="w-3 h-3 rounded-full animate-pulse mr-2" style={{ backgroundColor: '#4ade80' }}></div>
-                    <span className="text-sm font-medium">LIVE & ACTIVE</span>
-                  </div>
-                  <p className="text-sm" style={{ color: '#e9d5ff' }}>Phone: (424) 351-9304</p>
+                <div style={{ fontSize: '14px', color: '#ffffff', opacity: 0.9, marginTop: '4px' }}>
+                  Bookings Today
+                </div>
+                <div style={{ fontSize: '12px', color: '#86efac', marginTop: '4px' }}>
+                  +{Math.floor(stats.todayAppointments * 0.6)} After Hours
                 </div>
               </div>
 
-              {/* AI Impact Metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-6 text-center">
-                  <div className="text-3xl font-bold mb-1" style={{ color: 'white' }}>{stats.todayAppointments}</div>
-                  <div className="text-sm" style={{ color: '#e9d5ff' }}>Bookings Today</div>
-                  <div className="text-xs mt-1" style={{ color: '#86efac' }}>+{Math.floor(stats.todayAppointments * 0.6)} After Hours</div>
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffffff' }}>
+                  {Math.floor(stats.monthlyRevenue / 100)}
                 </div>
-                <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-6 text-center">
-                  <div className="text-3xl font-bold mb-1" style={{ color: 'white' }}>{Math.floor(stats.monthlyRevenue / 100)}</div>
-                  <div className="text-sm" style={{ color: '#e9d5ff' }}>Calls Handled</div>
-                  <div className="text-xs mt-1" style={{ color: '#86efac' }}>This Month</div>
+                <div style={{ fontSize: '14px', color: '#ffffff', opacity: 0.9, marginTop: '4px' }}>
+                  Calls Handled
                 </div>
-                <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-6 text-center">
-                  <div className="text-3xl font-bold mb-1" style={{ color: 'white' }}>$0</div>
-                  <div className="text-sm" style={{ color: '#e9d5ff' }}>Missed Revenue</div>
-                  <div className="text-xs mt-1" style={{ color: '#86efac' }}>vs $8,000 avg lost</div>
-                </div>
-                <div className="bg-white bg-opacity-15 backdrop-blur-sm rounded-xl p-6 text-center">
-                  <div className="text-3xl font-bold mb-1" style={{ color: 'white' }}>98%</div>
-                  <div className="text-sm" style={{ color: '#e9d5ff' }}>Success Rate</div>
-                  <div className="text-xs mt-1" style={{ color: '#86efac' }}>Calls → Bookings</div>
+                <div style={{ fontSize: '12px', color: '#86efac', marginTop: '4px' }}>
+                  This Month
                 </div>
               </div>
 
-              {/* Call to Action */}
-              <div className="mt-6 flex items-center justify-between">
-                <div style={{ color: '#e9d5ff' }}>
-                  <span className="text-sm">💰 Revenue generated by AI this month: </span>
-                  <span className="text-xl font-bold" style={{ color: 'white' }}>${(stats.monthlyRevenue * 1.4).toLocaleString()}</span>
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffffff' }}>
+                  $0
                 </div>
-                <a
-                  href="/dashboard/voice-ai"
-                  className="inline-flex items-center px-4 py-2 bg-white rounded-lg hover:bg-opacity-90 transition-all text-sm font-medium"
-                  style={{ color: '#9333ea' }}
-                >
-                  📊 View Call Analytics
-                </a>
+                <div style={{ fontSize: '14px', color: '#ffffff', opacity: 0.9, marginTop: '4px' }}>
+                  Missed Revenue
+                </div>
+                <div style={{ fontSize: '12px', color: '#86efac', marginTop: '4px' }}>
+                  vs $8,000 avg lost
+                </div>
               </div>
+
+              <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffffff' }}>
+                  98%
+                </div>
+                <div style={{ fontSize: '14px', color: '#ffffff', opacity: 0.9, marginTop: '4px' }}>
+                  Success Rate
+                </div>
+                <div style={{ fontSize: '12px', color: '#86efac', marginTop: '4px' }}>
+                  Calls → Bookings
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom CTA */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingTop: '16px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.2)'
+            }}>
+              <div style={{ color: '#ffffff' }}>
+                <span style={{ fontSize: '14px', opacity: 0.9 }}>💰 Revenue generated by AI this month: </span>
+                <span style={{ fontSize: '20px', fontWeight: 'bold' }}>
+                  ${(stats.monthlyRevenue * 1.4).toLocaleString()}
+                </span>
+              </div>
+              <a
+                href="/dashboard/voice-ai"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '10px 20px',
+                  backgroundColor: '#ffffff',
+                  color: '#9333ea',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  textDecoration: 'none'
+                }}
+              >
+                📊 View Call Analytics
+              </a>
             </div>
           </div>
         </div>
