@@ -44,6 +44,13 @@ export default function LoginPage() {
     )
 
     if (isValidLogin) {
+      // Set authentication in localStorage
+      const demoBusinessId = 'demo-business-' + Date.now()
+      localStorage.setItem('authenticated_business_id', demoBusinessId)
+      localStorage.setItem('authenticated_user_email', formData.email)
+      localStorage.setItem('authenticated_business_name', 'VoiceFly Demo Business')
+      localStorage.setItem('authenticated_business_type', 'nail_salon')
+
       // Redirect to dashboard
       window.location.href = '/dashboard'
     } else {
