@@ -411,7 +411,7 @@ export default function CustomersPage() {
             <div className="px-4 py-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <UserPlusIcon className="h-8 w-8 text-brand-600" />
+                  <UserPlusIcon className="h-8 w-8 text-blue-600" />
                 </div>
                 <div className="ml-5">
                   <div className="text-sm font-medium text-gray-500">Total Customers</div>
@@ -581,7 +581,7 @@ export default function CustomersPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
-                      <div className="h-12 w-12 bg-gradient-to-br from-beauty-400 to-brand-500 rounded-full flex items-center justify-center">
+                      <div className="h-12 w-12 bg-gradient-to-br from-beauty-400 to-blue-500 rounded-full flex items-center justify-center">
                         <span className="text-white font-semibold">
                           {customer.firstName[0]}{customer.lastName[0]}
                         </span>
@@ -709,7 +709,7 @@ export default function CustomersPage() {
                 <div className="bg-white px-6 py-6">
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center">
-                      <div className="h-16 w-16 bg-gradient-to-br from-beauty-400 to-brand-500 rounded-full flex items-center justify-center">
+                      <div className="h-16 w-16 bg-gradient-to-br from-beauty-400 to-blue-500 rounded-full flex items-center justify-center">
                         <span className="text-white font-semibold text-xl">
                           {selectedCustomer.firstName[0]}{selectedCustomer.lastName[0]}
                         </span>
@@ -820,7 +820,7 @@ export default function CustomersPage() {
                           {selectedCustomer.favoriteServices.map((service, index) => (
                             <span
                               key={index}
-                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-800"
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                             >
                               {service}
                             </span>

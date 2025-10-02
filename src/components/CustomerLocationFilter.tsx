@@ -33,7 +33,7 @@ export default function CustomerLocationFilter({
     <div className={`relative ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+        className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
       >
         <MapPinIcon className="h-4 w-4 text-gray-400" />
         <span className="text-sm font-medium text-gray-700">
@@ -64,7 +64,7 @@ export default function CustomerLocationFilter({
                 }}
                 className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
                   selectedLocationId === 'all' 
-                    ? 'bg-brand-50 text-brand-700 font-medium' 
+                    ? 'bg-blue-50 text-blue-700 font-medium' 
                     : 'text-gray-700'
                 }`}
               >
@@ -92,7 +92,7 @@ export default function CustomerLocationFilter({
                   }}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
                     selectedLocationId === location.id
-                      ? 'bg-brand-50 text-brand-700 font-medium'
+                      ? 'bg-blue-50 text-blue-700 font-medium'
                       : 'text-gray-700'
                   }`}
                 >

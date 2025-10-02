@@ -348,7 +348,7 @@ export default function StaffPage() {
             <div key={member.id} className="card hover:shadow-lg transition-shadow">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center">
-                  <div className="h-12 w-12 bg-gradient-to-br from-beauty-400 to-brand-500 rounded-full flex items-center justify-center">
+                  <div className="h-12 w-12 bg-gradient-to-br from-beauty-400 to-blue-500 rounded-full flex items-center justify-center">
                     <span className="text-white font-semibold text-lg">
                       {member.name.split(' ').map(n => n[0]).join('')}
                     </span>
@@ -397,7 +397,7 @@ export default function StaffPage() {
                   {member.specialties.map((specialty, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-800"
+                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                     >
                       {specialty}
                     </span>
@@ -440,7 +440,7 @@ export default function StaffPage() {
                 <div className="bg-white px-6 py-6">
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center">
-                      <div className="h-16 w-16 bg-gradient-to-br from-beauty-400 to-brand-500 rounded-full flex items-center justify-center">
+                      <div className="h-16 w-16 bg-gradient-to-br from-beauty-400 to-blue-500 rounded-full flex items-center justify-center">
                         <span className="text-white font-semibold text-xl">
                           {selectedStaff.name.split(' ').map(n => n[0]).join('')}
                         </span>
@@ -503,7 +503,7 @@ export default function StaffPage() {
                           {selectedStaff.specialties.map((specialty, index) => (
                             <span
                               key={index}
-                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-100 text-brand-800"
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                             >
                               {specialty}
                             </span>

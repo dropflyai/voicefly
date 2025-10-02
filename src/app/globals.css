@@ -10,6 +10,30 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Custom brand colors */
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
+
+  /* Beauty/accent color */
+  --color-beauty-50: #fdf4ff;
+  --color-beauty-100: #fae8ff;
+  --color-beauty-200: #f5d0fe;
+  --color-beauty-300: #f0abfc;
+  --color-beauty-400: #e879f9;
+  --color-beauty-500: #d946ef;
+  --color-beauty-600: #c026d3;
+  --color-beauty-700: #a21caf;
+  --color-beauty-800: #86198f;
+  --color-beauty-900: #701a75;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -25,59 +49,51 @@ body {
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
-/* FORCE ALL TEXT TO BE READABLE - OVERRIDE EVERYTHING */
-.text-gray-600,
-.text-gray-500,
-.text-gray-400,
-.text-gray-300,
-.text-gray-200,
-.text-blue-200,
-.text-blue-300,
-.text-blue-400,
-.text-blue-500 {
-  color: #000000 !important;
+/* Custom utility classes */
+.stat-card {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200;
 }
 
-/* Keep dark text dark */
-.text-gray-900,
-.text-gray-800,
-.text-gray-700,
-.text-black {
-  color: #000000 !important;
+.card {
+  @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
 }
 
-/* Keep white text white on dark backgrounds */
-.text-white,
-.bg-gray-900 .text-white,
-.bg-blue-600 .text-white,
-.bg-blue-700 .text-white,
-.bg-blue-800 .text-white {
-  color: #ffffff !important;
+.nav-item {
+  @apply flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors;
 }
 
-/* Navigation text - force visible - except sidebar */
-.text-blue-600,
-.text-blue-700,
-.text-blue-800,
-.text-blue-900 {
-  color: #000000 !important;
+.nav-item-active {
+  @apply bg-blue-50 text-blue-700;
 }
 
-/* Main navigation links should be black except in sidebar */
-main nav a,
-main nav button,
-main nav span {
-  color: #000000 !important;
+.nav-item-inactive {
+  @apply text-gray-700 hover:bg-gray-50 hover:text-gray-900;
 }
 
-/* Force all text in navigation to be black - except dark sidebar */
-header a,
-header button,
-header span {
-  color: #ffffff !important;
+.btn-primary {
+  @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
 }
 
-/* LEFT SIDEBAR - Force all text to be white */
-aside * {
-  color: #ffffff !important;
+.btn-secondary {
+  @apply inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }

@@ -141,7 +141,7 @@ export default function AnalyticsPage() {
             <div className="px-4 py-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <CalendarIcon className="h-8 w-8 text-brand-600" />
+                  <CalendarIcon className="h-8 w-8 text-blue-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -297,7 +297,7 @@ export default function AnalyticsPage() {
               {staffPerformance.map((staff, index) => (
                 <div key={staff.name} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center">
-                    <div className="h-12 w-12 bg-gradient-to-br from-beauty-400 to-brand-500 rounded-full flex items-center justify-center">
+                    <div className="h-12 w-12 bg-gradient-to-br from-beauty-400 to-blue-500 rounded-full flex items-center justify-center">
                       <span className="text-white font-semibold">
                         {staff.name[0]}
                       </span>
@@ -321,7 +321,7 @@ export default function AnalyticsPage() {
                       <div className="text-sm text-gray-500">Revenue</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-brand-600">{formatCurrency(staff.revenue / staff.appointments)}</div>
+                      <div className="text-2xl font-bold text-blue-600">{formatCurrency(staff.revenue / staff.appointments)}</div>
                       <div className="text-sm text-gray-500">Avg. Ticket</div>
                     </div>
                   </div>

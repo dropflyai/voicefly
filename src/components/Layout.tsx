@@ -250,7 +250,7 @@ export default function Layout({ children, business }: LayoutProps) {
         <div className="md:hidden pl-1 pt-1 sm:pl-3 sm:pt-3">
           <button
             type="button"
-            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-brand-500"
+            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
             onClick={() => setSidebarOpen(true)}
           >
             <Bars3Icon className="h-6 w-6" aria-hidden="true" />
@@ -286,7 +286,7 @@ function SidebarContent({ business }: { business?: LayoutProps['business'] }) {
       <div className="flex items-center flex-shrink-0 px-4">
         <div className="flex flex-col">
           <div className="flex items-center">
-            <div className="h-8 w-8 bg-gradient-to-br from-beauty-500 to-brand-600 rounded-lg flex items-center justify-center">
+            <div className="h-8 w-8 bg-gradient-to-br from-beauty-500 to-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">✨</span>
             </div>
             <div className="ml-3">
@@ -318,11 +318,10 @@ function SidebarContent({ business }: { business?: LayoutProps['business'] }) {
               className={clsx(
                 'nav-item group',
                 isActive ? 'nav-item-active' : 'nav-item-inactive',
-                isUpgradeRequired ? 'opacity-60' : '',
-                isActive ? 'text-brand-700' : 'text-gray-700'
+                isUpgradeRequired ? 'opacity-60' : ''
               )}
             >
-              <item.icon className={clsx("mr-3 h-5 w-5", isActive ? 'text-brand-600' : 'text-gray-500')} aria-hidden="true" />
+              <item.icon className={clsx("mr-3 h-5 w-5", isActive ? 'text-blue-600' : 'text-gray-500')} aria-hidden="true" />
               {item.name}
               {isUpgradeRequired && (
                 <span className="ml-auto text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full group-hover:scale-105 transition-transform">

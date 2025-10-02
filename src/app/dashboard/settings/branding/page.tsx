@@ -123,9 +123,9 @@ export default function BrandingSettingsPage() {
       setTimeout(() => setSuccessMessage(''), 3000)
 
       // Update charts and preview in real-time
-      document.documentElement.style.setProperty('--brand-primary', branding.primary_color)
-      document.documentElement.style.setProperty('--brand-secondary', branding.secondary_color)
-      document.documentElement.style.setProperty('--brand-accent', branding.accent_color)
+      document.documentElement.style.setProperty('--blue-primary', branding.primary_color)
+      document.documentElement.style.setProperty('--blue-secondary', branding.secondary_color)
+      document.documentElement.style.setProperty('--blue-accent', branding.accent_color)
     } catch (error) {
       console.error('Error saving branding:', error)
       alert('Failed to save branding settings. Please try again.')
@@ -173,9 +173,9 @@ export default function BrandingSettingsPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-6" style={{
-      '--brand-primary': branding.primary_color,
-      '--brand-secondary': branding.secondary_color,
-      '--brand-accent': branding.accent_color
+      '--blue-primary': branding.primary_color,
+      '--blue-secondary': branding.secondary_color,
+      '--blue-accent': branding.accent_color
     } as any}>
       {/* Header */}
       <div className="flex items-center justify-between mb-8">

@@ -106,7 +106,7 @@ export default function SettingsPage() {
                   className={clsx(
                     'w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
                     activeTab === tab.id
-                      ? 'bg-brand-100 text-brand-700'
+                      ? 'bg-blue-100 text-blue-700'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                   )}
                 >
@@ -265,7 +265,7 @@ export default function SettingsPage() {
                             onClick={() => updateBusinessHours(key, 'isOpen', !businessHours[key].isOpen)}
                             className={clsx(
                               'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out',
-                              businessHours[key].isOpen ? 'bg-brand-600' : 'bg-gray-200'
+                              businessHours[key].isOpen ? 'bg-blue-600' : 'bg-gray-200'
                             )}
                           >
                             <span
@@ -304,11 +304,11 @@ export default function SettingsPage() {
                   <div className="mt-6 pt-6 border-t">
                     <h3 className="text-sm font-medium text-gray-900 mb-4">Quick Settings</h3>
                     <div className="space-y-2">
-                      <button className="text-sm text-brand-600 hover:text-brand-700">
+                      <button className="text-sm text-blue-600 hover:text-blue-700">
                         Copy Monday hours to all weekdays
                       </button>
                       <br />
-                      <button className="text-sm text-brand-600 hover:text-brand-700">
+                      <button className="text-sm text-blue-600 hover:text-blue-700">
                         Set weekend hours (9 AM - 4 PM)
                       </button>
                     </div>
@@ -343,7 +343,7 @@ export default function SettingsPage() {
                               onClick={() => updateNotification(key, !notifications[key as keyof typeof notifications])}
                               className={clsx(
                                 'mt-1 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out',
-                                notifications[key as keyof typeof notifications] ? 'bg-brand-600' : 'bg-gray-200'
+                                notifications[key as keyof typeof notifications] ? 'bg-blue-600' : 'bg-gray-200'
                               )}
                             >
                               <span
@@ -375,7 +375,7 @@ export default function SettingsPage() {
                               onClick={() => updateNotification(key, !notifications[key as keyof typeof notifications])}
                               className={clsx(
                                 'mt-1 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out',
-                                notifications[key as keyof typeof notifications] ? 'bg-brand-600' : 'bg-gray-200'
+                                notifications[key as keyof typeof notifications] ? 'bg-blue-600' : 'bg-gray-200'
                               )}
                             >
                               <span
@@ -470,7 +470,7 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 bg-brand-600 rounded-full flex items-center justify-center">
+                        <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">
                           <span className="text-white font-medium">JS</span>
                         </div>
                         <div>
@@ -533,7 +533,7 @@ export default function SettingsPage() {
                           Connected
                         </span>
                       </div>
-                      <button className="text-sm text-brand-600 hover:text-brand-700">
+                      <button className="text-sm text-blue-600 hover:text-blue-700">
                         Configure
                       </button>
                     </div>
@@ -553,7 +553,7 @@ export default function SettingsPage() {
                           Connected
                         </span>
                       </div>
-                      <button className="text-sm text-brand-600 hover:text-brand-700">
+                      <button className="text-sm text-blue-600 hover:text-blue-700">
                         Configure
                       </button>
                     </div>

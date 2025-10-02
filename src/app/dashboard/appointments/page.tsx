@@ -486,8 +486,8 @@ export default function AppointmentsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
-                      <div className="h-10 w-10 bg-brand-100 rounded-full flex items-center justify-center">
-                        <CalendarIcon className="h-5 w-5 text-brand-600" />
+                      <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <CalendarIcon className="h-5 w-5 text-blue-600" />
                       </div>
                     </div>
                     

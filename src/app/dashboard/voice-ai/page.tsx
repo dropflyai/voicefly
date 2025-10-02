@@ -199,7 +199,7 @@ export default function VoiceAIPage() {
             <div className="px-4 py-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <PhoneIcon className="h-8 w-8 text-brand-600" />
+                  <PhoneIcon className="h-8 w-8 text-blue-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -410,8 +410,8 @@ export default function VoiceAIPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="flex-shrink-0">
-                      <div className="h-10 w-10 bg-brand-100 rounded-full flex items-center justify-center">
-                        <PhoneIcon className="h-5 w-5 text-brand-600" />
+                      <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <PhoneIcon className="h-5 w-5 text-blue-600" />
                       </div>
                     </div>
                     

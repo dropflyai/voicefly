@@ -504,7 +504,7 @@ function DashboardPage() {
             <div className="px-4 py-5 sm:p-6">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <CalendarIcon className="h-8 w-8 text-brand-600" />
+                  <CalendarIcon className="h-8 w-8 text-blue-600" />
                 </div>
                 <div className="ml-5 w-0 flex-1">
                   <dl>
@@ -627,7 +627,7 @@ function DashboardPage() {
                 </h2>
                 <a 
                   href="/dashboard/appointments" 
-                  className="text-brand-600 hover:text-brand-700 text-sm font-medium"
+                  className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                 >
                   View all
                 </a>
@@ -640,8 +640,8 @@ function DashboardPage() {
                     className="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
                     <div className="flex-shrink-0">
-                      <div className="h-10 w-10 bg-brand-100 rounded-full flex items-center justify-center">
-                        <CalendarIcon className="h-5 w-5 text-brand-600" />
+                      <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <CalendarIcon className="h-5 w-5 text-blue-600" />
                       </div>
                     </div>
                     <div className="ml-4 flex-1">
@@ -693,10 +693,10 @@ function DashboardPage() {
               <div className="space-y-3">
                 <a 
                   href="/dashboard/appointments" 
-                  className="flex items-center p-3 bg-brand-50 rounded-lg hover:bg-brand-100 transition-colors group"
+                  className="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors group"
                 >
-                  <CalendarIcon className="h-5 w-5 text-brand-600 mr-3" />
-                  <span className="text-sm font-medium text-brand-700 group-hover:text-brand-800">
+                  <CalendarIcon className="h-5 w-5 text-blue-600 mr-3" />
+                  <span className="text-sm font-medium text-blue-700 group-hover:text-blue-800">
                     Manage Appointments
                   </span>
                 </a>
@@ -837,7 +837,7 @@ function DashboardPage() {
               
               <a 
                 href="/dashboard/voice-ai" 
-                className="mt-4 flex items-center justify-center p-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+                className="mt-4 flex items-center justify-center p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <PhoneIcon className="h-4 w-4 mr-2" />
                 <span className="text-sm font-medium">Manage Voice AI</span>

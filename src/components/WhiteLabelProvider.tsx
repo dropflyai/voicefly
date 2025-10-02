@@ -91,10 +91,10 @@ export function WhiteLabelProvider({ children }: WhiteLabelProviderProps) {
     const applyBranding = (branding: WhiteLabelConfig['branding']) => {
       // Apply CSS variables to document root
       const root = document.documentElement
-      root.style.setProperty('--brand-primary', branding.colors.primary)
-      root.style.setProperty('--brand-secondary', branding.colors.secondary)
-      root.style.setProperty('--brand-accent', branding.colors.accent)
-      root.style.setProperty('--brand-font', branding.font_family)
+      root.style.setProperty('--blue-primary', branding.colors.primary)
+      root.style.setProperty('--blue-secondary', branding.colors.secondary)
+      root.style.setProperty('--blue-accent', branding.colors.accent)
+      root.style.setProperty('--blue-font', branding.font_family)
 
       // Update document title and favicon if provided
       if (branding.platform_name) {
@@ -149,100 +149,100 @@ function WhiteLabelStyles({ colors, fontFamily }: WhiteLabelStylesProps) {
   return (
     <style jsx global>{`
       :root {
-        --brand-primary: ${colors.primary};
-        --brand-secondary: ${colors.secondary};
-        --brand-accent: ${colors.accent};
-        --brand-font: ${fontFamily}, sans-serif;
+        --blue-primary: ${colors.primary};
+        --blue-secondary: ${colors.secondary};
+        --blue-accent: ${colors.accent};
+        --blue-font: ${fontFamily}, sans-serif;
       }
 
       /* Apply white-label theming */
       .white-label-app {
-        font-family: var(--brand-font);
+        font-family: var(--blue-font);
       }
 
       /* Button theming */
       .white-label-app .btn-primary,
       .white-label-app button[class*="bg-purple-600"] {
-        background-color: var(--brand-primary) !important;
-        border-color: var(--brand-primary) !important;
+        background-color: var(--blue-primary) !important;
+        border-color: var(--blue-primary) !important;
       }
 
       .white-label-app .btn-primary:hover,
       .white-label-app button[class*="bg-purple-600"]:hover {
-        background-color: var(--brand-secondary) !important;
-        border-color: var(--brand-secondary) !important;
+        background-color: var(--blue-secondary) !important;
+        border-color: var(--blue-secondary) !important;
       }
 
       /* Link theming */
       .white-label-app a,
       .white-label-app [class*="text-purple-600"] {
-        color: var(--brand-primary) !important;
+        color: var(--blue-primary) !important;
       }
 
       .white-label-app a:hover,
       .white-label-app [class*="text-purple-600"]:hover {
-        color: var(--brand-secondary) !important;
+        color: var(--blue-secondary) !important;
       }
 
       /* Border theming */
       .white-label-app [class*="border-purple-"],
       .white-label-app [class*="ring-purple-"] {
-        border-color: var(--brand-primary) !important;
-        --tw-ring-color: var(--brand-primary) !important;
+        border-color: var(--blue-primary) !important;
+        --tw-ring-color: var(--blue-primary) !important;
       }
 
       /* Background theming */
       .white-label-app [class*="bg-purple-50"] {
-        background-color: color-mix(in srgb, var(--brand-primary) 10%, white) !important;
+        background-color: color-mix(in srgb, var(--blue-primary) 10%, white) !important;
       }
 
       .white-label-app [class*="bg-purple-100"] {
-        background-color: color-mix(in srgb, var(--brand-primary) 20%, white) !important;
+        background-color: color-mix(in srgb, var(--blue-primary) 20%, white) !important;
       }
 
       /* Text theming */
       .white-label-app h1,
       .white-label-app h2,
       .white-label-app h3,
-      .white-label-app .text-brand-primary {
-        color: var(--brand-primary) !important;
+      .white-label-app .text-blue-primary {
+        color: var(--blue-primary) !important;
       }
 
-      .white-label-app .text-brand-accent {
-        color: var(--brand-accent) !important;
+      .white-label-app .text-blue-accent {
+        color: var(--blue-accent) !important;
       }
 
       /* Chart theming */
       .white-label-app .recharts-line-curve {
-        stroke: var(--brand-primary) !important;
+        stroke: var(--blue-primary) !important;
       }
 
       .white-label-app .recharts-bar {
-        fill: var(--brand-primary) !important;
+        fill: var(--blue-primary) !important;
       }
 
       .white-label-app .recharts-active-dot {
-        stroke: var(--brand-secondary) !important;
-        fill: var(--brand-secondary) !important;
+        stroke: var(--blue-secondary) !important;
+        fill: var(--blue-secondary) !important;
       }
 
       /* Form theming */
       .white-label-app input:focus,
       .white-label-app select:focus,
       .white-label-app textarea:focus {
-        border-color: var(--brand-primary) !important;
-        --tw-ring-color: var(--brand-primary) !important;
+        border-color: var(--blue-primary) !important;
+        --tw-ring-color: var(--blue-primary) !important;
       }
 
       /* Status indicators */
       .white-label-app .status-active {
-        background-color: color-mix(in srgb, var(--brand-accent) 20%, white) !important;
-        color: var(--brand-accent) !important;
+        background-color: color-mix(in srgb, var(--blue-accent) 20%, white) !important;
+        color: var(--blue-accent) !important;
       }
 
       /* Navigation theming */
       .white-label-app .nav-active {
-        background-color: var(--brand-primary) !important;
+        background-color: var(--blue-primary) !important;
         color: white !important;
       }
 
@@ -253,33 +253,33 @@ function WhiteLabelStyles({ colors, fontFamily }: WhiteLabelStylesProps) {
 
       /* Gradient backgrounds */
       .white-label-app .gradient-primary {
-        background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%) !important;
+        background: linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-secondary) 100%) !important;
       }
 
       /* Custom scrollbar */
       .white-label-app ::-webkit-scrollbar-thumb {
-        background-color: var(--brand-primary) !important;
+        background-color: var(--blue-primary) !important;
       }
 
       .white-label-app ::-webkit-scrollbar-track {
-        background-color: color-mix(in srgb, var(--brand-primary) 10%, white) !important;
+        background-color: color-mix(in srgb, var(--blue-primary) 10%, white) !important;
       }
 
       /* Loading indicators */
       .white-label-app .loading-spinner {
-        border-top-color: var(--brand-primary) !important;
+        border-top-color: var(--blue-primary) !important;
       }
 
       /* Alert styling */
       .white-label-app .alert-primary {
-        background-color: color-mix(in srgb, var(--brand-primary) 10%, white) !important;
-        border-color: var(--brand-primary) !important;
-        color: var(--brand-primary) !important;
+        background-color: color-mix(in srgb, var(--blue-primary) 10%, white) !important;
+        border-color: var(--blue-primary) !important;
+        color: var(--blue-primary) !important;
       }
 
       /* Modal styling */
       .white-label-app .modal-header {
-        background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%) !important;
+        background: linear-gradient(135deg, var(--blue-primary) 0%, var(--blue-secondary) 100%) !important;
         color: white !important;
       }
     `}</style>

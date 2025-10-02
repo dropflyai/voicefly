@@ -107,7 +107,7 @@ const getBusinessTypeCategories = (businessType: string) => {
     case 'Medical Spa':
       return [
         ...baseCategories,
-        { name: 'Injectables', value: 'Injectables', color: 'bg-brand-100 text-brand-800' },
+        { name: 'Injectables', value: 'Injectables', color: 'bg-blue-100 text-blue-800' },
         { name: 'Laser Treatments', value: 'Laser Treatments', color: 'bg-beauty-100 text-beauty-800' },
         { name: 'Skin Treatments', value: 'Skin Treatments', color: 'bg-purple-100 text-purple-800' },
         { name: 'Body Contouring', value: 'Body Contouring', color: 'bg-green-100 text-green-800' }
@@ -115,7 +115,7 @@ const getBusinessTypeCategories = (businessType: string) => {
     case 'Day Spa':
       return [
         ...baseCategories,
-        { name: 'Massages', value: 'Massages', color: 'bg-brand-100 text-brand-800' },
+        { name: 'Massages', value: 'Massages', color: 'bg-blue-100 text-blue-800' },
         { name: 'Facials', value: 'Facials', color: 'bg-beauty-100 text-beauty-800' },
         { name: 'Body Treatments', value: 'Body Treatments', color: 'bg-purple-100 text-purple-800' },
         { name: 'Specialty Services', value: 'Specialty Services', color: 'bg-green-100 text-green-800' }
@@ -123,7 +123,7 @@ const getBusinessTypeCategories = (businessType: string) => {
     case 'Wellness Center':
       return [
         ...baseCategories,
-        { name: 'Alternative Medicine', value: 'Alternative Medicine', color: 'bg-brand-100 text-brand-800' },
+        { name: 'Alternative Medicine', value: 'Alternative Medicine', color: 'bg-blue-100 text-blue-800' },
         { name: 'Energy Healing', value: 'Energy Healing', color: 'bg-beauty-100 text-beauty-800' },
         { name: 'Wellness Consultations', value: 'Wellness Consultations', color: 'bg-purple-100 text-purple-800' },
         { name: 'Therapeutic Services', value: 'Therapeutic Services', color: 'bg-green-100 text-green-800' }
@@ -131,7 +131,7 @@ const getBusinessTypeCategories = (businessType: string) => {
     default:
       return [
         ...baseCategories,
-        { name: 'Manicures', value: 'Manicures', color: 'bg-brand-100 text-brand-800' },
+        { name: 'Manicures', value: 'Manicures', color: 'bg-blue-100 text-blue-800' },
         { name: 'Pedicures', value: 'Pedicures', color: 'bg-beauty-100 text-beauty-800' },
         { name: 'Enhancements', value: 'Enhancements', color: 'bg-purple-100 text-purple-800' },
         { name: 'Spa Services', value: 'Spa Services', color: 'bg-green-100 text-green-800' }
@@ -279,7 +279,7 @@ export default function ServicesPage() {
           <div className="mt-4 sm:mt-0">
             <button
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <PlusIcon className="h-4 w-4 mr-2" />
               {businessType === 'medical_practice' ? 'Add Procedure' :
@@ -299,7 +299,7 @@ export default function ServicesPage() {
                            businessType === 'dental_practice' ? 'Search dental services...' : 'Search services...'}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
           </div>
@@ -345,7 +345,7 @@ export default function ServicesPage() {
               {services.length === 0 && (
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="inline-flex items-center px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   {businessType === 'medical_practice' ? 'Add Your First Procedure' :
@@ -361,7 +361,7 @@ export default function ServicesPage() {
                     <div className="flex-shrink-0">
                       <div className={clsx(
                         'h-12 w-12 rounded-lg flex items-center justify-center',
-                        service.isActive ? 'bg-brand-100' : 'bg-gray-100'
+                        service.isActive ? 'bg-blue-100' : 'bg-gray-100'
                       )}>
                         <span className="text-lg">
                           {getServiceIcon(service.category, businessType)}
