@@ -111,40 +111,83 @@ function DashboardPage() {
       }
       
       console.log('🔍 Dashboard loading with Business ID:', businessId)
-      const businessData = await BusinessAPI.getBusiness(businessId)
-      console.log('📋 Business data loaded:', businessData?.name)
-      if (businessData) {
+
+      // Check if this is a demo business (created by login page)
+      const isDemoMode = businessId.startsWith('demo-business-')
+
+      let businessData
+      if (isDemoMode) {
+        // Create mock business data for demo mode
+        console.log('🎭 Running in DEMO mode - using mock data')
+        businessData = {
+          id: businessId,
+          name: 'VoiceFly Demo Business',
+          slug: 'voicefly-demo',
+          business_type: 'nail_salon',
+          phone: '(555) 123-4567',
+          email: 'demo@voicefly.ai',
+          website: 'https://voicefly.ai',
+          address_line1: '123 Demo Street',
+          city: 'San Francisco',
+          state: 'CA',
+          postal_code: '94102',
+          country: 'US',
+          timezone: 'America/Los_Angeles',
+          subscription_tier: 'professional' as const,
+          subscription_status: 'active' as const,
+          trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
         setBusiness(businessData)
       } else {
-        setError('Business not found. Please check your configuration.')
-        return
+        // Real mode - fetch from database
+        businessData = await BusinessAPI.getBusiness(businessId)
+        console.log('📋 Business data loaded:', businessData?.name)
+        if (businessData) {
+          setBusiness(businessData)
+        } else {
+          setError('Business not found. Please check your configuration.')
+          return
+        }
       }
 
       // Load locations for Business tier
-      if (businessData.subscription_tier === 'business') {
+      if (!isDemoMode && businessData.subscription_tier === 'business') {
         const locationAPI = new LocationAPIImpl()
         const locationsData = await locationAPI.getLocations(businessId)
         setLocations(locationsData)
       }
 
       // Load dashboard statistics
-      const dashboardStats = await BusinessAPI.getDashboardStats(businessId)
-      setStats(dashboardStats)
+      if (isDemoMode) {
+        // Mock stats for demo mode
+        setStats({
+          totalAppointments: 247,
+          todayAppointments: 8,
+          monthlyRevenue: 12450,
+          activeCustomers: 89
+        })
+        setUpcomingAppointments([])
+      } else {
+        const dashboardStats = await BusinessAPI.getDashboardStats(businessId)
+        setStats(dashboardStats)
 
-      // Load upcoming appointments with location filtering
-      const appointmentFilters = selectedLocationId === 'all' ? {} : { location_id: selectedLocationId }
-      const upcomingAppts = await BusinessAPI.getUpcomingAppointments(businessId, 5)
-      console.log('📅 Upcoming appointments loaded:', upcomingAppts.length)
-      
-      // Enhance appointments with location data
-      const enhancedAppointments = upcomingAppts.map(apt => ({
-        ...apt,
-        location: locations.find(loc => loc.id === apt.location_id) || null
-      }))
-      setUpcomingAppointments(enhancedAppointments)
+        // Load upcoming appointments with location filtering
+        const appointmentFilters = selectedLocationId === 'all' ? {} : { location_id: selectedLocationId }
+        const upcomingAppts = await BusinessAPI.getUpcomingAppointments(businessId, 5)
+        console.log('📅 Upcoming appointments loaded:', upcomingAppts.length)
+
+        // Enhance appointments with location data
+        const enhancedAppointments = upcomingAppts.map(apt => ({
+          ...apt,
+          location: locations.find(loc => loc.id === apt.location_id) || null
+        }))
+        setUpcomingAppointments(enhancedAppointments)
+      }
 
       // Load payment data for Professional+ tiers
-      if (['professional', 'business'].includes(businessData.subscription_tier)) {
+      if (!isDemoMode && ['professional', 'business'].includes(businessData.subscription_tier)) {
         const paymentAPI = new PaymentAPIImpl()
         const paymentsData = await paymentAPI.getPayments(businessId, { limit: 3 })
         setRecentPayments(paymentsData)
