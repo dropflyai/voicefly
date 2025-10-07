@@ -15,15 +15,64 @@ interface ResearchRequest {
 }
 
 async function performWebSearch(query: string): Promise<any> {
-  // TODO: Integrate with WebSearch tool when available
-  // For now, return mock data
+  const BRAVE_API_KEY = process.env.BRAVE_SEARCH_API_KEY
+
+  // If Brave API is configured, use real web search
+  if (BRAVE_API_KEY && BRAVE_API_KEY !== 'your_brave_search_api_key_here') {
+    try {
+      const response = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=10`, {
+        headers: {
+          'Accept': 'application/json',
+          'Accept-Encoding': 'gzip',
+          'X-Subscription-Token': BRAVE_API_KEY
+        }
+      })
+
+      if (!response.ok) {
+        console.error('Brave Search API error:', response.status)
+        return getMockSearchResults(query)
+      }
+
+      const data = await response.json()
+
+      return {
+        results: data.web?.results?.map((result: any) => ({
+          title: result.title,
+          url: result.url,
+          snippet: result.description || '',
+          relevance: 0.9 // Brave doesn't provide relevance scores
+        })) || []
+      }
+    } catch (error) {
+      console.error('Web search failed, falling back to mock data:', error)
+      return getMockSearchResults(query)
+    }
+  }
+
+  // Fallback to mock data if no API key
+  return getMockSearchResults(query)
+}
+
+function getMockSearchResults(query: string): any {
   return {
     results: [
       {
-        title: 'Market Analysis 2025',
+        title: `${query} - Market Analysis 2025`,
         url: 'https://example.com/analysis',
-        snippet: 'Comprehensive market analysis showing...',
+        snippet: 'Comprehensive market analysis showing strong growth trends and opportunities...',
         relevance: 0.95
+      },
+      {
+        title: `Industry Report: ${query}`,
+        url: 'https://example.com/industry-report',
+        snippet: 'Latest industry insights and competitive landscape analysis...',
+        relevance: 0.88
+      },
+      {
+        title: `${query} Best Practices Guide`,
+        url: 'https://example.com/best-practices',
+        snippet: 'Expert recommendations and proven strategies for success...',
+        relevance: 0.82
       }
     ]
   }
@@ -33,7 +82,7 @@ async function analyzeWithAI(query: string, searchResults: any[], mode: string):
   const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY
 
   // If Claude API key is configured, use real AI
-  if (ANTHROPIC_API_KEY) {
+  if (ANTHROPIC_API_KEY && ANTHROPIC_API_KEY !== 'your_anthropic_api_key_here') {
     try {
       return await callClaudeAPI(query, searchResults, mode)
     } catch (error) {
@@ -43,6 +92,7 @@ async function analyzeWithAI(query: string, searchResults: any[], mode: string):
   }
 
   // Fallback to templates (MVP mode)
+  console.log('Using template responses - add ANTHROPIC_API_KEY for real AI analysis')
   return generateTemplateResponse(query, mode)
 }
 
