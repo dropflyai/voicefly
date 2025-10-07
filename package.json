@@ -13,7 +13,7 @@
     "revfly:setup": "node -e \"console.log('RevFly setup complete! Run: npm run revfly:dev')\""
   },
   "dependencies": {
-    "@headlessui/react": "^1.7.17",
+    "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.0.18",
     "@react-email/components": "^0.5.1",
     "@sendgrid/mail": "^8.1.5",
@@ -40,6 +40,8 @@
     "next": "15.5.3",
     "node-cron": "^4.2.1",
     "ora": "^5.4.1",
+    "pg": "^8.16.3",
+    "playwright": "^1.55.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-email": "^4.2.8",
