@@ -318,47 +318,76 @@ Organize services by category for easier booking:
   subscriptionFeatures: {
     starter: {
       name: "Starter Plan",
-      price: "$99/month",
+      price: "$67/month",
       features: [
-        "Up to 500 AI calls/month",
-        "1 phone number",
-        "Basic voice AI",
-        "Email support",
+        "50 appointments/month",
         "Up to 100 customers",
-        "Basic analytics"
-      ]
+        "Up to 5 services",
+        "1 location",
+        "Basic voice AI (shared)",
+        "Manual SMS only",
+        "Basic calendar",
+        "Email support",
+        "NO analytics dashboard",
+        "NO payment processing",
+        "NO automated reminders",
+        "NO marketing campaigns"
+      ],
+      limits: "Perfect for testing - you'll need to upgrade as you grow!"
     },
     professional: {
       name: "Professional Plan",
-      price: "$299/month",
+      price: "$147/month",
       features: [
-        "Up to 2,000 AI calls/month",
-        "3 phone numbers",
-        "Advanced voice AI with custom scripts",
-        "Priority phone & chat support",
-        "Unlimited customers",
-        "Advanced analytics & reporting",
-        "CRM integrations",
-        "Call recording",
-        "Team collaboration (up to 5 users)"
-      ]
+        "500 appointments/month (10x more!)",
+        "Up to 1,000 customers (10x more!)",
+        "Up to 25 services (5x more!)",
+        "1 location",
+        "Shared voice AI with custom scripts",
+        "Full analytics dashboard",
+        "Automated 24h reminders",
+        "Loyalty program",
+        "Payment processing (Stripe/Square)",
+        "Email & SMS marketing",
+        "Custom branding (logo & colors)",
+        "Priority support"
+      ],
+      limits: "Great for growing businesses - upgrade to Business for unlimited!"
+    },
+    business: {
+      name: "Business Plan",
+      price: "$297/month",
+      features: [
+        "UNLIMITED appointments",
+        "UNLIMITED customers",
+        "UNLIMITED services",
+        "Up to 3 locations",
+        "CUSTOM AI assistant (unique personality)",
+        "Everything in Professional PLUS:",
+        "White-label options",
+        "API access",
+        "Multi-location analytics",
+        "Priority support",
+        "Custom integrations"
+      ],
+      limits: "Best for established businesses ready to scale"
     },
     enterprise: {
       name: "Enterprise Plan",
-      price: "Custom pricing",
+      price: "$597/month",
       features: [
-        "Unlimited AI calls",
-        "Unlimited phone numbers",
-        "White-label options",
+        "UNLIMITED everything",
+        "UNLIMITED locations",
+        "Custom AI assistant",
         "Dedicated account manager",
         "24/7 premium support",
-        "Custom AI training",
-        "API access",
-        "Multi-location support",
-        "Unlimited team members",
         "Custom integrations",
-        "SLA guarantees"
-      ]
+        "SLA guarantees",
+        "Quarterly business reviews",
+        "White-label options",
+        "API access"
+      ],
+      limits: "For large organizations with multiple locations"
     }
   }
 }

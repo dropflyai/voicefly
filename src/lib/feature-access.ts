@@ -136,7 +136,7 @@ export class FeatureAccess {
     currentCount: number
   ): FeatureAccessResult {
     const limits = PLAN_TIER_LIMITS[tier]
-    
+
     if (limits.max_locations > 0 && currentCount >= limits.max_locations) {
       return {
         hasAccess: false,
@@ -144,7 +144,49 @@ export class FeatureAccess {
         upgradeRequired: tier === 'starter' || tier === 'professional' ? 'business' : 'enterprise'
       }
     }
-    
+
+    return { hasAccess: true }
+  }
+
+  /**
+   * Check customer limit
+   */
+  static checkCustomerLimit(
+    tier: SubscriptionTier,
+    currentCount: number
+  ): FeatureAccessResult {
+    const limits = PLAN_TIER_LIMITS[tier] as any
+    const maxCustomers = limits.max_customers
+
+    if (maxCustomers && maxCustomers > 0 && currentCount >= maxCustomers) {
+      return {
+        hasAccess: false,
+        reason: `You've reached your limit of ${maxCustomers} customers`,
+        upgradeRequired: tier === 'starter' ? 'professional' : tier === 'professional' ? 'business' : 'enterprise'
+      }
+    }
+
+    return { hasAccess: true }
+  }
+
+  /**
+   * Check service limit
+   */
+  static checkServiceLimit(
+    tier: SubscriptionTier,
+    currentCount: number
+  ): FeatureAccessResult {
+    const limits = PLAN_TIER_LIMITS[tier] as any
+    const maxServices = limits.max_services
+
+    if (maxServices && maxServices > 0 && currentCount >= maxServices) {
+      return {
+        hasAccess: false,
+        reason: `You've reached your limit of ${maxServices} services`,
+        upgradeRequired: tier === 'starter' ? 'professional' : tier === 'professional' ? 'business' : 'enterprise'
+      }
+    }
+
     return { hasAccess: true }
   }
 
@@ -173,10 +215,12 @@ export class FeatureAccess {
    */
   static getUpgradeBenefits(currentTier: SubscriptionTier, targetTier: SubscriptionTier): string[] {
     const benefits: string[] = []
-    
+
     if (currentTier === 'starter' && targetTier === 'professional') {
       benefits.push(
-        'Unlimited appointments (no 200/month limit)',
+        '500 appointments/month (vs 50 in Starter - 10x increase!)',
+        '1,000 customers (vs 100 in Starter - 10x increase!)',
+        '25 services (vs 5 in Starter - 5x increase!)',
         'Full analytics dashboard to track performance',
         'Automated 24-hour reminders (reduce no-shows by 30%)',
         'Loyalty points program (increase retention by 40%)',
@@ -186,6 +230,9 @@ export class FeatureAccess {
       )
     } else if (currentTier === 'professional' && targetTier === 'business') {
       benefits.push(
+        'UNLIMITED appointments (vs 500/month limit)',
+        'UNLIMITED customers (vs 1,000 limit)',
+        'UNLIMITED services (vs 25 limit)',
         'CUSTOM AI assistant with unique personality',
         'Support for up to 3 locations',
         'White-label options for your brand',
@@ -203,7 +250,7 @@ export class FeatureAccess {
         'Quarterly business reviews'
       )
     }
-    
+
     return benefits
   }
 }

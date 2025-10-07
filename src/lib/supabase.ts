@@ -1569,7 +1569,9 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     payment_processors: [], // No payment processing in starter
     loyalty_program: false, // No loyalty in starter
     monthly_price: 67,
-    max_appointments: 200, // New limit for starter
+    max_appointments: 50, // LIMITED: Forces upgrade quickly
+    max_customers: 100, // LIMITED: Max 100 customers
+    max_services: 5, // LIMITED: Only 5 services
     analytics_dashboard: false, // No analytics in starter
     marketing_campaigns: false, // No marketing in starter
     custom_branding: false, // No branding in starter
@@ -1581,7 +1583,9 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     payment_processors: ['square', 'stripe'],
     loyalty_program: true,
     monthly_price: 147,
-    max_appointments: -1, // Unlimited appointments
+    max_appointments: 500, // HIGH but still limited (drives to Business)
+    max_customers: 1000, // 1000 customers
+    max_services: 25, // 25 services
     analytics_dashboard: true, // Full analytics
     marketing_campaigns: true, // Email & SMS campaigns
     custom_branding: true, // Logo and colors
@@ -1593,7 +1597,9 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     payment_processors: ['square', 'stripe'],
     loyalty_program: true,
     monthly_price: 297,
-    max_appointments: -1, // Unlimited
+    max_appointments: -1, // UNLIMITED appointments
+    max_customers: -1, // UNLIMITED customers
+    max_services: -1, // UNLIMITED services
     analytics_dashboard: true,
     marketing_campaigns: true,
     custom_branding: true,
@@ -1609,6 +1615,8 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     loyalty_program: true,
     monthly_price: 597, // Higher price for unlimited
     max_appointments: -1,
+    max_customers: -1,
+    max_services: -1,
     analytics_dashboard: true,
     marketing_campaigns: true,
     custom_branding: true,
