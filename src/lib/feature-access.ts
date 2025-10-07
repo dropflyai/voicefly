@@ -211,6 +211,48 @@ export class FeatureAccess {
   }
 
   /**
+   * Check AI minutes limit
+   */
+  static checkAIMinutesLimit(
+    tier: SubscriptionTier,
+    currentMinutes: number
+  ): FeatureAccessResult {
+    const limits = PLAN_TIER_LIMITS[tier] as any
+    const maxMinutes = limits.max_ai_minutes
+
+    if (maxMinutes && maxMinutes > 0 && currentMinutes >= maxMinutes) {
+      return {
+        hasAccess: false,
+        reason: `You've used ${currentMinutes} of ${maxMinutes} AI call minutes this month`,
+        upgradeRequired: 'professional'
+      }
+    }
+
+    return { hasAccess: true }
+  }
+
+  /**
+   * Check SMS limit
+   */
+  static checkSMSLimit(
+    tier: SubscriptionTier,
+    currentCount: number
+  ): FeatureAccessResult {
+    const limits = PLAN_TIER_LIMITS[tier] as any
+    const maxSMS = limits.max_sms
+
+    if (maxSMS && maxSMS > 0 && currentCount >= maxSMS) {
+      return {
+        hasAccess: false,
+        reason: `You've sent ${currentCount} of ${maxSMS} SMS messages this month`,
+        upgradeRequired: 'professional'
+      }
+    }
+
+    return { hasAccess: true }
+  }
+
+  /**
    * Get upgrade benefits when moving from one tier to another
    */
   static getUpgradeBenefits(currentTier: SubscriptionTier, targetTier: SubscriptionTier): string[] {
@@ -218,36 +260,36 @@ export class FeatureAccess {
 
     if (currentTier === 'starter' && targetTier === 'professional') {
       benefits.push(
-        '500 appointments/month (vs 50 in Starter - 10x increase!)',
-        '1,000 customers (vs 100 in Starter - 10x increase!)',
-        '25 services (vs 5 in Starter - 5x increase!)',
-        'Full analytics dashboard to track performance',
-        'Automated 24-hour reminders (reduce no-shows by 30%)',
-        'Loyalty points program (increase retention by 40%)',
-        'Email & SMS marketing campaigns',
-        'Custom branding with logo and colors',
-        'Payment processing with Square/Stripe'
+        '🚀 UNLIMITED AI call minutes (vs 60 minutes)',
+        '📅 UNLIMITED appointments (vs 25/month)',
+        '💬 UNLIMITED SMS messages (vs 50/month)',
+        '📊 Full analytics dashboard - Track ROI and revenue',
+        '🔔 Automated reminders - Reduce no-shows by 30%',
+        '💳 Payment processing - Accept Stripe/Square',
+        '📧 Marketing campaigns - Email & SMS automation',
+        '🎨 Custom branding - Logo, colors, white-label',
+        '⭐ Loyalty program - Increase retention 40%'
       )
-    } else if (currentTier === 'professional' && targetTier === 'business') {
+    } else if (currentTier === 'professional' && targetTier === 'enterprise') {
       benefits.push(
-        'UNLIMITED appointments (vs 500/month limit)',
-        'UNLIMITED customers (vs 1,000 limit)',
-        'UNLIMITED services (vs 25 limit)',
-        'CUSTOM AI assistant with unique personality',
-        'Support for up to 3 locations',
-        'White-label options for your brand',
-        'Cross-location analytics and reporting',
-        'API access for custom integrations',
-        'Priority support response',
-        'Custom domain support'
+        '🏢 UNLIMITED locations (vs 1 location)',
+        '🤖 CUSTOM AI assistant - Unique personality for your brand',
+        '🏷️ White-label everything - Remove VoiceFly branding',
+        '🔌 API access - Custom integrations',
+        '📈 Multi-location analytics - Cross-location insights',
+        '👨‍💼 Dedicated account manager',
+        '⚡ Priority support with SLA guarantee',
+        '🛠️ Custom integrations and development'
       )
     } else if (targetTier === 'enterprise') {
       benefits.push(
-        'Unlimited locations',
+        'UNLIMITED locations',
+        'CUSTOM AI assistant',
+        'White-label options',
         'Dedicated account manager',
         'Custom integrations',
         'SLA guarantee',
-        'Quarterly business reviews'
+        'Priority support'
       )
     }
 

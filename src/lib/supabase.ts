@@ -1566,66 +1566,72 @@ export class LoyaltyAPIImpl implements LoyaltyAPI {
 export const PLAN_TIER_LIMITS: PlanTierLimits = {
   starter: {
     max_locations: 1,
-    payment_processors: [], // No payment processing in starter
-    loyalty_program: false, // No loyalty in starter
-    monthly_price: 67,
-    max_appointments: 50, // LIMITED: Forces upgrade quickly
-    max_customers: 100, // LIMITED: Max 100 customers
-    max_services: 5, // LIMITED: Only 5 services
-    analytics_dashboard: false, // No analytics in starter
-    marketing_campaigns: false, // No marketing in starter
-    custom_branding: false, // No branding in starter
-    automated_reminders: false, // Basic SMS only, no automated
-    voice_ai_type: 'shared' // Shared AI assistant
+    payment_processors: [], // No payment processing
+    loyalty_program: false,
+    monthly_price: 47, // ULTRA LOW entry price
+
+    // USAGE-BASED LIMITS (Force upgrade in 1-2 weeks)
+    max_ai_minutes: 60, // Only 60 minutes of AI calls = ~30 calls
+    max_appointments: 25, // Only 25 appointments/month
+    max_sms: 50, // Only 50 SMS messages
+
+    // FEATURE LIMITS
+    max_customers: -1, // Unlimited customers (no blocker)
+    max_services: -1, // Unlimited services (no blocker)
+
+    // DISABLED FEATURES
+    analytics_dashboard: false, // NO analytics - can't see ROI
+    marketing_campaigns: false, // NO marketing
+    custom_branding: false, // NO branding
+    automated_reminders: false, // NO automation
+    payment_processing: false, // NO payments
+    voice_ai_type: 'shared'
   },
   professional: {
     max_locations: 1,
     payment_processors: ['square', 'stripe'],
     loyalty_program: true,
-    monthly_price: 147,
-    max_appointments: 500, // HIGH but still limited (drives to Business)
-    max_customers: 1000, // 1000 customers
-    max_services: 25, // 25 services
-    analytics_dashboard: true, // Full analytics
-    marketing_campaigns: true, // Email & SMS campaigns
-    custom_branding: true, // Logo and colors
-    automated_reminders: true, // 24-hour automated reminders
-    voice_ai_type: 'shared' // Still shared AI
-  },
-  business: {
-    max_locations: 3,
-    payment_processors: ['square', 'stripe'],
-    loyalty_program: true,
-    monthly_price: 297,
+    monthly_price: 197, // THE MONEY MAKER
+
+    // UNLIMITED USAGE
+    max_ai_minutes: -1, // UNLIMITED AI call minutes
     max_appointments: -1, // UNLIMITED appointments
-    max_customers: -1, // UNLIMITED customers
-    max_services: -1, // UNLIMITED services
-    analytics_dashboard: true,
-    marketing_campaigns: true,
-    custom_branding: true,
-    automated_reminders: true,
-    voice_ai_type: 'custom', // CUSTOM AI assistant
-    white_label: true, // White-label option
-    api_access: true, // API access
-    priority_support: true // Priority support
+    max_sms: -1, // UNLIMITED SMS
+    max_customers: -1, // UNLIMITED
+    max_services: -1, // UNLIMITED
+
+    // ALL FEATURES UNLOCKED
+    analytics_dashboard: true, // See ROI and revenue
+    marketing_campaigns: true, // Grow business
+    custom_branding: true, // Professional look
+    automated_reminders: true, // Save time, reduce no-shows
+    payment_processing: true, // Collect money
+    voice_ai_type: 'shared'
   },
   enterprise: {
-    max_locations: -1, // unlimited locations
+    max_locations: -1, // UNLIMITED locations
     payment_processors: ['square', 'stripe'],
     loyalty_program: true,
-    monthly_price: 597, // Higher price for unlimited
+    monthly_price: 497,
+
+    // UNLIMITED EVERYTHING
+    max_ai_minutes: -1,
     max_appointments: -1,
+    max_sms: -1,
     max_customers: -1,
     max_services: -1,
+
+    // ENTERPRISE FEATURES
     analytics_dashboard: true,
     marketing_campaigns: true,
     custom_branding: true,
     automated_reminders: true,
-    voice_ai_type: 'custom',
-    white_label: true,
-    api_access: true,
+    payment_processing: true,
+    voice_ai_type: 'custom', // CUSTOM AI personality
+    white_label: true, // White-label branding
+    api_access: true, // API access
     priority_support: true,
     dedicated_support: true, // Dedicated account manager
-    custom_integrations: true // Custom development
+    custom_integrations: true
   }
 }

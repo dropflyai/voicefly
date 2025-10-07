@@ -314,80 +314,64 @@ Organize services by category for easier booking:
     }
   },
 
-  // Subscription Features
+  // Subscription Features - 3 Tier System
   subscriptionFeatures: {
     starter: {
       name: "Starter Plan",
-      price: "$67/month",
+      price: "$47/month",
+      tagline: "Get a taste - upgrade when you see ROI",
       features: [
-        "50 appointments/month",
-        "Up to 100 customers",
-        "Up to 5 services",
+        "💬 60 AI call minutes (~30 calls)",
+        "📅 25 appointments/month",
+        "📱 50 SMS messages/month",
+        "👥 Unlimited customers",
+        "🛠️ Unlimited services",
         "1 location",
-        "Basic voice AI (shared)",
-        "Manual SMS only",
-        "Basic calendar",
-        "Email support",
-        "NO analytics dashboard",
-        "NO payment processing",
-        "NO automated reminders",
-        "NO marketing campaigns"
+        "Basic voice AI",
+        "❌ NO analytics (can't track ROI)",
+        "❌ NO payment processing",
+        "❌ NO automated reminders",
+        "❌ NO marketing campaigns",
+        "❌ NO custom branding"
       ],
-      limits: "Perfect for testing - you'll need to upgrade as you grow!"
+      limits: "Runs out in 1-2 weeks → Forces upgrade to Pro"
     },
     professional: {
       name: "Professional Plan",
-      price: "$147/month",
+      price: "$197/month",
+      tagline: "Everything unlimited - This is where you make money",
       features: [
-        "500 appointments/month (10x more!)",
-        "Up to 1,000 customers (10x more!)",
-        "Up to 25 services (5x more!)",
+        "🚀 UNLIMITED AI call minutes",
+        "📅 UNLIMITED appointments",
+        "💬 UNLIMITED SMS messages",
+        "👥 UNLIMITED customers",
+        "🛠️ UNLIMITED services",
         "1 location",
-        "Shared voice AI with custom scripts",
-        "Full analytics dashboard",
-        "Automated 24h reminders",
-        "Loyalty program",
-        "Payment processing (Stripe/Square)",
-        "Email & SMS marketing",
-        "Custom branding (logo & colors)",
-        "Priority support"
+        "✅ Full analytics dashboard (track ROI & revenue)",
+        "✅ Payment processing (Stripe/Square)",
+        "✅ Automated reminders (30% less no-shows)",
+        "✅ Marketing campaigns (email & SMS)",
+        "✅ Custom branding (logo & colors)",
+        "✅ Loyalty program (40% better retention)"
       ],
-      limits: "Great for growing businesses - upgrade to Business for unlimited!"
-    },
-    business: {
-      name: "Business Plan",
-      price: "$297/month",
-      features: [
-        "UNLIMITED appointments",
-        "UNLIMITED customers",
-        "UNLIMITED services",
-        "Up to 3 locations",
-        "CUSTOM AI assistant (unique personality)",
-        "Everything in Professional PLUS:",
-        "White-label options",
-        "API access",
-        "Multi-location analytics",
-        "Priority support",
-        "Custom integrations"
-      ],
-      limits: "Best for established businesses ready to scale"
+      limits: "This is the sweet spot - stay here or go Enterprise for multi-location"
     },
     enterprise: {
       name: "Enterprise Plan",
-      price: "$597/month",
+      price: "$497/month",
+      tagline: "Scale to unlimited locations with custom AI",
       features: [
-        "UNLIMITED everything",
-        "UNLIMITED locations",
-        "Custom AI assistant",
-        "Dedicated account manager",
-        "24/7 premium support",
-        "Custom integrations",
-        "SLA guarantees",
-        "Quarterly business reviews",
-        "White-label options",
-        "API access"
+        "🏢 UNLIMITED locations",
+        "🤖 CUSTOM AI assistant (unique personality)",
+        "🏷️ White-label (remove VoiceFly branding)",
+        "🔌 API access for integrations",
+        "📊 Multi-location analytics",
+        "👨‍💼 Dedicated account manager",
+        "⚡ Priority support with SLA",
+        "🛠️ Custom integrations & development",
+        "✅ Everything in Professional PLUS scale"
       ],
-      limits: "For large organizations with multiple locations"
+      limits: "For serious businesses ready to dominate"
     }
   }
 }
