@@ -314,11 +314,11 @@ Organize services by category for easier booking:
     }
   },
 
-  // Subscription Features - 3 Tier System (NO UNLIMITED)
+  // Subscription Features - 3 Tier System (DOUBLED PRICES + Strategic location pricing)
   subscriptionFeatures: {
     starter: {
       name: "Starter Plan",
-      price: "$47/month",
+      price: "$94/month",
       tagline: "Get a taste - upgrade when you run out",
       features: [
         "💬 60 AI call minutes (~30 calls)",
@@ -340,7 +340,7 @@ Organize services by category for easier booking:
     },
     professional: {
       name: "Professional Plan",
-      price: "$197/month",
+      price: "$394/month",
       tagline: "High limits + all features - This is where you make money",
       features: [
         "🚀 500 AI call minutes/month (~250 calls)",
@@ -356,15 +356,15 @@ Organize services by category for easier booking:
         "✅ Marketing campaigns (email & SMS)",
         "✅ Custom branding (logo & colors)",
         "✅ Loyalty program (40% better retention)",
-        "➕ Add team members at $25/mo per seat",
-        "➕ Add locations at $50/mo each"
+        "➕ Add team members at $50/mo per seat",
+        "➕ Add locations at $100/mo each"
       ],
-      limits: "Sweet spot for most businesses - scale with add-ons"
+      limits: "Sweet spot for most businesses - scale with add-ons or upgrade for volume discounts"
     },
     enterprise: {
       name: "Enterprise Plan",
-      price: "$497/month",
-      tagline: "Maximum scale + exclusive features",
+      price: "$994/month",
+      tagline: "Maximum scale + exclusive features + volume discounts",
       features: [
         "🚀 2,000 AI call minutes/month (~1,000 calls)",
         "📅 2,000 appointments/month",
@@ -381,10 +381,10 @@ Organize services by category for easier booking:
         "👨‍💼 Dedicated account manager",
         "⚡ Priority support with SLA",
         "🛠️ Custom integrations & development",
-        "➕ Add locations at $75/mo each",
-        "➕ Add seats at $40/mo each"
+        "➕ Add locations at $50/mo each (50% cheaper than Pro!)",
+        "➕ Add seats at $80/mo each"
       ],
-      limits: "For serious multi-location businesses"
+      limits: "For serious multi-location businesses - Best value for scaling"
     }
   }
 }

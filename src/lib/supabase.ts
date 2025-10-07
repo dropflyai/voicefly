@@ -1562,13 +1562,13 @@ export class LoyaltyAPIImpl implements LoyaltyAPI {
   }
 }
 
-// Plan tier configuration - NO UNLIMITED + Per-seat + Per-location pricing
+// Plan tier configuration - DOUBLED PRICES + Strategic location pricing
 export const PLAN_TIER_LIMITS: PlanTierLimits = {
   starter: {
     max_locations: 1,
     payment_processors: [], // No payment processing
     loyalty_program: false,
-    monthly_price: 47, // ULTRA LOW entry price
+    monthly_price: 94, // Entry price (doubled)
 
     // USAGE-BASED LIMITS (Force upgrade in 1-2 weeks)
     max_ai_minutes: 60, // Only 60 minutes of AI calls = ~30 calls
@@ -1596,7 +1596,7 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     max_locations: 1,
     payment_processors: ['square', 'stripe'],
     loyalty_program: true,
-    monthly_price: 197, // THE MONEY MAKER
+    monthly_price: 394, // THE MONEY MAKER (doubled)
 
     // CAPPED USAGE (Generous but predictable costs)
     max_ai_minutes: 500, // 500 minutes/month (~250 calls)
@@ -1607,10 +1607,10 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
 
     // USER SEATS
     max_user_seats: 3, // 3 seats included
-    additional_seat_price: 25, // $25/mo per additional seat
+    additional_seat_price: 50, // $50/mo per additional seat (doubled)
 
-    // LOCATION ADD-ONS
-    additional_location_price: 50, // $50/mo per additional location
+    // LOCATION ADD-ONS (EXPENSIVE - Forces Enterprise upgrade)
+    additional_location_price: 100, // $100/mo per additional location (expensive)
 
     // PROFESSIONAL FEATURES
     analytics_dashboard: true, // See ROI and revenue
@@ -1624,7 +1624,7 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     max_locations: 5, // 5 locations included
     payment_processors: ['square', 'stripe'],
     loyalty_program: true,
-    monthly_price: 497,
+    monthly_price: 994, // Premium tier (doubled)
 
     // ENTERPRISE SCALE (High limits but not unlimited)
     max_ai_minutes: 2000, // 2,000 minutes/month (~1,000 calls)
@@ -1635,10 +1635,10 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
 
     // USER SEATS
     max_user_seats: 10, // 10 seats included
-    additional_seat_price: 40, // $40/mo per additional seat
+    additional_seat_price: 80, // $80/mo per additional seat (doubled)
 
-    // LOCATION ADD-ONS
-    additional_location_price: 75, // $75/mo per additional location
+    // LOCATION ADD-ONS (CHEAP - Volume discount)
+    additional_location_price: 50, // $50/mo per additional location (cheaper than Pro!)
 
     // ALL PROFESSIONAL FEATURES
     analytics_dashboard: true,

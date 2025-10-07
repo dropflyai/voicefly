@@ -305,8 +305,8 @@ export class FeatureAccess {
         '📧 Marketing campaigns - Email & SMS automation',
         '🎨 Custom branding - Logo, colors',
         '⭐ Loyalty program - Increase retention 40%',
-        '➕ Add locations at $50/mo each',
-        '➕ Add team members at $25/mo per seat'
+        '➕ Add locations at $100/mo each',
+        '➕ Add team members at $50/mo per seat'
       )
     } else if (currentTier === 'professional' && targetTier === 'enterprise') {
       benefits.push(
@@ -315,6 +315,7 @@ export class FeatureAccess {
         '💬 5,000 SMS/month (vs 1,000)',
         '🏢 5 locations included (vs 1)',
         '👥 10 user seats included (vs 3)',
+        '💰 Location add-ons only $50/mo (vs $100/mo on Pro!)',
         '🤖 CUSTOM AI assistant - Unique personality (Enterprise exclusive)',
         '🏷️ White-label branding - Remove VoiceFly branding (Enterprise exclusive)',
         '🔌 API access - Custom integrations (Enterprise exclusive)',
@@ -322,14 +323,14 @@ export class FeatureAccess {
         '👨‍💼 Dedicated account manager',
         '⚡ Priority support with SLA guarantee',
         '🛠️ Custom integrations and development',
-        '➕ Add locations at $75/mo each (vs $50)',
-        '➕ Add seats at $40/mo each (vs $25)'
+        '➕ Add seats at $80/mo each (vs $50/mo on Pro)'
       )
     } else if (targetTier === 'enterprise') {
       benefits.push(
         '2,000 AI minutes/month',
         '5 locations included',
         '10 user seats included',
+        'Location add-ons only $50/mo (volume discount)',
         'CUSTOM AI assistant (Enterprise exclusive)',
         'White-label branding (Enterprise exclusive)',
         'API access (Enterprise exclusive)',
