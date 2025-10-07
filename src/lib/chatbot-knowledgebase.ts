@@ -314,64 +314,77 @@ Organize services by category for easier booking:
     }
   },
 
-  // Subscription Features - 3 Tier System
+  // Subscription Features - 3 Tier System (NO UNLIMITED)
   subscriptionFeatures: {
     starter: {
       name: "Starter Plan",
       price: "$47/month",
-      tagline: "Get a taste - upgrade when you see ROI",
+      tagline: "Get a taste - upgrade when you run out",
       features: [
         "💬 60 AI call minutes (~30 calls)",
         "📅 25 appointments/month",
         "📱 50 SMS messages/month",
-        "👥 Unlimited customers",
-        "🛠️ Unlimited services",
-        "1 location",
+        "👥 100 customers max",
+        "🛠️ 5 services max",
+        "👤 1 user seat (solo user only)",
+        "📍 1 location only",
         "Basic voice AI",
         "❌ NO analytics (can't track ROI)",
         "❌ NO payment processing",
         "❌ NO automated reminders",
         "❌ NO marketing campaigns",
-        "❌ NO custom branding"
+        "❌ NO custom branding",
+        "❌ NO additional seats or locations"
       ],
-      limits: "Runs out in 1-2 weeks → Forces upgrade to Pro"
+      limits: "Runs out in 1-2 weeks → Upgrade to Professional"
     },
     professional: {
       name: "Professional Plan",
       price: "$197/month",
-      tagline: "Everything unlimited - This is where you make money",
+      tagline: "High limits + all features - This is where you make money",
       features: [
-        "🚀 UNLIMITED AI call minutes",
-        "📅 UNLIMITED appointments",
-        "💬 UNLIMITED SMS messages",
-        "👥 UNLIMITED customers",
-        "🛠️ UNLIMITED services",
-        "1 location",
+        "🚀 500 AI call minutes/month (~250 calls)",
+        "📅 500 appointments/month",
+        "💬 1,000 SMS messages/month",
+        "👥 2,000 customers max",
+        "🛠️ 50 services max",
+        "👥 3 user seats included",
+        "📍 1 location included",
         "✅ Full analytics dashboard (track ROI & revenue)",
         "✅ Payment processing (Stripe/Square)",
         "✅ Automated reminders (30% less no-shows)",
         "✅ Marketing campaigns (email & SMS)",
         "✅ Custom branding (logo & colors)",
-        "✅ Loyalty program (40% better retention)"
+        "✅ Loyalty program (40% better retention)",
+        "➕ Add team members at $25/mo per seat",
+        "➕ Add locations at $50/mo each"
       ],
-      limits: "This is the sweet spot - stay here or go Enterprise for multi-location"
+      limits: "Sweet spot for most businesses - scale with add-ons"
     },
     enterprise: {
       name: "Enterprise Plan",
       price: "$497/month",
-      tagline: "Scale to unlimited locations with custom AI",
+      tagline: "Maximum scale + exclusive features",
       features: [
-        "🏢 UNLIMITED locations",
-        "🤖 CUSTOM AI assistant (unique personality)",
-        "🏷️ White-label (remove VoiceFly branding)",
-        "🔌 API access for integrations",
-        "📊 Multi-location analytics",
+        "🚀 2,000 AI call minutes/month (~1,000 calls)",
+        "📅 2,000 appointments/month",
+        "💬 5,000 SMS messages/month",
+        "👥 10,000 customers max",
+        "🛠️ 200 services max",
+        "👥 10 user seats included",
+        "📍 5 locations included",
+        "✅ Everything in Professional PLUS:",
+        "🤖 CUSTOM AI assistant (Enterprise exclusive)",
+        "🏷️ White-label branding (Enterprise exclusive)",
+        "🔌 API access (Enterprise exclusive)",
+        "📊 Multi-location analytics (Enterprise exclusive)",
         "👨‍💼 Dedicated account manager",
         "⚡ Priority support with SLA",
         "🛠️ Custom integrations & development",
-        "✅ Everything in Professional PLUS scale"
+        "➕ Add locations at $75/mo each",
+        "➕ Add seats at $40/mo each"
       ],
-      limits: "For serious businesses ready to dominate"
+      limits: "For serious multi-location businesses"
     }
   }
 }

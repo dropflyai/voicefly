@@ -162,11 +162,46 @@ export class FeatureAccess {
       return {
         hasAccess: false,
         reason: `You've reached your limit of ${maxCustomers} customers`,
-        upgradeRequired: tier === 'starter' ? 'professional' : tier === 'professional' ? 'business' : 'enterprise'
+        upgradeRequired: tier === 'starter' ? 'professional' : 'enterprise'
       }
     }
 
     return { hasAccess: true }
+  }
+
+  /**
+   * Check user seat limit
+   */
+  static checkUserSeatLimit(
+    tier: SubscriptionTier,
+    currentSeats: number
+  ): FeatureAccessResult {
+    const limits = PLAN_TIER_LIMITS[tier] as any
+    const maxSeats = limits.max_user_seats
+
+    if (maxSeats && maxSeats > 0 && currentSeats >= maxSeats) {
+      return {
+        hasAccess: false,
+        reason: `You've reached your limit of ${maxSeats} user seats`,
+        upgradeRequired: tier === 'starter' ? 'professional' : 'enterprise'
+      }
+    }
+
+    return { hasAccess: true }
+  }
+
+  /**
+   * Get add-on pricing for seats and locations
+   */
+  static getAddOnPricing(tier: SubscriptionTier): {
+    seatPrice: number
+    locationPrice: number
+  } {
+    const limits = PLAN_TIER_LIMITS[tier] as any
+    return {
+      seatPrice: limits.additional_seat_price || 0,
+      locationPrice: limits.additional_location_price || 0
+    }
   }
 
   /**
@@ -260,34 +295,46 @@ export class FeatureAccess {
 
     if (currentTier === 'starter' && targetTier === 'professional') {
       benefits.push(
-        '🚀 UNLIMITED AI call minutes (vs 60 minutes)',
-        '📅 UNLIMITED appointments (vs 25/month)',
-        '💬 UNLIMITED SMS messages (vs 50/month)',
+        '🚀 500 AI call minutes/month (vs 60)',
+        '📅 500 appointments/month (vs 25)',
+        '💬 1,000 SMS messages/month (vs 50)',
+        '👥 3 user seats (vs 1 solo user)',
         '📊 Full analytics dashboard - Track ROI and revenue',
         '🔔 Automated reminders - Reduce no-shows by 30%',
         '💳 Payment processing - Accept Stripe/Square',
         '📧 Marketing campaigns - Email & SMS automation',
-        '🎨 Custom branding - Logo, colors, white-label',
-        '⭐ Loyalty program - Increase retention 40%'
+        '🎨 Custom branding - Logo, colors',
+        '⭐ Loyalty program - Increase retention 40%',
+        '➕ Add locations at $50/mo each',
+        '➕ Add team members at $25/mo per seat'
       )
     } else if (currentTier === 'professional' && targetTier === 'enterprise') {
       benefits.push(
-        '🏢 UNLIMITED locations (vs 1 location)',
-        '🤖 CUSTOM AI assistant - Unique personality for your brand',
-        '🏷️ White-label everything - Remove VoiceFly branding',
-        '🔌 API access - Custom integrations',
-        '📈 Multi-location analytics - Cross-location insights',
+        '🚀 2,000 AI minutes/month (vs 500)',
+        '📅 2,000 appointments/month (vs 500)',
+        '💬 5,000 SMS/month (vs 1,000)',
+        '🏢 5 locations included (vs 1)',
+        '👥 10 user seats included (vs 3)',
+        '🤖 CUSTOM AI assistant - Unique personality (Enterprise exclusive)',
+        '🏷️ White-label branding - Remove VoiceFly branding (Enterprise exclusive)',
+        '🔌 API access - Custom integrations (Enterprise exclusive)',
+        '📈 Multi-location analytics - Cross-location insights (Enterprise exclusive)',
         '👨‍💼 Dedicated account manager',
         '⚡ Priority support with SLA guarantee',
-        '🛠️ Custom integrations and development'
+        '🛠️ Custom integrations and development',
+        '➕ Add locations at $75/mo each (vs $50)',
+        '➕ Add seats at $40/mo each (vs $25)'
       )
     } else if (targetTier === 'enterprise') {
       benefits.push(
-        'UNLIMITED locations',
-        'CUSTOM AI assistant',
-        'White-label options',
+        '2,000 AI minutes/month',
+        '5 locations included',
+        '10 user seats included',
+        'CUSTOM AI assistant (Enterprise exclusive)',
+        'White-label branding (Enterprise exclusive)',
+        'API access (Enterprise exclusive)',
+        'Multi-location analytics',
         'Dedicated account manager',
-        'Custom integrations',
         'SLA guarantee',
         'Priority support'
       )

@@ -1562,7 +1562,7 @@ export class LoyaltyAPIImpl implements LoyaltyAPI {
   }
 }
 
-// Plan tier configuration - Updated pricing and features
+// Plan tier configuration - NO UNLIMITED + Per-seat + Per-location pricing
 export const PLAN_TIER_LIMITS: PlanTierLimits = {
   starter: {
     max_locations: 1,
@@ -1574,10 +1574,15 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     max_ai_minutes: 60, // Only 60 minutes of AI calls = ~30 calls
     max_appointments: 25, // Only 25 appointments/month
     max_sms: 50, // Only 50 SMS messages
+    max_customers: 100, // Limited to 100 customers
+    max_services: 5, // Limited to 5 services
 
-    // FEATURE LIMITS
-    max_customers: -1, // Unlimited customers (no blocker)
-    max_services: -1, // Unlimited services (no blocker)
+    // USER SEATS
+    max_user_seats: 1, // Solo user only
+    additional_seat_price: 0, // Can't add seats on Starter
+
+    // LOCATION ADD-ONS
+    additional_location_price: 0, // Can't add locations on Starter
 
     // DISABLED FEATURES
     analytics_dashboard: false, // NO analytics - can't see ROI
@@ -1593,14 +1598,21 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     loyalty_program: true,
     monthly_price: 197, // THE MONEY MAKER
 
-    // UNLIMITED USAGE
-    max_ai_minutes: -1, // UNLIMITED AI call minutes
-    max_appointments: -1, // UNLIMITED appointments
-    max_sms: -1, // UNLIMITED SMS
-    max_customers: -1, // UNLIMITED
-    max_services: -1, // UNLIMITED
+    // CAPPED USAGE (Generous but predictable costs)
+    max_ai_minutes: 500, // 500 minutes/month (~250 calls)
+    max_appointments: 500, // 500 appointments/month
+    max_sms: 1000, // 1,000 SMS/month
+    max_customers: 2000, // 2,000 customers max
+    max_services: 50, // 50 services max
 
-    // ALL FEATURES UNLOCKED
+    // USER SEATS
+    max_user_seats: 3, // 3 seats included
+    additional_seat_price: 25, // $25/mo per additional seat
+
+    // LOCATION ADD-ONS
+    additional_location_price: 50, // $50/mo per additional location
+
+    // PROFESSIONAL FEATURES
     analytics_dashboard: true, // See ROI and revenue
     marketing_campaigns: true, // Grow business
     custom_branding: true, // Professional look
@@ -1609,29 +1621,40 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     voice_ai_type: 'shared'
   },
   enterprise: {
-    max_locations: -1, // UNLIMITED locations
+    max_locations: 5, // 5 locations included
     payment_processors: ['square', 'stripe'],
     loyalty_program: true,
     monthly_price: 497,
 
-    // UNLIMITED EVERYTHING
-    max_ai_minutes: -1,
-    max_appointments: -1,
-    max_sms: -1,
-    max_customers: -1,
-    max_services: -1,
+    // ENTERPRISE SCALE (High limits but not unlimited)
+    max_ai_minutes: 2000, // 2,000 minutes/month (~1,000 calls)
+    max_appointments: 2000, // 2,000 appointments/month
+    max_sms: 5000, // 5,000 SMS/month
+    max_customers: 10000, // 10,000 customers
+    max_services: 200, // 200 services
 
-    // ENTERPRISE FEATURES
+    // USER SEATS
+    max_user_seats: 10, // 10 seats included
+    additional_seat_price: 40, // $40/mo per additional seat
+
+    // LOCATION ADD-ONS
+    additional_location_price: 75, // $75/mo per additional location
+
+    // ALL PROFESSIONAL FEATURES
     analytics_dashboard: true,
     marketing_campaigns: true,
     custom_branding: true,
     automated_reminders: true,
     payment_processing: true,
-    voice_ai_type: 'custom', // CUSTOM AI personality
-    white_label: true, // White-label branding
-    api_access: true, // API access
+
+    // ENTERPRISE-EXCLUSIVE FEATURES
+    voice_ai_type: 'custom', // CUSTOM AI personality (Enterprise only)
+    white_label: true, // White-label branding (Enterprise only)
+    api_access: true, // API access (Enterprise only)
+    multi_location_analytics: true, // Cross-location reporting (Enterprise only)
     priority_support: true,
     dedicated_support: true, // Dedicated account manager
-    custom_integrations: true
+    custom_integrations: true, // Custom development
+    sla_guarantee: true // SLA guarantee (Enterprise only)
   }
 }
