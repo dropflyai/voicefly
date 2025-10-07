@@ -1,4 +1,5 @@
 import OmnipresentResearchProvider from '@/components/OmnipresentResearch'
+import AIChatbot from '@/components/AIChatbot'
 
 export default function DashboardLayout({
   children,
@@ -8,6 +9,7 @@ export default function DashboardLayout({
   return (
     <OmnipresentResearchProvider>
       {children}
+      <AIChatbot />
     </OmnipresentResearchProvider>
   )
 }

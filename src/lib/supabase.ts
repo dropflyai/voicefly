@@ -6,6 +6,7 @@ import {
   CreateLocationRequest, CreatePaymentRequest, ProcessPaymentResponse,
   LoyaltyRedemptionRequest, PlanTierLimits, LoyaltyCustomer, LoyaltyRewardTier
 } from './supabase-types-mvp'
+import { getServicesForIndustry } from './industry-service-templates'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -203,18 +204,121 @@ export class BusinessAPI {
       .select('*')
       .eq('id', businessId)
       .single()
-    
+
     if (error) {
       console.error('Error fetching business:', error)
       return null
     }
-    
+
     // Default subscription tier to professional if not set
     if (data && !data.subscription_tier) {
       data.subscription_tier = 'professional'
     }
-    
+
     return data
+  }
+
+  static async getBusinessByEmail(email: string): Promise<Business | null> {
+    const { data, error } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('email', email)
+      .single()
+
+    if (error) {
+      console.error('Error fetching business by email:', error)
+      return null
+    }
+
+    // Default subscription tier to professional if not set
+    if (data && !data.subscription_tier) {
+      data.subscription_tier = 'professional'
+    }
+
+    return data
+  }
+
+  static async createBusiness(businessData: {
+    name: string
+    email: string
+    phone?: string
+    business_type?: string
+    subscription_tier?: 'starter' | 'professional' | 'business' | 'enterprise'
+  }): Promise<Business | null> {
+    try {
+      // Generate a slug from business name
+      const slug = businessData.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+
+      const businessInsert = {
+        name: businessData.name,
+        slug,
+        business_type: businessData.business_type || 'general_business',
+        email: businessData.email,
+        phone: businessData.phone || '',
+        subscription_tier: businessData.subscription_tier || 'professional',
+        subscription_status: 'trialing' as const,
+        trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+        timezone: 'America/Los_Angeles',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+
+      console.log('Creating business:', businessInsert)
+
+      const { data, error } = await supabase
+        .from('businesses')
+        .insert(businessInsert)
+        .select()
+        .single()
+
+      if (error) {
+        console.error('Error creating business:', error)
+        throw new Error(`Database error creating business: ${error.message}`)
+      }
+
+      console.log('Created business:', data)
+
+      // Auto-create default services for this business type
+      const businessType = businessInsert.business_type
+      const serviceTemplates = getServicesForIndustry(businessType)
+
+      if (serviceTemplates.length > 0) {
+        console.log(`Creating ${serviceTemplates.length} default services for ${businessType}...`)
+
+        const servicesInsert = serviceTemplates.map(template => ({
+          business_id: data.id,
+          name: template.name,
+          description: template.description,
+          duration_minutes: template.duration_minutes,
+          base_price: template.base_price,
+          category: template.category,
+          is_active: true,
+          requires_deposit: template.requires_deposit,
+          deposit_amount: template.deposit_amount,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }))
+
+        const { error: servicesError } = await supabase
+          .from('services')
+          .insert(servicesInsert)
+
+        if (servicesError) {
+          console.error('Error creating default services:', servicesError)
+          // Don't throw - business is created, services are optional
+        } else {
+          console.log(`✅ Created ${serviceTemplates.length} default services`)
+        }
+      }
+
+      return data
+    } catch (error) {
+      console.error('createBusiness failed:', error)
+      throw error
+    }
   }
 
   static async getAppointments(businessId: string, filters?: {

@@ -6,6 +6,7 @@ import Layout from '../../components/Layout'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { BusinessAPI, LocationAPIImpl, PaymentAPIImpl, LoyaltyAPIImpl, type Business, type DashboardStats, type Appointment } from '../../lib/supabase'
 import type { Location, PaymentWithDetails, LoyaltyCustomer } from '../../lib/supabase-types-mvp'
+import { getServiceTerminology } from '../../lib/industry-service-templates'
 import {
   CalendarIcon,
   UsersIcon,
@@ -51,7 +52,10 @@ function DashboardPage() {
   const [loyaltyStats, setLoyaltyStats] = useState({ totalMembers: 0, pointsAwarded: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
+
+  // Get industry-specific terminology
+  const terminology = getServiceTerminology(business?.business_type || 'general_business')
+
   // Tour state management
   const [showOnboardingTour, setShowOnboardingTour] = useState(false)
   const [onboardingPlan, setOnboardingPlan] = useState<'starter' | 'professional' | 'business' | null>(null)
@@ -112,82 +116,42 @@ function DashboardPage() {
       
       console.log('🔍 Dashboard loading with Business ID:', businessId)
 
-      // Check if this is a demo business (created by login page)
-      const isDemoMode = businessId.startsWith('demo-business-')
+      // Fetch business from database
+      const businessData = await BusinessAPI.getBusiness(businessId)
+      console.log('📋 Business data loaded:', businessData?.name)
 
-      let businessData
-      if (isDemoMode) {
-        // Create mock business data for demo mode
-        console.log('🎭 Running in DEMO mode - using mock data')
-        businessData = {
-          id: businessId,
-          name: 'VoiceFly Demo Business',
-          slug: 'voicefly-demo',
-          business_type: 'nail_salon',
-          phone: '(555) 123-4567',
-          email: 'demo@voicefly.ai',
-          website: 'https://voicefly.ai',
-          address_line1: '123 Demo Street',
-          city: 'San Francisco',
-          state: 'CA',
-          postal_code: '94102',
-          country: 'US',
-          timezone: 'America/Los_Angeles',
-          subscription_tier: 'professional' as const,
-          subscription_status: 'active' as const,
-          trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-        setBusiness(businessData)
-      } else {
-        // Real mode - fetch from database
-        businessData = await BusinessAPI.getBusiness(businessId)
-        console.log('📋 Business data loaded:', businessData?.name)
-        if (businessData) {
-          setBusiness(businessData)
-        } else {
-          setError('Business not found. Please check your configuration.')
-          return
-        }
+      if (!businessData) {
+        setError('Business not found. Please check your configuration.')
+        return
       }
 
+      setBusiness(businessData)
+
       // Load locations for Business tier
-      if (!isDemoMode && businessData.subscription_tier === 'business') {
+      if (businessData.subscription_tier === 'business') {
         const locationAPI = new LocationAPIImpl()
         const locationsData = await locationAPI.getLocations(businessId)
         setLocations(locationsData)
       }
 
       // Load dashboard statistics
-      if (isDemoMode) {
-        // Mock stats for demo mode
-        setStats({
-          totalAppointments: 247,
-          todayAppointments: 8,
-          monthlyRevenue: 12450,
-          activeCustomers: 89
-        })
-        setUpcomingAppointments([])
-      } else {
-        const dashboardStats = await BusinessAPI.getDashboardStats(businessId)
-        setStats(dashboardStats)
+      const dashboardStats = await BusinessAPI.getDashboardStats(businessId)
+      setStats(dashboardStats)
 
-        // Load upcoming appointments with location filtering
-        const appointmentFilters = selectedLocationId === 'all' ? {} : { location_id: selectedLocationId }
-        const upcomingAppts = await BusinessAPI.getUpcomingAppointments(businessId, 5)
-        console.log('📅 Upcoming appointments loaded:', upcomingAppts.length)
+      // Load upcoming appointments with location filtering
+      const appointmentFilters = selectedLocationId === 'all' ? {} : { location_id: selectedLocationId }
+      const upcomingAppts = await BusinessAPI.getUpcomingAppointments(businessId, 5)
+      console.log('📅 Upcoming appointments loaded:', upcomingAppts.length)
 
-        // Enhance appointments with location data
-        const enhancedAppointments = upcomingAppts.map(apt => ({
-          ...apt,
-          location: locations.find(loc => loc.id === apt.location_id) || null
-        }))
-        setUpcomingAppointments(enhancedAppointments)
-      }
+      // Enhance appointments with location data
+      const enhancedAppointments = upcomingAppts.map(apt => ({
+        ...apt,
+        location: locations.find(loc => loc.id === apt.location_id) || null
+      }))
+      setUpcomingAppointments(enhancedAppointments)
 
       // Load payment data for Professional+ tiers
-      if (!isDemoMode && ['professional', 'business'].includes(businessData.subscription_tier)) {
+      if (['professional', 'business'].includes(businessData.subscription_tier)) {
         const paymentAPI = new PaymentAPIImpl()
         const paymentsData = await paymentAPI.getPayments(businessId, { limit: 3 })
         setRecentPayments(paymentsData)
@@ -338,7 +302,7 @@ function DashboardPage() {
                   {stats.todayAppointments}
                 </div>
                 <div style={{ fontSize: '14px', color: '#ffffff', opacity: 0.9, marginTop: '4px' }}>
-                  Bookings Today
+                  {terminology.plural} Today
                 </div>
                 <div style={{ fontSize: '12px', color: '#86efac', marginTop: '4px' }}>
                   +{Math.floor(stats.todayAppointments * 0.6)} After Hours
@@ -690,10 +654,10 @@ function DashboardPage() {
             <div className="card">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-medium text-gray-900">
-                  Upcoming Appointments
+                  Upcoming {terminology.plural}
                 </h2>
-                <a 
-                  href="/dashboard/appointments" 
+                <a
+                  href="/dashboard/appointments"
                   className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                 >
                   View all
@@ -764,7 +728,7 @@ function DashboardPage() {
                 >
                   <CalendarIcon className="h-5 w-5 text-blue-600 mr-3" />
                   <span className="text-sm font-medium text-blue-700 group-hover:text-blue-800">
-                    Manage Appointments
+                    Manage {terminology.plural}
                   </span>
                 </a>
                 

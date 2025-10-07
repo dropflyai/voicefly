@@ -21,6 +21,8 @@ import {
   SparklesIcon,
   InboxIcon,
   UserGroupIcon,
+  MagnifyingGlassIcon,
+  BeakerIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -66,6 +68,7 @@ const businessFeatures = [
 const sharedFeatures = [
   { name: 'Voice AI', href: '/dashboard/voice-ai', icon: PhoneIcon },
   { name: 'Agent Config', href: '/dashboard/agent', icon: SparklesIcon },
+  { name: 'Research', href: '/dashboard/research', icon: BeakerIcon },
   { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
 ]
 

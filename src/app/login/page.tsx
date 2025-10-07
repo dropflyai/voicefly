@@ -9,10 +9,11 @@ import {
   Eye,
   EyeOff,
   Mail,
-  AlertCircle,
-  Star
+  AlertCircle
 } from 'lucide-react'
 import Link from 'next/link'
+import { AuthService } from '../../lib/auth-service'
+import { supabase } from '../../lib/supabase-client'
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
@@ -29,35 +30,41 @@ export default function LoginPage() {
     setIsLoading(true)
     setError('')
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    try {
+      // Login with Supabase Auth
+      const { user, primaryBusinessId } = await AuthService.login({
+        email: formData.email,
+        password: formData.password
+      })
 
-    // Demo login validation
-    const validCredentials = [
-      { email: 'demo@voicefly.ai', password: 'demo123' },
-      { email: 'admin@voicefly.ai', password: 'admin123' },
-      { email: 'test@voicefly.ai', password: 'test123' }
-    ]
+      // Get full business data
+      const { BusinessAPI } = await import('../../lib/supabase')
+      const business = await BusinessAPI.getBusiness(primaryBusinessId)
 
-    const isValidLogin = validCredentials.some(
-      cred => cred.email === formData.email && cred.password === formData.password
-    )
+      if (!business) {
+        throw new Error('Business not found')
+      }
 
-    if (isValidLogin) {
       // Set authentication in localStorage
-      const demoBusinessId = 'demo-business-' + Date.now()
-      localStorage.setItem('authenticated_business_id', demoBusinessId)
-      localStorage.setItem('authenticated_user_email', formData.email)
-      localStorage.setItem('authenticated_business_name', 'VoiceFly Demo Business')
-      localStorage.setItem('authenticated_business_type', 'nail_salon')
+      localStorage.setItem('authenticated_business_id', primaryBusinessId)
+      localStorage.setItem('authenticated_user_email', user.email)
+      localStorage.setItem('authenticated_business_name', business.name)
+      localStorage.setItem('authenticated_business_type', business.business_type)
+
+      console.log('✅ Login successful:', {
+        userId: user.id,
+        businessId: primaryBusinessId,
+        businessCount: user.businesses.length
+      })
 
       // Redirect to dashboard
       window.location.href = '/dashboard'
-    } else {
-      setError('Invalid email or password. Try demo@voicefly.ai / demo123')
+    } catch (error: any) {
+      console.error('Login error:', error)
+      setError(error.message || 'Invalid email or password')
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -70,6 +77,40 @@ export default function LoginPage() {
   }
 
   const isFormValid = formData.email && formData.password
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      })
+
+      if (error) {
+        setError('Google Sign-In not yet configured. Please use email/password or contact support.')
+      }
+    } catch (err) {
+      setError('Google Sign-In not yet configured. Please use email/password.')
+    }
+  }
+
+  const handleAppleSignIn = async () => {
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      })
+
+      if (error) {
+        setError('Apple Sign-In not yet configured. Please use email/password or contact support.')
+      }
+    } catch (err) {
+      setError('Apple Sign-In not yet configured. Please use email/password.')
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -94,34 +135,12 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Demo Credentials */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="text-sm font-semibold text-blue-900 mb-2 flex items-center">
-              <Star className="h-4 w-4 text-blue-600 mr-1" />
-              Demo Account
-            </h3>
-            <div className="text-xs text-blue-700 space-y-1">
-              <div><strong>Email:</strong> demo@voicefly.ai</div>
-              <div><strong>Password:</strong> demo123</div>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setFormData(prev => ({
-                  ...prev,
-                  email: 'demo@voicefly.ai',
-                  password: 'demo123'
-                }))
-              }}
-              className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
-            >
-              Fill demo credentials
-            </button>
-          </div>
-
           {/* Social Login */}
           <div className="space-y-3 mb-6">
-            <button className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 hover:bg-gray-50 transition-colors">
+            <button
+              onClick={handleGoogleSignIn}
+              className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+            >
               <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -131,11 +150,14 @@ export default function LoginPage() {
               Continue with Google
             </button>
 
-            <button className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 hover:bg-gray-50 transition-colors">
-              <svg className="w-5 h-5 mr-3" fill="#00BCF2" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            <button
+              onClick={handleAppleSignIn}
+              className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
               </svg>
-              Continue with Microsoft
+              Continue with Apple
             </button>
           </div>
 

@@ -3,7 +3,7 @@
 -- Voice Scripts & Templates
 CREATE TABLE voice_scripts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   description TEXT,
   script_type TEXT CHECK (script_type IN ('cold_call', 'follow_up', 'qualification', 'demo_booking', 'custom')),
@@ -22,7 +22,7 @@ CREATE TABLE voice_scripts (
 -- Call Recordings & Transcripts
 CREATE TABLE call_recordings (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  call_id UUID REFERENCES voice_campaign_calls(id) ON DELETE CASCADE NOT NULL,
+  call_id UUID REFERENCES voice_calls(id) ON DELETE CASCADE NOT NULL,
   recording_url TEXT NOT NULL,
   transcript_url TEXT,
   duration_seconds INTEGER,
@@ -36,7 +36,7 @@ CREATE TABLE call_recordings (
 CREATE TABLE lead_enrichment (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   lead_id UUID REFERENCES leads(id) ON DELETE CASCADE NOT NULL,
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
   -- Company data
   company_revenue TEXT,
   company_employees TEXT,
@@ -63,7 +63,7 @@ CREATE TABLE lead_enrichment (
 -- Email Templates & Sequences
 CREATE TABLE email_templates (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   subject TEXT NOT NULL,
   body_html TEXT,
@@ -77,7 +77,7 @@ CREATE TABLE email_templates (
 -- Follow-up Sequences
 CREATE TABLE follow_up_sequences (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   trigger_event TEXT CHECK (trigger_event IN ('call_completed', 'no_answer', 'qualified', 'not_qualified', 'meeting_scheduled')),
   steps JSONB NOT NULL, -- Array of {delay_hours, action_type, template_id}
@@ -88,9 +88,9 @@ CREATE TABLE follow_up_sequences (
 -- Meetings & Calendar Integration
 CREATE TABLE meetings (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
   lead_id UUID REFERENCES leads(id) NOT NULL,
-  call_id UUID REFERENCES voice_campaign_calls(id),
+  call_id UUID REFERENCES voice_calls(id),
   scheduled_by UUID REFERENCES auth.users(id),
   meeting_type TEXT CHECK (meeting_type IN ('demo', 'discovery', 'follow_up', 'closing', 'check_in')),
   scheduled_at TIMESTAMPTZ NOT NULL,
@@ -106,7 +106,7 @@ CREATE TABLE meetings (
 -- Integrations Configuration
 CREATE TABLE integrations (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
   integration_type TEXT CHECK (integration_type IN ('salesforce', 'hubspot', 'pipedrive', 'slack', 'teams', 'zapier', 'webhook', 'calendly', 'zoom')),
   name TEXT NOT NULL,
   config JSONB NOT NULL, -- Encrypted credentials and settings
@@ -116,13 +116,13 @@ CREATE TABLE integrations (
   sync_status TEXT,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(business_id, integration_type)
+  UNIQUE(organization_id, integration_type)
 );
 
 -- Webhooks for real-time updates
 CREATE TABLE webhooks (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   url TEXT NOT NULL,
   events TEXT[] NOT NULL, -- ['call.started', 'call.completed', 'lead.qualified']
@@ -136,7 +136,7 @@ CREATE TABLE webhooks (
 -- Team Performance Analytics
 CREATE TABLE team_performance (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES auth.users(id) NOT NULL,
   period_date DATE NOT NULL,
   -- Metrics
@@ -156,7 +156,7 @@ CREATE TABLE team_performance (
 -- Custom Fields for Leads (Dynamic schema)
 CREATE TABLE custom_fields (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
   field_name TEXT NOT NULL,
   field_type TEXT CHECK (field_type IN ('text', 'number', 'date', 'boolean', 'select', 'multiselect')),
   field_options JSONB, -- For select/multiselect
@@ -164,7 +164,7 @@ CREATE TABLE custom_fields (
   applies_to TEXT CHECK (applies_to IN ('lead', 'campaign', 'call')),
   display_order INTEGER,
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(business_id, field_name, applies_to)
+  UNIQUE(organization_id, field_name, applies_to)
 );
 
 -- Custom Field Values
@@ -180,8 +180,8 @@ CREATE TABLE custom_field_values (
 -- AI Training Data (for improving voice AI)
 CREATE TABLE ai_training_feedback (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
-  call_id UUID REFERENCES voice_campaign_calls(id) NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
+  call_id UUID REFERENCES voice_calls(id) NOT NULL,
   feedback_type TEXT CHECK (feedback_type IN ('positive', 'negative', 'correction')),
   segment_start_time INTEGER, -- Seconds into call
   segment_end_time INTEGER,
@@ -196,7 +196,7 @@ CREATE TABLE ai_training_feedback (
 CREATE TABLE notification_preferences (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
   -- Channels
   email_enabled BOOLEAN DEFAULT true,
   sms_enabled BOOLEAN DEFAULT false,
@@ -211,17 +211,17 @@ CREATE TABLE notification_preferences (
   notify_weekly_report BOOLEAN DEFAULT false,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(user_id, business_id)
+  UNIQUE(user_id, organization_id)
 );
 
 -- Tags for organization and filtering
 CREATE TABLE tags (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   color TEXT DEFAULT '#gray',
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(business_id, name)
+  UNIQUE(organization_id, name)
 );
 
 -- Tag associations (polymorphic)
@@ -253,7 +253,7 @@ CREATE TABLE call_queues (
 -- AB Testing for Scripts
 CREATE TABLE ab_tests (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   test_type TEXT CHECK (test_type IN ('script', 'voice', 'timing', 'opener')),
   variant_a JSONB NOT NULL,
@@ -274,10 +274,10 @@ CREATE TABLE ab_tests (
 );
 
 -- Create all indexes
-CREATE INDEX idx_voice_scripts_org ON voice_scripts(business_id);
+CREATE INDEX idx_voice_scripts_org ON voice_scripts(organization_id);
 CREATE INDEX idx_lead_enrichment_lead ON lead_enrichment(lead_id);
 CREATE INDEX idx_meetings_scheduled ON meetings(scheduled_at);
-CREATE INDEX idx_integrations_org ON integrations(business_id);
+CREATE INDEX idx_integrations_org ON integrations(organization_id);
 CREATE INDEX idx_team_performance_user ON team_performance(user_id);
 CREATE INDEX idx_team_performance_period ON team_performance(period_date);
 CREATE INDEX idx_custom_field_values_entity ON custom_field_values(entity_id);

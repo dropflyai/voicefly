@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Layout from '../../../components/Layout'
 import { BusinessAPI } from '../../../lib/supabase'
 import { getCurrentBusinessId } from '../../../lib/auth-utils'
+import { getServiceTerminology } from '../../../lib/industry-service-templates'
 import {
   PlusIcon,
   MagnifyingGlassIcon,
@@ -149,7 +150,10 @@ export default function ServicesPage() {
   const [showModal, setShowModal] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [businessType, setBusinessType] = useState('Nail Salon')
+  const [businessType, setBusinessType] = useState('general_business')
+
+  // Get industry-specific terminology
+  const terminology = getServiceTerminology(businessType)
 
   // Load real services from database
   useEffect(() => {
@@ -262,17 +266,12 @@ export default function ServicesPage() {
         <div className="sm:flex sm:items-center sm:justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
-              {businessType === 'medical_practice' ? 'Medical Procedures' : 
-               businessType === 'dental_practice' ? 'Dental Services' : 'Services'}
+              {terminology.plural}
             </h1>
             <p className="text-gray-600 mt-1">
-              {services.length === 0 
-                ? (businessType === 'medical_practice' ? 'No procedures yet - Add your first medical procedure to get started!' :
-                   businessType === 'dental_practice' ? 'No dental services yet - Add your first dental service to get started!' :
-                   'No services yet - Add your first service to get started!')
-                : (businessType === 'medical_practice' ? `Managing ${services.length} medical procedures for your practice` :
-                   businessType === 'dental_practice' ? `Managing ${services.length} dental services for your practice` :
-                   `Managing ${services.length} services for your business`)
+              {services.length === 0
+                ? `No ${terminology.plural.toLowerCase()} yet - Add your first ${terminology.singular.toLowerCase()} to get started!`
+                : `Managing ${services.length} ${terminology.plural.toLowerCase()} for your business`
               }
             </p>
           </div>
@@ -282,8 +281,7 @@ export default function ServicesPage() {
               className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               <PlusIcon className="h-4 w-4 mr-2" />
-              {businessType === 'medical_practice' ? 'Add Procedure' :
-               businessType === 'dental_practice' ? 'Add Service' : 'Add Service'}
+              Add {terminology.singular}
             </button>
           </div>
         </div>
@@ -295,8 +293,7 @@ export default function ServicesPage() {
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder={businessType === 'medical_practice' ? 'Search procedures...' :
-                           businessType === 'dental_practice' ? 'Search dental services...' : 'Search services...'}
+                placeholder={`Search ${terminology.plural.toLowerCase()}...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -327,18 +324,14 @@ export default function ServicesPage() {
             <div className="text-center py-12">
               <div className="text-gray-400 text-6xl mb-4">💅</div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {services.length === 0 ? 
-                  (businessType === 'medical_practice' ? 'No procedures yet' :
-                   businessType === 'dental_practice' ? 'No dental services yet' : 'No services yet') :
-                  (businessType === 'medical_practice' ? 'No matching procedures' :
-                   businessType === 'dental_practice' ? 'No matching services' : 'No matching services')
+                {services.length === 0
+                  ? `No ${terminology.plural.toLowerCase()} yet`
+                  : `No matching ${terminology.plural.toLowerCase()}`
                 }
               </h3>
               <p className="text-gray-500 mb-6">
-                {services.length === 0 
-                  ? (businessType === 'medical_practice' ? 'Add your first medical procedure to get started with patient appointments' :
-                     businessType === 'dental_practice' ? 'Add your first dental service to get started with patient appointments' :
-                     'Add your first service to get started with bookings')
+                {services.length === 0
+                  ? `Add your first ${terminology.singular.toLowerCase()} to get started with bookings`
                   : 'Try adjusting your search or filters'
                 }
               </p>
@@ -348,8 +341,7 @@ export default function ServicesPage() {
                   className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
-                  {businessType === 'medical_practice' ? 'Add Your First Procedure' :
-                   businessType === 'dental_practice' ? 'Add Your First Service' : 'Add Your First Service'}
+                  Add Your First {terminology.singular}
                 </button>
               )}
             </div>
@@ -460,7 +452,8 @@ interface AddServiceModalProps {
 function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddServiceModalProps) {
   const modalCategories = getBusinessTypeCategories(businessType).slice(1) // Remove 'All Categories'
   const defaultCategory = modalCategories[0]?.value || 'general'
-  
+  const terminology = getServiceTerminology(businessType)
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -510,8 +503,7 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
             <div className="bg-white px-6 py-6">
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-medium text-gray-900">
-                  {businessType === 'medical_practice' ? 'Add New Medical Procedure' :
-                   businessType === 'dental_practice' ? 'Add New Dental Service' : 'Add New Service'}
+                  Add New {terminology.singular}
                 </h3>
                 <button
                   type="button"
@@ -525,8 +517,7 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {businessType === 'medical_practice' ? 'Procedure Name *' :
-                     businessType === 'dental_practice' ? 'Service Name *' : 'Service Name *'}
+                    {terminology.singular} Name *
                   </label>
                   <input
                     type="text"
@@ -534,9 +525,9 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    placeholder={businessType === 'medical_practice' ? 'e.g., Annual Physical Exam' :
-                                businessType === 'dental_practice' ? 'e.g., Routine Cleaning' :
-                                'e.g., Classic Manicure'}
+                    placeholder={`e.g., ${businessType === 'medical_practice' ? 'Annual Physical Exam' :
+                                businessType === 'dental_practice' ? 'Routine Cleaning' :
+                                'Classic Manicure'}`}
                   />
                 </div>
 
@@ -549,9 +540,7 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    placeholder={businessType === 'medical_practice' ? 'Brief description of the medical procedure...' :
-                                businessType === 'dental_practice' ? 'Brief description of the dental service...' :
-                                'Brief description of the service...'}
+                    placeholder={`Brief description of the ${terminology.singular.toLowerCase()}...`}
                   />
                 </div>
 

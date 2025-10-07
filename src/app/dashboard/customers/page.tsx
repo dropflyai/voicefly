@@ -259,7 +259,17 @@ export default function CustomersPage() {
       const businessId = getCurrentBusinessId()
       if (!businessId) return
 
-      const realCustomers = await BusinessAPI.getCustomers(businessId)
+      // Check if this is a demo business
+      const isDemoMode = businessId.startsWith('demo-business-')
+
+      let realCustomers
+      if (isDemoMode) {
+        // Return empty array for demo mode - no mock customers needed
+        console.log('🎭 Customers page in DEMO mode - showing empty state')
+        realCustomers = []
+      } else {
+        realCustomers = await BusinessAPI.getCustomers(businessId)
+      }
       
       // Transform to match our interface
       const transformedCustomers: Customer[] = await Promise.all(

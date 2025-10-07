@@ -457,54 +457,161 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'team' && (
-              <div className="card">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900">Team Access</h2>
-                    <button className="btn-primary">
-                      <UserGroupIcon className="h-4 w-4 mr-2" />
-                      Invite Team Member
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">
-                          <span className="text-white font-medium">JS</span>
-                        </div>
+              <div className="space-y-6">
+                {/* Team Pricing Overview */}
+                <div className="card">
+                  <div className="p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Team Seat Pricing</h2>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-medium text-gray-900">John Smith</div>
-                          <div className="text-sm text-gray-500">john@bellanails.com</div>
+                          <div className="text-sm font-medium text-gray-700">Current Plan: Professional</div>
+                          <div className="text-2xl font-bold text-gray-900 mt-1">$446/month</div>
+                          <div className="text-sm text-gray-600 mt-1">
+                            $397 base + $49 for 1 additional seat
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Owner
-                        </span>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <PencilIcon className="h-4 w-4" />
-                        </button>
+                        <div className="text-right">
+                          <div className="text-sm font-medium text-gray-700">Seat Usage</div>
+                          <div className="text-2xl font-bold text-gray-900 mt-1">4 / 10</div>
+                          <div className="text-sm text-gray-600 mt-1">seats used</div>
+                        </div>
                       </div>
                     </div>
-                    
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 bg-beauty-600 rounded-full flex items-center justify-center">
-                          <span className="text-white font-medium">MR</span>
+
+                    <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <div className="text-gray-600">Included Seats</div>
+                        <div className="font-semibold text-gray-900 mt-1">3 seats</div>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <div className="text-gray-600">Additional Seats</div>
+                        <div className="font-semibold text-gray-900 mt-1">$49/seat/month</div>
+                      </div>
+                      <div className="bg-gray-50 p-3 rounded-lg">
+                        <div className="text-gray-600">Max Seats</div>
+                        <div className="font-semibold text-gray-900 mt-1">10 seats</div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0">
+                          <svg className="h-5 w-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
                         </div>
-                        <div>
-                          <div className="font-medium text-gray-900">Maya Rodriguez</div>
-                          <div className="text-sm text-gray-500">maya@bellanails.com</div>
+                        <div className="ml-3 text-sm">
+                          <p className="font-medium text-yellow-800">Approaching seat limit</p>
+                          <p className="text-yellow-700 mt-1">You're using 4 of 10 seats. Upgrade to Business plan for up to 25 seats at $59/seat.</p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-3">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          Manager
-                        </span>
-                        <button className="text-gray-400 hover:text-gray-600">
-                          <PencilIcon className="h-4 w-4" />
-                        </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Team Members */}
+                <div className="card">
+                  <div className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-xl font-semibold text-gray-900">Team Members</h2>
+                      <button
+                        className="btn-primary"
+                        onClick={() => alert('Team invite modal would open here')}
+                      >
+                        <UserGroupIcon className="h-4 w-4 mr-2" />
+                        Invite Team Member
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-medium">JS</span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">John Smith</div>
+                            <div className="text-sm text-gray-500">john@voicefly.ai</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Owner
+                          </span>
+                          <span className="text-xs text-gray-500">Included</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="h-10 w-10 bg-purple-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-medium">MR</span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">Maya Rodriguez</div>
+                            <div className="text-sm text-gray-500">maya@voicefly.ai</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            Manager
+                          </span>
+                          <span className="text-xs text-gray-500">Included</span>
+                          <button className="text-gray-400 hover:text-red-600">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="h-10 w-10 bg-green-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-medium">SK</span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">Sarah Kim</div>
+                            <div className="text-sm text-gray-500">sarah@voicefly.ai</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            Member
+                          </span>
+                          <span className="text-xs text-gray-500">Included</span>
+                          <button className="text-gray-400 hover:text-red-600">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-medium">TC</span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">Tom Chen</div>
+                            <div className="text-sm text-gray-500">tom@voicefly.ai</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            Member
+                          </span>
+                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                            +$49/mo
+                          </span>
+                          <button className="text-gray-400 hover:text-red-600">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
