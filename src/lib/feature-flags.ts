@@ -78,9 +78,23 @@ export const getMayaJobForBusinessType = (businessType: BusinessType): string =>
 };
 
 /**
+ * Business feature set
+ */
+export interface BusinessFeatures {
+  appointments: boolean;
+  services: boolean;
+  staff: boolean;
+  customers: boolean;
+  analytics: boolean;
+  receptionist: boolean;
+  callLogs: boolean;
+  leadManagement: boolean;
+}
+
+/**
  * Get features available for business type
  */
-export const getFeaturesForBusinessType = (businessType: BusinessType) => {
+export const getFeaturesForBusinessType = (businessType: BusinessType): BusinessFeatures => {
   switch (businessType) {
     case 'beauty_salon':
       return {

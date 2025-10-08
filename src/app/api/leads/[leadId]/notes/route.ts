@@ -6,9 +6,10 @@ export const dynamic = 'force-dynamic'
 // Add note to lead
 export async function POST(
   request: NextRequest,
-  { params }: { params: { leadId: string } }
+  { params }: { params: Promise<{ leadId: string }> }
 ) {
   try {
+    const { leadId } = await params
     const body = await request.json()
     const { business_id, content, title, note_type, research_query, research_mode } = body
 
@@ -21,7 +22,7 @@ export async function POST(
 
     const note = await ResearchAPI.addLeadNote({
       business_id,
-      lead_id: params.leadId,
+      lead_id: leadId,
       content,
       title: title || 'Research Note',
       note_type: note_type || 'research',
@@ -52,10 +53,11 @@ export async function POST(
 // Get notes for lead
 export async function GET(
   request: NextRequest,
-  { params }: { params: { leadId: string } }
+  { params }: { params: Promise<{ leadId: string }> }
 ) {
   try {
-    const notes = await ResearchAPI.getLeadNotes(params.leadId)
+    const { leadId } = await params
+    const notes = await ResearchAPI.getLeadNotes(leadId)
 
     return NextResponse.json({
       notes,

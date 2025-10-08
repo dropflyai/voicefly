@@ -222,7 +222,7 @@ Return JSON:
         objection_handling: parsed.objections || {},
         closing: parsed.closing || '',
         target_leads: leads.map(l => l.apolloId || ''),
-        target_segment: sampleLead.segment,
+        target_segment: (sampleLead.segment === 'cold' ? 'warm' : sampleLead.segment) as 'warm' | 'hot',
         calls_made: 0,
         calls_connected: 0,
         appointments_booked: 0,
