@@ -135,6 +135,7 @@ const getNavigationForBusiness = (subscriptionTier: string, businessType?: strin
     }
     if (FEATURE_FLAGS.leadManagement) {
       navigation.push({ name: 'Leads', href: '/dashboard/leads', icon: UserGroupIcon })
+      navigation.push({ name: 'Campaigns', href: '/dashboard/campaigns', icon: EnvelopeIcon })
     }
     // Messages feature (placeholder for future)
     navigation.push({ name: 'Messages', href: '/dashboard/messages', icon: InboxIcon })

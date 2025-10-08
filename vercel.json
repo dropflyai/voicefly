@@ -1,0 +1,81 @@
+{
+  "version": 2,
+  "name": "voicefly",
+  "alias": ["voiceflyai.com", "www.voiceflyai.com"],
+  "regions": ["iad1"],
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_SITE_URL": "https://voiceflyai.com",
+      "NEXT_PUBLIC_API_URL": "https://voiceflyai.com/api"
+    }
+  },
+  "env": {
+    "PLATFORM_DOMAIN": "voiceflyai.com",
+    "ADMIN_DASHBOARD_URL": "https://voiceflyai.com",
+    "BOOKING_SITE_BASE": "https://voiceflyai.com/book",
+    "NEXT_PUBLIC_APP_URL": "https://voiceflyai.com",
+    "WEBHOOK_URL": "https://voiceflyai.com/api/webhook/vapi"
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://voiceflyai.com"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/www",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/book/:path*",
+      "destination": "/booking/:path*"
+    }
+  ]
+}
