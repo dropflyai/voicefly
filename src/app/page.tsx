@@ -1,11 +1,12 @@
 "use client"
 
 import Link from 'next/link'
-import { Phone, DollarSign, Clock, CheckCircle, ArrowRight, Star, Users, TrendingUp, Shield, Zap, Calendar, Search, Mail, BarChart3, Brain, Workflow } from 'lucide-react'
+import { Phone, DollarSign, Clock, CheckCircle, ArrowRight, Star, Users, TrendingUp, Shield, Zap, Calendar, Search, Mail, BarChart3, Brain, Workflow, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 
 export default function HomePage() {
   const [monthlyCallVolume, setMonthlyCallVolume] = useState(500)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const receptionistCost = 150000 // Full employee cost including benefits
   const voiceFlyCost = 297 * 12
   const annualSavings = receptionistCost - voiceFlyCost
@@ -14,13 +15,15 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="flex justify-between items-center py-4 md:py-6">
             <div className="flex items-center">
-              <Phone className="h-8 w-8 text-blue-600 mr-3" />
-              <span className="text-2xl font-bold text-gray-900">VoiceFly</span>
+              <Phone className="h-6 w-6 md:h-8 md:w-8 text-blue-600 mr-2 md:mr-3" />
+              <span className="text-xl md:text-2xl font-bold text-gray-900">VoiceFly</span>
             </div>
+
+            {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
               <Link href="/" className="text-blue-600 font-medium">Home</Link>
               <Link href="/solutions" className="text-gray-700 hover:text-blue-600 font-medium">Solutions</Link>
@@ -35,7 +38,35 @@ export default function HomePage() {
                 Start Free Trial
               </Link>
             </nav>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
+
+          {/* Mobile Navigation */}
+          {mobileMenuOpen && (
+            <div className="md:hidden py-4 space-y-2 border-t border-gray-200">
+              <Link href="/" className="block px-4 py-2 text-blue-600 font-medium rounded-lg hover:bg-blue-50" onClick={() => setMobileMenuOpen(false)}>Home</Link>
+              <Link href="/solutions" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Solutions</Link>
+              <Link href="/features" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Features</Link>
+              <Link href="/pricing" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
+              <Link href="/testimonials" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Testimonials</Link>
+              <Link href="/login" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
+              <Link
+                href="/login"
+                className="block bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium text-center transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Start Free Trial
+              </Link>
+            </div>
+          )}
         </div>
       </header>
 
@@ -48,12 +79,12 @@ export default function HomePage() {
               The World's Most Advanced AI Business Employee
             </div>
 
-            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
               Meet Maya: Your AI Employee
               <span className="text-blue-600 block mt-2">Who Runs Your Entire Business</span>
             </h1>
 
-            <p className="text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
+            <p className="text-lg sm:text-xl text-gray-700 mb-8 max-w-3xl mx-auto px-4">
               Maya isn't just another chatbot - she's a complete AI employee who handles sales calls,
               conducts deep market research, manages multi-channel marketing campaigns, processes payments,
               and automates your entire business operations 24/7.
@@ -72,17 +103,17 @@ export default function HomePage() {
             </div>
 
             {/* Trust Badges */}
-            <div className="flex items-center justify-center space-x-8 text-gray-600">
+            <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-gray-600 text-sm sm:text-base">
               <div className="flex items-center">
-                <Shield className="h-5 w-5 mr-2 text-green-600" />
+                <Shield className="h-5 w-5 mr-2 text-green-600 flex-shrink-0" />
                 <span>Enterprise Grade</span>
               </div>
               <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                <CheckCircle className="h-5 w-5 mr-2 text-green-600 flex-shrink-0" />
                 <span>Live in 10 Minutes</span>
               </div>
               <div className="flex items-center">
-                <Users className="h-5 w-5 mr-2 text-green-600" />
+                <Users className="h-5 w-5 mr-2 text-green-600 flex-shrink-0" />
                 <span>500+ Businesses</span>
               </div>
             </div>
@@ -481,13 +512,13 @@ export default function HomePage() {
             </button>
           </div>
 
-          <div className="mt-12 flex items-center justify-center space-x-8 text-white/80">
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-4 md:gap-8 text-white/80 text-sm sm:text-base">
             <div className="flex items-center">
-              <CheckCircle className="h-5 w-5 mr-2" />
+              <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0" />
               <span>14-day free trial</span>
             </div>
             <div className="flex items-center">
-              <CheckCircle className="h-5 w-5 mr-2" />
+              <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0" />
               <span>Works alongside your existing team</span>
             </div>
           </div>

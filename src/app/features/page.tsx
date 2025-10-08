@@ -5,19 +5,21 @@ import {
   Phone, Clock, Calendar, Brain, Shield, Zap, Globe, BarChart3,
   Users, MessageSquare, CheckCircle, ArrowRight, Headphones,
   FileText, DollarSign, TrendingUp, Bot, Mic, Database, Languages,
-  CalendarCheck, PhoneCall, UserCheck, Star, Sparkles, Settings
+  CalendarCheck, PhoneCall, UserCheck, Star, Sparkles, Settings, Menu, X
 } from 'lucide-react'
+import { useState } from 'react'
 
 export default function FeaturesPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+          <div className="flex justify-between items-center py-4 md:py-6">
             <div className="flex items-center">
-              <Phone className="h-8 w-8 text-blue-600 mr-3" />
-              <span className="text-2xl font-bold text-gray-900">VoiceFly</span>
+              <Phone className="h-6 w-6 md:h-8 md:w-8 text-blue-600 mr-2 md:mr-3" />
+              <span className="text-xl md:text-2xl font-bold text-gray-900">VoiceFly</span>
             </div>
             <nav className="hidden md:flex items-center space-x-8">
               <Link href="/" className="text-gray-700 hover:text-blue-600 font-medium">Home</Link>
@@ -32,7 +34,26 @@ export default function FeaturesPage() {
                 Start Free Trial
               </Link>
             </nav>
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
+          {mobileMenuOpen && (
+            <div className="md:hidden py-4 space-y-2 border-t border-gray-200">
+              <Link href="/" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Home</Link>
+              <Link href="/features" className="block px-4 py-2 text-blue-600 font-medium rounded-lg hover:bg-blue-50" onClick={() => setMobileMenuOpen(false)}>Features</Link>
+              <Link href="/pricing" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
+              <Link href="/testimonials" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Testimonials</Link>
+              <Link href="/login" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
+              <Link href="/login" className="block bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium text-center transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Start Free Trial
+              </Link>
+            </div>
+          )}
         </div>
       </header>
 
@@ -44,12 +65,12 @@ export default function FeaturesPage() {
             Enterprise-Grade AI Technology
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6">
             Everything Maya Can Do
             <span className="text-blue-600 block mt-2">For Your Business</span>
           </h1>
 
-          <p className="text-xl text-gray-700 mb-8 max-w-3xl mx-auto">
+          <p className="text-lg sm:text-xl text-gray-700 mb-8 max-w-3xl mx-auto px-4">
             Maya isn't just an AI receptionist - she's a full-featured team member with
             capabilities that transform how you handle customer interactions.
           </p>

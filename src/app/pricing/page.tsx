@@ -346,12 +346,12 @@ export default function PricingPage() {
       {/* Pricing Cards */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {plans.map((plan) => (
               <div
                 key={plan.id}
                 className={`relative bg-white rounded-2xl shadow-lg border-2 transition-all hover:shadow-xl ${
-                  plan.popular ? 'border-blue-500 scale-105' : 'border-gray-200'
+                  plan.popular ? 'border-blue-500 lg:scale-105' : 'border-gray-200'
                 }`}
               >
                 {plan.popular && (
