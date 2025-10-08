@@ -1591,6 +1591,7 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     custom_branding: false, // NO branding
     automated_reminders: false, // NO automation
     payment_processing: false, // NO payments
+    geo_optimization: false, // NO GEO tools
     voice_ai_type: 'shared'
   },
   professional: {
@@ -1620,6 +1621,7 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     custom_branding: true, // Professional look
     automated_reminders: true, // Save time, reduce no-shows
     payment_processing: true, // Collect money
+    geo_optimization: true, // AI-powered GEO analysis & recommendations
     voice_ai_type: 'shared'
   },
   enterprise: {
@@ -1649,6 +1651,7 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     custom_branding: true,
     automated_reminders: true,
     payment_processing: true,
+    geo_optimization: true, // AI-powered GEO analysis & recommendations
 
     // ENTERPRISE-EXCLUSIVE FEATURES
     voice_ai_type: 'custom', // CUSTOM AI personality (Enterprise only)

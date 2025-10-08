@@ -431,7 +431,7 @@ Return JSON:
       },
       closing: `Perfect! I have next Tuesday at 2pm or Wednesday at 10am. Which works better for you?`,
       target_leads: leads.map(l => l.apolloId || ''),
-      target_segment: sampleLead.segment,
+      target_segment: (sampleLead.segment === 'cold' ? 'warm' : sampleLead.segment) as 'warm' | 'hot',
       calls_made: 0,
       calls_connected: 0,
       appointments_booked: 0,

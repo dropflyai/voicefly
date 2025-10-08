@@ -101,7 +101,14 @@ export class FeatureAccess {
           reason: !(limits as any).automated_reminders ? 'Automated reminders not available in your plan' : undefined,
           upgradeRequired: !(limits as any).automated_reminders ? 'professional' : undefined
         }
-      
+
+      case 'geo_optimization':
+        return {
+          hasAccess: (limits as any).geo_optimization ?? false,
+          reason: !(limits as any).geo_optimization ? 'GEO (Generative Engine Optimization) tools not available in your plan' : undefined,
+          upgradeRequired: !(limits as any).geo_optimization ? 'professional' : undefined
+        }
+
       default:
         return { hasAccess: true }
     }
@@ -241,7 +248,8 @@ export class FeatureAccess {
     if ((limits as any).white_label) features.push('white_label')
     if ((limits as any).api_access) features.push('api')
     if ((limits as any).automated_reminders) features.push('reminders')
-    
+    if ((limits as any).geo_optimization) features.push('geo')
+
     return features
   }
 
