@@ -322,6 +322,7 @@ Organize services by category for easier booking:
       tagline: "Get a taste - upgrade when you run out",
       features: [
         "💬 60 AI call minutes (~30 calls)",
+        "🤖 1 AI agent (single business identity)",
         "📅 25 appointments/month",
         "📱 50 SMS messages/month",
         "👥 100 customers max",
@@ -344,6 +345,7 @@ Organize services by category for easier booking:
       tagline: "High limits + all features - This is where you make money",
       features: [
         "🚀 500 AI call minutes/month (~250 calls)",
+        "🤖 3 AI agents (Sales, Service, After-hours)",
         "📅 500 appointments/month",
         "💬 1,000 SMS messages/month",
         "👥 2,000 customers max",
@@ -356,17 +358,18 @@ Organize services by category for easier booking:
         "✅ Marketing campaigns (email & SMS)",
         "✅ Custom branding (logo & colors)",
         "✅ Loyalty program (40% better retention)",
-        "➕ Add team members at $50/mo per seat",
-        "➕ Add locations at $100/mo each"
+        "➕ Add team members at $100/mo per seat",
+        "➕ Add locations at $200/mo each"
       ],
-      limits: "Sweet spot for most businesses - scale with add-ons or upgrade for volume discounts"
+      limits: "Sweet spot for most businesses - upgrade to Enterprise for volume discounts"
     },
     enterprise: {
       name: "Enterprise Plan",
       price: "$994/month",
-      tagline: "Maximum scale + exclusive features + volume discounts",
+      tagline: "Maximum scale + exclusive features + 50% location discount",
       features: [
         "🚀 2,000 AI call minutes/month (~1,000 calls)",
+        "🤖 10 AI agents (1 per location + departmental)",
         "📅 2,000 appointments/month",
         "💬 5,000 SMS messages/month",
         "👥 10,000 customers max",
@@ -374,17 +377,17 @@ Organize services by category for easier booking:
         "👥 10 user seats included",
         "📍 5 locations included",
         "✅ Everything in Professional PLUS:",
-        "🤖 CUSTOM AI assistant (Enterprise exclusive)",
+        "🎨 CUSTOM AI personality per agent (Enterprise exclusive)",
         "🏷️ White-label branding (Enterprise exclusive)",
         "🔌 API access (Enterprise exclusive)",
         "📊 Multi-location analytics (Enterprise exclusive)",
         "👨‍💼 Dedicated account manager",
         "⚡ Priority support with SLA",
         "🛠️ Custom integrations & development",
-        "➕ Add locations at $50/mo each (50% cheaper than Pro!)",
-        "➕ Add seats at $80/mo each"
+        "➕ Add locations at $100/mo each (50% cheaper than Pro!)",
+        "➕ Add seats at $160/mo each"
       ],
-      limits: "For serious multi-location businesses - Best value for scaling"
+      limits: "For serious multi-location businesses - Huge savings on locations"
     }
   }
 }

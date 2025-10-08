@@ -267,6 +267,27 @@ export class FeatureAccess {
   }
 
   /**
+   * Check AI agent limit
+   */
+  static checkAIAgentLimit(
+    tier: SubscriptionTier,
+    currentAgents: number
+  ): FeatureAccessResult {
+    const limits = PLAN_TIER_LIMITS[tier] as any
+    const maxAgents = limits.max_ai_agents
+
+    if (maxAgents && maxAgents > 0 && currentAgents >= maxAgents) {
+      return {
+        hasAccess: false,
+        reason: `You've reached your limit of ${maxAgents} AI agent(s)`,
+        upgradeRequired: tier === 'starter' ? 'professional' : 'enterprise'
+      }
+    }
+
+    return { hasAccess: true }
+  }
+
+  /**
    * Check SMS limit
    */
   static checkSMSLimit(
@@ -296,6 +317,7 @@ export class FeatureAccess {
     if (currentTier === 'starter' && targetTier === 'professional') {
       benefits.push(
         '🚀 500 AI call minutes/month (vs 60)',
+        '🤖 3 AI agents (vs 1) - Sales, Service, After-hours',
         '📅 500 appointments/month (vs 25)',
         '💬 1,000 SMS messages/month (vs 50)',
         '👥 3 user seats (vs 1 solo user)',
@@ -305,32 +327,33 @@ export class FeatureAccess {
         '📧 Marketing campaigns - Email & SMS automation',
         '🎨 Custom branding - Logo, colors',
         '⭐ Loyalty program - Increase retention 40%',
-        '➕ Add locations at $100/mo each',
-        '➕ Add team members at $50/mo per seat'
+        '➕ Add locations at $200/mo each',
+        '➕ Add team members at $100/mo per seat'
       )
     } else if (currentTier === 'professional' && targetTier === 'enterprise') {
       benefits.push(
         '🚀 2,000 AI minutes/month (vs 500)',
+        '🤖 10 AI agents (vs 3) - 1 per location + departmental',
         '📅 2,000 appointments/month (vs 500)',
         '💬 5,000 SMS/month (vs 1,000)',
         '🏢 5 locations included (vs 1)',
         '👥 10 user seats included (vs 3)',
-        '💰 Location add-ons only $50/mo (vs $100/mo on Pro!)',
-        '🤖 CUSTOM AI assistant - Unique personality (Enterprise exclusive)',
+        '💰 Location add-ons only $100/mo (vs $200/mo on Pro - 50% savings!)',
+        '🎨 CUSTOM AI personality per agent (Enterprise exclusive)',
         '🏷️ White-label branding - Remove VoiceFly branding (Enterprise exclusive)',
         '🔌 API access - Custom integrations (Enterprise exclusive)',
         '📈 Multi-location analytics - Cross-location insights (Enterprise exclusive)',
         '👨‍💼 Dedicated account manager',
         '⚡ Priority support with SLA guarantee',
         '🛠️ Custom integrations and development',
-        '➕ Add seats at $80/mo each (vs $50/mo on Pro)'
+        '➕ Add seats at $160/mo each (vs $100/mo on Pro)'
       )
     } else if (targetTier === 'enterprise') {
       benefits.push(
         '2,000 AI minutes/month',
         '5 locations included',
         '10 user seats included',
-        'Location add-ons only $50/mo (volume discount)',
+        'Location add-ons only $100/mo (volume discount)',
         'CUSTOM AI assistant (Enterprise exclusive)',
         'White-label branding (Enterprise exclusive)',
         'API access (Enterprise exclusive)',

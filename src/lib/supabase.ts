@@ -1572,6 +1572,7 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
 
     // USAGE-BASED LIMITS (Force upgrade in 1-2 weeks)
     max_ai_minutes: 60, // Only 60 minutes of AI calls = ~30 calls
+    max_ai_agents: 1, // Only 1 AI agent (single business identity)
     max_appointments: 25, // Only 25 appointments/month
     max_sms: 50, // Only 50 SMS messages
     max_customers: 100, // Limited to 100 customers
@@ -1600,6 +1601,7 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
 
     // CAPPED USAGE (Generous but predictable costs)
     max_ai_minutes: 500, // 500 minutes/month (~250 calls)
+    max_ai_agents: 3, // 3 AI agents (matches seats - 1 per department or location)
     max_appointments: 500, // 500 appointments/month
     max_sms: 1000, // 1,000 SMS/month
     max_customers: 2000, // 2,000 customers max
@@ -1607,10 +1609,10 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
 
     // USER SEATS
     max_user_seats: 3, // 3 seats included
-    additional_seat_price: 50, // $50/mo per additional seat (doubled)
+    additional_seat_price: 100, // $100/mo per additional seat (4x original)
 
-    // LOCATION ADD-ONS (EXPENSIVE - Forces Enterprise upgrade)
-    additional_location_price: 100, // $100/mo per additional location (expensive)
+    // LOCATION ADD-ONS (VERY EXPENSIVE - Forces Enterprise upgrade)
+    additional_location_price: 200, // $200/mo per additional location (4x original)
 
     // PROFESSIONAL FEATURES
     analytics_dashboard: true, // See ROI and revenue
@@ -1628,6 +1630,7 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
 
     // ENTERPRISE SCALE (High limits but not unlimited)
     max_ai_minutes: 2000, // 2,000 minutes/month (~1,000 calls)
+    max_ai_agents: 10, // 10 AI agents (1 per location + departmental agents)
     max_appointments: 2000, // 2,000 appointments/month
     max_sms: 5000, // 5,000 SMS/month
     max_customers: 10000, // 10,000 customers
@@ -1635,10 +1638,10 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
 
     // USER SEATS
     max_user_seats: 10, // 10 seats included
-    additional_seat_price: 80, // $80/mo per additional seat (doubled)
+    additional_seat_price: 160, // $160/mo per additional seat (4x original)
 
-    // LOCATION ADD-ONS (CHEAP - Volume discount)
-    additional_location_price: 50, // $50/mo per additional location (cheaper than Pro!)
+    // LOCATION ADD-ONS (VOLUME DISCOUNT - Still cheaper than Pro)
+    additional_location_price: 100, // $100/mo per additional location (50% cheaper than Pro!)
 
     // ALL PROFESSIONAL FEATURES
     analytics_dashboard: true,
