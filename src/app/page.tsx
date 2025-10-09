@@ -571,7 +571,7 @@ export default function HomePage() {
 
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-white text-sm">
-              © 2024 VoiceFly. All rights reserved.
+              © 2025 VoiceFly. All rights reserved.
             </p>
             <div className="flex items-center space-x-4 mt-4 md:mt-0">
               <span className="text-sm text-white">SOC 2 Certified</span>

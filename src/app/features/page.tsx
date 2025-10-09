@@ -635,7 +635,7 @@ export default function FeaturesPage() {
             <Phone className="h-6 w-6 text-blue-400 mr-2" />
             <span className="text-xl font-bold">VoiceFly</span>
           </div>
-          <p className="text-gray-400">© 2024 VoiceFly. All rights reserved.</p>
+          <p className="text-gray-400">© 2025 VoiceFly. All rights reserved.</p>
         </div>
       </footer>
     </div>

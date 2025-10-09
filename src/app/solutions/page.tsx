@@ -517,7 +517,7 @@ export default function SolutionsPage() {
       <footer style={{ backgroundColor: '#1f2937', color: '#ffffff', padding: '48px 24px', marginTop: '64px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
           <p style={{ fontSize: '14px', opacity: 0.8, color: '#ffffff' }}>
-            © 2024 VoiceFly. All rights reserved.
+            © 2025 VoiceFly. All rights reserved.
           </p>
         </div>
       </footer>
