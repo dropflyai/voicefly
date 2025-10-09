@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Phone, DollarSign, Clock, CheckCircle, ArrowRight, Star, Users, TrendingUp, Shield, Zap, Calendar, Search, Mail, BarChart3, Brain, Workflow, Menu, X } from 'lucide-react'
 import { useState } from 'react'
+import AIChatbot from '@/components/AIChatbot'
 
 export default function HomePage() {
   const [monthlyCallVolume, setMonthlyCallVolume] = useState(500)
@@ -580,6 +581,9 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
+
+      {/* AI Chatbot */}
+      <AIChatbot />
     </div>
   )
 }

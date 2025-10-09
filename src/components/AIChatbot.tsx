@@ -17,15 +17,15 @@ export default function AIChatbot() {
     {
       id: '1',
       type: 'bot',
-      content: `Hi! I'm your VoiceFly AI assistant. I can help you with:
+      content: `Hi! 👋 I'm Maya, your VoiceFly AI assistant. I can help you with:
 
-• Getting started with VoiceFly
-• Setting up voice AI and call scripts
-• Managing services and appointments
-• Understanding analytics
-• Troubleshooting issues
+• Understanding how VoiceFly works
+• Pricing and plan comparisons
+• Getting started with a free trial
+• Features and capabilities
+• Answers to any questions
 
-What can I help you with today?`,
+What would you like to know?`,
       timestamp: new Date()
     }
   ])
@@ -80,10 +80,10 @@ What can I help you with today?`,
   }
 
   const quickQuestions = [
-    "How do I set up voice AI?",
-    "How do I add services?",
-    "How do automated reminders work?",
-    "What are the subscription plans?"
+    "What is VoiceFly?",
+    "How much does it cost?",
+    "How does Maya work?",
+    "Start free trial"
   ]
 
   const handleQuickQuestion = (question: string) => {
