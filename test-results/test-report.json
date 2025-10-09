@@ -1,0 +1,350 @@
+{
+  "passed": 42,
+  "failed": 5,
+  "warnings": 2,
+  "tests": [
+    {
+      "name": "Homepage loads",
+      "status": "pass",
+      "details": "HTTP 200",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:31.427Z"
+    },
+    {
+      "name": "Header exists",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:31.681Z"
+    },
+    {
+      "name": "VoiceFly branding present",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:31.689Z"
+    },
+    {
+      "name": "Navigation links present",
+      "status": "pass",
+      "details": "7 links found",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:31.695Z"
+    },
+    {
+      "name": "Mobile menu button exists",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:31.697Z"
+    },
+    {
+      "name": "Footer exists",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:31.698Z"
+    },
+    {
+      "name": "Copyright year is 2025",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:31.699Z"
+    },
+    {
+      "name": "Footer links present",
+      "status": "pass",
+      "details": "10 links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:31.702Z"
+    },
+    {
+      "name": "Footer links functional",
+      "status": "pass",
+      "details": "3 working links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:31.706Z"
+    },
+    {
+      "name": "AI Chatbot button exists",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:31.710Z"
+    },
+    {
+      "name": "AI Chatbot opens",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:32.788Z"
+    },
+    {
+      "name": "AI Chatbot shows Maya greeting",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:32.908Z"
+    },
+    {
+      "name": "Homepage mobile responsive",
+      "status": "pass",
+      "details": "No overflow",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:33.955Z"
+    },
+    {
+      "name": "Homepage has no console errors",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:35.997Z"
+    },
+    {
+      "name": "Features loads",
+      "status": "pass",
+      "details": "HTTP 200",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:36.080Z"
+    },
+    {
+      "name": "Footer exists",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:36.339Z"
+    },
+    {
+      "name": "Copyright year is 2025",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:36.342Z"
+    },
+    {
+      "name": "Footer links present",
+      "status": "warn",
+      "details": "No footer links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:36.345Z"
+    },
+    {
+      "name": "Features mobile responsive",
+      "status": "pass",
+      "details": "No overflow",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:36.853Z"
+    },
+    {
+      "name": "Features has no console errors",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:38.886Z"
+    },
+    {
+      "name": "Pricing loads",
+      "status": "pass",
+      "details": "HTTP 200",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:39.735Z"
+    },
+    {
+      "name": "Footer exists",
+      "status": "fail",
+      "details": "No footer element",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:39.804Z"
+    },
+    {
+      "name": "Pricing mobile responsive",
+      "status": "pass",
+      "details": "No overflow",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:40.315Z"
+    },
+    {
+      "name": "Pricing has no console errors",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:42.341Z"
+    },
+    {
+      "name": "Solutions loads",
+      "status": "pass",
+      "details": "HTTP 200",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:42.736Z"
+    },
+    {
+      "name": "Footer exists",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:42.837Z"
+    },
+    {
+      "name": "Copyright year is 2025",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:42.840Z"
+    },
+    {
+      "name": "Footer links present",
+      "status": "warn",
+      "details": "No footer links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:42.841Z"
+    },
+    {
+      "name": "Solutions mobile responsive",
+      "status": "fail",
+      "details": "Overflow: 653px > 390px",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:43.347Z"
+    },
+    {
+      "name": "Solutions has no console errors",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:45.382Z"
+    },
+    {
+      "name": "Testimonials loads",
+      "status": "pass",
+      "details": "HTTP 200",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:45.780Z"
+    },
+    {
+      "name": "Footer exists",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:45.881Z"
+    },
+    {
+      "name": "Copyright year is 2025",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:45.884Z"
+    },
+    {
+      "name": "Footer links present",
+      "status": "pass",
+      "details": "9 links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:45.887Z"
+    },
+    {
+      "name": "Footer links functional",
+      "status": "pass",
+      "details": "3 working links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:45.890Z"
+    },
+    {
+      "name": "Testimonials mobile responsive",
+      "status": "pass",
+      "details": "No overflow",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:46.507Z"
+    },
+    {
+      "name": "Testimonials has no console errors",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:48.539Z"
+    },
+    {
+      "name": "Login loads",
+      "status": "pass",
+      "details": "HTTP 200",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:49.295Z"
+    },
+    {
+      "name": "Footer exists",
+      "status": "fail",
+      "details": "No footer element",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:49.548Z"
+    },
+    {
+      "name": "Login mobile responsive",
+      "status": "pass",
+      "details": "No overflow",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:50.057Z"
+    },
+    {
+      "name": "Login has no console errors",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:52.087Z"
+    },
+    {
+      "name": "Privacy Policy loads",
+      "status": "pass",
+      "details": "HTTP 200",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:52.425Z"
+    },
+    {
+      "name": "Footer exists",
+      "status": "fail",
+      "details": "No footer element",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:52.497Z"
+    },
+    {
+      "name": "Privacy Policy mobile responsive",
+      "status": "pass",
+      "details": "No overflow",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:53.000Z"
+    },
+    {
+      "name": "Privacy Policy has no console errors",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:55.018Z"
+    },
+    {
+      "name": "Terms of Service loads",
+      "status": "pass",
+      "details": "HTTP 200",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:55.321Z"
+    },
+    {
+      "name": "Footer exists",
+      "status": "fail",
+      "details": "No footer element",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:55.380Z"
+    },
+    {
+      "name": "Terms of Service mobile responsive",
+      "status": "pass",
+      "details": "No overflow",
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:55.885Z"
+    },
+    {
+      "name": "Terms of Service has no console errors",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T15:55:57.901Z"
+    }
+  ]
+}

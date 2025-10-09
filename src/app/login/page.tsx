@@ -348,6 +348,15 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-6">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <p className="text-gray-400 text-sm">
+            © 2025 VoiceFly. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }

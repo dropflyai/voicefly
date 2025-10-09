@@ -317,10 +317,10 @@ export default function SolutionsPage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f9fafb', overflowX: 'hidden', width: '100%', maxWidth: '100vw' }}>
       {/* Header */}
       <nav style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e5e7eb', padding: '16px 0' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
           <Link href="/" style={{ fontSize: '24px', fontWeight: 'bold', color: '#1f2937', textDecoration: 'none' }}>
             🎙️ VoiceFly
           </Link>
@@ -350,8 +350,8 @@ export default function SolutionsPage() {
       </div>
 
       {/* Industry Selector */}
-      <div style={{ maxWidth: '1200px', margin: '-40px auto 0', padding: '0 24px', position: 'relative', zIndex: 10 }}>
-        <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '32px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+      <div style={{ maxWidth: '1200px', margin: '-40px auto 0', padding: '0 16px', position: 'relative', zIndex: 10 }}>
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '16px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
           <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
             Select Your Industry
           </label>
@@ -514,11 +514,57 @@ export default function SolutionsPage() {
       </div>
 
       {/* Footer */}
-      <footer style={{ backgroundColor: '#1f2937', color: '#ffffff', padding: '48px 24px', marginTop: '64px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
-          <p style={{ fontSize: '14px', opacity: 0.8, color: '#ffffff' }}>
-            © 2025 VoiceFly. All rights reserved.
-          </p>
+      <footer style={{ backgroundColor: '#1f2937', color: '#ffffff', padding: '48px 16px', marginTop: '64px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '32px', marginBottom: '32px' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                <span style={{ fontSize: '20px', fontWeight: 'bold' }}>🎙️ VoiceFly</span>
+              </div>
+              <p style={{ fontSize: '14px', color: '#9ca3af' }}>
+                The world's most advanced AI business employee platform
+              </p>
+            </div>
+
+            <div>
+              <h4 style={{ fontWeight: '600', marginBottom: '16px' }}>Product</h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                <li style={{ marginBottom: '8px' }}><Link href="/features" style={{ fontSize: '14px', color: '#9ca3af', textDecoration: 'none' }}>Features</Link></li>
+                <li style={{ marginBottom: '8px' }}><Link href="/pricing" style={{ fontSize: '14px', color: '#9ca3af', textDecoration: 'none' }}>Pricing</Link></li>
+                <li style={{ marginBottom: '8px' }}><Link href="/solutions" style={{ fontSize: '14px', color: '#9ca3af', textDecoration: 'none' }}>Solutions</Link></li>
+                <li style={{ marginBottom: '8px' }}><Link href="/testimonials" style={{ fontSize: '14px', color: '#9ca3af', textDecoration: 'none' }}>Testimonials</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 style={{ fontWeight: '600', marginBottom: '16px' }}>Company</h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                <li style={{ marginBottom: '8px' }}><Link href="/login" style={{ fontSize: '14px', color: '#9ca3af', textDecoration: 'none' }}>Sign In</Link></li>
+                <li style={{ marginBottom: '8px' }}><Link href="/login" style={{ fontSize: '14px', color: '#9ca3af', textDecoration: 'none' }}>Get Started</Link></li>
+                <li style={{ marginBottom: '8px' }}><a href="mailto:hello@voiceflyai.com" style={{ fontSize: '14px', color: '#9ca3af', textDecoration: 'none' }}>Contact</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 style={{ fontWeight: '600', marginBottom: '16px' }}>Legal</h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                <li style={{ marginBottom: '8px' }}><Link href="/privacy" style={{ fontSize: '14px', color: '#9ca3af', textDecoration: 'none' }}>Privacy</Link></li>
+                <li style={{ marginBottom: '8px' }}><Link href="/terms" style={{ fontSize: '14px', color: '#9ca3af', textDecoration: 'none' }}>Terms</Link></li>
+                <li style={{ marginBottom: '8px' }}><Link href="/login" style={{ fontSize: '14px', color: '#9ca3af', textDecoration: 'none' }}>Contact</Link></li>
+              </ul>
+            </div>
+          </div>
+
+          <div style={{ borderTop: '1px solid #374151', paddingTop: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', textAlign: 'center' }}>
+            <p style={{ fontSize: '14px', color: '#9ca3af' }}>
+              © 2025 VoiceFly. All rights reserved.
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '14px', color: '#9ca3af', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <span>SOC 2 Certified</span>
+              <span>•</span>
+              <span>HIPAA Compliant</span>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
