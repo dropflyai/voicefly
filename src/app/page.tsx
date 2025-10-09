@@ -541,31 +541,29 @@ export default function HomePage() {
 
             <div>
               <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-white text-sm">
+              <ul className="space-y-2 text-gray-400 text-sm">
                 <li><Link href="/features" className="hover:text-white">Features</Link></li>
                 <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
-                <li><Link href="#" className="hover:text-white">Integrations</Link></li>
-                <li><Link href="#" className="hover:text-white">API</Link></li>
+                <li><Link href="/solutions" className="hover:text-white">Solutions</Link></li>
+                <li><Link href="/testimonials" className="hover:text-white">Testimonials</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-white text-sm">
-                <li><Link href="#" className="hover:text-white">About</Link></li>
-                <li><Link href="#" className="hover:text-white">Blog</Link></li>
-                <li><Link href="#" className="hover:text-white">Careers</Link></li>
-                <li><Link href="#" className="hover:text-white">Contact</Link></li>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li><Link href="/login" className="hover:text-white">Sign In</Link></li>
+                <li><Link href="/login" className="hover:text-white">Get Started</Link></li>
+                <li><Link href="mailto:hello@voiceflyai.com" className="hover:text-white">Contact</Link></li>
               </ul>
             </div>
 
             <div>
               <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-white text-sm">
-                <li><Link href="#" className="hover:text-white">Privacy</Link></li>
-                <li><Link href="#" className="hover:text-white">Terms</Link></li>
-                <li><Link href="#" className="hover:text-white">Security</Link></li>
-                <li><Link href="#" className="hover:text-white">HIPAA</Link></li>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li><Link href="/privacy" className="hover:text-white">Privacy</Link></li>
+                <li><Link href="/terms" className="hover:text-white">Terms</Link></li>
+                <li><Link href="/login" className="hover:text-white">Contact</Link></li>
               </ul>
             </div>
           </div>
