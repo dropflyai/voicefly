@@ -350,11 +350,30 @@ export default function LoginPage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-6">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <p className="text-gray-400 text-sm">
-            © 2025 VoiceFly. All rights reserved.
-          </p>
+      <footer className="bg-gray-900 text-white py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center space-y-4">
+            <nav className="flex flex-wrap justify-center gap-6 text-sm">
+              <Link href="/" className="text-gray-400 hover:text-white transition-colors">
+                Home
+              </Link>
+              <Link href="/features" className="text-gray-400 hover:text-white transition-colors">
+                Features
+              </Link>
+              <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">
+                Pricing
+              </Link>
+              <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
+                Privacy
+              </Link>
+              <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">
+                Terms
+              </Link>
+            </nav>
+            <p className="text-gray-400 text-sm">
+              © 2025 VoiceFly. All rights reserved.
+            </p>
+          </div>
         </div>
       </footer>
     </div>

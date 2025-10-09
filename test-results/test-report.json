@@ -1,350 +1,448 @@
 {
-  "passed": 42,
-  "failed": 5,
-  "warnings": 2,
+  "passed": 63,
+  "failed": 0,
+  "warnings": 0,
   "tests": [
     {
       "name": "Homepage loads",
       "status": "pass",
       "details": "HTTP 200",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:31.427Z"
+      "timestamp": "2025-10-09T16:12:28.121Z"
     },
     {
       "name": "Header exists",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:31.681Z"
+      "timestamp": "2025-10-09T16:12:28.381Z"
     },
     {
       "name": "VoiceFly branding present",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:31.689Z"
+      "timestamp": "2025-10-09T16:12:28.390Z"
     },
     {
       "name": "Navigation links present",
       "status": "pass",
       "details": "7 links found",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:31.695Z"
+      "timestamp": "2025-10-09T16:12:28.395Z"
     },
     {
       "name": "Mobile menu button exists",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:31.697Z"
+      "timestamp": "2025-10-09T16:12:28.397Z"
     },
     {
       "name": "Footer exists",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:31.698Z"
+      "timestamp": "2025-10-09T16:12:28.398Z"
     },
     {
       "name": "Copyright year is 2025",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:31.699Z"
+      "timestamp": "2025-10-09T16:12:28.399Z"
     },
     {
       "name": "Footer links present",
       "status": "pass",
       "details": "10 links",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:31.702Z"
+      "timestamp": "2025-10-09T16:12:28.403Z"
     },
     {
       "name": "Footer links functional",
       "status": "pass",
       "details": "3 working links",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:31.706Z"
+      "timestamp": "2025-10-09T16:12:28.406Z"
     },
     {
       "name": "AI Chatbot button exists",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:31.710Z"
+      "timestamp": "2025-10-09T16:12:28.409Z"
     },
     {
       "name": "AI Chatbot opens",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:32.788Z"
+      "timestamp": "2025-10-09T16:12:29.453Z"
     },
     {
       "name": "AI Chatbot shows Maya greeting",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:32.908Z"
+      "timestamp": "2025-10-09T16:12:29.569Z"
     },
     {
       "name": "Homepage mobile responsive",
       "status": "pass",
       "details": "No overflow",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:33.955Z"
+      "timestamp": "2025-10-09T16:12:30.617Z"
     },
     {
       "name": "Homepage has no console errors",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:35.997Z"
+      "timestamp": "2025-10-09T16:12:32.657Z"
     },
     {
       "name": "Features loads",
       "status": "pass",
       "details": "HTTP 200",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:36.080Z"
+      "timestamp": "2025-10-09T16:12:32.766Z"
     },
     {
       "name": "Footer exists",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:36.339Z"
+      "timestamp": "2025-10-09T16:12:33.033Z"
     },
     {
       "name": "Copyright year is 2025",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:36.342Z"
-    },
-    {
-      "name": "Footer links present",
-      "status": "warn",
-      "details": "No footer links",
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:36.345Z"
-    },
-    {
-      "name": "Features mobile responsive",
-      "status": "pass",
-      "details": "No overflow",
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:36.853Z"
-    },
-    {
-      "name": "Features has no console errors",
-      "status": "pass",
-      "details": null,
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:38.886Z"
-    },
-    {
-      "name": "Pricing loads",
-      "status": "pass",
-      "details": "HTTP 200",
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:39.735Z"
-    },
-    {
-      "name": "Footer exists",
-      "status": "fail",
-      "details": "No footer element",
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:39.804Z"
-    },
-    {
-      "name": "Pricing mobile responsive",
-      "status": "pass",
-      "details": "No overflow",
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:40.315Z"
-    },
-    {
-      "name": "Pricing has no console errors",
-      "status": "pass",
-      "details": null,
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:42.341Z"
-    },
-    {
-      "name": "Solutions loads",
-      "status": "pass",
-      "details": "HTTP 200",
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:42.736Z"
-    },
-    {
-      "name": "Footer exists",
-      "status": "pass",
-      "details": null,
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:42.837Z"
-    },
-    {
-      "name": "Copyright year is 2025",
-      "status": "pass",
-      "details": null,
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:42.840Z"
-    },
-    {
-      "name": "Footer links present",
-      "status": "warn",
-      "details": "No footer links",
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:42.841Z"
-    },
-    {
-      "name": "Solutions mobile responsive",
-      "status": "fail",
-      "details": "Overflow: 653px > 390px",
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:43.347Z"
-    },
-    {
-      "name": "Solutions has no console errors",
-      "status": "pass",
-      "details": null,
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:45.382Z"
-    },
-    {
-      "name": "Testimonials loads",
-      "status": "pass",
-      "details": "HTTP 200",
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:45.780Z"
-    },
-    {
-      "name": "Footer exists",
-      "status": "pass",
-      "details": null,
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:45.881Z"
-    },
-    {
-      "name": "Copyright year is 2025",
-      "status": "pass",
-      "details": null,
-      "screenshot": null,
-      "timestamp": "2025-10-09T15:55:45.884Z"
+      "timestamp": "2025-10-09T16:12:33.037Z"
     },
     {
       "name": "Footer links present",
       "status": "pass",
-      "details": "9 links",
+      "details": "10 links",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:45.887Z"
+      "timestamp": "2025-10-09T16:12:33.045Z"
     },
     {
       "name": "Footer links functional",
       "status": "pass",
       "details": "3 working links",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:45.890Z"
+      "timestamp": "2025-10-09T16:12:33.047Z"
+    },
+    {
+      "name": "Features mobile responsive",
+      "status": "pass",
+      "details": "No overflow",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:33.555Z"
+    },
+    {
+      "name": "Features has no console errors",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:35.599Z"
+    },
+    {
+      "name": "Pricing loads",
+      "status": "pass",
+      "details": "HTTP 200",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:35.774Z"
+    },
+    {
+      "name": "Footer exists",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:36.087Z"
+    },
+    {
+      "name": "Copyright year is 2025",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:36.091Z"
+    },
+    {
+      "name": "Footer links present",
+      "status": "pass",
+      "details": "10 links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:36.093Z"
+    },
+    {
+      "name": "Footer links functional",
+      "status": "pass",
+      "details": "3 working links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:36.095Z"
+    },
+    {
+      "name": "Pricing mobile responsive",
+      "status": "pass",
+      "details": "No overflow",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:36.605Z"
+    },
+    {
+      "name": "Pricing has no console errors",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:38.625Z"
+    },
+    {
+      "name": "Solutions loads",
+      "status": "pass",
+      "details": "HTTP 200",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:38.944Z"
+    },
+    {
+      "name": "Footer exists",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:39.031Z"
+    },
+    {
+      "name": "Copyright year is 2025",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:39.035Z"
+    },
+    {
+      "name": "Footer links present",
+      "status": "pass",
+      "details": "10 links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:39.038Z"
+    },
+    {
+      "name": "Footer links functional",
+      "status": "pass",
+      "details": "3 working links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:39.041Z"
+    },
+    {
+      "name": "Solutions mobile responsive",
+      "status": "pass",
+      "details": "No overflow",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:39.546Z"
+    },
+    {
+      "name": "Solutions has no console errors",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:41.577Z"
+    },
+    {
+      "name": "Testimonials loads",
+      "status": "pass",
+      "details": "HTTP 200",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:41.682Z"
+    },
+    {
+      "name": "Footer exists",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:41.793Z"
+    },
+    {
+      "name": "Copyright year is 2025",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:41.901Z"
+    },
+    {
+      "name": "Footer links present",
+      "status": "pass",
+      "details": "9 links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:41.929Z"
+    },
+    {
+      "name": "Footer links functional",
+      "status": "pass",
+      "details": "3 working links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:41.941Z"
     },
     {
       "name": "Testimonials mobile responsive",
       "status": "pass",
       "details": "No overflow",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:46.507Z"
+      "timestamp": "2025-10-09T16:12:42.448Z"
     },
     {
       "name": "Testimonials has no console errors",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:48.539Z"
+      "timestamp": "2025-10-09T16:12:44.479Z"
     },
     {
       "name": "Login loads",
       "status": "pass",
       "details": "HTTP 200",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:49.295Z"
+      "timestamp": "2025-10-09T16:12:44.562Z"
     },
     {
       "name": "Footer exists",
-      "status": "fail",
-      "details": "No footer element",
+      "status": "pass",
+      "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:49.548Z"
+      "timestamp": "2025-10-09T16:12:44.826Z"
+    },
+    {
+      "name": "Copyright year is 2025",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:44.831Z"
+    },
+    {
+      "name": "Footer links present",
+      "status": "pass",
+      "details": "5 links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:44.837Z"
+    },
+    {
+      "name": "Footer links functional",
+      "status": "pass",
+      "details": "3 working links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:44.841Z"
     },
     {
       "name": "Login mobile responsive",
       "status": "pass",
       "details": "No overflow",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:50.057Z"
+      "timestamp": "2025-10-09T16:12:45.346Z"
     },
     {
       "name": "Login has no console errors",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:52.087Z"
+      "timestamp": "2025-10-09T16:12:47.364Z"
     },
     {
       "name": "Privacy Policy loads",
       "status": "pass",
       "details": "HTTP 200",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:52.425Z"
+      "timestamp": "2025-10-09T16:12:47.688Z"
     },
     {
       "name": "Footer exists",
-      "status": "fail",
-      "details": "No footer element",
+      "status": "pass",
+      "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:52.497Z"
+      "timestamp": "2025-10-09T16:12:47.742Z"
+    },
+    {
+      "name": "Copyright year is 2025",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:47.746Z"
+    },
+    {
+      "name": "Footer links present",
+      "status": "pass",
+      "details": "5 links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:47.748Z"
+    },
+    {
+      "name": "Footer links functional",
+      "status": "pass",
+      "details": "3 working links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:47.750Z"
     },
     {
       "name": "Privacy Policy mobile responsive",
       "status": "pass",
       "details": "No overflow",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:53.000Z"
+      "timestamp": "2025-10-09T16:12:48.255Z"
     },
     {
       "name": "Privacy Policy has no console errors",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:55.018Z"
+      "timestamp": "2025-10-09T16:12:50.270Z"
     },
     {
       "name": "Terms of Service loads",
       "status": "pass",
       "details": "HTTP 200",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:55.321Z"
+      "timestamp": "2025-10-09T16:12:50.589Z"
     },
     {
       "name": "Footer exists",
-      "status": "fail",
-      "details": "No footer element",
+      "status": "pass",
+      "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:55.380Z"
+      "timestamp": "2025-10-09T16:12:50.642Z"
+    },
+    {
+      "name": "Copyright year is 2025",
+      "status": "pass",
+      "details": null,
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:50.646Z"
+    },
+    {
+      "name": "Footer links present",
+      "status": "pass",
+      "details": "5 links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:50.648Z"
+    },
+    {
+      "name": "Footer links functional",
+      "status": "pass",
+      "details": "3 working links",
+      "screenshot": null,
+      "timestamp": "2025-10-09T16:12:50.650Z"
     },
     {
       "name": "Terms of Service mobile responsive",
       "status": "pass",
       "details": "No overflow",
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:55.885Z"
+      "timestamp": "2025-10-09T16:12:51.154Z"
     },
     {
       "name": "Terms of Service has no console errors",
       "status": "pass",
       "details": null,
       "screenshot": null,
-      "timestamp": "2025-10-09T15:55:57.901Z"
+      "timestamp": "2025-10-09T16:12:53.170Z"
     }
   ]
 }
