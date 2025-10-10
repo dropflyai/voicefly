@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -10,7 +10,7 @@ import { getCurrentBusinessId } from '@/lib/auth-utils'
 import { CheckCircle, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
-export default function CreditsPage() {
+function CreditsPageContent() {
   const searchParams = useSearchParams()
   const [businessId, setBusinessId] = useState<string | null>(null)
   const [showPurchaseModal, setShowPurchaseModal] = useState(false)
@@ -209,5 +209,21 @@ export default function CreditsPage() {
         />
       </Layout>
     </ProtectedRoute>
+  )
+}
+
+export default function CreditsPage() {
+  return (
+    <Suspense fallback={
+      <ProtectedRoute>
+        <Layout business={null}>
+          <div className="flex items-center justify-center h-screen">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        </Layout>
+      </ProtectedRoute>
+    }>
+      <CreditsPageContent />
+    </Suspense>
   )
 }

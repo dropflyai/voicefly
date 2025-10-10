@@ -25,6 +25,11 @@ const createAdminClient = () => {
   }
 }
 
+// Create server client for API routes and server actions
+export const createServerClient = () => {
+  return createClient(supabaseUrl, supabaseServiceKey)
+}
+
 // Export MVP types for easy importing
 export * from './supabase-types-mvp'
 
