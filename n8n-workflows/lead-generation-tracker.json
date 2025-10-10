@@ -1,0 +1,194 @@
+{
+  "name": "VoiceFly - Lead Generation Tracker",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-capture",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "webhook-lead-capture",
+      "name": "Lead Webhook",
+      "webhookId": "lead-gen-webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse lead data from webhook\nconst input = $json;\n\n// Extract lead information\nconst lead = {\n  lead_id: `lead_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,\n  business_id: input.business_id || input.businessId,\n  \n  // Contact info\n  first_name: input.first_name || input.firstName || '',\n  last_name: input.last_name || input.lastName || '',\n  email: input.email || '',\n  phone: input.phone || input.phone_number || '',\n  \n  // Lead source tracking\n  source: input.source || 'unknown',\n  source_campaign: input.campaign || input.utm_campaign || null,\n  source_medium: input.medium || input.utm_medium || null,\n  source_term: input.term || input.utm_term || null,\n  landing_page: input.landing_page || input.page_url || null,\n  referrer: input.referrer || null,\n  \n  // Lead qualification\n  status: 'new',\n  lead_score: 0,\n  temperature: 'cold',\n  \n  // Additional data\n  service_interest: input.service_interest || input.service || null,\n  message: input.message || input.comments || null,\n  metadata: {\n    ip_address: input.ip_address,\n    user_agent: input.user_agent,\n    device_type: input.device_type,\n    browser: input.browser\n  },\n  \n  // Timestamps\n  created_at: new Date().toISOString(),\n  last_contacted: null,\n  next_follow_up: null\n};\n\n// Calculate initial lead score\nlet score = 0;\nif (lead.email) score += 20;\nif (lead.phone) score += 20;\nif (lead.service_interest) score += 15;\nif (lead.message && lead.message.length > 50) score += 10;\nif (lead.source === 'referral') score += 25;\nif (lead.source === 'google_ads') score += 15;\n\nlead.lead_score = score;\n\n// Set temperature based on score\nif (score >= 70) lead.temperature = 'hot';\nelse if (score >= 40) lead.temperature = 'warm';\nelse lead.temperature = 'cold';\n\n// Determine next action\nlead.next_action = score >= 70 ? 'immediate_call' : score >= 40 ? 'same_day_email' : 'nurture_sequence';\n\nconsole.log(`New lead captured: ${lead.first_name} ${lead.last_name} (Score: ${score}, Temp: ${lead.temperature})`);\n\nreturn [{ json: lead }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "id": "parse-lead-data",
+      "name": "Parse & Score Lead"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "leads",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "lead_id",
+              "fieldValue": "={{ $json.lead_id }}"
+            },
+            {
+              "fieldId": "business_id",
+              "fieldValue": "={{ $json.business_id }}"
+            },
+            {
+              "fieldId": "first_name",
+              "fieldValue": "={{ $json.first_name }}"
+            },
+            {
+              "fieldId": "last_name",
+              "fieldValue": "={{ $json.last_name }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $json.email }}"
+            },
+            {
+              "fieldId": "phone",
+              "fieldValue": "={{ $json.phone }}"
+            },
+            {
+              "fieldId": "source",
+              "fieldValue": "={{ $json.source }}"
+            },
+            {
+              "fieldId": "source_campaign",
+              "fieldValue": "={{ $json.source_campaign }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.status }}"
+            },
+            {
+              "fieldId": "lead_score",
+              "fieldValue": "={{ $json.lead_score }}"
+            },
+            {
+              "fieldId": "temperature",
+              "fieldValue": "={{ $json.temperature }}"
+            },
+            {
+              "fieldId": "service_interest",
+              "fieldValue": "={{ $json.service_interest }}"
+            },
+            {
+              "fieldId": "metadata",
+              "fieldValue": "={{ JSON.stringify($json.metadata) }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "id": "save-to-database",
+      "name": "Save Lead to Database"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "hot-lead",
+              "leftValue": "={{ $json.temperature }}",
+              "rightValue": "hot",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "id": "check-lead-temperature",
+      "name": "Route by Temperature"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.business_email }}",
+        "subject": "🔥 HOT LEAD: {{ $json.first_name }} {{ $json.last_name }}",
+        "message": "=<h2>Hot Lead Alert!</h2>\n<p><strong>Contact Information:</strong></p>\n<ul>\n  <li>Name: {{ $json.first_name }} {{ $json.last_name }}</li>\n  <li>Email: {{ $json.email }}</li>\n  <li>Phone: {{ $json.phone }}</li>\n</ul>\n\n<p><strong>Lead Details:</strong></p>\n<ul>\n  <li>Source: {{ $json.source }}</li>\n  <li>Service Interest: {{ $json.service_interest }}</li>\n  <li>Lead Score: {{ $json.lead_score }}/100</li>\n</ul>\n\n<p><strong>Message:</strong><br>{{ $json.message }}</p>\n\n<p style=\"color: red;\"><strong>⚡ ACTION REQUIRED: Call this lead immediately!</strong></p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1120, 200],
+      "id": "hot-lead-alert",
+      "name": "Send Hot Lead Alert"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "Thanks for your interest in {{ $json.business_name }}!",
+        "message": "=<p>Hi {{ $json.first_name }},</p>\n\n<p>Thank you for reaching out! We received your inquiry about <strong>{{ $json.service_interest }}</strong>.</p>\n\n<p>We'll get back to you within 24 hours. In the meantime, feel free to:</p>\n<ul>\n  <li>Call us: {{ $json.business_phone }}</li>\n  <li>Visit our website: {{ $json.business_website }}</li>\n</ul>\n\n<p>Looking forward to working with you!</p>\n\n<p>Best regards,<br>{{ $json.business_name }} Team</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1120, 400],
+      "id": "auto-reply",
+      "name": "Send Auto-Reply to Lead"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"lead_id\": $json.lead_id, \"message\": \"Lead captured successfully\", \"temperature\": $json.temperature } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [1340, 300],
+      "id": "webhook-response",
+      "name": "Send Response"
+    }
+  ],
+  "connections": {
+    "Lead Webhook": {
+      "main": [[{ "node": "Parse & Score Lead", "type": "main", "index": 0 }]]
+    },
+    "Parse & Score Lead": {
+      "main": [[{ "node": "Save Lead to Database", "type": "main", "index": 0 }]]
+    },
+    "Save Lead to Database": {
+      "main": [[{ "node": "Route by Temperature", "type": "main", "index": 0 }]]
+    },
+    "Route by Temperature": {
+      "main": [
+        [
+          { "node": "Send Hot Lead Alert", "type": "main", "index": 0 },
+          { "node": "Send Auto-Reply to Lead", "type": "main", "index": 0 }
+        ],
+        [
+          { "node": "Send Auto-Reply to Lead", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Send Hot Lead Alert": {
+      "main": [[{ "node": "Send Response", "type": "main", "index": 0 }]]
+    },
+    "Send Auto-Reply to Lead": {
+      "main": [[{ "node": "Send Response", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

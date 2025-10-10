@@ -1,0 +1,182 @@
+{
+  "name": "VoiceFly - Email Marketing Campaign",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "email-campaign/send",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [240, 300],
+      "id": "campaign-webhook",
+      "name": "Campaign Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse campaign request\nconst input = $json;\n\nconst campaign = {\n  campaign_id: input.campaign_id || `campaign_${Date.now()}`,\n  business_id: input.business_id,\n  campaign_name: input.campaign_name || 'Untitled Campaign',\n  \n  // Email content\n  subject: input.subject,\n  email_html: input.email_html || input.html_content,\n  \n  // Targeting\n  segment: input.segment || 'all', // all, customers, leads, vip, inactive\n  tags: input.tags || [],\n  \n  // Scheduling\n  send_type: input.send_type || 'immediate', // immediate, scheduled, drip\n  scheduled_time: input.scheduled_time || null,\n  \n  // Tracking\n  track_opens: input.track_opens !== false,\n  track_clicks: input.track_clicks !== false,\n  \n  // Settings\n  from_name: input.from_name || 'VoiceFly',\n  reply_to: input.reply_to || input.business_email,\n  \n  created_at: new Date().toISOString(),\n  status: 'processing'\n};\n\nreturn [{ json: campaign }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "id": "parse-campaign",
+      "name": "Parse Campaign"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "customers",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "business_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.business_id }}"
+            },
+            {
+              "keyName": "email_opted_in",
+              "condition": "eq",
+              "keyValue": "=true"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "id": "get-recipients",
+      "name": "Get Email Recipients"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter recipients based on segment\nconst campaign = $('Parse Campaign').first().json;\nconst allRecipients = $input.all().map(item => item.json);\n\nlet recipients = allRecipients;\n\n// Apply segment filtering\nswitch(campaign.segment) {\n  case 'customers':\n    recipients = recipients.filter(r => r.total_purchases > 0);\n    break;\n  case 'leads':\n    recipients = recipients.filter(r => r.total_purchases === 0);\n    break;\n  case 'vip':\n    recipients = recipients.filter(r => r.total_spent > 1000 || r.loyalty_tier === 'vip');\n    break;\n  case 'inactive':\n    const threeMonthsAgo = new Date();\n    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);\n    recipients = recipients.filter(r => new Date(r.last_purchase_date) < threeMonthsAgo);\n    break;\n  case 'all':\n  default:\n    // No filter\n    break;\n}\n\n// Apply tag filtering if specified\nif (campaign.tags && campaign.tags.length > 0) {\n  recipients = recipients.filter(r => {\n    const customerTags = r.tags || [];\n    return campaign.tags.some(tag => customerTags.includes(tag));\n  });\n}\n\nconsole.log(`Campaign: ${campaign.campaign_name}`);\nconsole.log(`Total recipients after filtering: ${recipients.length}`);\n\n// Return recipients with campaign data attached\nreturn recipients.map(recipient => ({\n  json: {\n    ...campaign,\n    recipient_email: recipient.email,\n    recipient_name: `${recipient.first_name} ${recipient.last_name}`,\n    recipient_first_name: recipient.first_name,\n    recipient_id: recipient.id\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "id": "filter-segment",
+      "name": "Filter by Segment"
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1120, 300],
+      "id": "batch-emails",
+      "name": "Batch Emails (Rate Limiting)"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.recipient_email }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.email_html }}",
+        "options": {
+          "senderName": "={{ $json.from_name }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1340, 300],
+      "id": "send-email",
+      "name": "Send Campaign Email"
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "tableId": "email_campaign_sends",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "campaign_id",
+              "fieldValue": "={{ $json.campaign_id }}"
+            },
+            {
+              "fieldId": "recipient_id",
+              "fieldValue": "={{ $json.recipient_id }}"
+            },
+            {
+              "fieldId": "recipient_email",
+              "fieldValue": "={{ $json.recipient_email }}"
+            },
+            {
+              "fieldId": "sent_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "sent"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1560, 300],
+      "id": "log-send",
+      "name": "Log Email Send"
+    },
+    {
+      "parameters": {
+        "amount": 200,
+        "unit": "milliseconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1340, 460],
+      "id": "rate-limit-delay",
+      "name": "Rate Limit Delay"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"campaign_id\": $json.campaign_id, \"total_sent\": $json.total_recipients, \"status\": \"sending\" } }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [680, 120],
+      "id": "immediate-response",
+      "name": "Send Immediate Response"
+    }
+  ],
+  "connections": {
+    "Campaign Trigger": {
+      "main": [[{ "node": "Parse Campaign", "type": "main", "index": 0 }]]
+    },
+    "Parse Campaign": {
+      "main": [[
+        { "node": "Get Email Recipients", "type": "main", "index": 0 },
+        { "node": "Send Immediate Response", "type": "main", "index": 0 }
+      ]]
+    },
+    "Get Email Recipients": {
+      "main": [[{ "node": "Filter by Segment", "type": "main", "index": 0 }]]
+    },
+    "Filter by Segment": {
+      "main": [[{ "node": "Batch Emails (Rate Limiting)", "type": "main", "index": 0 }]]
+    },
+    "Batch Emails (Rate Limiting)": {
+      "main": [[{ "node": "Send Campaign Email", "type": "main", "index": 0 }]]
+    },
+    "Send Campaign Email": {
+      "main": [[
+        { "node": "Log Email Send", "type": "main", "index": 0 },
+        { "node": "Rate Limit Delay", "type": "main", "index": 0 }
+      ]]
+    },
+    "Rate Limit Delay": {
+      "main": [[{ "node": "Batch Emails (Rate Limiting)", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

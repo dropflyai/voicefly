@@ -17,6 +17,7 @@ import {
   LinkIcon,
   ClipboardDocumentIcon
 } from '@heroicons/react/24/outline'
+import DOMPurify from 'isomorphic-dompurify'
 
 type ResearchMode = 'deep' | 'quick' | 'prospect' | 'competitor' | 'market'
 type ResearchStatus = 'idle' | 'searching' | 'analyzing' | 'complete' | 'error'
@@ -453,14 +454,16 @@ export default function ResearchPage() {
                   <div
                     className="whitespace-pre-wrap text-gray-700 leading-relaxed"
                     dangerouslySetInnerHTML={{
-                      __html: streamedContent
-                        .replace(/^# (.*)/gm, '<h1 class="text-2xl font-bold mt-6 mb-4">$1</h1>')
-                        .replace(/^## (.*)/gm, '<h2 class="text-xl font-semibold mt-5 mb-3">$2</h2>')
-                        .replace(/^### (.*)/gm, '<h3 class="text-lg font-medium mt-4 mb-2">$3</h3>')
-                        .replace(/^\*\*(.*)\*\*/gm, '<strong>$1</strong>')
-                        .replace(/^• (.*)/gm, '<li class="ml-4">$1</li>')
-                        .replace(/^✓ (.*)/gm, '<li class="ml-4 text-green-600">✓ $1</li>')
-                        .replace(/^❌ (.*)/gm, '<li class="ml-4 text-red-600">❌ $1</li>')
+                      __html: DOMPurify.sanitize(
+                        streamedContent
+                          .replace(/^# (.*)/gm, '<h1 class="text-2xl font-bold mt-6 mb-4">$1</h1>')
+                          .replace(/^## (.*)/gm, '<h2 class="text-xl font-semibold mt-5 mb-3">$2</h2>')
+                          .replace(/^### (.*)/gm, '<h3 class="text-lg font-medium mt-4 mb-2">$3</h3>')
+                          .replace(/^\*\*(.*)\*\*/gm, '<strong>$1</strong>')
+                          .replace(/^• (.*)/gm, '<li class="ml-4">$1</li>')
+                          .replace(/^✓ (.*)/gm, '<li class="ml-4 text-green-600">✓ $1</li>')
+                          .replace(/^❌ (.*)/gm, '<li class="ml-4 text-red-600">❌ $1</li>')
+                      )
                     }}
                   />
                 </div>

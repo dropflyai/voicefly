@@ -2,6 +2,8 @@
 import { supabase } from './supabase-client'
 import { BusinessAPI } from './supabase'
 import { getServicesForIndustry } from './industry-service-templates'
+import AuditLogger, { AuditEventType } from './audit-logger'
+import CreditSystem from './credit-system'
 
 export interface SignupData {
   email: string
@@ -59,44 +61,53 @@ export class AuthService {
 
     const userId = authData.user.id
 
-    // 2. Create business
-    const business = await BusinessAPI.createBusiness({
-      name: data.companyName,
-      email: data.email,
-      phone: data.phone,
-      business_type: data.businessType,
-      subscription_tier: 'professional'
+    // 2. Create business and business_user association using secure function
+    // This uses SECURITY DEFINER to bypass RLS during signup
+    const { data: businessResult, error: businessError } = await supabase.rpc('create_business_for_new_user', {
+      p_business_name: data.companyName,
+      p_email: data.email,
+      p_phone: data.phone || '',
+      p_business_type: data.businessType || 'general_business',
+      p_user_id: userId,
+      p_first_name: data.firstName,
+      p_last_name: data.lastName
     })
 
-    if (!business) {
+    if (businessError || !businessResult) {
+      console.error('Failed to create business:', businessError)
       // Rollback: delete auth user if business creation fails
-      await supabase.auth.admin.deleteUser(userId)
-      throw new Error('Failed to create business account')
+      try {
+        await supabase.auth.admin.deleteUser(userId)
+      } catch (e) {
+        console.error('Failed to rollback user:', e)
+      }
+      throw new Error(businessError?.message || 'Failed to create business account')
     }
 
-    // 3. Create business_user association (as owner)
-    const { error: businessUserError } = await supabase
-      .from('business_users')
-      .insert({
-        user_id: userId,
-        business_id: business.id,
-        role: 'owner',
-        first_name: data.firstName,
-        last_name: data.lastName,
-        phone: data.phone
-      })
+    const business = businessResult as { id: string; name: string; email: string; business_type: string }
 
-    if (businessUserError) {
-      console.error('Failed to create business_user association:', businessUserError)
-      throw new Error('Failed to link user to business')
-    }
+    console.log('✅ Business created via secure function:', business.id)
 
-    // 4. Auto-create industry-specific services (already handled by BusinessAPI.createBusiness)
+    // Initialize credits for new business (trial tier gets 50 credits)
+    await CreditSystem.initializeCredits(business.id, 'trial')
+    console.log('✅ Credits initialized for trial: 50 credits')
 
     console.log('✅ Signup complete:', {
       userId,
       businessId: business.id,
       email: data.email
+    })
+
+    // Audit log - signup success
+    await AuditLogger.log({
+      event_type: AuditEventType.SIGNUP,
+      user_id: userId,
+      business_id: business.id,
+      metadata: {
+        email: data.email,
+        business_name: business.name
+      },
+      severity: 'low'
     })
 
     return {
@@ -128,6 +139,12 @@ export class AuthService {
     })
 
     if (authError || !authData.user) {
+      // Audit log - login failed
+      await AuditLogger.log({
+        event_type: AuditEventType.LOGIN_FAILED,
+        metadata: { email: data.email, error: authError?.message },
+        severity: 'high'
+      })
       throw new Error('Invalid email or password')
     }
 
@@ -166,7 +183,19 @@ export class AuthService {
       businessCount: businesses.length
     })
 
-    // Log login event
+    // Audit log - login success
+    await AuditLogger.log({
+      event_type: AuditEventType.LOGIN_SUCCESS,
+      user_id: userId,
+      business_id: primaryBusiness.id,
+      metadata: {
+        email: data.email,
+        business_count: businesses.length
+      },
+      severity: 'low'
+    })
+
+    // Log login event (legacy)
     await supabase.rpc('log_user_action', {
       p_business_id: primaryBusiness.id,
       p_action: 'login',
@@ -286,9 +315,7 @@ export class AuthService {
         .insert({
           user_id: existingUser.user_id,
           business_id: businessId,
-          role,
-          first_name: firstName,
-          last_name: lastName
+          role
         })
 
       if (error) {

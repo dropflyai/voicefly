@@ -222,7 +222,7 @@ export class SubscriptionManager {
         .from('businesses')
         .update({
           subscription_tier: planId,
-          subscription_status: 'trialing',
+          subscription_status: 'trial',
           trial_ends_at: trialEndsAt.toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -405,9 +405,9 @@ export class SubscriptionManager {
     const now = new Date()
     const trialEnd = business.trial_ends_at ? new Date(business.trial_ends_at) : null
 
-    if (business.subscription_status === 'trialing' && trialEnd && trialEnd > now) {
+    if (business.subscription_status === 'trial' && trialEnd && trialEnd > now) {
       const daysRemaining = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      
+
       return {
         is_trial: true,
         trial_days_remaining: daysRemaining,

@@ -28,6 +28,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { clsx } from 'clsx'
 import MobileNavigation from './MobileNavigation'
+import CreditMeter from './CreditMeter'
 import { FEATURE_FLAGS, shouldShowBeautyFeatures, shouldShowReceptionistFeatures, getFeaturesForBusinessType, type BusinessType } from '../lib/feature-flags'
 import { getAuthenticatedUser } from '../lib/auth-utils'
 
@@ -251,14 +252,27 @@ export default function Layout({ children, business }: LayoutProps) {
       {/* Main content */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
         {/* Top bar */}
-        <div className="md:hidden pl-1 pt-1 sm:pl-3 sm:pt-3">
-          <button
-            type="button"
-            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Bars3Icon className="h-6 w-6" aria-hidden="true" />
-          </button>
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+          <div className="md:hidden">
+            <button
+              type="button"
+              className="h-10 w-10 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+            </button>
+          </div>
+
+          {/* Credit Meter - Always visible */}
+          <div className="flex-1 flex justify-end">
+            {business?.id && (
+              <CreditMeter
+                businessId={business.id}
+                compact={true}
+                showPurchaseButton={true}
+              />
+            )}
+          </div>
         </div>
 
         {/* Page content */}

@@ -1,0 +1,10 @@
+-- Delete all test accounts from auth.users
+-- This removes orphaned accounts that have no businesses
+
+DELETE FROM auth.users
+WHERE email LIKE 'test.%@gmail.com';
+
+-- Verify they're gone
+SELECT COUNT(*) as remaining_test_accounts
+FROM auth.users
+WHERE email LIKE 'test.%@gmail.com';

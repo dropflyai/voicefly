@@ -1,0 +1,11 @@
+-- Check what RLS policies exist
+SELECT
+    schemaname,
+    tablename,
+    policyname,
+    permissive,
+    roles,
+    cmd as command
+FROM pg_policies
+WHERE tablename IN ('businesses', 'business_users')
+ORDER BY tablename, policyname;

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  PaintBrushIcon, 
+import {
+  PaintBrushIcon,
   EyeIcon,
   PaperAirplaneIcon,
   DocumentTextIcon,
@@ -10,6 +10,7 @@ import {
   CalendarIcon,
   SparklesIcon
 } from '@heroicons/react/24/outline'
+import DOMPurify from 'isomorphic-dompurify'
 
 interface Campaign {
   id?: string
@@ -279,7 +280,7 @@ export default function CampaignBuilder({ initialCampaign, onSave, onCancel }: C
         
         {previewMode ? (
           <div className="border border-gray-300 rounded-lg p-4 bg-gray-50 min-h-[300px]">
-            <div dangerouslySetInnerHTML={{ __html: campaign.content }} />
+            <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(campaign.content) }} />
           </div>
         ) : (
           <textarea

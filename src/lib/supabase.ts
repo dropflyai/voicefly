@@ -53,7 +53,7 @@ export interface Business {
   country?: string
   timezone?: string
   subscription_tier: 'starter' | 'professional' | 'business' | 'enterprise'
-  subscription_status: 'active' | 'cancelled' | 'past_due' | 'trialing'
+  subscription_status: 'trial' | 'active' | 'cancelled' | 'past_due' | 'suspended'
   trial_ends_at?: string
   settings?: {
     currency?: string
@@ -259,7 +259,7 @@ export class BusinessAPI {
         email: businessData.email,
         phone: businessData.phone || '',
         subscription_tier: businessData.subscription_tier || 'professional',
-        subscription_status: 'trialing' as const,
+        subscription_status: 'trial' as const,
         trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
         timezone: 'America/Los_Angeles',
         created_at: new Date().toISOString(),

@@ -1,6 +1,13 @@
 import { headers } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
+import Stripe from 'stripe'
+import CreditSystem from '@/lib/credit-system'
+import AuditLogger, { AuditEventType } from '@/lib/audit-logger'
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2024-12-18.acacia'
+})
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
 
@@ -18,15 +25,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No signature header' }, { status: 400 })
   }
 
-  let event
+  let event: Stripe.Event
 
   try {
-    // In a real implementation, you would verify the webhook signature here
-    // For now, we'll just parse the event
-    event = JSON.parse(body)
-  } catch (err) {
-    console.error('Error parsing webhook payload:', err)
-    return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
+    // Verify webhook signature - SECURITY CRITICAL
+    event = stripe.webhooks.constructEvent(body, sig, endpointSecret)
+  } catch (err: any) {
+    console.error('Webhook signature verification failed:', err.message)
+    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 })
   }
 
   const supabase = createServerClient()
@@ -136,6 +142,69 @@ export async function POST(request: NextRequest) {
             status: 'failed',
             created_at: new Date().toISOString()
           })
+
+        break
+
+      case 'checkout.session.completed':
+        const session = event.data.object as Stripe.Checkout.Session
+        console.log('Checkout session completed:', session.id)
+
+        // Check if this is a credit pack purchase
+        if (session.metadata?.type === 'credit_pack_purchase') {
+          const businessId = session.metadata.business_id
+          const packId = session.metadata.pack_id
+          const credits = parseInt(session.metadata.credits)
+          const paymentIntentId = typeof session.payment_intent === 'string'
+            ? session.payment_intent
+            : session.payment_intent?.id
+
+          if (businessId && packId && credits) {
+            console.log(`💳 Processing credit pack purchase: ${credits} credits for business ${businessId}`)
+
+            // Add purchased credits to business
+            const result = await CreditSystem.addPurchasedCredits(
+              businessId,
+              credits,
+              packId,
+              paymentIntentId
+            )
+
+            if (result.success) {
+              console.log(`✅ Added ${credits} credits to business ${businessId}. New balance: ${result.balance?.total_credits}`)
+
+              // Log purchase to credit_purchases table
+              await supabase
+                .from('credit_purchases')
+                .insert({
+                  business_id: businessId,
+                  pack_id: packId,
+                  credits_purchased: credits,
+                  amount_paid: session.amount_total || 0,
+                  stripe_payment_id: paymentIntentId,
+                  stripe_invoice_id: typeof session.invoice === 'string' ? session.invoice : session.invoice?.id,
+                  status: 'completed',
+                  created_at: new Date().toISOString()
+                })
+
+              // Audit log
+              await AuditLogger.log({
+                event_type: AuditEventType.CREDIT_PURCHASED,
+                business_id: businessId,
+                metadata: {
+                  pack_id: packId,
+                  credits_purchased: credits,
+                  amount_paid: session.amount_total,
+                  stripe_session_id: session.id
+                },
+                severity: 'low'
+              })
+            } else {
+              console.error('❌ Failed to add purchased credits:', result)
+            }
+          } else {
+            console.error('Missing metadata in credit pack purchase:', session.metadata)
+          }
+        }
 
         break
 

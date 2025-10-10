@@ -1,0 +1,21 @@
+-- Check if we have test accounts already created
+SELECT
+  au.id,
+  au.email,
+  au.created_at,
+  au.last_sign_in_at
+FROM auth.users au
+WHERE au.email LIKE 'test.%@gmail.com'
+ORDER BY au.created_at DESC
+LIMIT 10;
+
+-- Also check businesses created
+SELECT
+  b.id,
+  b.name,
+  b.email,
+  b.created_at
+FROM businesses b
+WHERE b.email LIKE 'test.%@gmail.com'
+ORDER BY b.created_at DESC
+LIMIT 10;

@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ResearchAPI } from '@/lib/research-api'
+import { rateLimit, getClientIp } from '@/lib/rate-limit'
+import AuditLogger, { AuditEventType } from '@/lib/audit-logger'
+import CreditSystem, { CreditCost } from '@/lib/credit-system'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 60 // 60 second timeout for research
+export const maxDuration = 30 // 30 second timeout for research (security hardening)
 
 interface ResearchRequest {
   query: string
@@ -433,6 +436,35 @@ We sit between basic software (too limited) and enterprise solutions (too expens
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
 
+  // Rate limiting - 20 requests per 10 seconds per IP
+  const ip = getClientIp(request.headers)
+  const rateLimitResult = rateLimit(ip, { limit: 20, window: 10000 })
+
+  if (!rateLimitResult.success) {
+    // Audit log - rate limit exceeded
+    await AuditLogger.logRateLimitExceeded(
+      ip,
+      '/api/research',
+      request.headers.get('user-agent') || 'unknown'
+    )
+
+    return NextResponse.json(
+      {
+        error: 'Too many requests. Please try again later.',
+        retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+      },
+      {
+        status: 429,
+        headers: {
+          'X-RateLimit-Limit': '20',
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          'X-RateLimit-Reset': rateLimitResult.reset.toString(),
+          'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString()
+        }
+      }
+    )
+  }
+
   try {
     const body: ResearchRequest = await request.json()
     const { query, mode, businessId, relatedLeadId, relatedCustomerId, pageContext } = body
@@ -442,6 +474,43 @@ export async function POST(request: NextRequest) {
         { error: 'Query and mode are required' },
         { status: 400 }
       )
+    }
+
+    // Check credits before performing research
+    if (businessId) {
+      const creditCost = mode === 'deep' ? CreditCost.MAYA_DEEP_RESEARCH : CreditCost.MAYA_QUICK_RESEARCH
+
+      const hasCredits = await CreditSystem.hasCredits(businessId, creditCost)
+      if (!hasCredits) {
+        const balance = await CreditSystem.getBalance(businessId)
+        return NextResponse.json(
+          {
+            error: 'Insufficient credits',
+            required: creditCost,
+            available: balance?.total_credits || 0,
+            upgrade_url: '/dashboard/billing',
+            purchase_url: '/dashboard/billing/credits'
+          },
+          { status: 402 } // Payment Required
+        )
+      }
+
+      // Deduct credits
+      const deductResult = await CreditSystem.deductCredits(
+        businessId,
+        creditCost,
+        `maya_research_${mode}`,
+        { query, mode }
+      )
+
+      if (!deductResult.success) {
+        return NextResponse.json(
+          { error: deductResult.error || 'Failed to deduct credits' },
+          { status: 500 }
+        )
+      }
+
+      console.log(`✅ Deducted ${creditCost} credits for ${mode} research. Balance: ${deductResult.balance?.total_credits}`)
     }
 
     // Perform web searches

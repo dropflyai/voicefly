@@ -76,16 +76,30 @@ export async function POST(request: NextRequest) {
 }
 
 function verifyApolloSignature(body: any, signature: string | null): boolean {
-  // Implement Apollo signature verification
-  if (process.env.NODE_ENV === 'development') {
-    return true
-  }
-
   const webhookSecret = process.env.APOLLO_WEBHOOK_SECRET
+
+  // SECURITY: Always verify signatures, even in development
   if (!webhookSecret || !signature) {
+    console.error('Apollo webhook secret or signature missing')
     return false
   }
 
-  // Add Apollo signature verification logic here
-  return true // Placeholder
+  try {
+    const crypto = require('crypto')
+
+    // Compute HMAC signature
+    const expectedSignature = crypto
+      .createHmac('sha256', webhookSecret)
+      .update(JSON.stringify(body))
+      .digest('hex')
+
+    // Use timing-safe comparison to prevent timing attacks
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    )
+  } catch (error) {
+    console.error('Apollo signature verification error:', error)
+    return false
+  }
 }

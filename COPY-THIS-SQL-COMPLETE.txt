@@ -1,0 +1,38 @@
+-- Fix BOTH businesses AND business_users tables for signup
+
+-- ===== BUSINESSES TABLE =====
+DROP POLICY IF EXISTS "authenticated_users_can_create_business" ON businesses;
+DROP POLICY IF EXISTS "users_can_view_own_businesses" ON businesses;
+DROP POLICY IF EXISTS "users_can_update_own_businesses" ON businesses;
+
+CREATE POLICY "authenticated_users_can_create_business"
+ON businesses FOR INSERT TO authenticated WITH CHECK (true);
+
+CREATE POLICY "users_can_view_own_businesses"
+ON businesses FOR SELECT TO authenticated
+USING (id IN (SELECT business_id FROM business_users WHERE user_id = auth.uid()));
+
+CREATE POLICY "users_can_update_own_businesses"
+ON businesses FOR UPDATE TO authenticated
+USING (id IN (SELECT business_id FROM business_users WHERE user_id = auth.uid() AND role IN ('owner', 'admin')))
+WITH CHECK (id IN (SELECT business_id FROM business_users WHERE user_id = auth.uid() AND role IN ('owner', 'admin')));
+
+-- ===== BUSINESS_USERS TABLE =====
+DROP POLICY IF EXISTS "authenticated_users_can_create_business_user" ON business_users;
+DROP POLICY IF EXISTS "users_can_view_business_users" ON business_users;
+DROP POLICY IF EXISTS "users_can_update_business_users" ON business_users;
+
+CREATE POLICY "authenticated_users_can_create_business_user"
+ON business_users FOR INSERT TO authenticated WITH CHECK (true);
+
+CREATE POLICY "users_can_view_business_users"
+ON business_users FOR SELECT TO authenticated
+USING (business_id IN (SELECT business_id FROM business_users WHERE user_id = auth.uid()));
+
+CREATE POLICY "users_can_update_business_users"
+ON business_users FOR UPDATE TO authenticated
+USING (business_id IN (SELECT business_id FROM business_users WHERE user_id = auth.uid() AND role IN ('owner', 'admin')))
+WITH CHECK (business_id IN (SELECT business_id FROM business_users WHERE user_id = auth.uid() AND role IN ('owner', 'admin')));
+
+-- Verify policies
+SELECT tablename, policyname FROM pg_policies WHERE tablename IN ('businesses', 'business_users') ORDER BY tablename, policyname;

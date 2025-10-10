@@ -1,0 +1,211 @@
+{
+  "name": "VoiceFly - Appointment Reminders",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 1 }]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "id": "hourly-trigger",
+      "name": "Check Every Hour"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate time windows for reminders\nconst now = new Date();\n\n// 24-hour reminder window (23-25 hours from now)\nconst tomorrow23h = new Date(now.getTime() + (23 * 60 * 60 * 1000));\nconst tomorrow25h = new Date(now.getTime() + (25 * 60 * 60 * 1000));\n\n// 1-hour reminder window (50-70 minutes from now)\nconst in50min = new Date(now.getTime() + (50 * 60 * 1000));\nconst in70min = new Date(now.getTime() + (70 * 60 * 1000));\n\nreturn [{\n  json: {\n    now: now.toISOString(),\n    \n    // 24-hour reminder window\n    reminder_24h_start: tomorrow23h.toISOString(),\n    reminder_24h_end: tomorrow25h.toISOString(),\n    \n    // 1-hour reminder window\n    reminder_1h_start: in50min.toISOString(),\n    reminder_1h_end: in70min.toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "id": "calc-windows",
+      "name": "Calculate Time Windows"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "appointments",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "=confirmed"
+            },
+            {
+              "keyName": "start_datetime",
+              "condition": "gte",
+              "keyValue": "={{ $json.reminder_24h_start }}"
+            },
+            {
+              "keyName": "start_datetime",
+              "condition": "lte",
+              "keyValue": "={{ $json.reminder_24h_end }}"
+            },
+            {
+              "keyName": "reminder_24h_sent",
+              "condition": "eq",
+              "keyValue": "=false"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [680, 200],
+      "id": "get-24h-reminders",
+      "name": "Get 24h Reminders"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "appointments",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "=confirmed"
+            },
+            {
+              "keyName": "start_datetime",
+              "condition": "gte",
+              "keyValue": "={{ $json.reminder_1h_start }}"
+            },
+            {
+              "keyName": "start_datetime",
+              "condition": "lte",
+              "keyValue": "={{ $json.reminder_1h_end }}"
+            },
+            {
+              "keyName": "reminder_1h_sent",
+              "condition": "eq",
+              "keyValue": "=false"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [680, 400],
+      "id": "get-1h-reminders",
+      "name": "Get 1h Reminders"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format 24-hour reminder\nconst apt = $json;\n\nconst appointmentDate = new Date(apt.start_datetime);\nconst formattedDate = appointmentDate.toLocaleDateString('en-US', { \n  weekday: 'long', \n  month: 'long', \n  day: 'numeric' \n});\nconst formattedTime = appointmentDate.toLocaleTimeString('en-US', { \n  hour: 'numeric', \n  minute: '2-digit',\n  hour12: true \n});\n\nconst smsMessage = `Hi ${apt.customer_name}! Reminder: Your ${apt.service_type} appointment is tomorrow (${formattedDate}) at ${formattedTime}. Reply CONFIRM to confirm or CANCEL to cancel. - ${apt.business_name}`;\n\nconst emailSubject = `Reminder: Your appointment tomorrow at ${formattedTime}`;\nconst emailHtml = `\n<h2>Appointment Reminder</h2>\n<p>Hi ${apt.customer_name},</p>\n<p>This is a friendly reminder about your upcoming appointment:</p>\n<ul>\n  <li><strong>Service:</strong> ${apt.service_type}</li>\n  <li><strong>Date:</strong> ${formattedDate}</li>\n  <li><strong>Time:</strong> ${formattedTime}</li>\n  <li><strong>Location:</strong> ${apt.business_location}</li>\n  <li><strong>Technician:</strong> ${apt.technician_name}</li>\n</ul>\n<p>See you tomorrow!</p>\n<p>Need to reschedule? Call us at ${apt.business_phone}</p>\n<p>Best regards,<br>${apt.business_name}</p>\n`;\n\nreturn [{\n  json: {\n    ...apt,\n    reminder_type: '24h',\n    sms_message: smsMessage,\n    email_subject: emailSubject,\n    email_html: emailHtml\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 200],
+      "id": "format-24h",
+      "name": "Format 24h Reminder"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Format 1-hour reminder\nconst apt = $json;\n\nconst appointmentDate = new Date(apt.start_datetime);\nconst formattedTime = appointmentDate.toLocaleTimeString('en-US', { \n  hour: 'numeric', \n  minute: '2-digit',\n  hour12: true \n});\n\nconst smsMessage = `Hi ${apt.customer_name}! Your ${apt.service_type} appointment is in 1 hour at ${formattedTime}. See you soon! - ${apt.business_name}`;\n\nconst emailSubject = `Your appointment is in 1 hour!`;\nconst emailHtml = `\n<h2>Your appointment is starting soon!</h2>\n<p>Hi ${apt.customer_name},</p>\n<p>Just a quick reminder that your appointment is in about 1 hour:</p>\n<ul>\n  <li><strong>Time:</strong> ${formattedTime}</li>\n  <li><strong>Service:</strong> ${apt.service_type}</li>\n  <li><strong>Location:</strong> ${apt.business_location}</li>\n</ul>\n<p>We're looking forward to seeing you!</p>\n<p>${apt.business_name}</p>\n`;\n\nreturn [{\n  json: {\n    ...apt,\n    reminder_type: '1h',\n    sms_message: smsMessage,\n    email_subject: emailSubject,\n    email_html: emailHtml\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 400],
+      "id": "format-1h",
+      "name": "Format 1h Reminder"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customer_email }}",
+        "subject": "={{ $json.email_subject }}",
+        "message": "={{ $json.email_html }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1120, 300],
+      "id": "send-email",
+      "name": "Send Email Reminder"
+    },
+    {
+      "parameters": {
+        "fromNumber": "={{ $json.business_phone }}",
+        "toNumber": "={{ $json.customer_phone }}",
+        "message": "={{ $json.sms_message }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [1120, 480],
+      "id": "send-sms",
+      "name": "Send SMS Reminder"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "appointments",
+        "filterType": "string",
+        "filterString": "=id=eq.{{ $json.id }}",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "={{ $json.reminder_type === '24h' ? 'reminder_24h_sent' : 'reminder_1h_sent' }}",
+              "fieldValue": "true"
+            },
+            {
+              "fieldId": "={{ $json.reminder_type === '24h' ? 'reminder_24h_sent_at' : 'reminder_1h_sent_at' }}",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1340, 300],
+      "id": "mark-sent",
+      "name": "Mark Reminder Sent"
+    }
+  ],
+  "connections": {
+    "Check Every Hour": {
+      "main": [[{ "node": "Calculate Time Windows", "type": "main", "index": 0 }]]
+    },
+    "Calculate Time Windows": {
+      "main": [[
+        { "node": "Get 24h Reminders", "type": "main", "index": 0 },
+        { "node": "Get 1h Reminders", "type": "main", "index": 0 }
+      ]]
+    },
+    "Get 24h Reminders": {
+      "main": [[{ "node": "Format 24h Reminder", "type": "main", "index": 0 }]]
+    },
+    "Get 1h Reminders": {
+      "main": [[{ "node": "Format 1h Reminder", "type": "main", "index": 0 }]]
+    },
+    "Format 24h Reminder": {
+      "main": [[
+        { "node": "Send Email Reminder", "type": "main", "index": 0 },
+        { "node": "Send SMS Reminder", "type": "main", "index": 0 }
+      ]]
+    },
+    "Format 1h Reminder": {
+      "main": [[
+        { "node": "Send Email Reminder", "type": "main", "index": 0 },
+        { "node": "Send SMS Reminder", "type": "main", "index": 0 }
+      ]]
+    },
+    "Send Email Reminder": {
+      "main": [[{ "node": "Mark Reminder Sent", "type": "main", "index": 0 }]]
+    },
+    "Send SMS Reminder": {
+      "main": [[{ "node": "Mark Reminder Sent", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

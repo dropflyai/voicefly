@@ -435,7 +435,7 @@ export default function SignupPage() {
               </div>
               <div className="text-white">
                 <div className="font-semibold">Sarah J. & 257,999 others</div>
-                <div className="text-sm text-blue-200">started their free trial today</div>
+                <div className="text-sm text-blue-200">started their trial today</div>
               </div>
             </div>
             <div className="text-blue-100 text-sm">
@@ -447,11 +447,11 @@ export default function SignupPage() {
             <div className="flex items-center justify-center space-x-4 text-blue-200 text-sm">
               <span className="flex items-center">
                 <CheckCircle className="h-4 w-4 mr-1" />
-                14-day free trial
+                14-day trial
               </span>
               <span className="flex items-center">
                 <CheckCircle className="h-4 w-4 mr-1" />
-                No credit card required
+                Credit card required
               </span>
             </div>
           </div>

@@ -389,18 +389,18 @@ export default function TestimonialsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-4xl font-bold mb-4">Ready to Join These Success Stories?</h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Start your free trial today and see why businesses choose Maya to transform their customer communications.
+            Start your 14-day trial today and see why businesses choose Maya to transform their customer communications.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup" className="bg-white text-blue-600 px-8 py-4 rounded-lg hover:bg-gray-100 font-semibold inline-flex items-center">
-              Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+              Start Trial <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
             <Link href="/demo" className="border-2 border-white text-white px-8 py-4 rounded-lg hover:bg-white hover:text-blue-600 font-semibold">
               Watch Demo
             </Link>
           </div>
           <div className="mt-6 text-blue-200">
-            <span className="text-sm">14-day free trial • No credit card required • Setup in 5 minutes</span>
+            <span className="text-sm">14-day trial • Credit card required • Setup in 5 minutes</span>
           </div>
         </div>
       </section>

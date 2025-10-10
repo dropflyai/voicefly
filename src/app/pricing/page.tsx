@@ -245,8 +245,8 @@ export default function PricingPage() {
       answer: "We'll notify you when you reach 80% of your limits. Overage pricing applies: voice minutes at $0.35-0.40 each, Maya research queries at $0.12-0.15 each, and additional phone numbers at $7-9/month."
     },
     {
-      question: "How does the 3-day free trial work?",
-      answer: "Your trial includes limited usage: 50-150 voice minutes and 5-15 Maya research queries depending on the plan. No credit card required to start, and you can upgrade anytime during or after the trial."
+      question: "How does the 14-day trial work?",
+      answer: "Your trial includes limited usage: 50-150 voice minutes and 5-15 Maya research queries depending on the plan. Credit card required at signup. Cancel anytime before day 14 to avoid charges."
     },
     {
       question: "What are the 3 basic integrations in the Starter plan?",
@@ -315,7 +315,7 @@ export default function PricingPage() {
             Simple, Transparent Pricing That Grows With You
           </h1>
           <p className="text-xl text-gray-600 mb-8">
-            All plans include 3-day free trial, no credit card required
+            All plans include 14-day trial • Credit card required
           </p>
 
           {/* Billing Toggle */}
@@ -426,7 +426,7 @@ export default function PricingPage() {
 
                   {plan.id !== 'enterprise' && (
                     <p className="text-center text-sm text-gray-500 mt-4">
-                      3-day free trial • No credit card required
+                      14-day trial • Credit card required
                     </p>
                   )}
                 </div>
@@ -548,12 +548,12 @@ export default function PricingPage() {
                 <div></div>
                 <div className="text-center">
                   <button className="w-full bg-gray-200 text-gray-900 py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors">
-                    Start Free Trial
+                    Start Trial
                   </button>
                 </div>
                 <div className="text-center">
                   <button className="w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
-                    Start Free Trial
+                    Start Trial
                   </button>
                 </div>
                 <div className="text-center">
@@ -629,12 +629,12 @@ export default function PricingPage() {
             Ready to Transform Your Business Communication?
           </h2>
           <p className="text-xl text-blue-100 mb-8">
-            Start your 3-day free trial today. No credit card required.
+            Start your 14-day trial today. Credit card required.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <Link href="/signup" className="bg-white text-blue-600 px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center">
-              Start Free Trial
+              Start Trial
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
             <button className="border-2 border-white text-white px-8 py-4 rounded-lg text-lg font-semibold hover:bg-white/10 transition-colors">
@@ -645,7 +645,7 @@ export default function PricingPage() {
           <div className="flex items-center justify-center space-x-6 text-blue-100 text-sm">
             <span className="flex items-center">
               <CheckCircle className="h-4 w-4 mr-1" />
-              3-day free trial
+              14-day trial
             </span>
             <span className="flex items-center">
               <CheckCircle className="h-4 w-4 mr-1" />

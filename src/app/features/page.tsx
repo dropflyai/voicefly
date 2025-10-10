@@ -28,10 +28,10 @@ export default function FeaturesPage() {
               <Link href="/testimonials" className="text-gray-700 hover:text-blue-600 font-medium">Testimonials</Link>
               <Link href="/login" className="text-gray-700 hover:text-blue-600 font-medium">Sign In</Link>
               <Link
-                href="/login"
+                href="/signup"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
               >
-                Start Free Trial
+                Start Trial
               </Link>
             </nav>
             <button
@@ -49,8 +49,8 @@ export default function FeaturesPage() {
               <Link href="/pricing" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
               <Link href="/testimonials" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Testimonials</Link>
               <Link href="/login" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
-              <Link href="/login" className="block bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium text-center transition-colors" onClick={() => setMobileMenuOpen(false)}>
-                Start Free Trial
+              <Link href="/signup" className="block bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium text-center transition-colors" onClick={() => setMobileMenuOpen(false)}>
+                Start Trial
               </Link>
             </div>
           )}
@@ -616,10 +616,10 @@ export default function FeaturesPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/login"
+              href="/signup"
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors"
             >
-              Start Free 14-Day Trial
+              Start 14-Day Trial
             </Link>
             <button className="border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg transition-colors">
               Schedule Live Demo

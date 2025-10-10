@@ -1,0 +1,26 @@
+-- Verify audit logging is working
+-- Should show signup event for test user
+
+SELECT
+  event_type,
+  user_id,
+  business_id,
+  metadata,
+  severity,
+  timestamp,
+  created_at
+FROM audit_logs
+ORDER BY timestamp DESC
+LIMIT 10;
+
+-- Count total audit logs
+SELECT COUNT(*) as total_audit_logs FROM audit_logs;
+
+-- Show events by type
+SELECT
+  event_type,
+  COUNT(*) as count,
+  MAX(timestamp) as last_occurred
+FROM audit_logs
+GROUP BY event_type
+ORDER BY count DESC;
