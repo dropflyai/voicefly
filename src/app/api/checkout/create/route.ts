@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
+import * as Sentry from '@sentry/nextjs'
+import { checkRateLimit, getRateLimitIdentifier } from '@/lib/rate-limit'
+import { validateRequest, checkoutCreateSchema, formatValidationErrors } from '@/lib/validation'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2024-12-18.acacia'
@@ -7,20 +10,43 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(request: NextRequest) {
   try {
-    const { priceId, businessId, planName } = await request.json()
+    // 1. Rate Limiting (10 requests per minute for payment endpoints)
+    const rateLimitIdentifier = getRateLimitIdentifier(request)
+    const rateLimit = await checkRateLimit(rateLimitIdentifier, 'payment')
 
-    // Validate required fields
-    if (!priceId) {
+    if (!rateLimit.success) {
       return NextResponse.json(
-        { error: 'Price ID is required' },
+        {
+          error: 'Too many requests. Please try again later.',
+          retryAfter: rateLimit.reset
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rateLimit.reset || Date.now()) / 1000)),
+            'X-RateLimit-Remaining': String(rateLimit.remaining || 0),
+          }
+        }
+      )
+    }
+
+    // 2. Input Validation with Zod
+    const validation = await validateRequest(request, checkoutCreateSchema)
+
+    if (!validation.success) {
+      const formattedErrors = formatValidationErrors(validation.errors)
+      return NextResponse.json(
+        formattedErrors,
         { status: 400 }
       )
     }
 
-    // Get the base URL for redirects
+    const { priceId, businessId, planName, successUrl, cancelUrl } = validation.data
+
+    // 3. Get the base URL for redirects
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3022'
 
-    // Create Stripe checkout session
+    // 4. Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -30,8 +56,8 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${baseUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}&success=true`,
-      cancel_url: `${baseUrl}/pricing?canceled=true`,
+      success_url: successUrl || `${baseUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}&success=true`,
+      cancel_url: cancelUrl || `${baseUrl}/pricing?canceled=true`,
       subscription_data: {
         metadata: {
           business_id: businessId || 'unknown',
@@ -46,12 +72,25 @@ export async function POST(request: NextRequest) {
       billing_address_collection: 'auto',
     })
 
+    // 5. Return success response
     return NextResponse.json({
       url: session.url,
       sessionId: session.id
     })
   } catch (error: any) {
+    // 6. Error handling with Sentry
     console.error('Stripe checkout error:', error)
+
+    Sentry.captureException(error, {
+      tags: {
+        api_route: '/api/checkout/create',
+        error_type: 'stripe_checkout_error',
+      },
+      extra: {
+        errorMessage: error.message,
+      },
+    })
+
     return NextResponse.json(
       { error: error.message || 'Failed to create checkout session' },
       { status: 500 }
