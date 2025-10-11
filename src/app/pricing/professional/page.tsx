@@ -64,7 +64,7 @@ export default function ProfessionalTierPage() {
                 href="/signup?tier=professional"
                 className="px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transition-all inline-flex items-center"
               >
-                Start 14-Day Trial
+                Get Started Now
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Link
@@ -75,7 +75,7 @@ export default function ProfessionalTierPage() {
               </Link>
             </div>
             <p className="text-sm text-gray-500 mt-4">
-              No credit card required for trial • Cancel anytime
+              Start with Free tier, upgrade anytime • Cancel anytime
             </p>
           </div>
 
@@ -563,14 +563,14 @@ export default function ProfessionalTierPage() {
               Start Growing Proactively Today
             </h2>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              No credit card required for 14-day trial. Full access to outbound campaigns,
+              Start with Free tier, upgrade to Professional when ready. Full access to outbound campaigns,
               lead generation, and advanced automation.
             </p>
             <Link
               href="/signup?tier=professional"
               className="inline-flex items-center px-10 py-5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold text-xl shadow-xl hover:shadow-2xl transition-all"
             >
-              Try Professional Free for 14 Days
+              Get Started with Professional
               <ArrowRight className="ml-3 h-6 w-6" />
             </Link>
             <p className="text-sm text-gray-500 mt-4">

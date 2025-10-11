@@ -61,7 +61,7 @@ export default function StarterTierPage() {
                 href="/signup?tier=starter"
                 className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transition-all inline-flex items-center"
               >
-                Start 14-Day Trial
+                Get Started Now
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Link
@@ -72,7 +72,7 @@ export default function StarterTierPage() {
               </Link>
             </div>
             <p className="text-sm text-gray-500 mt-4">
-              No credit card required for trial • Cancel anytime
+              Start with Free tier, upgrade anytime • Cancel anytime
             </p>
           </div>
 
@@ -481,13 +481,12 @@ export default function StarterTierPage() {
 
               <details className="bg-white border border-gray-200 rounded-lg p-6 group">
                 <summary className="font-semibold text-gray-900 cursor-pointer list-none flex items-center justify-between">
-                  How does the 14-day trial work?
+                  Can I try before I buy?
                   <span className="ml-4 flex-shrink-0 text-gray-400 group-open:rotate-180 transition-transform">▼</span>
                 </summary>
                 <p className="mt-4 text-gray-600">
-                  We don't require a credit card for the trial. Start with full Starter features for
-                  14 days. When the trial ends, you can add payment to continue or downgrade to the
-                  Free plan automatically.
+                  Yes! Start with our Free tier (50 voice minutes, 25 SMS, 10 bookings/month - forever free).
+                  When you're ready to scale, upgrade to Starter instantly with no setup required.
                 </p>
               </details>
 
@@ -520,16 +519,16 @@ export default function StarterTierPage() {
           {/* Final CTA */}
           <div className="text-center bg-white border-2 border-blue-200 rounded-xl p-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Start Your 14-Day Free Trial
+              Ready to Scale Your Business?
             </h2>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              No credit card required. Full access to all Starter features. Cancel anytime.
+              Start with Free tier, upgrade to Starter when ready. Cancel anytime.
             </p>
             <Link
               href="/signup?tier=starter"
               className="inline-flex items-center px-10 py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-xl shadow-xl hover:shadow-2xl transition-all"
             >
-              Try Starter Free for 14 Days
+              Get Started with Starter
               <ArrowRight className="ml-3 h-6 w-6" />
             </Link>
             <p className="text-sm text-gray-500 mt-4">

@@ -272,4 +272,7 @@ class AuditLogger {
   }
 }
 
+// Convenience export for named imports
+export const logAuditEvent = AuditLogger.log
+
 export default AuditLogger

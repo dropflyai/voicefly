@@ -85,7 +85,7 @@ export default function PrivacyPolicy() {
               <br />
               <strong>Email:</strong> privacy@voicefly.ai
               <br />
-              <strong>Address:</strong> VoiceFly Inc., [Your Business Address]
+              <strong>Address:</strong> VoiceFly Inc., 1209 Orange Street, Wilmington, DE 19801
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">9. Changes to This Policy</h2>

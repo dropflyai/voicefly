@@ -488,4 +488,8 @@ export class CreditSystem {
   }
 }
 
+// Convenience exports for named imports
+export const hasEnoughCredits = CreditSystem.hasCredits
+export const deductCredits = CreditSystem.deductCredits
+
 export default CreditSystem

@@ -102,8 +102,8 @@ export default function TermsOfService() {
 
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">12. Governing Law</h2>
             <p className="text-gray-700 mb-6">
-              These Terms are governed by the laws of [Your Jurisdiction], without regard to conflict of law principles.
-              Any disputes shall be resolved in the courts of [Your Jurisdiction].
+              These Terms are governed by the laws of Delaware, United States, without regard to conflict of law principles.
+              Any disputes shall be resolved in the courts of Delaware, United States.
             </p>
 
             <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">13. Changes to Terms</h2>
@@ -118,7 +118,7 @@ export default function TermsOfService() {
               <br />
               <strong>Email:</strong> legal@voicefly.ai
               <br />
-              <strong>Address:</strong> VoiceFly Inc., [Your Business Address]
+              <strong>Address:</strong> VoiceFly Inc., 1209 Orange Street, Wilmington, DE 19801
             </p>
           </div>
 
