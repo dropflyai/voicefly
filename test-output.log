@@ -1,0 +1,148 @@
+
+Running 25 tests using 8 workers
+
+Found 7 navigation links
+  - Testing link: Home (/)
+✅ Beauty industry page loaded
+✅ Enterprise pricing page loaded
+✅ Homepage loaded
+✅ Starter pricing page loaded
+✅ Professional pricing page loaded
+✅ Pricing page loaded with all tiers
+  - Testing link: Solutions (/solutions)
+  - Testing link: Features (/features)
+  - Testing link: Pricing (/pricing)
+  - Testing link: Testimonials (/testimonials)
+  ✓   6 [chromium] › tests/comprehensive-e2e.spec.ts:111:7 › VoiceFly Comprehensive E2E Tests › Beauty industry page loads (2.8s)
+✅ Navigation links tested
+  ✓   7 [chromium] › tests/comprehensive-e2e.spec.ts:90:7 › VoiceFly Comprehensive E2E Tests › Enterprise pricing page loads (2.7s)
+  ✓   3 [chromium] › tests/comprehensive-e2e.spec.ts:81:7 › VoiceFly Comprehensive E2E Tests › Professional pricing page loads (2.7s)
+  ✓   2 [chromium] › tests/comprehensive-e2e.spec.ts:52:7 › VoiceFly Comprehensive E2E Tests › Pricing overview page loads (2.7s)
+  ✓   5 [chromium] › tests/comprehensive-e2e.spec.ts:68:7 › VoiceFly Comprehensive E2E Tests › Starter pricing page loads (2.8s)
+  ✓   4 [chromium] › tests/comprehensive-e2e.spec.ts:12:7 › VoiceFly Comprehensive E2E Tests › Homepage loads successfully (2.9s)
+  ✓   8 [chromium] › tests/comprehensive-e2e.spec.ts:28:7 › VoiceFly Comprehensive E2E Tests › All navigation links are clickable (2.8s)
+✅ Checkout API working
+   Session ID: cs_test_b1dkglzIZA3Z1gBPNdAJikikbkIKnTOhBH33pLdsHJdgEkDwBPHZzcA1N5
+  ✓  14 [chromium] › tests/comprehensive-e2e.spec.ts:172:7 › VoiceFly Comprehensive E2E Tests › Checkout API creates session (4.1s)
+✅ GoHighLevel comparison page loaded
+✅ Privacy page loaded
+✅ Legal industry page loaded
+✅ Terms page loaded
+✅ Mobile responsive
+✅ HubSpot comparison page loaded
+✅ Tablet responsive
+  ✓  10 [chromium] › tests/comprehensive-e2e.spec.ts:131:7 › VoiceFly Comprehensive E2E Tests › GoHighLevel comparison page loads (4.8s)
+  ✓  13 [chromium] › tests/comprehensive-e2e.spec.ts:160:7 › VoiceFly Comprehensive E2E Tests › Privacy Policy page loads (4.8s)
+  ✓  12 [chromium] › tests/comprehensive-e2e.spec.ts:151:7 › VoiceFly Comprehensive E2E Tests › Terms of Service page loads (4.8s)
+  ✓   9 [chromium] › tests/comprehensive-e2e.spec.ts:119:7 › VoiceFly Comprehensive E2E Tests › Legal industry page loads (4.9s)
+  ✓  11 [chromium] › tests/comprehensive-e2e.spec.ts:139:7 › VoiceFly Comprehensive E2E Tests › HubSpot comparison page loads (4.8s)
+  ✓  15 [chromium] › tests/comprehensive-e2e.spec.ts:195:7 › VoiceFly Comprehensive E2E Tests › Homepage is responsive on mobile (4.8s)
+  ✓  16 [chromium] › tests/comprehensive-e2e.spec.ts:204:7 › VoiceFly Comprehensive E2E Tests › Homepage is responsive on tablet (762ms)
+  ✘   1 [chromium] › tests/comprehensive-e2e.spec.ts:103:7 › VoiceFly Comprehensive E2E Tests › Automotive industry page loads (7.8s)
+  ✘  22 [chromium] › tests/comprehensive-e2e.spec.ts:296:7 › VoiceFly Comprehensive E2E Tests › SMS API endpoint responds (3.5s)
+  ✘  25 [chromium] › tests/comprehensive-e2e.spec.ts:345:7 › VoiceFly Comprehensive E2E Tests › Checkout API validates input (47ms)
+✅ Rate limiting working (2 requests blocked)
+  ✓  24 [chromium] › tests/comprehensive-e2e.spec.ts:322:7 › VoiceFly Comprehensive E2E Tests › Rate limiting works on payment endpoint (3.6s)
+✅ Leads API exists (status: 200)
+  ✓  23 [chromium] › tests/comprehensive-e2e.spec.ts:310:7 › VoiceFly Comprehensive E2E Tests › Leads API endpoint exists (4.0s)
+⚠️  Products page not found (404)
+✅ Accessibility: 0/0 images have alt text
+✅ SEO meta tags present
+   Title: VoiceFly - Enterprise Voice AI Platform
+✅ Found 0 forms on homepage
+  ✓  21 [chromium] › tests/comprehensive-e2e.spec.ts:281:7 › VoiceFly Comprehensive E2E Tests › Products page loads (4.2s)
+  ✓  20 [chromium] › tests/comprehensive-e2e.spec.ts:268:7 › VoiceFly Comprehensive E2E Tests › Contact/Lead capture forms exist (4.3s)
+  ✓  18 [chromium] › tests/comprehensive-e2e.spec.ts:230:7 › VoiceFly Comprehensive E2E Tests › Homepage has proper meta tags (4.3s)
+  ✓  19 [chromium] › tests/comprehensive-e2e.spec.ts:249:7 › VoiceFly Comprehensive E2E Tests › Homepage has no critical accessibility issues (4.3s)
+  ✘  17 [chromium] › tests/comprehensive-e2e.spec.ts:217:7 › VoiceFly Comprehensive E2E Tests › Homepage loads within 3 seconds (4.3s)
+
+
+  1) [chromium] › tests/comprehensive-e2e.spec.ts:103:7 › VoiceFly Comprehensive E2E Tests › Automotive industry page loads 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByText(/automotive/i).first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByText(/automotive/i).first()[22m
+
+
+      104 |     await page.goto(`${BASE_URL}/industries/automotive`)
+      105 |
+    > 106 |     await expect(page.getByText(/automotive/i).first()).toBeVisible()
+          |                                                         ^
+      107 |
+      108 |     console.log('✅ Automotive industry page loaded')
+      109 |   })
+        at /Users/rioallen/Documents/DropFly-OS-App-Builder/DropFly-PROJECTS/voicefly-app/tests/comprehensive-e2e.spec.ts:106:57
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/comprehensive-e2e-VoiceFly-23294-omotive-industry-page-loads-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/comprehensive-e2e-VoiceFly-23294-omotive-industry-page-loads-chromium/error-context.md
+
+  2) [chromium] › tests/comprehensive-e2e.spec.ts:217:7 › VoiceFly Comprehensive E2E Tests › Homepage loads within 3 seconds 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: < [32m3000[39m
+    Received:   [31m4143[39m
+
+      220 |     const loadTime = Date.now() - startTime
+      221 |
+    > 222 |     expect(loadTime).toBeLessThan(3000)
+          |                      ^
+      223 |     console.log(`✅ Page loaded in ${loadTime}ms`)
+      224 |   })
+      225 |
+        at /Users/rioallen/Documents/DropFly-OS-App-Builder/DropFly-PROJECTS/voicefly-app/tests/comprehensive-e2e.spec.ts:222:22
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/comprehensive-e2e-VoiceFly-5b18d-page-loads-within-3-seconds-chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/comprehensive-e2e-VoiceFly-5b18d-page-loads-within-3-seconds-chromium/error-context.md
+
+  3) [chromium] › tests/comprehensive-e2e.spec.ts:296:7 › VoiceFly Comprehensive E2E Tests › SMS API endpoint responds 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: < [32m500[39m
+    Received:   [31m500[39m
+
+      304 |
+      305 |     // Should get rate limited or validation error (not 500)
+    > 306 |     expect(response.status()).toBeLessThan(500)
+          |                               ^
+      307 |     console.log(`✅ SMS API responds (status: ${response.status()})`)
+      308 |   })
+      309 |
+        at /Users/rioallen/Documents/DropFly-OS-App-Builder/DropFly-PROJECTS/voicefly-app/tests/comprehensive-e2e.spec.ts:306:31
+
+  4) [chromium] › tests/comprehensive-e2e.spec.ts:345:7 › VoiceFly Comprehensive E2E Tests › Checkout API validates input 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m400[39m
+    Received: [31m429[39m
+
+      348 |     })
+      349 |
+    > 350 |     expect(response.status()).toBe(400)
+          |                               ^
+      351 |     const data = await response.json()
+      352 |     expect(data).toHaveProperty('message')
+      353 |
+        at /Users/rioallen/Documents/DropFly-OS-App-Builder/DropFly-PROJECTS/voicefly-app/tests/comprehensive-e2e.spec.ts:350:31
+
+  4 failed
+    [chromium] › tests/comprehensive-e2e.spec.ts:103:7 › VoiceFly Comprehensive E2E Tests › Automotive industry page loads 
+    [chromium] › tests/comprehensive-e2e.spec.ts:217:7 › VoiceFly Comprehensive E2E Tests › Homepage loads within 3 seconds 
+    [chromium] › tests/comprehensive-e2e.spec.ts:296:7 › VoiceFly Comprehensive E2E Tests › SMS API endpoint responds 
+    [chromium] › tests/comprehensive-e2e.spec.ts:345:7 › VoiceFly Comprehensive E2E Tests › Checkout API validates input 
+  21 passed (15.5s)

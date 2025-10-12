@@ -31,8 +31,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if business has enough SMS credits
-    const hasCredits = await hasEnoughCredits(businessId, 'sms', 1)
+    // Check if business has enough SMS credits (1 credit per SMS)
+    const hasCredits = await hasEnoughCredits(businessId, 1)
     if (!hasCredits) {
       return NextResponse.json(
         { error: 'Insufficient SMS credits. Please upgrade your plan or purchase additional credits.' },
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     if (result.success) {
       // Deduct SMS credit
-      await deductCredits(businessId, 'sms', 1)
+      await deductCredits(businessId, 1, 'sms')
 
       // Log audit event
       await logAuditEvent({

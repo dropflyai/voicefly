@@ -138,7 +138,7 @@ export class SMSScheduler {
       }
 
       // Check credit balance
-      const hasCredits = await hasEnoughCredits(businessId, 'sms', 1)
+      const hasCredits = await hasEnoughCredits(businessId, 1)
       if (!hasCredits) {
         console.log(`Insufficient SMS credits for business ${businessId}`)
         return
@@ -164,7 +164,7 @@ export class SMSScheduler {
 
       if (result.success) {
         // Deduct credit
-        await deductCredits(businessId, 'sms', 1)
+        await deductCredits(businessId, 1, 'sms')
 
         // Mark reminder as sent
         const updateField = type === '24h' ? 'reminder_24h_sent' : 'reminder_2h_sent'
@@ -231,7 +231,7 @@ export class SMSScheduler {
         }
 
         // Check credits
-        const hasCredits = await hasEnoughCredits(businessId, 'sms', 1)
+        const hasCredits = await hasEnoughCredits(businessId, 1)
         if (!hasCredits) continue
 
         const templateData: SMSTemplateData = {
@@ -244,7 +244,7 @@ export class SMSScheduler {
         const result = await SMSService.sendSMS(phoneNumber, message)
 
         if (result.success) {
-          await deductCredits(businessId, 'sms', 1)
+          await deductCredits(businessId, 1, 'sms')
 
           // Mark as sent this year
           await supabase
@@ -305,7 +305,7 @@ export class SMSScheduler {
         if (!complianceCheck.allowed) continue
 
         // Check credits
-        const hasCredits = await hasEnoughCredits(businessId, 'sms', 1)
+        const hasCredits = await hasEnoughCredits(businessId, 1)
         if (!hasCredits) continue
 
         const templateData: SMSTemplateData = {
@@ -318,7 +318,7 @@ export class SMSScheduler {
         const result = await SMSService.sendSMS(phoneNumber, message)
 
         if (result.success) {
-          await deductCredits(businessId, 'sms', 1)
+          await deductCredits(businessId, 1, 'sms')
 
           await supabase
             .from('customers')
@@ -379,7 +379,7 @@ export class SMSScheduler {
         if (!complianceCheck.allowed) continue
 
         // Check credits
-        const hasCredits = await hasEnoughCredits(businessId, 'sms', 1)
+        const hasCredits = await hasEnoughCredits(businessId, 1)
         if (!hasCredits) continue
 
         const templateData: SMSTemplateData = {
@@ -392,7 +392,7 @@ export class SMSScheduler {
         const result = await SMSService.sendSMS(phoneNumber, message)
 
         if (result.success) {
-          await deductCredits(businessId, 'sms', 1)
+          await deductCredits(businessId, 1, 'sms')
 
           await supabase
             .from('appointments')
