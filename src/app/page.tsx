@@ -36,7 +36,7 @@ export default function HomePage() {
                 href="/signup"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
               >
-                Start Trial
+                Start Now
               </Link>
             </nav>
 
@@ -64,7 +64,7 @@ export default function HomePage() {
                 className="block bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium text-center transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Start Trial
+                Start Now
               </Link>
             </div>
           )}
@@ -96,11 +96,14 @@ export default function HomePage() {
                 href="/signup"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg flex items-center justify-center transition-all transform hover:scale-105 shadow-lg"
               >
-                Start 14-Day Trial <ArrowRight className="ml-2 h-5 w-5" />
+                Start Now <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
-              <button className="border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg transition-colors">
+              <Link
+                href="/features"
+                className="border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center"
+              >
                 See Maya in Action
-              </button>
+              </Link>
             </div>
 
             {/* Trust Badges */}
@@ -516,7 +519,7 @@ export default function HomePage() {
           <div className="mt-12 flex flex-wrap items-center justify-center gap-4 md:gap-8 text-white/80 text-sm sm:text-base">
             <div className="flex items-center">
               <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0" />
-              <span>14-day trial • Credit card required</span>
+              <span>Free to start • No credit card needed</span>
             </div>
             <div className="flex items-center">
               <CheckCircle className="h-5 w-5 mr-2 flex-shrink-0" />
