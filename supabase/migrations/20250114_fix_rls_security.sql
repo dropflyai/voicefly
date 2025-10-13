@@ -1,4 +1,4 @@
--- Fix RLS Security Issues
+-- Fix RLS Security Issues (FIXED VERSION)
 -- Enable RLS and add policies for 28 tables that are missing protection
 
 -- ============================================
@@ -34,14 +34,13 @@ ALTER TABLE ab_tests ENABLE ROW LEVEL SECURITY;
 -- PART 2: Add RLS Policies for each table
 -- ============================================
 
--- package_services (junction table)
+-- package_services (junction table) - FIXED
 CREATE POLICY "Users can view package_services from their businesses"
   ON package_services FOR SELECT
   USING (
     EXISTS (
       SELECT 1 FROM service_packages sp
-      JOIN services s ON sp.service_id = s.id
-      JOIN business_users bu ON bu.business_id = s.business_id
+      JOIN business_users bu ON bu.business_id = sp.business_id
       WHERE sp.id = package_services.package_id
         AND bu.user_id = auth.uid()
     )
@@ -52,8 +51,7 @@ CREATE POLICY "Users can manage package_services for their businesses"
   USING (
     EXISTS (
       SELECT 1 FROM service_packages sp
-      JOIN services s ON sp.service_id = s.id
-      JOIN business_users bu ON bu.business_id = s.business_id
+      JOIN business_users bu ON bu.business_id = sp.business_id
       WHERE sp.id = package_services.package_id
         AND bu.user_id = auth.uid()
         AND bu.role IN ('owner', 'admin')
