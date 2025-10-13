@@ -288,7 +288,7 @@ END $$;
 
 DO $$
 DECLARE
-  table_name TEXT;
+  tbl_name TEXT;
   enterprise_tables TEXT[] := ARRAY[
     'voice_scripts', 'call_recordings', 'lead_enrichment',
     'email_templates', 'follow_up_sequences', 'meetings',
@@ -298,14 +298,14 @@ DECLARE
     'call_queues', 'ab_tests'
   ];
 BEGIN
-  FOREACH table_name IN ARRAY enterprise_tables
+  FOREACH tbl_name IN ARRAY enterprise_tables
   LOOP
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND tables.table_name = table_name) THEN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = tbl_name) THEN
       -- Allow authenticated users to access
       EXECUTE format('CREATE POLICY "Authenticated users can access %I"
         ON %I FOR ALL
         TO authenticated
-        USING (true)', table_name, table_name);
+        USING (true)', tbl_name, tbl_name);
     END IF;
   END LOOP;
 END $$;
