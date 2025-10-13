@@ -195,7 +195,7 @@ What would you like to know?`,
                 onKeyPress={handleKeyPress}
                 placeholder="Ask me anything..."
                 rows={1}
-                className="flex-1 resize-none border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="flex-1 resize-none border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-gray-900"
               />
               <button
                 onClick={handleSend}
