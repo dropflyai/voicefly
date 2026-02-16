@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getApolloService, LeadSearchCriteria } from '@/lib/apollo-service'
 import { getCampaignAutomation } from '@/lib/campaign-automation'
 import { supabase } from '@/lib/supabase-client'
+import { validateAuth, validateBusinessAccess } from '@/lib/api-auth'
 
 /**
  * POST /api/leads/request
@@ -37,18 +38,34 @@ import { supabase } from '@/lib/supabase-client'
  * }
  */
 export async function POST(request: NextRequest) {
+  // Authentication check - SECURITY CRITICAL
+  const authResult = await validateAuth(request)
+  if (!authResult.success || !authResult.user) {
+    return NextResponse.json(
+      { error: authResult.error || 'Authentication required' },
+      { status: 401 }
+    )
+  }
+
   try {
     const { businessId, criteria } = await request.json()
 
-    if (!businessId) {
-      return NextResponse.json(
-        { error: 'businessId is required' },
-        { status: 400 }
-      )
+    // Use authenticated user's business if not provided
+    const targetBusinessId = businessId || authResult.user.businessId
+
+    // Validate business access if a specific businessId was provided
+    if (businessId && businessId !== authResult.user.businessId) {
+      const accessResult = await validateBusinessAccess(request, businessId)
+      if (!accessResult.success) {
+        return NextResponse.json(
+          { error: 'Access denied to this business' },
+          { status: 403 }
+        )
+      }
     }
 
     // Validate subscription tier and lead quota
-    const quotaCheck = await checkLeadQuota(businessId, criteria.limit || 50)
+    const quotaCheck = await checkLeadQuota(targetBusinessId, criteria.limit || 50)
     if (!quotaCheck.allowed) {
       return NextResponse.json(
         {
@@ -62,7 +79,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`🔍 Lead request from business ${businessId}:`, criteria)
+    console.log(`🔍 Lead request from business ${targetBusinessId}:`, criteria)
 
     // Step 1: Search Apollo and enrich leads
     const apollo = getApolloService()
@@ -81,12 +98,12 @@ export async function POST(request: NextRequest) {
     console.log(`✅ Found and enriched ${enrichedLeads.length} leads`)
 
     // Step 2: Save leads to database
-    const savedLeads = await saveLeadsToDatabase(businessId, enrichedLeads)
+    const savedLeads = await saveLeadsToDatabase(targetBusinessId, enrichedLeads)
     console.log(`💾 Saved ${savedLeads.length} leads to database`)
 
     // Step 3: Auto-create campaigns
     const automation = getCampaignAutomation()
-    const campaigns = await automation.autoCreateCampaigns(businessId, enrichedLeads)
+    const campaigns = await automation.autoCreateCampaigns(targetBusinessId, enrichedLeads)
 
     console.log(`🤖 Auto-created campaigns:`, {
       email: !!campaigns.emailCampaign,
@@ -94,7 +111,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Step 4: Update lead quota usage
-    await updateLeadQuota(businessId, enrichedLeads.length)
+    await updateLeadQuota(targetBusinessId, enrichedLeads.length)
 
     // Step 5: Calculate summary
     const summary = {
@@ -131,15 +148,31 @@ export async function POST(request: NextRequest) {
  * Check current lead quota status
  */
 export async function GET(request: NextRequest) {
+  // Authentication check - SECURITY CRITICAL
+  const authResult = await validateAuth(request)
+  if (!authResult.success || !authResult.user) {
+    return NextResponse.json(
+      { error: authResult.error || 'Authentication required' },
+      { status: 401 }
+    )
+  }
+
   try {
     const { searchParams } = new URL(request.url)
-    const businessId = searchParams.get('businessId')
+    let businessId = searchParams.get('businessId')
 
+    // Use authenticated user's business if not provided
     if (!businessId) {
-      return NextResponse.json(
-        { error: 'businessId is required' },
-        { status: 400 }
-      )
+      businessId = authResult.user.businessId
+    } else if (businessId !== authResult.user.businessId) {
+      // Validate business access
+      const accessResult = await validateBusinessAccess(request, businessId)
+      if (!accessResult.success) {
+        return NextResponse.json(
+          { error: 'Access denied to this business' },
+          { status: 403 }
+        )
+      }
     }
 
     // Get business subscription tier

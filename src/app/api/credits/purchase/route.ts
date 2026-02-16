@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { CREDIT_PACKS } from '@/lib/credit-system'
+import { MINUTE_PACKS } from '@/lib/credit-system'
+import { validateBusinessAccess, checkRateLimit, rateLimitedResponse } from '@/lib/api-auth'
+import { creditPurchaseSchema, validate } from '@/lib/validations'
 import Stripe from 'stripe'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia'
+  apiVersion: '2025-08-27.basil'
 })
 
 /**
@@ -12,18 +14,36 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
  */
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
-    const { business_id, pack_id } = body
+    // Rate limit check - sensitive tier for payment operations
+    const rateLimit = await checkRateLimit(req, 'sensitive')
+    if (!rateLimit.allowed) {
+      return rateLimitedResponse(rateLimit.result)
+    }
 
-    if (!business_id || !pack_id) {
+    const body = await req.json()
+
+    // Validate input
+    const validation = validate(creditPurchaseSchema, body)
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'business_id and pack_id are required' },
+        { error: 'Validation failed', details: validation.error },
         { status: 400 }
       )
     }
 
-    // Find credit pack
-    const pack = CREDIT_PACKS.find(p => p.id === pack_id)
+    const { business_id, pack_id } = validation.data
+
+    // Validate authentication and business access
+    const authResult = await validateBusinessAccess(req, business_id)
+    if (!authResult.success) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized' },
+        { status: authResult.error === 'Access denied to this business' ? 403 : 401 }
+      )
+    }
+
+    // Find minute pack
+    const pack = MINUTE_PACKS.find(p => p.id === pack_id)
     if (!pack) {
       return NextResponse.json(
         { error: 'Invalid pack_id' },
@@ -39,23 +59,24 @@ export async function POST(req: NextRequest) {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `VoiceFly Credits - ${pack.name}`,
-              description: `${pack.credits.toLocaleString()} credits for your VoiceFly account`,
+              name: `VoiceFly Minutes - ${pack.name}`,
+              description: `${pack.minutes.toLocaleString()} voice minutes for your VoiceFly account`,
               images: ['https://voicefly.com/logo.png'], // Replace with actual logo URL
             },
-            unit_amount: pack.price, // Price in cents
+            unit_amount: pack.price * 100, // Convert dollars to cents
           },
           quantity: 1,
         },
       ],
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?credits_purchased=true&pack=${pack_id}`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?minutes_purchased=true&pack=${pack_id}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing/credits`,
       metadata: {
         business_id,
         pack_id,
+        minutes: pack.minutes.toString(),
         credits: pack.credits.toString(),
-        type: 'credit_pack_purchase'
+        type: 'minute_pack_purchase'
       }
     })
 

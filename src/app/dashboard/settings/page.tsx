@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Layout from '../../../components/Layout'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import {
   BuildingOfficeIcon,
   ClockIcon,
@@ -33,6 +34,262 @@ const daysOfWeek = [
   { key: 'saturday', label: 'Saturday' },
   { key: 'sunday', label: 'Sunday' }
 ]
+
+// ============================================
+// GOOGLE CALENDAR INTEGRATION COMPONENT
+// ============================================
+
+function GoogleCalendarIntegration() {
+  const supabase = createClientComponentClient()
+  const [calendarId, setCalendarId] = useState('')
+  const [isConnected, setIsConnected] = useState(false)
+  const [serviceAccountEmail, setServiceAccountEmail] = useState<string | null>(null)
+  const [isConfigured, setIsConfigured] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+
+  const loadCalendarStatus = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      // Get business ID from user's membership
+      const { data: membership } = await supabase
+        .from('business_users')
+        .select('business_id')
+        .eq('user_id', session.user.id)
+        .single()
+
+      if (!membership) return
+
+      const res = await fetch(`/api/settings/google-calendar?businessId=${membership.business_id}`, {
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+      })
+      const data = await res.json()
+
+      setIsConnected(data.connected || false)
+      setCalendarId(data.calendarId || '')
+      setServiceAccountEmail(data.serviceAccountEmail || null)
+      setIsConfigured(data.configured || false)
+    } catch {
+      // Silently fail on load
+    } finally {
+      setLoading(false)
+    }
+  }, [supabase])
+
+  useEffect(() => {
+    loadCalendarStatus()
+  }, [loadCalendarStatus])
+
+  const handleSave = async () => {
+    setSaving(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setError('Not authenticated')
+        return
+      }
+
+      const { data: membership } = await supabase
+        .from('business_users')
+        .select('business_id')
+        .eq('user_id', session.user.id)
+        .single()
+
+      if (!membership) {
+        setError('Business not found')
+        return
+      }
+
+      const res = await fetch('/api/settings/google-calendar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          businessId: membership.business_id,
+          calendarId: calendarId.trim() || null,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        setError(data.error || 'Failed to save')
+        return
+      }
+
+      setIsConnected(data.connected)
+      setSuccess(data.message)
+    } catch (err: any) {
+      setError(err.message || 'Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDisconnect = async () => {
+    setCalendarId('')
+    setSaving(true)
+    setError(null)
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const { data: membership } = await supabase
+        .from('business_users')
+        .select('business_id')
+        .eq('user_id', session.user.id)
+        .single()
+
+      if (!membership) return
+
+      const res = await fetch('/api/settings/google-calendar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          businessId: membership.business_id,
+          calendarId: null,
+        }),
+      })
+
+      const data = await res.json()
+      setIsConnected(false)
+      setSuccess('Google Calendar disconnected')
+    } catch {
+      setError('Failed to disconnect')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="card">
+        <div className="p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-6 bg-gray-200 rounded w-48" />
+            <div className="h-4 bg-gray-200 rounded w-full" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="card">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <ClockIcon className="h-6 w-6 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Google Calendar</h2>
+              <p className="text-sm text-gray-500">Sync appointments with your Google Calendar</p>
+            </div>
+          </div>
+          {isConnected && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              Connected
+            </span>
+          )}
+        </div>
+
+        {!isConfigured ? (
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm text-yellow-800">
+              Google Calendar integration is not configured yet. A service account needs to be set up by the administrator.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {/* Instructions */}
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 className="text-sm font-medium text-blue-900 mb-2">Setup Instructions</h3>
+              <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                <li>Open Google Calendar settings</li>
+                <li>Select the calendar you want to share</li>
+                <li>Under "Share with specific people", add:</li>
+              </ol>
+              {serviceAccountEmail && (
+                <code className="block mt-2 px-3 py-2 bg-white border border-blue-200 rounded text-xs text-blue-900 font-mono break-all">
+                  {serviceAccountEmail}
+                </code>
+              )}
+              <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside mt-2" start={4}>
+                <li>Set permission to "Make changes to events"</li>
+                <li>Copy the Calendar ID from "Integrate calendar" section below</li>
+              </ol>
+            </div>
+
+            {/* Calendar ID Input */}
+            <div>
+              <label className="label">Calendar ID</label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="example@group.calendar.google.com"
+                value={calendarId}
+                onChange={(e) => {
+                  setCalendarId(e.target.value)
+                  setError(null)
+                  setSuccess(null)
+                }}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Found in Google Calendar &gt; Settings &gt; Integrate calendar
+              </p>
+            </div>
+
+            {/* Error/Success Messages */}
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            )}
+            {success && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-700">{success}</p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleSave}
+                disabled={saving || !calendarId.trim()}
+                className="btn-primary disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : isConnected ? 'Update Calendar' : 'Connect Calendar'}
+              </button>
+              {isConnected && (
+                <button
+                  onClick={handleDisconnect}
+                  disabled={saving}
+                  className="btn-secondary text-red-600 hover:text-red-700 disabled:opacity-50"
+                >
+                  Disconnect
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('business')
@@ -620,89 +877,75 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'integrations' && (
-              <div className="card">
-                <div className="p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-6">Integrations</h2>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <CheckIcon className="h-6 w-6 text-green-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-gray-900">Google Calendar</h3>
-                            <p className="text-sm text-gray-500">Sync appointments</p>
-                          </div>
-                        </div>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Connected
-                        </span>
-                      </div>
-                      <button className="text-sm text-blue-600 hover:text-blue-700">
-                        Configure
-                      </button>
-                    </div>
+              <div className="space-y-6">
+                {/* Google Calendar Integration */}
+                <GoogleCalendarIntegration />
 
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <EnvelopeIcon className="h-6 w-6 text-blue-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-medium text-gray-900">Gmail</h3>
-                            <p className="text-sm text-gray-500">Send email notifications</p>
-                          </div>
-                        </div>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Connected
-                        </span>
-                      </div>
-                      <button className="text-sm text-blue-600 hover:text-blue-700">
-                        Configure
-                      </button>
-                    </div>
+                {/* Other Integrations */}
+                <div className="card">
+                  <div className="p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-6">Other Integrations</h2>
 
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <CreditCardIcon className="h-6 w-6 text-purple-600" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                              <CreditCardIcon className="h-6 w-6 text-purple-600" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900">Stripe</h3>
+                              <p className="text-sm text-gray-500">Process payments</p>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="font-medium text-gray-900">Stripe</h3>
-                            <p className="text-sm text-gray-500">Process payments</p>
-                          </div>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Connected
+                          </span>
                         </div>
-                        <button className="btn-secondary text-sm">
-                          Connect
-                        </button>
+                        <p className="text-sm text-gray-500">
+                          Accept credit card payments via checkout links
+                        </p>
                       </div>
-                      <p className="text-sm text-gray-500">
-                        Accept credit card payments and deposits
-                      </p>
-                    </div>
 
-                    <div className="border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-                            <DevicePhoneMobileIcon className="h-6 w-6 text-yellow-600" />
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="h-10 w-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                              <DevicePhoneMobileIcon className="h-6 w-6 text-yellow-600" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900">Twilio SMS</h3>
+                              <p className="text-sm text-gray-500">Send text reminders</p>
+                            </div>
                           </div>
-                          <div>
-                            <h3 className="font-medium text-gray-900">Twilio SMS</h3>
-                            <p className="text-sm text-gray-500">Send text reminders</p>
-                          </div>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Connected
+                          </span>
                         </div>
-                        <button className="btn-secondary text-sm">
-                          Connect
-                        </button>
+                        <p className="text-sm text-gray-500">
+                          SMS confirmations and payment links
+                        </p>
                       </div>
-                      <p className="text-sm text-gray-500">
-                        Send appointment reminders via SMS
-                      </p>
+
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-3">
+                            <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                              <EnvelopeIcon className="h-6 w-6 text-blue-600" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-gray-900">SendGrid Email</h3>
+                              <p className="text-sm text-gray-500">Send email notifications</p>
+                            </div>
+                          </div>
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Connected
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-500">
+                          Email confirmations and reports
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>

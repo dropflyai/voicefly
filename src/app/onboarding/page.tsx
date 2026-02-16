@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   CheckCircle,
   ArrowRight,
@@ -14,12 +15,17 @@ import {
   BarChart3,
   Building,
   Globe,
-  Headphones
+  Headphones,
+  Loader2
 } from 'lucide-react'
 import Link from 'next/link'
 
 export default function OnboardingPage() {
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [businessId, setBusinessId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     // Step 1: Use Case
     primaryUseCase: '',
@@ -41,6 +47,18 @@ export default function OnboardingPage() {
   })
 
   const totalSteps = 5
+
+  // Get business ID from localStorage on mount
+  useEffect(() => {
+    const storedBusinessId =
+      localStorage.getItem('authenticated_business_id') ||
+      localStorage.getItem('current_business_id') ||
+      localStorage.getItem('business_id')
+
+    if (storedBusinessId) {
+      setBusinessId(storedBusinessId)
+    }
+  }, [])
 
   const useCases = [
     {
@@ -112,12 +130,41 @@ export default function OnboardingPage() {
     { id: 'other', name: 'Other / Manual', logo: null }
   ]
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < totalSteps) {
       setCurrentStep(currentStep + 1)
     } else {
-      // Complete onboarding
-      window.location.href = '/dashboard'
+      // Complete onboarding - save all data to API
+      setIsSubmitting(true)
+      setSubmitError(null)
+
+      try {
+        const response = await fetch('/api/onboarding/complete', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            businessId: businessId,
+            ...formData
+          }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to complete onboarding')
+        }
+
+        const result = await response.json()
+        console.log('Onboarding completed:', result)
+
+        // Redirect to dashboard
+        router.push('/dashboard')
+      } catch (error) {
+        console.error('Onboarding error:', error)
+        setSubmitError(error instanceof Error ? error.message : 'Something went wrong')
+        setIsSubmitting(false)
+      }
     }
   }
 
@@ -419,12 +466,18 @@ export default function OnboardingPage() {
                 <CheckCircle className="h-12 w-12 text-green-600" />
               </div>
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                You're All Set! 🎉
+                You're All Set!
               </h2>
               <p className="text-gray-600 text-lg">
                 Your VoiceFly account is configured and ready to transform your business communication
               </p>
             </div>
+
+            {submitError && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                {submitError}
+              </div>
+            )}
 
             <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-8 mb-8">
               <h3 className="font-semibold text-gray-900 mb-4">What's Next?</h3>
@@ -453,14 +506,31 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/dashboard" className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
-                Go to Dashboard
-              </Link>
-              <button className="border-2 border-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
-                Schedule Training Call
-              </button>
+            <div className="bg-blue-50 rounded-lg p-6 mb-8">
+              <h4 className="font-semibold text-gray-900 mb-2">Configuration Summary</h4>
+              <div className="space-y-2 text-sm text-left">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Use Case:</span>
+                  <span className="font-medium capitalize">{formData.primaryUseCase?.replace('-', ' ')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Business Type:</span>
+                  <span className="font-medium capitalize">{formData.businessType}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Voice:</span>
+                  <span className="font-medium">{voiceOptions.find(v => v.id === formData.selectedVoice)?.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">CRM:</span>
+                  <span className="font-medium">{crmOptions.find(c => c.id === formData.crmSystem)?.name}</span>
+                </div>
+              </div>
             </div>
+
+            <p className="text-sm text-gray-500 mb-4">
+              Click "Complete Setup" to save your configuration and go to dashboard
+            </p>
           </div>
         )
 
@@ -540,15 +610,24 @@ export default function OnboardingPage() {
 
             <button
               onClick={handleNext}
-              disabled={!isStepValid()}
+              disabled={!isStepValid() || isSubmitting}
               className={`flex items-center px-6 py-3 rounded-lg font-semibold transition-colors ${
-                isStepValid()
+                isStepValid() && !isSubmitting
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >
-              {currentStep === totalSteps ? 'Complete Setup' : 'Next'}
-              <ArrowRight className="h-5 w-5 ml-2" />
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  {currentStep === totalSteps ? 'Complete Setup' : 'Next'}
+                  <ArrowRight className="h-5 w-5 ml-2" />
+                </>
+              )}
             </button>
           </div>
         </div>

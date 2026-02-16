@@ -21,7 +21,7 @@ function CreditsPageContent() {
     setBusinessId(id)
 
     // Check for success message from Stripe redirect
-    if (searchParams.get('credits_purchased') === 'true') {
+    if (searchParams.get('credits_purchased') === 'true' || searchParams.get('minutes_purchased') === 'true') {
       setShowSuccessMessage(true)
       setTimeout(() => setShowSuccessMessage(false), 5000)
     }
@@ -52,9 +52,9 @@ function CreditsPageContent() {
               <ArrowLeft className="h-4 w-4 mr-1" />
               Back to Billing
             </Link>
-            <h1 className="text-3xl font-bold text-gray-900">Purchase Credits</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Purchase Voice Minutes</h1>
             <p className="text-gray-600 mt-2">
-              Additional credits for your VoiceFly account. Credits never expire and roll over forever.
+              Additional voice minutes for your VoiceFly account. Minutes never expire and roll over forever.
             </p>
           </div>
 
@@ -65,10 +65,10 @@ function CreditsPageContent() {
                 <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
                 <div>
                   <h3 className="font-semibold text-green-900 mb-1">
-                    Credits Purchased Successfully!
+                    Minutes Purchased Successfully!
                   </h3>
                   <p className="text-sm text-green-700">
-                    Your credits have been added to your account. They'll appear in your balance within a few seconds.
+                    Your minutes have been added to your account. They'll appear in your balance within a few seconds.
                   </p>
                 </div>
               </div>
@@ -87,35 +87,44 @@ function CreditsPageContent() {
           {/* Purchase Button */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-8 text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Ready to Purchase More Credits?
+              Ready to Purchase More Minutes?
             </h2>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Choose from our flexible credit packs below. All credits never expire and can be used for any VoiceFly feature.
+              Choose from our flexible minute packs below. All minutes never expire and can be used for VoiceFly voice AI.
             </p>
             <button
               onClick={() => setShowPurchaseModal(true)}
               className="inline-flex items-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transition-all"
             >
-              View Credit Packs
+              View Minute Packs
             </button>
           </div>
 
-          {/* Credit Usage Examples */}
+          {/* How Minutes Work */}
           <div className="mt-12">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">What Can You Do With Credits?</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-6">How Voice Minutes Work</h3>
             <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">5</div>
-                <div className="text-sm text-gray-500 mb-3">credits</div>
-                <h4 className="font-semibold text-gray-900 mb-2">Voice Call (Inbound)</h4>
+                <div className="text-3xl font-bold text-blue-600 mb-2">1 min</div>
+                <div className="text-sm text-gray-500 mb-3">= 1 voice minute</div>
+                <h4 className="font-semibold text-gray-900 mb-2">Inbound Calls</h4>
                 <p className="text-sm text-gray-600">
                   Receive and handle customer calls with Maya AI
                 </p>
               </div>
 
               <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">25</div>
-                <div className="text-sm text-gray-500 mb-3">credits</div>
+                <div className="text-3xl font-bold text-blue-600 mb-2">1.6 min</div>
+                <div className="text-sm text-gray-500 mb-3">= 1 voice minute</div>
+                <h4 className="font-semibold text-gray-900 mb-2">Outbound Calls</h4>
+                <p className="text-sm text-gray-600">
+                  Proactive calling campaigns to leads and customers
+                </p>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="text-3xl font-bold text-blue-600 mb-2">5 min</div>
+                <div className="text-sm text-gray-500 mb-3">equivalent</div>
                 <h4 className="font-semibold text-gray-900 mb-2">Deep Research</h4>
                 <p className="text-sm text-gray-600">
                   Comprehensive market analysis and competitive research
@@ -123,26 +132,8 @@ function CreditsPageContent() {
               </div>
 
               <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">15</div>
-                <div className="text-sm text-gray-500 mb-3">credits per 100</div>
-                <h4 className="font-semibold text-gray-900 mb-2">Email Campaign</h4>
-                <p className="text-sm text-gray-600">
-                  Send bulk email campaigns to your customer base
-                </p>
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">8</div>
-                <div className="text-sm text-gray-500 mb-3">credits</div>
-                <h4 className="font-semibold text-gray-900 mb-2">Outbound Call</h4>
-                <p className="text-sm text-gray-600">
-                  Proactive calling campaigns to leads and customers
-                </p>
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">10</div>
-                <div className="text-sm text-gray-500 mb-3">credits</div>
+                <div className="text-3xl font-bold text-blue-600 mb-2">2 min</div>
+                <div className="text-sm text-gray-500 mb-3">equivalent</div>
                 <h4 className="font-semibold text-gray-900 mb-2">Quick Research</h4>
                 <p className="text-sm text-gray-600">
                   Fast market insights and data analysis
@@ -150,8 +141,17 @@ function CreditsPageContent() {
               </div>
 
               <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">2</div>
-                <div className="text-sm text-gray-500 mb-3">credits</div>
+                <div className="text-3xl font-bold text-blue-600 mb-2">3 min</div>
+                <div className="text-sm text-gray-500 mb-3">per 100 contacts</div>
+                <h4 className="font-semibold text-gray-900 mb-2">Email Campaign</h4>
+                <p className="text-sm text-gray-600">
+                  Send bulk email campaigns to your customer base
+                </p>
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="text-3xl font-bold text-blue-600 mb-2">~0.5 min</div>
+                <div className="text-sm text-gray-500 mb-3">equivalent</div>
                 <h4 className="font-semibold text-gray-900 mb-2">Appointment Booking</h4>
                 <p className="text-sm text-gray-600">
                   Schedule appointments with customers
@@ -174,7 +174,7 @@ function CreditsPageContent() {
                       Pack
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Credits
+                      Minutes
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Amount
@@ -187,7 +187,7 @@ function CreditsPageContent() {
                 <tbody className="bg-white divide-y divide-gray-200">
                   <tr>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" colSpan={5}>
-                      No purchases yet. Click "View Credit Packs" above to get started.
+                      No purchases yet. Click "View Minute Packs" above to get started.
                     </td>
                   </tr>
                 </tbody>

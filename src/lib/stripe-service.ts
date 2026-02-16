@@ -236,6 +236,75 @@ export class StripeService {
   }
 
   /**
+   * Create a Stripe Checkout Session for phone order payment
+   * Returns the checkout URL that can be sent to the customer via SMS
+   */
+  static async createCheckoutSession(data: {
+    amount: number // in cents
+    businessId: string
+    orderId: string
+    businessName: string
+    orderDescription: string
+    customerPhone?: string
+    successUrl?: string
+  }): Promise<{ success: boolean; checkoutUrl?: string; sessionId?: string; error?: string }> {
+    try {
+      const stripe = getStripeClient()
+      if (!stripe) {
+        return { success: false, error: 'Stripe client not initialized. Please configure Stripe credentials.' }
+      }
+
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://voicefly.app'
+
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: `Order from ${data.businessName}`,
+                description: data.orderDescription,
+              },
+              unit_amount: data.amount,
+            },
+            quantity: 1,
+          },
+        ],
+        metadata: {
+          orderId: data.orderId,
+          businessId: data.businessId,
+          customerPhone: data.customerPhone || '',
+          source: 'phone_employee_order',
+        },
+        success_url: data.successUrl || `${appUrl}/order/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${appUrl}/order/cancelled`,
+        expires_after: 1800, // 30 minutes
+      })
+
+      // Update order with checkout session ID
+      await supabase
+        .from('phone_orders')
+        .update({
+          payment_session_id: session.id,
+          payment_status: 'pending',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', data.orderId)
+
+      return {
+        success: true,
+        checkoutUrl: session.url!,
+        sessionId: session.id,
+      }
+    } catch (error: any) {
+      console.error('Stripe checkout session error:', error)
+      return { success: false, error: error.message || 'Failed to create checkout session' }
+    }
+  }
+
+  /**
    * Get payment method details
    */
   static async getPaymentMethod(paymentMethodId: string): Promise<Stripe.PaymentMethod | null> {

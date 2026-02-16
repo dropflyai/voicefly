@@ -1,15 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
+import { validateAuth, checkRateLimit, rateLimitedResponse } from '@/lib/api-auth'
+import { appointmentCreateSchema, appointmentUpdateSchema, validate } from '@/lib/validations'
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit check
+    const rateLimit = await checkRateLimit(request, 'standard')
+    if (!rateLimit.allowed) {
+      return rateLimitedResponse(rateLimit.result)
+    }
+
+    // Validate authentication
+    const authResult = await validateAuth(request)
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
-    const organization_id = searchParams.get('organization_id')
+    // Support both organization_id and businessId for backward compatibility
+    const organization_id = searchParams.get('organization_id') ||
+                           searchParams.get('businessId') ||
+                           searchParams.get('business_id') ||
+                           authResult.user.businessId
     const date = searchParams.get('date')
     const status = searchParams.get('status')
 
-    if (!organization_id) {
-      return NextResponse.json({ error: 'organization_id required' }, { status: 400 })
+    // Verify user has access to this business
+    if (!authResult.user.businessIds.includes(organization_id)) {
+      return NextResponse.json(
+        { error: 'Access denied to this business' },
+        { status: 403 }
+      )
     }
 
     let query = supabase
@@ -62,9 +87,35 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit check
+    const rateLimit = await checkRateLimit(request, 'standard')
+    if (!rateLimit.allowed) {
+      return rateLimitedResponse(rateLimit.result)
+    }
+
+    // Validate authentication
+    const authResult = await validateAuth(request)
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
+
+    // Validate input
+    const validation = validate(appointmentCreateSchema, body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validation.error },
+        { status: 400 }
+      )
+    }
+
     const {
       organization_id,
+      businessId,
       customer_phone,
       customer_first_name,
       customer_last_name,
@@ -78,15 +129,26 @@ export async function POST(request: NextRequest) {
       special_requests,
       voice_call_id,
       campaign_id,
-      booking_source = 'voice_call'
-    } = body
+      booking_source
+    } = validation.data
+
+    // Use provided business ID or fall back to user's primary
+    const targetBusinessId = organization_id || businessId || authResult.user.businessId
+
+    // Verify user has access to this business
+    if (!authResult.user.businessIds.includes(targetBusinessId)) {
+      return NextResponse.json(
+        { error: 'Access denied to this business' },
+        { status: 403 }
+      )
+    }
 
     // Find or create customer
     let customer
     const { data: existingCustomer, error: customerError } = await supabase
       .from('customers')
       .select('*')
-      .eq('organization_id', organization_id)
+      .eq('organization_id', targetBusinessId)
       .eq('phone', customer_phone)
       .single()
 
@@ -98,7 +160,7 @@ export async function POST(request: NextRequest) {
         .from('customers')
         .insert([
           {
-            organization_id,
+            organization_id: targetBusinessId,
             first_name: customer_first_name,
             last_name: customer_last_name,
             phone: customer_phone,
@@ -140,7 +202,7 @@ export async function POST(request: NextRequest) {
       .from('appointments')
       .insert([
         {
-          organization_id,
+          organization_id: targetBusinessId,
           customer_id: customer.id,
           service_id,
           staff_id,
@@ -208,8 +270,51 @@ export async function POST(request: NextRequest) {
 // Update appointment status
 export async function PATCH(request: NextRequest) {
   try {
+    // Rate limit check
+    const rateLimit = await checkRateLimit(request, 'standard')
+    if (!rateLimit.allowed) {
+      return rateLimitedResponse(rateLimit.result)
+    }
+
+    // Validate authentication
+    const authResult = await validateAuth(request)
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
-    const { appointment_id, status, payment_status, notes } = body
+
+    // Validate input
+    const validation = validate(appointmentUpdateSchema, body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validation.error },
+        { status: 400 }
+      )
+    }
+
+    const { appointment_id, status, payment_status, notes } = validation.data
+
+    // First verify the appointment belongs to a business the user has access to
+    const { data: existingAppointment, error: fetchError } = await supabase
+      .from('appointments')
+      .select('organization_id')
+      .eq('id', appointment_id)
+      .single()
+
+    if (fetchError || !existingAppointment) {
+      return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+    }
+
+    if (!authResult.user.businessIds.includes(existingAppointment.organization_id)) {
+      return NextResponse.json(
+        { error: 'Access denied to this appointment' },
+        { status: 403 }
+      )
+    }
 
     const { data: appointment, error } = await supabase
       .from('appointments')

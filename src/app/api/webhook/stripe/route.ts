@@ -2,18 +2,19 @@ import { headers } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import Stripe from 'stripe'
-import CreditSystem from '@/lib/credit-system'
+import CreditSystem, { CREDITS_PER_MINUTE } from '@/lib/credit-system'
 import AuditLogger, { AuditEventType } from '@/lib/audit-logger'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia'
+  apiVersion: '2025-08-27.basil'
 })
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
-  const sig = headers().get('stripe-signature')
+  const headersList = await headers()
+  const sig = headersList.get('stripe-signature')
 
   if (!endpointSecret) {
     console.error('STRIPE_WEBHOOK_SECRET is not set')
@@ -57,7 +58,7 @@ export async function POST(request: NextRequest) {
         break
 
       case 'customer.subscription.created':
-        const subscription = event.data.object
+        const subscription = event.data.object as Stripe.Subscription
         console.log('Subscription created:', subscription.id)
 
         // Create subscription record
@@ -68,8 +69,8 @@ export async function POST(request: NextRequest) {
             stripe_customer_id: subscription.customer,
             status: subscription.status,
             plan_id: subscription.items.data[0]?.price?.id,
-            current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+            current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+            current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
         break
 
       case 'customer.subscription.updated':
-        const updatedSubscription = event.data.object
+        const updatedSubscription = event.data.object as Stripe.Subscription
         console.log('Subscription updated:', updatedSubscription.id)
 
         // Update subscription record
@@ -86,8 +87,8 @@ export async function POST(request: NextRequest) {
           .update({
             status: updatedSubscription.status,
             plan_id: updatedSubscription.items.data[0]?.price?.id,
-            current_period_start: new Date(updatedSubscription.current_period_start * 1000).toISOString(),
-            current_period_end: new Date(updatedSubscription.current_period_end * 1000).toISOString(),
+            current_period_start: new Date((updatedSubscription as any).current_period_start * 1000).toISOString(),
+            current_period_end: new Date((updatedSubscription as any).current_period_end * 1000).toISOString(),
             updated_at: new Date().toISOString()
           })
           .eq('stripe_subscription_id', updatedSubscription.id)
@@ -149,17 +150,18 @@ export async function POST(request: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session
         console.log('Checkout session completed:', session.id)
 
-        // Check if this is a credit pack purchase
-        if (session.metadata?.type === 'credit_pack_purchase') {
+        // Check if this is a minute/credit pack purchase
+        if (session.metadata?.type === 'minute_pack_purchase' || session.metadata?.type === 'credit_pack_purchase') {
           const businessId = session.metadata.business_id
           const packId = session.metadata.pack_id
           const credits = parseInt(session.metadata.credits)
+          const minutes = session.metadata.minutes ? parseInt(session.metadata.minutes) : Math.floor(credits / CREDITS_PER_MINUTE)
           const paymentIntentId = typeof session.payment_intent === 'string'
             ? session.payment_intent
             : session.payment_intent?.id
 
           if (businessId && packId && credits) {
-            console.log(`💳 Processing credit pack purchase: ${credits} credits for business ${businessId}`)
+            console.log(`💳 Processing minute pack purchase: ${minutes} minutes (${credits} credits) for business ${businessId}`)
 
             // Add purchased credits to business
             const result = await CreditSystem.addPurchasedCredits(
@@ -170,7 +172,7 @@ export async function POST(request: NextRequest) {
             )
 
             if (result.success) {
-              console.log(`✅ Added ${credits} credits to business ${businessId}. New balance: ${result.balance?.total_credits}`)
+              console.log(`✅ Added ${minutes} minutes (${credits} credits) to business ${businessId}. New balance: ${result.balance?.total_minutes} minutes`)
 
               // Log purchase to credit_purchases table
               await supabase
@@ -179,6 +181,7 @@ export async function POST(request: NextRequest) {
                   business_id: businessId,
                   pack_id: packId,
                   credits_purchased: credits,
+                  minutes_purchased: minutes,
                   amount_paid: session.amount_total || 0,
                   stripe_payment_id: paymentIntentId,
                   stripe_invoice_id: typeof session.invoice === 'string' ? session.invoice : session.invoice?.id,
@@ -192,6 +195,7 @@ export async function POST(request: NextRequest) {
                 business_id: businessId,
                 metadata: {
                   pack_id: packId,
+                  minutes_purchased: minutes,
                   credits_purchased: credits,
                   amount_paid: session.amount_total,
                   stripe_session_id: session.id
@@ -202,7 +206,7 @@ export async function POST(request: NextRequest) {
               console.error('❌ Failed to add purchased credits:', result)
             }
           } else {
-            console.error('Missing metadata in credit pack purchase:', session.metadata)
+            console.error('Missing metadata in minute pack purchase:', session.metadata)
           }
         }
 

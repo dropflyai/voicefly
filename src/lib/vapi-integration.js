@@ -1,6 +1,7 @@
 // Vapi Integration for Multi-Tenant Phone Numbers
 const VAPI_API_KEY = process.env.VAPI_API_KEY;
-const SHARED_ASSISTANT_ID = '8ab7e000-aea8-4141-a471-33133219a471'; // Your existing assistant
+const SHARED_ASSISTANT_ID = process.env.VAPI_SHARED_ASSISTANT_ID || '8ab7e000-aea8-4141-a471-33133219a471';
+const WEBHOOK_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 export async function assignPhoneNumber(businessId, businessName) {
   try {
@@ -35,7 +36,7 @@ export async function assignPhoneNumber(businessId, businessName) {
       body: JSON.stringify({
         assistantId: SHARED_ASSISTANT_ID,
         // The webhook will receive businessId in metadata
-        serverUrl: 'https://fbb8dc638db6.ngrok-free.app/webhook/vapi',
+        serverUrl: `${WEBHOOK_BASE_URL}/webhook/vapi`,
         serverUrlSecret: 'your-webhook-secret' // Optional security
       })
     });

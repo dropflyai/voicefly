@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Battery, BatteryLow, BatteryWarning, Plus, TrendingUp } from 'lucide-react'
+import { Clock, Battery, BatteryLow, BatteryWarning, Plus, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
 
 interface CreditBalance {
@@ -10,7 +10,16 @@ interface CreditBalance {
   total_credits: number
   credits_used_this_month: number
   credits_reset_date: string
+  // Minute equivalents (from API)
+  monthly_minutes?: number
+  purchased_minutes?: number
+  total_minutes?: number
+  minutes_used_this_month?: number
 }
+
+// Fallback conversion if API doesn't provide minutes
+const CREDITS_PER_MINUTE = 5
+const toMinutes = (credits: number) => Math.floor(credits / CREDITS_PER_MINUTE)
 
 interface CreditMeterProps {
   businessId: string
@@ -69,6 +78,13 @@ export default function CreditMeter({
   }
 
   const { total_credits, monthly_credits, purchased_credits } = balance
+
+  // Use API-provided minutes or calculate from credits
+  const total_minutes = balance.total_minutes ?? toMinutes(total_credits)
+  const monthly_minutes = balance.monthly_minutes ?? toMinutes(monthly_credits)
+  const purchased_minutes = balance.purchased_minutes ?? toMinutes(purchased_credits)
+  const minutes_used = balance.minutes_used_this_month ?? toMinutes(balance.credits_used_this_month)
+
   const percentageRemaining = Math.max(0, Math.min(100, (total_credits / Math.max(monthly_credits + purchased_credits, 1)) * 100))
 
   // Determine status color
@@ -91,9 +107,9 @@ export default function CreditMeter({
     return (
       <div className="flex items-center space-x-2">
         <div className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg ${bgColor}`}>
-          <Icon className={`h-4 w-4 ${statusColor}`} />
+          <Clock className={`h-4 w-4 ${statusColor}`} />
           <span className={`text-sm font-semibold ${statusColor}`}>
-            {total_credits.toLocaleString()}
+            {total_minutes.toLocaleString()} min
           </span>
         </div>
 
@@ -115,8 +131,8 @@ export default function CreditMeter({
     <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-          <Icon className={`h-5 w-5 mr-2 ${statusColor}`} />
-          Credit Balance
+          <Clock className={`h-5 w-5 mr-2 ${statusColor}`} />
+          Voice Minutes
         </h3>
         {showPurchaseButton && (
           <Link
@@ -124,20 +140,20 @@ export default function CreditMeter({
             className="flex items-center space-x-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
           >
             <Plus className="h-4 w-4" />
-            <span>Purchase Credits</span>
+            <span>Purchase Minutes</span>
           </Link>
         )}
       </div>
 
       <div className="space-y-4">
-        {/* Total Credits */}
+        {/* Total Minutes */}
         <div>
           <div className="flex items-baseline justify-between mb-2">
             <span className="text-3xl font-bold text-gray-900">
-              {total_credits.toLocaleString()}
+              {total_minutes.toLocaleString()}
             </span>
             <span className="text-sm text-gray-500">
-              total credits
+              minutes remaining
             </span>
           </div>
 
@@ -159,7 +175,7 @@ export default function CreditMeter({
           <div>
             <div className="text-sm text-gray-500 mb-1">Monthly Allocation</div>
             <div className="text-xl font-semibold text-gray-900">
-              {monthly_credits.toLocaleString()}
+              {monthly_minutes.toLocaleString()} min
             </div>
             <div className="text-xs text-gray-400 mt-1">
               Resets {new Date(balance.credits_reset_date).toLocaleDateString()}
@@ -167,9 +183,9 @@ export default function CreditMeter({
           </div>
 
           <div>
-            <div className="text-sm text-gray-500 mb-1">Purchased Credits</div>
+            <div className="text-sm text-gray-500 mb-1">Purchased Minutes</div>
             <div className="text-xl font-semibold text-blue-600">
-              {purchased_credits.toLocaleString()}
+              {purchased_minutes.toLocaleString()} min
             </div>
             <div className="text-xs text-gray-400 mt-1">
               Never expire
@@ -182,22 +198,22 @@ export default function CreditMeter({
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">Used this month</span>
             <span className="font-semibold text-gray-900">
-              {balance.credits_used_this_month.toLocaleString()} credits
+              {minutes_used.toLocaleString()} minutes
             </span>
           </div>
         </div>
 
-        {/* Low credit warning */}
-        {percentageRemaining <= 20 && total_credits > 0 && (
+        {/* Low minutes warning */}
+        {percentageRemaining <= 20 && total_minutes > 0 && (
           <div className={`${bgColor} border ${percentageRemaining <= 10 ? 'border-red-300' : 'border-yellow-300'} rounded-lg p-4`}>
             <div className="flex items-start">
               <BatteryWarning className={`h-5 w-5 ${statusColor} mt-0.5 mr-3 flex-shrink-0`} />
               <div>
                 <h4 className={`font-semibold ${statusColor} mb-1`}>
-                  {percentageRemaining <= 10 ? 'Critical: Low Credits' : 'Warning: Low Credits'}
+                  {percentageRemaining <= 10 ? 'Critical: Low Minutes' : 'Warning: Low Minutes'}
                 </h4>
                 <p className="text-sm text-gray-700 mb-3">
-                  You have {total_credits} credits remaining ({percentageRemaining.toFixed(0)}%).
+                  You have {total_minutes} minutes remaining ({percentageRemaining.toFixed(0)}%).
                   {percentageRemaining <= 10 && ' Your account will be limited when you run out.'}
                 </p>
                 <div className="flex space-x-3">
@@ -205,7 +221,7 @@ export default function CreditMeter({
                     href="/dashboard/billing/credits"
                     className="text-sm font-medium text-blue-600 hover:text-blue-700"
                   >
-                    Purchase Credits →
+                    Purchase Minutes →
                   </Link>
                   <Link
                     href="/dashboard/billing"
@@ -219,24 +235,24 @@ export default function CreditMeter({
           </div>
         )}
 
-        {/* Out of credits */}
-        {total_credits === 0 && (
+        {/* Out of minutes */}
+        {total_minutes === 0 && (
           <div className="bg-red-50 border border-red-300 rounded-lg p-4">
             <div className="flex items-start">
               <BatteryWarning className="h-5 w-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
               <div>
                 <h4 className="font-semibold text-red-600 mb-1">
-                  Out of Credits
+                  Out of Minutes
                 </h4>
                 <p className="text-sm text-gray-700 mb-3">
-                  You've used all your credits. Purchase more to continue using VoiceFly features.
+                  You've used all your voice minutes. Purchase more to continue using VoiceFly.
                 </p>
                 <Link
                   href="/dashboard/billing/credits"
                   className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Purchase Credits Now
+                  Purchase Minutes Now
                 </Link>
               </div>
             </div>

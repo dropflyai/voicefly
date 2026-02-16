@@ -16,7 +16,9 @@ import {
   ClockIcon,
   MapPinIcon,
   CreditCardIcon,
-  GiftIcon
+  GiftIcon,
+  SparklesIcon,
+  BoltIcon,
 } from '@heroicons/react/24/outline'
 import AppointmentLocationBadge from '../../components/AppointmentLocationBadge'
 import LocationSelector from '../../components/LocationSelector'
@@ -850,7 +852,7 @@ function DashboardPage() {
                   </span>
                 </div>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Calls Today</span>
@@ -865,13 +867,76 @@ function DashboardPage() {
                   <span className="font-medium text-green-600">34.8%</span>
                 </div>
               </div>
-              
-              <a 
-                href="/dashboard/voice-ai" 
+
+              <a
+                href="/dashboard/voice-ai"
                 className="mt-4 flex items-center justify-center p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <PhoneIcon className="h-4 w-4 mr-2" />
                 <span className="text-sm font-medium">Manage Voice AI</span>
+              </a>
+            </div>
+
+            {/* Maya AI Agents Status */}
+            <div className="card bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-100">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <div className="h-8 w-8 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-lg flex items-center justify-center mr-2">
+                    <SparklesIcon className="h-4 w-4 text-white" />
+                  </div>
+                  <h2 className="text-lg font-medium text-gray-900">
+                    Maya AI Agents
+                  </h2>
+                </div>
+                <div className="flex items-center">
+                  <BoltIcon className="h-4 w-4 text-purple-600 mr-1" />
+                  <span className="text-sm text-purple-600 font-medium">
+                    5 Active
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 flex items-center">
+                    <span className="h-2 w-2 bg-blue-500 rounded-full mr-2"></span>
+                    Lead Qualification
+                  </span>
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Analyzing</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 flex items-center">
+                    <span className="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
+                    Customer Retention
+                  </span>
+                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">Monitoring</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600 flex items-center">
+                    <span className="h-2 w-2 bg-purple-500 rounded-full mr-2"></span>
+                    Revenue Intel
+                  </span>
+                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">Processing</span>
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 bg-white/60 rounded-lg border border-purple-100">
+                <div className="flex items-center text-sm">
+                  <div className="h-6 w-6 bg-yellow-100 rounded-full flex items-center justify-center mr-2">
+                    <span className="text-xs">💡</span>
+                  </div>
+                  <span className="text-gray-700">
+                    <span className="font-medium">3 new insights</span> ready for review
+                  </span>
+                </div>
+              </div>
+
+              <a
+                href="/dashboard/agents"
+                className="mt-4 flex items-center justify-center p-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all"
+              >
+                <SparklesIcon className="h-4 w-4 mr-2" />
+                <span className="text-sm font-medium">View AI Dashboard</span>
               </a>
             </div>
           </div>

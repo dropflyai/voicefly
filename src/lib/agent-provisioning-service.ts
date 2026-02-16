@@ -7,7 +7,7 @@ import { getJobTemplate } from './maya-job-templates'
 import { generateBusinessProfile, BusinessTierInfo, CustomBusinessProfile } from './business-profile-generator'
 
 const VAPI_API_KEY = process.env.VAPI_API_KEY!
-const WEBHOOK_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://web-production-60875.up.railway.app'
+const WEBHOOK_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 // Pre-built job-specific agents (shared across customers)
 const JOB_SPECIFIC_AGENTS: Record<string, string> = {

@@ -23,61 +23,93 @@ export const getTestCards = () => ({
 
 export const getPlanFeatures = (tier: string) => {
   const features = {
+    trial: [
+      '10 Voice Minutes',
+      'AI Voice Assistant',
+      'Basic Booking',
+      'Try Before You Buy'
+    ],
     starter: [
+      '200 Voice Minutes/mo',
       '24/7 AI Voice Assistant',
       'Unlimited Bookings',
       'Customer Portal',
       'Basic Analytics',
-      'Email Support'
+      'Email Support',
+      '$0.45/min overage'
     ],
-    professional: [
+    growth: [
+      '500 Voice Minutes/mo',
       'Everything in Starter',
-      'Payment Processing (Square/Stripe)',
-      'Loyalty Program Management', 
-      'Advanced Analytics',
+      'Payment Processing',
       'SMS Notifications',
-      'Priority Support'
+      'Advanced Analytics',
+      'Priority Support',
+      '$0.38/min overage'
     ],
-    business: [
-      'Everything in Professional',
-      'Multi-Location Support (3 locations)',
-      'Location-Based Analytics',
-      'Staff Management Tools',
+    pro: [
+      '1,200 Voice Minutes/mo',
+      'Everything in Growth',
+      'Multi-Location (3 locations)',
+      'Staff Management',
       'Custom Integrations',
-      'Phone Support'
+      'Phone Support',
+      '$0.28/min overage'
     ],
-    enterprise: [
-      'Everything in Business',
+    scale: [
+      '2,500 Voice Minutes/mo',
+      'Everything in Pro',
       'Unlimited Locations',
       'White-Label Options',
-      'Custom Development',
       'Dedicated Account Manager',
-      '24/7 Phone Support'
+      '24/7 Phone Support',
+      '$0.22/min overage'
     ]
   }
-  
+
   return features[tier as keyof typeof features] || features.starter
 }
 
 export const getUpgradeROI = (currentTier: string, targetTier: string) => {
   const roi = {
-    'starter-professional': {
+    'starter-growth': {
       revenue_increase: '25-40%',
-      features: ['Payment processing reduces friction', 'Loyalty program increases retention'],
-      payback_period: '2-3 months'
+      features: ['2.5x more voice minutes', 'Payment processing reduces friction', 'SMS notifications'],
+      payback_period: '2-3 months',
+      minutes_increase: '+300 minutes'
     },
-    'starter-business': {
+    'starter-pro': {
       revenue_increase: '40-70%',
-      features: ['Multi-location efficiency', 'Advanced analytics insights', 'Streamlined operations'],
-      payback_period: '3-4 months'
+      features: ['6x more voice minutes', 'Multi-location support', 'Staff management'],
+      payback_period: '3-4 months',
+      minutes_increase: '+1,000 minutes'
     },
-    'professional-business': {
+    'starter-scale': {
+      revenue_increase: '70-120%',
+      features: ['12.5x more voice minutes', 'Unlimited locations', 'Dedicated support'],
+      payback_period: '4-5 months',
+      minutes_increase: '+2,300 minutes'
+    },
+    'growth-pro': {
+      revenue_increase: '20-35%',
+      features: ['2.4x more voice minutes', 'Multi-location scaling', 'Advanced integrations'],
+      payback_period: '2-3 months',
+      minutes_increase: '+700 minutes'
+    },
+    'growth-scale': {
+      revenue_increase: '40-60%',
+      features: ['5x more voice minutes', 'Unlimited locations', 'White-label options'],
+      payback_period: '3-4 months',
+      minutes_increase: '+2,000 minutes'
+    },
+    'pro-scale': {
       revenue_increase: '20-30%',
-      features: ['Multi-location scaling', 'Advanced staff management', 'Location analytics'],
-      payback_period: '2-3 months'
+      features: ['2x more voice minutes', 'Unlimited locations', 'Dedicated account manager'],
+      payback_period: '2-3 months',
+      minutes_increase: '+1,300 minutes'
     }
   }
-  
+
   const key = `${currentTier}-${targetTier}` as keyof typeof roi
   return roi[key] || null
 }

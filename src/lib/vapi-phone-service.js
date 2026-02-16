@@ -2,8 +2,9 @@
 // Handles automatic phone number purchasing and assignment
 
 const VAPI_API_KEY = process.env.NEXT_PUBLIC_VAPI_API_KEY || process.env.VAPI_API_KEY;
-const SHARED_ASSISTANT_ID = '8ab7e000-aea8-4141-a471-33133219a471'; // Your existing assistant
-const WEBHOOK_URL = 'https://fbb8dc638db6.ngrok-free.app/webhook/vapi'; // Your current webhook
+const SHARED_ASSISTANT_ID = process.env.VAPI_SHARED_ASSISTANT_ID || '8ab7e000-aea8-4141-a471-33133219a471';
+const WEBHOOK_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const WEBHOOK_URL = `${WEBHOOK_BASE_URL}/webhook/vapi`;
 
 export class VapiPhoneService {
   

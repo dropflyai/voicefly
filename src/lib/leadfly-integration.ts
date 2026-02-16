@@ -148,9 +148,89 @@ export async function updateLeadStatus(leadId: string, status: string) {
   }
 }
 
+/**
+ * LeadFlyIntegration class - handles webhook integrations from various sources
+ */
+export class LeadFlyIntegration {
+  /**
+   * Handle incoming webhook from various lead sources
+   */
+  static async handleWebhook(source: string, body: any): Promise<string | null> {
+    try {
+      const leadData: LeadData = {
+        firstName: body.firstName || body.first_name || '',
+        lastName: body.lastName || body.last_name || '',
+        email: body.email,
+        phone: body.phone,
+        companyName: body.company || body.companyName || body.company_name,
+        jobTitle: body.title || body.jobTitle || body.job_title,
+        source: source,
+        businessId: body.businessId || body.business_id,
+      };
+
+      const result = await captureLead(leadData);
+      return result.success ? result.leadId : null;
+    } catch (error) {
+      console.error('LeadFlyIntegration.handleWebhook error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Capture lead from Apollo.io webhook
+   */
+  static async captureLeadFromApollo(body: any): Promise<string | null> {
+    try {
+      const leadData: LeadData = {
+        firstName: body.person?.first_name || body.first_name || '',
+        lastName: body.person?.last_name || body.last_name || '',
+        email: body.person?.email || body.email,
+        phone: body.person?.phone_numbers?.[0]?.sanitized_number || body.phone,
+        companyName: body.person?.organization?.name || body.company,
+        jobTitle: body.person?.title || body.title,
+        source: 'apollo',
+        businessId: body.businessId || body.business_id,
+      };
+
+      const result = await captureLead(leadData);
+
+      // If we have enrichment data from Apollo, add it
+      if (result.success && result.leadId && body.person?.organization) {
+        await enrichLead(result.leadId, {
+          companyRevenue: body.person.organization.estimated_annual_revenue,
+          companyEmployees: body.person.organization.estimated_num_employees?.toString(),
+          companyIndustry: body.person.organization.industry,
+          linkedinUrl: body.person.linkedin_url,
+          twitterHandle: body.person.twitter_url,
+        });
+      }
+
+      return result.success ? result.leadId : null;
+    } catch (error) {
+      console.error('LeadFlyIntegration.captureLeadFromApollo error:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Capture lead from AudienceLab webhook
+   */
+  static async captureLeadFromAudienceLab(body: any): Promise<string | null> {
+    return this.handleWebhook('audiencelab', body);
+  }
+
+  /**
+   * Capture lead from LinkedIn webhook
+   */
+  static async captureLeadFromLinkedIn(body: any): Promise<string | null> {
+    return this.handleWebhook('linkedin', body);
+  }
+}
+
 export default {
   captureLead,
   enrichLead,
   getLead,
   updateLeadStatus,
+  LeadFlyIntegration,
 };

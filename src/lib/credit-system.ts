@@ -7,16 +7,17 @@ import { supabase } from './supabase-client'
 import AuditLogger, { AuditEventType } from './audit-logger'
 
 // Credit costs per feature
+// 1 voice minute = 5 credits (VOICE_CALL_INBOUND is the baseline)
 export enum CreditCost {
   // Voice AI
-  VOICE_CALL_INBOUND = 5,
-  VOICE_CALL_OUTBOUND = 8,
+  VOICE_CALL_INBOUND = 5,    // 1 minute of inbound voice
+  VOICE_CALL_OUTBOUND = 8,   // 1.6 minute equivalent (higher cost for outbound)
   AI_CHAT_MESSAGE = 1,
 
   // Maya Research
-  MAYA_DEEP_RESEARCH = 25,
-  MAYA_QUICK_RESEARCH = 10,
-  MAYA_MARKET_ANALYSIS = 20,
+  MAYA_DEEP_RESEARCH = 25,   // 5 minute equivalent
+  MAYA_QUICK_RESEARCH = 10,  // 2 minute equivalent
+  MAYA_MARKET_ANALYSIS = 20, // 4 minute equivalent
 
   // Core Operations
   APPOINTMENT_BOOKING = 2,
@@ -32,65 +33,111 @@ export enum CreditCost {
   AUTOMATION_TRIGGER = 2,
 }
 
-// Monthly credit allocations by tier
+// Credits to minutes conversion (for customer-facing display)
+export const CREDITS_PER_MINUTE = 5
+
+// Monthly credit allocations by tier (Hybrid model)
+// Customer sees minutes, system uses credits internally
+// Conversion: 5 credits = 1 voice minute
 export enum MonthlyCredits {
-  TRIAL = 50,           // One-time, doesn't reset
-  STARTER = 500,        // $147/mo
-  PROFESSIONAL = 2000,  // $397/mo
-  ENTERPRISE = 10000,   // $997/mo
+  TRIAL = 50,           // 10 minutes - One-time, doesn't reset
+  STARTER = 1000,       // 200 minutes - $97/mo
+  GROWTH = 2500,        // 500 minutes - $197/mo
+  PRO = 6000,           // 1,200 minutes - $297/mo
+  SCALE = 12500,        // 2,500 minutes - $497/mo
 }
 
-// Additional credit packs (one-time purchase)
-export interface CreditPack {
+// Subscription tier pricing in cents
+export const TIER_PRICING = {
+  trial: { price_cents: 0, name: 'Free Trial' },
+  starter: { price_cents: 9700, name: 'Starter' },
+  growth: { price_cents: 19700, name: 'Growth' },
+  pro: { price_cents: 29700, name: 'Pro' },
+  scale: { price_cents: 49700, name: 'Scale' },
+} as const
+
+// Minutes included per tier (for customer display)
+export const TIER_MINUTES = {
+  trial: 10,
+  starter: 200,
+  growth: 500,
+  pro: 1200,
+  scale: 2500,
+} as const
+
+// Additional minute packs (one-time purchase)
+// Presented as minutes to customers, stored as credits internally
+export interface MinutePack {
   id: string
   name: string
-  credits: number
-  price: number
-  savings: number
-  pricePerCredit: number
+  minutes: number        // Customer-facing
+  credits: number        // Internal (minutes * CREDITS_PER_MINUTE)
+  price: number          // In dollars
+  savings: number        // Savings vs pay-as-you-go
+  pricePerMinute: number // Customer-facing
 }
 
-export const CREDIT_PACKS: CreditPack[] = [
+export const MINUTE_PACKS: MinutePack[] = [
   {
-    id: 'pack_small',
-    name: 'Small Pack',
-    credits: 100,
-    price: 15,
+    id: 'pack_starter',
+    name: 'Starter Pack',
+    minutes: 50,
+    credits: 250,         // 50 * 5
+    price: 20,
     savings: 0,
-    pricePerCredit: 0.15
+    pricePerMinute: 0.40
   },
   {
-    id: 'pack_medium',
-    name: 'Medium Pack',
-    credits: 500,
-    price: 60,
-    savings: 15,
-    pricePerCredit: 0.12
+    id: 'pack_growth',
+    name: 'Growth Pack',
+    minutes: 150,
+    credits: 750,         // 150 * 5
+    price: 50,
+    savings: 10,
+    pricePerMinute: 0.33
   },
   {
-    id: 'pack_large',
-    name: 'Large Pack',
-    credits: 1000,
+    id: 'pack_pro',
+    name: 'Pro Pack',
+    minutes: 400,
+    credits: 2000,        // 400 * 5
     price: 100,
-    savings: 50,
-    pricePerCredit: 0.10
+    savings: 60,
+    pricePerMinute: 0.25
   },
   {
-    id: 'pack_enterprise',
-    name: 'Enterprise Pack',
-    credits: 5000,
-    price: 400,
-    savings: 150,
-    pricePerCredit: 0.08
+    id: 'pack_scale',
+    name: 'Scale Pack',
+    minutes: 1000,
+    credits: 5000,        // 1000 * 5
+    price: 200,
+    savings: 200,
+    pricePerMinute: 0.20
   }
 ]
 
-// Overage pricing by tier (per credit)
-export const OVERAGE_PRICING = {
-  STARTER: 0.10,
-  PROFESSIONAL: 0.08,
-  ENTERPRISE: 0.05
-}
+// Legacy alias for backwards compatibility
+export type CreditPack = MinutePack
+export const CREDIT_PACKS = MINUTE_PACKS
+
+// Overage pricing by tier (per minute for customer display)
+// Internal calculation: overage_per_minute / CREDITS_PER_MINUTE = per_credit_cost
+export const OVERAGE_PRICING_PER_MINUTE = {
+  trial: 0.50,      // $0.50/min overage
+  starter: 0.45,    // $0.45/min overage ($0.09/credit)
+  growth: 0.38,     // $0.38/min overage ($0.076/credit)
+  pro: 0.28,        // $0.28/min overage ($0.056/credit)
+  scale: 0.22,      // $0.22/min overage ($0.044/credit)
+} as const
+
+// Internal overage pricing per credit (for actual billing)
+export const OVERAGE_PRICING_PER_CREDIT = {
+  trial: 0.10,
+  starter: 0.09,
+  growth: 0.076,
+  pro: 0.056,
+  scale: 0.044,
+} as const
 
 interface CreditBalance {
   monthly_credits: number          // Resets on billing date
@@ -98,6 +145,11 @@ interface CreditBalance {
   total_credits: number            // Sum of both
   credits_used_this_month: number
   credits_reset_date: string
+  // Customer-facing minute equivalents
+  monthly_minutes: number
+  purchased_minutes: number
+  total_minutes: number
+  minutes_used_this_month: number
 }
 
 interface CreditTransaction {
@@ -128,13 +180,19 @@ export class CreditSystem {
 
       const monthly = data.monthly_credits || 0
       const purchased = data.purchased_credits || 0
+      const used = data.credits_used_this_month || 0
 
       return {
         monthly_credits: monthly,
         purchased_credits: purchased,
         total_credits: monthly + purchased,
-        credits_used_this_month: data.credits_used_this_month || 0,
-        credits_reset_date: data.credits_reset_date
+        credits_used_this_month: used,
+        credits_reset_date: data.credits_reset_date,
+        // Customer-facing minute equivalents
+        monthly_minutes: Math.floor(monthly / CREDITS_PER_MINUTE),
+        purchased_minutes: Math.floor(purchased / CREDITS_PER_MINUTE),
+        total_minutes: Math.floor((monthly + purchased) / CREDITS_PER_MINUTE),
+        minutes_used_this_month: Math.floor(used / CREDITS_PER_MINUTE)
       }
     } catch (error) {
       console.error('Error getting credit balance:', error)
@@ -231,12 +289,18 @@ export class CreditSystem {
         severity: 'low'
       })
 
+      const totalUsed = balance.credits_used_this_month + credits
       const newBalance: CreditBalance = {
         monthly_credits: newMonthly,
         purchased_credits: newPurchased,
         total_credits: newMonthly + newPurchased,
-        credits_used_this_month: balance.credits_used_this_month + credits,
-        credits_reset_date: balance.credits_reset_date
+        credits_used_this_month: totalUsed,
+        credits_reset_date: balance.credits_reset_date,
+        // Customer-facing minute equivalents
+        monthly_minutes: Math.floor(newMonthly / CREDITS_PER_MINUTE),
+        purchased_minutes: Math.floor(newPurchased / CREDITS_PER_MINUTE),
+        total_minutes: Math.floor((newMonthly + newPurchased) / CREDITS_PER_MINUTE),
+        minutes_used_this_month: Math.floor(totalUsed / CREDITS_PER_MINUTE)
       }
 
       return { success: true, balance: newBalance }
@@ -303,7 +367,9 @@ export class CreditSystem {
         balance: {
           ...balance,
           purchased_credits: newPurchased,
-          total_credits: balance.monthly_credits + newPurchased
+          total_credits: balance.monthly_credits + newPurchased,
+          purchased_minutes: Math.floor(newPurchased / CREDITS_PER_MINUTE),
+          total_minutes: Math.floor((balance.monthly_credits + newPurchased) / CREDITS_PER_MINUTE)
         }
       }
     } catch (error) {
@@ -335,11 +401,21 @@ export class CreditSystem {
         case 'starter':
           monthlyAllocation = MonthlyCredits.STARTER
           break
+        case 'growth':
+          monthlyAllocation = MonthlyCredits.GROWTH
+          break
+        case 'pro':
+          monthlyAllocation = MonthlyCredits.PRO
+          break
+        case 'scale':
+          monthlyAllocation = MonthlyCredits.SCALE
+          break
+        // Legacy tier support
         case 'professional':
-          monthlyAllocation = MonthlyCredits.PROFESSIONAL
+          monthlyAllocation = MonthlyCredits.PRO
           break
         case 'enterprise':
-          monthlyAllocation = MonthlyCredits.ENTERPRISE
+          monthlyAllocation = MonthlyCredits.SCALE
           break
       }
 
@@ -384,7 +460,7 @@ export class CreditSystem {
    */
   static async initializeCredits(
     businessId: string,
-    tier: 'trial' | 'starter' | 'professional' | 'enterprise'
+    tier: 'trial' | 'starter' | 'growth' | 'pro' | 'scale'
   ): Promise<boolean> {
     try {
       let monthlyAllocation = MonthlyCredits.TRIAL
@@ -392,11 +468,14 @@ export class CreditSystem {
         case 'starter':
           monthlyAllocation = MonthlyCredits.STARTER
           break
-        case 'professional':
-          monthlyAllocation = MonthlyCredits.PROFESSIONAL
+        case 'growth':
+          monthlyAllocation = MonthlyCredits.GROWTH
           break
-        case 'enterprise':
-          monthlyAllocation = MonthlyCredits.ENTERPRISE
+        case 'pro':
+          monthlyAllocation = MonthlyCredits.PRO
+          break
+        case 'scale':
+          monthlyAllocation = MonthlyCredits.SCALE
           break
       }
 
@@ -485,6 +564,58 @@ export class CreditSystem {
   static calculateCampaignCost(recipientCount: number, type: 'email' | 'sms'): number {
     const costPer100 = type === 'email' ? CreditCost.EMAIL_CAMPAIGN_PER_100 : CreditCost.SMS_CAMPAIGN_PER_100
     return Math.ceil(recipientCount / 100) * costPer100
+  }
+
+  /**
+   * Convert credits to minutes (for customer display)
+   */
+  static creditsToMinutes(credits: number): number {
+    return Math.floor(credits / CREDITS_PER_MINUTE)
+  }
+
+  /**
+   * Convert minutes to credits (for internal calculations)
+   */
+  static minutesToCredits(minutes: number): number {
+    return minutes * CREDITS_PER_MINUTE
+  }
+
+  /**
+   * Get tier details for display
+   */
+  static getTierDetails(tier: string): {
+    name: string
+    price: number
+    minutes: number
+    credits: number
+    overagePerMinute: number
+  } | null {
+    const tierKey = tier as keyof typeof TIER_PRICING
+    if (!TIER_PRICING[tierKey]) return null
+
+    return {
+      name: TIER_PRICING[tierKey].name,
+      price: TIER_PRICING[tierKey].price_cents / 100,
+      minutes: TIER_MINUTES[tierKey],
+      credits: MonthlyCredits[tierKey.toUpperCase() as keyof typeof MonthlyCredits],
+      overagePerMinute: OVERAGE_PRICING_PER_MINUTE[tierKey]
+    }
+  }
+
+  /**
+   * Calculate overage cost for exceeded minutes
+   */
+  static calculateOverageCost(
+    tier: string,
+    additionalMinutes: number
+  ): { credits: number; cost: number } {
+    const tierKey = tier as keyof typeof OVERAGE_PRICING_PER_MINUTE
+    const ratePerMinute = OVERAGE_PRICING_PER_MINUTE[tierKey] || OVERAGE_PRICING_PER_MINUTE.starter
+
+    return {
+      credits: additionalMinutes * CREDITS_PER_MINUTE,
+      cost: additionalMinutes * ratePerMinute
+    }
   }
 }
 

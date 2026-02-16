@@ -68,7 +68,9 @@ const businessFeatures = [
 // Shared features (for all business types)
 const sharedFeatures = [
   { name: 'Voice AI', href: '/dashboard/voice-ai', icon: PhoneIcon },
-  { name: 'Agent Config', href: '/dashboard/agent', icon: SparklesIcon },
+  { name: 'Phone Employees', href: '/dashboard/employees', icon: UsersIcon },
+  { name: 'AI Agents', href: '/dashboard/agents', icon: SparklesIcon },
+  { name: 'Agent Config', href: '/dashboard/agent', icon: CogIcon },
   { name: 'Research', href: '/dashboard/research', icon: BeakerIcon },
   { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
 ]
@@ -182,7 +184,7 @@ export default function Layout({ children, business }: LayoutProps) {
   const pathname = usePathname()
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gray-100">
+    <div className="h-screen flex overflow-hidden bg-gray-50">
       {/* Mobile sidebar */}
       <Transition.Root show={sidebarOpen} as={Fragment}>
         <Dialog as="div" className="relative z-40 md:hidden" onClose={setSidebarOpen}>
@@ -238,10 +240,10 @@ export default function Layout({ children, business }: LayoutProps) {
         </Dialog>
       </Transition.Root>
 
-      {/* Static sidebar for desktop */}
+      {/* Static sidebar for desktop - Enterprise Design */}
       <div className="hidden md:flex md:flex-shrink-0">
         <div className="flex flex-col w-64">
-          <div className="flex flex-col h-0 flex-1 bg-white shadow-lg">
+          <div className="flex flex-col h-0 flex-1 bg-white border-r border-gray-200">
             <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
               <SidebarContent business={business} />
             </div>
@@ -251,29 +253,67 @@ export default function Layout({ children, business }: LayoutProps) {
 
       {/* Main content */}
       <div className="flex flex-col w-0 flex-1 overflow-hidden">
-        {/* Top bar */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-          <div className="md:hidden">
-            <button
-              type="button"
-              className="h-10 w-10 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Bars3Icon className="h-6 w-6" aria-hidden="true" />
-            </button>
-          </div>
+        {/* Top bar - Enterprise Design */}
+        <header className="sticky top-0 z-10 bg-white border-b border-gray-200">
+          <div className="px-4 py-3 flex items-center justify-between">
+            {/* Left side - Mobile menu + Breadcrumb area */}
+            <div className="flex items-center">
+              <div className="md:hidden">
+                <button
+                  type="button"
+                  className="h-10 w-10 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 transition-colors"
+                  onClick={() => setSidebarOpen(true)}
+                >
+                  <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+                </button>
+              </div>
 
-          {/* Credit Meter - Always visible */}
-          <div className="flex-1 flex justify-end">
-            {business?.id && (
-              <CreditMeter
-                businessId={business.id}
-                compact={true}
-                showPurchaseButton={true}
-              />
-            )}
+              {/* Search bar - Desktop only */}
+              <div className="hidden md:flex items-center ml-2">
+                <div className="relative">
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search customers, appointments..."
+                    className="w-64 pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-400"
+                  />
+                  <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 hidden lg:inline-flex items-center px-1.5 py-0.5 text-xs text-gray-400 bg-gray-100 rounded border border-gray-200">
+                    ⌘K
+                  </kbd>
+                </div>
+              </div>
+            </div>
+
+            {/* Right side - Actions */}
+            <div className="flex items-center gap-3">
+              {/* Credit Meter */}
+              {business?.id && (
+                <CreditMeter
+                  businessId={business.id}
+                  compact={true}
+                  showPurchaseButton={true}
+                />
+              )}
+
+              {/* Notifications - Placeholder */}
+              <button className="hidden md:flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                </svg>
+              </button>
+
+              {/* User menu - Placeholder */}
+              <button className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-medium">
+                  {business?.name?.charAt(0)?.toUpperCase() || 'U'}
+                </div>
+                <svg className="hidden md:block h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
           </div>
-        </div>
+        </header>
 
         {/* Page content */}
         <main className="flex-1 relative z-0 overflow-y-auto focus:outline-none custom-scrollbar">
@@ -300,22 +340,24 @@ function SidebarContent({ business }: { business?: LayoutProps['business'] }) {
 
   return (
     <>
-      {/* Logo and business info */}
-      <div className="flex items-center flex-shrink-0 px-4">
-        <div className="flex flex-col">
+      {/* Logo and business info - Enterprise Design */}
+      <div className="flex items-center flex-shrink-0 px-4 border-b border-gray-100 pb-4">
+        <div className="flex flex-col w-full">
           <div className="flex items-center">
-            <div className="h-8 w-8 bg-gradient-to-br from-beauty-500 to-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">✨</span>
+            <div className="h-9 w-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-lg flex items-center justify-center shadow-sm">
+              <svg className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
             <div className="ml-3">
-              <h1 className="text-lg font-semibold text-gray-900">DropFly</h1>
+              <h1 className="text-lg font-semibold text-gray-900 tracking-tight">VoiceFly</h1>
+              <p className="text-xs text-gray-500">Business Center</p>
             </div>
           </div>
           {business && (
-            <div className="mt-2">
+            <div className="mt-3 px-3 py-2 bg-gray-50 rounded-lg">
               <p className="text-sm font-medium text-gray-900 truncate">{business.name}</p>
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-gray-500 capitalize">{business.subscription_tier} Plan</p>
+              <div className="flex items-center gap-2 mt-1">
                 {getPlanBadge(business.subscription_tier)}
               </div>
             </div>
@@ -323,28 +365,39 @@ function SidebarContent({ business }: { business?: LayoutProps['business'] }) {
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="mt-8 flex-1 px-2 space-y-1">
+      {/* Navigation - Enterprise Design */}
+      <nav className="mt-6 flex-1 px-3 space-y-1">
         {navigation.map((item) => {
           const isActive = pathname === item.href
           const isUpgradeRequired = isFeatureUpgradeRequired(item.name, business?.subscription_tier || 'starter')
-          
+
           return (
             <Link
               key={item.name}
               href={isUpgradeRequired ? '/dashboard/settings?tab=billing' : item.href}
               className={clsx(
-                'nav-item group',
-                isActive ? 'nav-item-active' : 'nav-item-inactive',
+                'group flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-150',
+                isActive
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900',
                 isUpgradeRequired ? 'opacity-60' : ''
               )}
             >
-              <item.icon className={clsx("mr-3 h-5 w-5", isActive ? 'text-blue-600' : 'text-gray-500')} aria-hidden="true" />
-              {item.name}
+              <item.icon
+                className={clsx(
+                  "flex-shrink-0 mr-3 h-5 w-5 transition-colors",
+                  isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
+                )}
+                aria-hidden="true"
+              />
+              <span className="flex-1">{item.name}</span>
               {isUpgradeRequired && (
-                <span className="ml-auto text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-0.5 rounded-full group-hover:scale-105 transition-transform">
-                  Pro
+                <span className="ml-2 inline-flex items-center px-1.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded">
+                  Upgrade
                 </span>
+              )}
+              {isActive && (
+                <span className="ml-2 w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
               )}
             </Link>
           )
@@ -378,54 +431,92 @@ function isFeatureUpgradeRequired(featureName: string, subscriptionTier: string)
   return false
 }
 
-// Helper function to get plan badge
+// Helper function to get plan badge - Enterprise Design
 function getPlanBadge(subscriptionTier: string) {
   const badges = {
-    starter: <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">AI Starter</span>,
-    professional: <span className="text-xs bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">AI Pro</span>,
-    business: <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">AI Business</span>,
-    enterprise: <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">Enterprise</span>
+    starter: (
+      <span className="inline-flex items-center text-xs font-medium bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
+        <span className="w-1.5 h-1.5 bg-slate-400 rounded-full mr-1.5"></span>
+        Starter
+      </span>
+    ),
+    professional: (
+      <span className="inline-flex items-center text-xs font-medium bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+        <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-1.5"></span>
+        Professional
+      </span>
+    ),
+    business: (
+      <span className="inline-flex items-center text-xs font-medium bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded">
+        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full mr-1.5"></span>
+        Business
+      </span>
+    ),
+    enterprise: (
+      <span className="inline-flex items-center text-xs font-medium bg-amber-50 text-amber-700 px-2 py-0.5 rounded">
+        <span className="w-1.5 h-1.5 bg-amber-500 rounded-full mr-1.5"></span>
+        Enterprise
+      </span>
+    )
   }
   return badges[subscriptionTier as keyof typeof badges] || null
 }
 
-// Helper function to get upgrade prompt based on plan
+// Helper function to get upgrade prompt based on plan - Enterprise Design
 function getUpgradePrompt(subscriptionTier: string) {
   if (subscriptionTier === 'starter') {
     return (
       <div className="flex-shrink-0 p-4">
-        <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-white">Unlock Analytics & More</h3>
-          <p className="text-xs mt-1 text-white opacity-90">
-            Upgrade to AI Professional for unlimited appointments, analytics & loyalty
-          </p>
-          <Link href="/dashboard/settings?tab=billing">
-            <button className="mt-2 bg-white text-purple-600 text-xs font-medium px-3 py-1 rounded hover:bg-gray-100 transition-colors">
-              Upgrade to Pro - $147/mo
-            </button>
-          </Link>
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-blue-900">Upgrade to Professional</h3>
+              <p className="text-xs mt-1 text-blue-700">
+                Unlock analytics, payments, and loyalty features
+              </p>
+              <Link href="/dashboard/settings?tab=billing">
+                <button className="mt-3 bg-blue-600 text-white text-xs font-medium px-3 py-1.5 rounded hover:bg-blue-700 transition-colors">
+                  View Plans
+                </button>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     )
   }
-  
+
   if (subscriptionTier === 'professional') {
     return (
       <div className="flex-shrink-0 p-4">
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-white">Get Custom AI & Scale</h3>
-          <p className="text-xs mt-1 text-white opacity-90">
-            Upgrade to AI Business for custom assistant & multi-location
-          </p>
-          <Link href="/dashboard/settings?tab=billing">
-            <button className="mt-2 bg-white text-green-600 text-xs font-medium px-3 py-1 rounded hover:bg-gray-100 transition-colors">
-              Upgrade to Business - $297/mo
-            </button>
-          </Link>
+        <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-indigo-900">Scale with Business</h3>
+              <p className="text-xs mt-1 text-indigo-700">
+                Multi-location support and custom AI training
+              </p>
+              <Link href="/dashboard/settings?tab=billing">
+                <button className="mt-3 bg-indigo-600 text-white text-xs font-medium px-3 py-1.5 rounded hover:bg-indigo-700 transition-colors">
+                  View Plans
+                </button>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     )
   }
-  
+
   return null
 }

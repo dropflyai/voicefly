@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { ResearchAPI } from '@/lib/research-api'
-import { rateLimit, getClientIp } from '@/lib/rate-limit'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import AuditLogger, { AuditEventType } from '@/lib/audit-logger'
 import CreditSystem, { CreditCost } from '@/lib/credit-system'
+import { validateAuth, validateBusinessAccess } from '@/lib/api-auth'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -436,9 +437,18 @@ We sit between basic software (too limited) and enterprise solutions (too expens
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
 
-  // Rate limiting - 20 requests per 10 seconds per IP
+  // Authentication check - SECURITY CRITICAL
+  const authResult = await validateAuth(request)
+  if (!authResult.success || !authResult.user) {
+    return NextResponse.json(
+      { error: authResult.error || 'Authentication required' },
+      { status: 401 }
+    )
+  }
+
+  // Rate limiting - strict tier for AI research (expensive operations)
   const ip = getClientIp(request.headers)
-  const rateLimitResult = rateLimit(ip, { limit: 20, window: 10000 })
+  const rateLimitResult = await checkRateLimit(ip, 'strict')
 
   if (!rateLimitResult.success) {
     // Audit log - rate limit exceeded
@@ -448,18 +458,19 @@ export async function POST(request: NextRequest) {
       request.headers.get('user-agent') || 'unknown'
     )
 
+    const retryAfter = Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
     return NextResponse.json(
       {
         error: 'Too many requests. Please try again later.',
-        retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000)
+        retryAfter
       },
       {
         status: 429,
         headers: {
-          'X-RateLimit-Limit': '20',
+          'X-RateLimit-Limit': rateLimitResult.limit.toString(),
           'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
           'X-RateLimit-Reset': rateLimitResult.reset.toString(),
-          'Retry-After': Math.ceil((rateLimitResult.reset - Date.now()) / 1000).toString()
+          'Retry-After': retryAfter.toString()
         }
       }
     )
@@ -467,7 +478,21 @@ export async function POST(request: NextRequest) {
 
   try {
     const body: ResearchRequest = await request.json()
-    const { query, mode, businessId, relatedLeadId, relatedCustomerId, pageContext } = body
+    const { query, mode, relatedLeadId, relatedCustomerId, pageContext } = body
+
+    // Use authenticated user's business ID (more secure than trusting client)
+    const businessId = body.businessId || authResult.user.businessId
+
+    // Validate business access if a specific businessId was provided
+    if (body.businessId && body.businessId !== authResult.user.businessId) {
+      const accessResult = await validateBusinessAccess(request, body.businessId)
+      if (!accessResult.success) {
+        return NextResponse.json(
+          { error: 'Access denied to this business' },
+          { status: 403 }
+        )
+      }
+    }
 
     if (!query || !mode) {
       return NextResponse.json(
@@ -476,7 +501,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check credits before performing research
+    // Check credits before performing research (businessId is now guaranteed)
     if (businessId) {
       const creditCost = mode === 'deep' ? CreditCost.MAYA_DEEP_RESEARCH : CreditCost.MAYA_QUICK_RESEARCH
 
@@ -577,16 +602,33 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  // Authentication check - SECURITY CRITICAL
+  const authResult = await validateAuth(request)
+  if (!authResult.success || !authResult.user) {
+    return NextResponse.json(
+      { error: authResult.error || 'Authentication required' },
+      { status: 401 }
+    )
+  }
+
   try {
-    const businessId = request.nextUrl.searchParams.get('businessId')
+    // Use authenticated user's business ID or validate access to requested businessId
+    let businessId = request.nextUrl.searchParams.get('businessId')
     const mode = request.nextUrl.searchParams.get('mode')
     const limit = parseInt(request.nextUrl.searchParams.get('limit') || '20')
 
+    // If no businessId provided, use the authenticated user's business
     if (!businessId) {
-      return NextResponse.json(
-        { error: 'businessId is required' },
-        { status: 400 }
-      )
+      businessId = authResult.user.businessId
+    } else if (businessId !== authResult.user.businessId) {
+      // Validate access to the requested business
+      const accessResult = await validateBusinessAccess(request, businessId)
+      if (!accessResult.success) {
+        return NextResponse.json(
+          { error: 'Access denied to this business' },
+          { status: 403 }
+        )
+      }
     }
 
     const research = await ResearchAPI.getResearchHistory(businessId, {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import CreditSystem from '@/lib/credit-system'
+import { validateBusinessAccess } from '@/lib/api-auth'
 
 /**
  * GET /api/credits/balance
@@ -14,6 +15,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(
         { error: 'business_id is required' },
         { status: 400 }
+      )
+    }
+
+    // Validate authentication and business access
+    const authResult = await validateBusinessAccess(req, businessId)
+    if (!authResult.success) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized' },
+        { status: authResult.error === 'Access denied to this business' ? 403 : 401 }
       )
     }
 
