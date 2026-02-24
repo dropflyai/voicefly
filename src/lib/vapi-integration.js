@@ -36,7 +36,7 @@ export async function assignPhoneNumber(businessId, businessName) {
       body: JSON.stringify({
         assistantId: SHARED_ASSISTANT_ID,
         // The webhook will receive businessId in metadata
-        serverUrl: `${WEBHOOK_BASE_URL}/webhook/vapi`,
+        serverUrl: `${WEBHOOK_BASE_URL}/api/webhooks/phone-employee`,
         serverUrlSecret: 'your-webhook-secret' // Optional security
       })
     });
@@ -112,7 +112,7 @@ export async function createCustomAssistant(businessData) {
                 required: ['preferred_date']
               },
               server: {
-                url: 'https://fbb8dc638db6.ngrok-free.app/webhook/vapi'
+                url: 'https://fbb8dc638db6.ngrok-free.app/api/webhooks/phone-employee'
               }
             }
           },
@@ -133,7 +133,7 @@ export async function createCustomAssistant(businessData) {
                 required: ['customer_name', 'customer_phone', 'appointment_date', 'start_time']
               },
               server: {
-                url: 'https://fbb8dc638db6.ngrok-free.app/webhook/vapi'
+                url: 'https://fbb8dc638db6.ngrok-free.app/api/webhooks/phone-employee'
               }
             }
           }

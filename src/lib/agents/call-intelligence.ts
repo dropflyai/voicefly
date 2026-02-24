@@ -5,6 +5,7 @@
  * qualifies leads, and triggers follow-up actions.
  */
 
+import Anthropic from '@anthropic-ai/sdk'
 import { supabase } from '../supabase-client'
 import { CreditSystem } from '../credit-system'
 import { ErrorTracker, ErrorCategory, ErrorSeverity } from '../error-tracking'
@@ -56,10 +57,14 @@ const SENTIMENT_INDICATORS = {
 export class CallIntelligenceAgent {
   private static instance: CallIntelligenceAgent
   private errorTracker = ErrorTracker.getInstance()
+  private anthropic: Anthropic | null = null
   private config: AgentConfig
 
   private constructor() {
     this.config = CALL_INTELLIGENCE_CONFIG
+    if (process.env.ANTHROPIC_API_KEY) {
+      this.anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+    }
     // Register with Maya Prime
     mayaPrime.registerAgent(this.config)
   }
@@ -178,7 +183,7 @@ export class CallIntelligenceAgent {
   }
 
   /**
-   * Perform call analysis
+   * Perform call analysis - uses AI when available, falls back to rules
    */
   private async performAnalysis(
     callId: string,
@@ -188,31 +193,24 @@ export class CallIntelligenceAgent {
     const transcript = callData.transcript || ''
     const transcriptLower = transcript.toLowerCase()
 
-    // Detect intents
+    // Try AI-powered analysis first (much higher quality)
+    if (this.anthropic && transcript.length > 50) {
+      try {
+        return await this.aiAnalysis(callId, businessId, callData, transcript)
+      } catch (err) {
+        console.error('[CallIntelligence] AI analysis failed, using rules:', err)
+      }
+    }
+
+    // Fallback: rule-based analysis
     const intentDetected = this.detectIntents(transcriptLower)
-
-    // Analyze sentiment
     const sentiment = this.analyzeSentiment(transcriptLower)
-
-    // Determine outcome
     const outcome = this.determineOutcome(callData, intentDetected)
-
-    // Extract key topics
     const keyTopics = this.extractKeyTopics(transcriptLower)
-
-    // Qualify lead
     const leadQuality = this.qualifyLead(callData, sentiment, intentDetected)
-
-    // Check if appointment was booked
     const appointmentBooked = outcome === 'appointment_booked'
-
-    // Determine if follow-up is needed
     const followUpRequired = this.needsFollowUp(outcome, sentiment, leadQuality)
-
-    // Generate follow-up suggestion
     const suggestedFollowUp = this.suggestFollowUp(outcome, sentiment, intentDetected)
-
-    // Identify coaching opportunities
     const coachingOpportunities = this.identifyCoachingOpportunities(callData, outcome)
 
     return {
@@ -229,6 +227,88 @@ export class CallIntelligenceAgent {
       suggestedFollowUp,
       transcriptSummary: this.summarizeTranscript(transcript),
       coachingOpportunities,
+    }
+  }
+
+  /**
+   * AI-powered call analysis using Anthropic Haiku
+   */
+  private async aiAnalysis(
+    callId: string,
+    businessId: string,
+    callData: VAPICallData,
+    transcript: string
+  ): Promise<CallAnalysis> {
+    const response = await this.anthropic!.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 600,
+      messages: [{
+        role: 'user',
+        content: `Analyze this phone call transcript. Return ONLY valid JSON.
+
+TRANSCRIPT:
+${transcript.substring(0, 3000)}
+
+CALL DURATION: ${callData.duration || 0} seconds
+
+Return this JSON structure:
+{
+  "summary": "2-3 sentence summary of the call",
+  "sentiment": {
+    "overall": "positive" | "neutral" | "negative",
+    "score": -1.0 to 1.0,
+    "customerFrustration": true/false,
+    "urgencyLevel": "high" | "medium" | "low"
+  },
+  "intents": ["appointment", "pricing", "information", "complaint", "followup", "emergency"],
+  "topics": ["scheduling", "pricing", "services", "hours", "location"],
+  "outcome": "appointment_booked" | "callback_scheduled" | "information_provided" | "voicemail_left" | "no_answer" | "customer_declined" | "transferred" | "other",
+  "leadQuality": "hot" | "warm" | "cold",
+  "followUpRequired": true/false,
+  "suggestedFollowUp": "specific action to take",
+  "coaching": ["specific coaching tips for improving this type of call"]
+}
+
+Only include intents and topics that are actually present. Be specific in coaching tips.`,
+      }],
+    })
+
+    const text = response.content[0]
+    if (text.type !== 'text') {
+      throw new Error('Unexpected response type')
+    }
+
+    const jsonMatch = text.text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      throw new Error('No JSON in response')
+    }
+
+    const ai = JSON.parse(jsonMatch[0])
+
+    // Map AI outcome or use VAPI's explicit outcome
+    const outcome: CallOutcome = callData.outcome
+      ? this.determineOutcome(callData, ai.intents || [])
+      : (ai.outcome as CallOutcome) || 'other'
+
+    return {
+      callId,
+      businessId,
+      duration: callData.duration || 0,
+      outcome,
+      sentiment: {
+        overall: ai.sentiment?.overall || 'neutral',
+        score: ai.sentiment?.score || 0,
+        customerFrustration: ai.sentiment?.customerFrustration || false,
+        urgencyLevel: ai.sentiment?.urgencyLevel || 'low',
+      },
+      intentDetected: ai.intents || [],
+      keyTopics: ai.topics || [],
+      appointmentBooked: outcome === 'appointment_booked',
+      leadQuality: ai.leadQuality || 'warm',
+      followUpRequired: ai.followUpRequired ?? false,
+      suggestedFollowUp: ai.suggestedFollowUp,
+      transcriptSummary: ai.summary || transcript.substring(0, 200),
+      coachingOpportunities: ai.coaching || [],
     }
   }
 

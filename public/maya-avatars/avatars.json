@@ -1,0 +1,58 @@
+[
+  {
+    "id": "headset-a1",
+    "name": "Headset Pro - Warm",
+    "prompt": "Professional portrait of a friendly female AI phone employee wearing a sleek modern wireless headset, warm confident smile, business casual attire, clean gradient blue background, subtle glowing circuit line details on the headset, 28 years old, soft studio lighting, high quality digital illustration",
+    "filepath": "/maya-avatars/headset-a1.png",
+    "generated": true
+  },
+  {
+    "id": "headset-a2",
+    "name": "Headset Pro - Bold",
+    "prompt": "Bold professional portrait of a female AI call center employee wearing a futuristic phone headset, confident expression, sharp blazer, deep navy blue background with subtle tech grid lines, glowing accent lights on headset, polished and capable, digital art portrait style",
+    "filepath": "/maya-avatars/headset-a2.png",
+    "generated": true
+  },
+  {
+    "id": "headset-a3",
+    "name": "Headset Pro - Illustrated",
+    "prompt": "Clean illustrated character of a female AI phone employee, modern headset with a soft glow, professional attire, friendly smile, flat design illustration style, blue and purple gradient color palette, SaaS product mascot style, 24/7 always-on vibe",
+    "filepath": "/maya-avatars/headset-a3.png",
+    "generated": true
+  },
+  {
+    "id": "headset-a4",
+    "name": "Headset Pro - Night Shift",
+    "prompt": "Portrait of a professional female AI phone employee wearing a glowing headset, working at night, dark background with cool blue ambient glow, suggesting 24/7 availability, calm and focused expression, futuristic but approachable, digital art style",
+    "filepath": "/maya-avatars/headset-a4.png",
+    "generated": true
+  },
+  {
+    "id": "holo-d1",
+    "name": "Holographic - Classic",
+    "prompt": "Holographic digital avatar of a professional female AI employee, semi-transparent glowing blue projection effect, wearing a phone headset, friendly expression, dark background with subtle grid lines, futuristic sci-fi aesthetic, clean and professional, digital art",
+    "filepath": "/maya-avatars/holo-d1.png",
+    "generated": true
+  },
+  {
+    "id": "holo-d2",
+    "name": "Holographic - Warm Glow",
+    "prompt": "Glowing holographic portrait of a female AI voice assistant, warm blue and purple translucent effect, soft human features, wearing a modern headset, floating in dark space with particle effects, professional yet otherworldly, high quality digital illustration",
+    "filepath": "/maya-avatars/holo-d2.png",
+    "generated": true
+  },
+  {
+    "id": "holo-d3",
+    "name": "Holographic - Minimal",
+    "prompt": "Minimalist holographic avatar of a female AI phone employee, clean glowing outline style, simple geometric face with warm expression, circuit pattern background, blue and cyan color palette, modern tech company aesthetic, flat design meets hologram",
+    "filepath": "/maya-avatars/holo-d3.png",
+    "generated": true
+  },
+  {
+    "id": "holo-d4",
+    "name": "Holographic - Vibrant",
+    "prompt": "Vibrant holographic AI employee avatar, female figure with a modern headset, glowing neon blue and purple digital projection, dynamic and energetic, dark background, suggests always-on 24/7 availability, futuristic SaaS brand aesthetic, digital art portrait",
+    "filepath": "/maya-avatars/holo-d4.png",
+    "generated": true
+  }
+]

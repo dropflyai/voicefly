@@ -171,7 +171,7 @@ async function createVapiAgent(input: ProvisioningInput, jobTemplate: MayaJobTem
           stability: voiceSettings.stability
         },
         firstMessage: greeting,
-        serverUrl: `${WEBHOOK_BASE_URL}/api/webhooks/vapi`,
+        serverUrl: `${WEBHOOK_BASE_URL}/api/webhooks/phone-employee`,
         serverUrlSecret: input.businessId,
         metadata: {
           businessId: input.businessId,
@@ -237,7 +237,7 @@ async function provisionPhoneNumber(businessId: string, businessName: string, ag
       },
       body: JSON.stringify({
         assistantId: agentId,
-        serverUrl: `${WEBHOOK_BASE_URL}/api/webhooks/vapi`,
+        serverUrl: `${WEBHOOK_BASE_URL}/api/webhooks/phone-employee`,
         serverUrlSecret: businessId
       })
     })

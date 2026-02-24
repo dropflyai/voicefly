@@ -1,536 +1,1142 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  CheckCircle,
-  ArrowRight,
-  ArrowLeft,
-  Mic,
-  Users,
-  Settings,
-  Zap,
-  Play,
-  Phone,
-  BarChart3,
-  Building,
-  Globe,
-  Headphones,
-  Loader2
+  ArrowRight, ArrowLeft, CheckCircle, Mic, Phone, Calendar,
+  ShoppingBag, Headphones, Play, Loader2, MapPin, Clock, User,
+  Link2, ExternalLink, Globe, Sparkles, RotateCw, Copy, Check,
+  Volume2, Square
 } from 'lucide-react'
-import Link from 'next/link'
+import { supabase } from '@/lib/supabase-client'
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface FormData {
+  // Step 1 — Business
+  industry: string
+  address: string
+  hoursNote: string  // e.g. "Mon-Fri 9am-5pm"
+
+  // Step 2 — Employee type
+  employeeType: string
+
+  // Step 3 — Configure
+  employeeName: string
+  voiceId: string
+  greeting: string
+  services: string        // free text: "haircuts, color, manicures"
+  escalationPhone: string // human fallback number
+
+  // Step 4 — Phone number
+  areaCode: string
+
+  // Result
+  provisionedPhone: string
+}
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const EMPLOYEE_TYPES = [
+  {
+    id: 'receptionist',
+    label: 'Receptionist',
+    icon: <Phone className="h-7 w-7" />,
+    description: 'Answers calls, greets callers, routes to the right person or takes messages',
+    popular: true,
+    comingSoon: false,
+  },
+  {
+    id: 'appointment-scheduler',
+    label: 'Appointment Setter',
+    icon: <Calendar className="h-7 w-7" />,
+    description: 'Books, reschedules, and confirms appointments around the clock',
+    popular: false,
+    comingSoon: false,
+  },
+  {
+    id: 'order-taker',
+    label: 'Order Taker',
+    icon: <ShoppingBag className="h-7 w-7" />,
+    description: 'Takes orders over the phone, confirms details, sends confirmations',
+    popular: false,
+    comingSoon: true,
+  },
+  {
+    id: 'customer-service',
+    label: 'Customer Service',
+    icon: <Headphones className="h-7 w-7" />,
+    description: 'Handles questions, complaints, and support requests 24/7',
+    popular: false,
+    comingSoon: true,
+  },
+]
+
+const VOICES = [
+  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', description: 'Confident & reassuring', gender: 'female' },
+  { id: 'hpp4J3VqNfWAUOO0d1Us', name: 'Bella', description: 'Professional & warm', gender: 'female' },
+  { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', description: 'Clear & engaging', gender: 'female' },
+  { id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', description: 'Knowledgeable & poised', gender: 'female' },
+  { id: 'iP95p4xoKVk53GoZ742B', name: 'Chris', description: 'Charming & down-to-earth', gender: 'male' },
+  { id: 'nPczCjzI2devNBz1zQrb', name: 'Brian', description: 'Deep & comforting', gender: 'male' },
+  { id: 'onwK4e9ZLuTAKqWW03F9', name: 'Daniel', description: 'Steady & trustworthy', gender: 'male' },
+  { id: 'IKne3meq5aSn9XLyUdCD', name: 'Charlie', description: 'Confident & energetic', gender: 'male' },
+]
+
+const SERVICE_ACCOUNT_EMAIL = 'voicefly-calendar@voice-fly.iam.gserviceaccount.com'
+
+const INDUSTRIES = [
+  'Medical / Healthcare', 'Dental', 'Law Firm', 'Real Estate',
+  'Beauty / Salon / Spa', 'Fitness & Wellness', 'Home Services',
+  'Restaurant / Food', 'Retail', 'General Business',
+]
+
+// Smart defaults by industry + employee type
+const INDUSTRY_DEFAULTS: Record<string, Record<string, { services: string; greetingTemplate: (name: string, biz: string) => string }>> = {
+  'Beauty / Salon / Spa': {
+    'receptionist': {
+      services: 'Haircut, Color & Highlights, Blowout, Manicure, Pedicure, Facial, Waxing, Massage',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}, how can I help you today? I can answer questions about our services, hours, or help you get connected with a stylist.`,
+    },
+    'appointment-scheduler': {
+      services: 'Haircut, Color & Highlights, Blowout, Manicure, Pedicure, Facial, Waxing, Massage',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}, and I'd love to help you book an appointment. What service are you looking for?`,
+    },
+  },
+  'Medical / Healthcare': {
+    'receptionist': {
+      services: 'New Patient Visit, Follow-up Appointment, Lab Work, Physical Exam, Vaccinations, Referral',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}. I'm ${name}, how may I assist you today?`,
+    },
+    'appointment-scheduler': {
+      services: 'New Patient Consultation, Follow-up Visit, Annual Physical, Lab Work, Vaccination, Specialist Referral',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}. I'm ${name}, I can help you schedule an appointment. Are you a new or existing patient?`,
+    },
+  },
+  'Dental': {
+    'receptionist': {
+      services: 'Cleaning, Exam & X-rays, Filling, Crown, Whitening, Root Canal, Emergency Visit',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}. How can I help you today?`,
+    },
+    'appointment-scheduler': {
+      services: 'Cleaning & Exam, Whitening, Filling, Crown, Root Canal, Emergency Visit, New Patient Exam',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}, I'd be happy to help you schedule your next visit. What type of appointment do you need?`,
+    },
+  },
+  'Law Firm': {
+    'receptionist': {
+      services: 'Free Consultation, Case Review, Document Preparation, Court Representation',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}. I'm ${name}. How may I direct your call today?`,
+    },
+    'appointment-scheduler': {
+      services: 'Initial Consultation, Case Review, Follow-up Meeting, Document Signing',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}. I'm ${name}. I can help you schedule a consultation. What type of legal matter are you calling about?`,
+    },
+  },
+  'Real Estate': {
+    'receptionist': {
+      services: 'Property Listing Inquiry, Buyer Consultation, Home Valuation, Open House Info',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}. Are you looking to buy, sell, or just have questions about a property?`,
+    },
+    'appointment-scheduler': {
+      services: 'Property Showing, Buyer Consultation, Listing Appointment, Home Valuation',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}. I can help you schedule a showing or consultation. What are you looking for?`,
+    },
+  },
+  'Fitness & Wellness': {
+    'receptionist': {
+      services: 'Membership Inquiry, Personal Training, Group Classes, Yoga, Pilates, Nutrition Coaching',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}. How can I help you today?`,
+    },
+    'appointment-scheduler': {
+      services: 'Personal Training Session, Group Class, Yoga, Pilates, Nutrition Consultation, Trial Visit',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}. I can help you book a session or class. What are you interested in?`,
+    },
+  },
+  'Home Services': {
+    'receptionist': {
+      services: 'Plumbing, Electrical, HVAC, Roofing, Painting, General Repair, Emergency Service',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}. I'm ${name}. How can we help you today?`,
+    },
+    'appointment-scheduler': {
+      services: 'Service Call, Estimate, Repair Appointment, Installation, Emergency Visit, Inspection',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}. I'm ${name}. I can help you schedule a service appointment. What do you need help with?`,
+    },
+  },
+  'Restaurant / Food': {
+    'receptionist': {
+      services: 'Dine-in, Takeout, Catering, Private Events, Gift Cards',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}. How can I help you today?`,
+    },
+    'appointment-scheduler': {
+      services: 'Reservation, Private Dining, Catering Consultation, Event Booking',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}. I'd be happy to help you make a reservation or book an event.`,
+    },
+  },
+  'Retail': {
+    'receptionist': {
+      services: 'Product Inquiry, Order Status, Returns & Exchanges, Store Hours, Gift Cards',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}. How can I help you today?`,
+    },
+    'appointment-scheduler': {
+      services: 'Personal Shopping, Product Demo, Consultation, Pickup Appointment',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}. I can help you schedule an appointment. What are you looking for?`,
+    },
+  },
+  'General Business': {
+    'receptionist': {
+      services: 'General Inquiry, Scheduling, Support, Billing Questions',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}. I'm ${name}. How can I help you today?`,
+    },
+    'appointment-scheduler': {
+      services: 'Consultation, Meeting, Follow-up, Initial Appointment',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}. I'm ${name}. I can help you schedule an appointment. What works best for you?`,
+    },
+  },
+}
+
+function getSmartDefaults(industry: string, employeeType: string, employeeName: string, businessName: string): { services: string; greeting: string } | null {
+  const industryDefaults = INDUSTRY_DEFAULTS[industry]
+  if (!industryDefaults) return null
+  const typeDefaults = industryDefaults[employeeType]
+  if (!typeDefaults) return null
+  return {
+    services: typeDefaults.services,
+    greeting: typeDefaults.greetingTemplate(employeeName || 'your assistant', businessName || 'our office'),
+  }
+}
+
+const TOTAL_STEPS = 6
+
+// ─── Step components ─────────────────────────────────────────────────────────
+
+function StepIndicator({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      {Array.from({ length: total }).map((_, i) => (
+        <div
+          key={i}
+          className={`h-2 rounded-full transition-all duration-300 ${
+            i < current ? 'bg-blue-600 w-6' : i === current ? 'bg-blue-600 w-4' : 'bg-gray-200 w-4'
+          }`}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
+
+interface LeadContext {
+  email?: string
+  name?: string
+  firstName?: string
+  businessType?: string
+  employeeInterest?: string
+}
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const [currentStep, setCurrentStep] = useState(1)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [step, setStep] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [businessId, setBusinessId] = useState<string | null>(null)
-  const [formData, setFormData] = useState({
-    // Step 1: Use Case
-    primaryUseCase: '',
-    businessType: '',
-    teamSize: '',
+  const [businessName, setBusinessName] = useState<string>('')
+  const [leadContext, setLeadContext] = useState<LeadContext | null>(null)
 
-    // Step 2: Voice Configuration
-    voicePersonality: 'professional',
-    voiceGender: 'female',
-    selectedVoice: 'sarah',
+  const [websiteUrl, setWebsiteUrl] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [generated, setGenerated] = useState(false)
 
-    // Step 3: Integration
-    crmSystem: '',
-    phoneSystem: '',
+  // Voice preview state
+  const [playingVoice, setPlayingVoice] = useState<string | null>(null)
+  const [loadingVoice, setLoadingVoice] = useState<string | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioCacheRef = useRef<Map<string, string>>(new Map())
 
-    // Step 4: First Campaign
-    campaignName: '',
-    campaignGoal: ''
+  // Google Calendar inline setup state
+  const [calendarId, setCalendarId] = useState('')
+  const [calendarConnecting, setCalendarConnecting] = useState(false)
+  const [calendarConnected, setCalendarConnected] = useState(false)
+  const [calendarError, setCalendarError] = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+  const [calendlyConnected, setCalendlyConnected] = useState(false)
+  const [calendlyError, setCalendlyError] = useState<string | null>(null)
+
+  const [form, setForm] = useState<FormData>({
+    industry: '',
+    address: '',
+    hoursNote: '',
+    employeeType: '',
+    employeeName: '',
+    voiceId: VOICES[0].id,
+    greeting: '',
+    services: '',
+    escalationPhone: '',
+    areaCode: '',
+    provisionedPhone: '',
   })
 
-  const totalSteps = 5
-
-  // Get business ID from localStorage on mount
   useEffect(() => {
-    const storedBusinessId =
-      localStorage.getItem('authenticated_business_id') ||
-      localStorage.getItem('current_business_id') ||
-      localStorage.getItem('business_id')
+    const id = localStorage.getItem('authenticated_business_id')
+    const name = localStorage.getItem('authenticated_business_name') || 'Your Business'
+    setBusinessId(id)
+    setBusinessName(name)
 
-    if (storedBusinessId) {
-      setBusinessId(storedBusinessId)
+    // Read context from Maya chat conversation and pre-populate the form
+    try {
+      const raw = localStorage.getItem('voicefly_lead_context')
+      if (raw) {
+        const ctx: LeadContext = JSON.parse(raw)
+        setLeadContext(ctx)
+        setForm(prev => ({
+          ...prev,
+          industry: ctx.businessType && INDUSTRIES.includes(ctx.businessType) ? ctx.businessType : prev.industry,
+          employeeType: ctx.employeeInterest && EMPLOYEE_TYPES.some(t => t.id === ctx.employeeInterest && !t.comingSoon)
+            ? ctx.employeeInterest
+            : prev.employeeType,
+        }))
+        localStorage.removeItem('voicefly_lead_context')
+      }
+    } catch {
+      // ignore
     }
   }, [])
 
-  const useCases = [
-    {
-      id: 'lead-qualification',
-      title: 'Lead Qualification',
-      description: 'Automatically qualify inbound leads and score prospects',
-      icon: <Users className="h-8 w-8" />,
-      popular: true
-    },
-    {
-      id: 'appointment-booking',
-      title: 'Appointment Booking',
-      description: 'Schedule meetings and manage calendar availability',
-      icon: <Phone className="h-8 w-8" />,
-      popular: false
-    },
-    {
-      id: 'customer-service',
-      title: 'Customer Service',
-      description: 'Handle support requests and common inquiries',
-      icon: <Headphones className="h-8 w-8" />,
-      popular: false
-    },
-    {
-      id: 'sales-follow-up',
-      title: 'Sales Follow-up',
-      description: 'Nurture prospects and re-engage cold leads',
-      icon: <BarChart3 className="h-8 w-8" />,
-      popular: false
+  // Detect Calendly OAuth return from URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('calendly_connected') === 'true') {
+      setCalendlyConnected(true)
+      setStep(4) // go back to calendar step to show success
+    } else if (params.get('calendly_error')) {
+      const err = params.get('calendly_error')
+      setCalendlyError(err === 'authorization_denied' ? 'Calendly authorization was denied.' : 'Failed to connect Calendly. Please try again.')
+      setStep(4)
     }
-  ]
+  }, [])
 
-  const voiceOptions = [
-    {
-      id: 'sarah',
-      name: 'Sarah',
-      personality: 'professional',
-      description: 'Professional, confident, perfect for B2B sales',
-      gender: 'female'
-    },
-    {
-      id: 'michael',
-      name: 'Michael',
-      personality: 'friendly',
-      description: 'Warm, approachable, great for customer service',
-      gender: 'male'
-    },
-    {
-      id: 'emma',
-      name: 'Emma',
-      personality: 'energetic',
-      description: 'Enthusiastic, engaging, ideal for appointment booking',
-      gender: 'female'
-    },
-    {
-      id: 'david',
-      name: 'David',
-      personality: 'professional',
-      description: 'Authoritative, trustworthy, excellent for enterprise',
-      gender: 'male'
+  const set = (field: keyof FormData, value: string) =>
+    setForm(prev => ({ ...prev, [field]: value }))
+
+  // Auto-fill greeting + services from smart defaults when name/type changes (unless AI-generated)
+  useEffect(() => {
+    if (!form.employeeName || !form.employeeType || generated) return
+    const defaults = getSmartDefaults(form.industry, form.employeeType, form.employeeName, businessName)
+    if (defaults) {
+      set('greeting', defaults.greeting)
+      if (!form.services) set('services', defaults.services)
+    } else {
+      const typeLabel = EMPLOYEE_TYPES.find(t => t.id === form.employeeType)?.label || 'assistant'
+      set('greeting', `Hello! Thank you for calling ${businessName}. I'm ${form.employeeName}, your ${typeLabel.toLowerCase()}. How can I help you today?`)
     }
-  ]
+  }, [form.employeeName, form.employeeType, businessName])
 
-  const crmOptions = [
-    { id: 'hubspot', name: 'HubSpot', logo: '/logos/hubspot.png' },
-    { id: 'salesforce', name: 'Salesforce', logo: '/logos/salesforce.png' },
-    { id: 'pipedrive', name: 'Pipedrive', logo: '/logos/pipedrive.png' },
-    { id: 'zoho', name: 'Zoho CRM', logo: '/logos/zoho.png' },
-    { id: 'other', name: 'Other / Manual', logo: null }
-  ]
+  const canAdvance = () => {
+    switch (step) {
+      case 0: return !!form.industry
+      case 1: return !!form.employeeType
+      case 2: return !!form.employeeName && !!form.voiceId
+      case 3: return true // area code optional
+      case 4: return true // calendar step — optional, can skip
+      case 5: return true
+      default: return false
+    }
+  }
 
   const handleNext = async () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1)
-    } else {
-      // Complete onboarding - save all data to API
-      setIsSubmitting(true)
-      setSubmitError(null)
+    if (step === 3) {
+      await provision()
+    } else if (step < TOTAL_STEPS - 1) {
+      setStep(s => s + 1)
+    }
+  }
 
-      try {
-        const response = await fetch('/api/onboarding/complete', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            businessId: businessId,
-            ...formData
-          }),
-        })
+  const skipCalendarStep = () => {
+    setStep(5) // go to success screen
+  }
 
-        if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || 'Failed to complete onboarding')
+  // ── Voice preview ───────────────────────────────────────────────────────────
+  const playVoicePreview = async (voiceId: string) => {
+    // Toggle off if same voice
+    if (playingVoice === voiceId) {
+      audioRef.current?.pause()
+      audioRef.current = null
+      setPlayingVoice(null)
+      return
+    }
+
+    // Stop any current audio
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+      setPlayingVoice(null)
+    }
+
+    // Use cached blob URL if available
+    const cachedUrl = audioCacheRef.current.get(voiceId)
+    if (cachedUrl) {
+      const audio = new Audio(cachedUrl)
+      audioRef.current = audio
+      audio.onended = () => { setPlayingVoice(null); audioRef.current = null }
+      audio.play()
+      setPlayingVoice(voiceId)
+      return
+    }
+
+    // Fetch from API
+    setLoadingVoice(voiceId)
+    try {
+      const res = await fetch(`/api/voice-preview?voiceId=${voiceId}`)
+      if (!res.ok) throw new Error('Failed to load preview')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      audioCacheRef.current.set(voiceId, url)
+
+      const audio = new Audio(url)
+      audioRef.current = audio
+      audio.onended = () => { setPlayingVoice(null); audioRef.current = null }
+      audio.play()
+      setPlayingVoice(voiceId)
+    } catch (err) {
+      console.error('Voice preview error:', err)
+    } finally {
+      setLoadingVoice(null)
+    }
+  }
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) audioRef.current.pause()
+    }
+  }, [])
+
+  // ── Google Calendar inline setup ────────────────────────────────────────────
+  const copyServiceEmail = () => {
+    navigator.clipboard.writeText(SERVICE_ACCOUNT_EMAIL)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const connectGoogleCalendar = async () => {
+    if (!calendarId.trim() || !businessId || calendarConnecting) return
+    setCalendarConnecting(true)
+    setCalendarError(null)
+
+    try {
+      const session = await supabase.auth.getSession()
+      const token = session.data.session?.access_token
+
+      const res = await fetch('/api/integrations/google-calendar/connect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ businessId, calendarId: calendarId.trim() }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to connect calendar')
+
+      setCalendarConnected(true)
+    } catch (err: any) {
+      setCalendarError(err.message || 'Failed to connect. Make sure you shared the calendar first.')
+    } finally {
+      setCalendarConnecting(false)
+    }
+  }
+
+  // Generate employee config from website URL using AI
+  const generateFromWebsite = async () => {
+    if (!websiteUrl.trim() || !businessId || generating) return
+    setGenerating(true)
+    setError(null)
+
+    try {
+      const session = await supabase.auth.getSession()
+      const token = session.data.session?.access_token
+
+      const res = await fetch('/api/phone-employees/generate-config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          businessId,
+          jobType: form.employeeType || 'receptionist',
+          businessDescription: `Website: ${websiteUrl}. Industry: ${form.industry}. Business name: ${businessName}.`,
+          employeeName: form.employeeName || undefined,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Failed to generate config')
+
+      // Pre-fill form with AI-generated data
+      if (data.greeting) set('greeting', data.greeting)
+      if (data.config) {
+        // Extract services from various config formats
+        const config = data.config
+        let services = ''
+        if (config.services && Array.isArray(config.services)) {
+          services = config.services.map((s: any) => typeof s === 'string' ? s : s.name).join(', ')
+        } else if (config.appointmentTypes && Array.isArray(config.appointmentTypes)) {
+          services = config.appointmentTypes.map((t: any) => t.name + (t.price ? ` $${t.price}` : '')).join(', ')
+        } else if (config.supportedProducts && Array.isArray(config.supportedProducts)) {
+          services = config.supportedProducts.join(', ')
         }
-
-        const result = await response.json()
-        console.log('Onboarding completed:', result)
-
-        // Redirect to dashboard
-        router.push('/dashboard')
-      } catch (error) {
-        console.error('Onboarding error:', error)
-        setSubmitError(error instanceof Error ? error.message : 'Something went wrong')
-        setIsSubmitting(false)
+        if (services) set('services', services)
       }
+
+      setGenerated(true)
+    } catch (err: any) {
+      setError(err.message || 'Failed to generate from website. You can fill in the details manually.')
+    } finally {
+      setGenerating(false)
     }
   }
 
-  const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1)
+  const provision = async () => {
+    if (!businessId) { setError('Session expired. Please sign in again.'); return }
+    setSubmitting(true)
+    setError(null)
+
+    try {
+      const session = await supabase.auth.getSession()
+      const token = session.data.session?.access_token
+
+      const res = await fetch('/api/onboarding/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          businessId,
+          industry: form.industry,
+          address: form.address,
+          hoursNote: form.hoursNote,
+          employeeType: form.employeeType,
+          employeeName: form.employeeName,
+          voiceId: form.voiceId,
+          greeting: form.greeting,
+          services: form.services,
+          escalationPhone: form.escalationPhone,
+          areaCode: form.areaCode || undefined,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) throw new Error(data.error || 'Failed to provision employee')
+
+      set('provisionedPhone', data.phoneNumber || '')
+      setStep(4) // calendar connection step
+    } catch (err: any) {
+      setError(err.message || 'Something went wrong. Please try again.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
-  const updateFormData = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
+  // ── Render steps ────────────────────────────────────────────────────────────
 
   const renderStep = () => {
-    switch (currentStep) {
+    switch (step) {
+      // ── Step 0: Business setup ──────────────────────────────────────────────
+      case 0:
+        return (
+          <div className="max-w-xl mx-auto">
+            {/* Personalized welcome from Maya chat context */}
+            {leadContext && (leadContext.firstName || leadContext.businessType || leadContext.employeeInterest) && (
+              <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+                <img src="/maya-avatars/holo-d1.png" alt="Maya" className="h-10 w-10 rounded-full border-2 border-blue-400/50 flex-shrink-0 object-cover object-top" />
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 mb-0.5">
+                    Welcome{leadContext.firstName ? `, ${leadContext.firstName}` : ''}! I've pre-filled what I learned from our chat.
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    {leadContext.businessType && leadContext.employeeInterest
+                      ? `Industry pre-selected: ${leadContext.businessType} · Suggested employee: ${EMPLOYEE_TYPES.find(t => t.id === leadContext.employeeInterest)?.label || leadContext.employeeInterest}`
+                      : leadContext.businessType
+                      ? `Industry pre-selected: ${leadContext.businessType} — confirm it below`
+                      : leadContext.employeeInterest
+                      ? `Suggested employee: ${EMPLOYEE_TYPES.find(t => t.id === leadContext.employeeInterest)?.label} — you can change it in the next step`
+                      : 'Just confirm your industry below to continue.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Tell us about your business</h2>
+              <p className="text-gray-500">We'll use this to train your AI employee</p>
+            </div>
+
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {INDUSTRIES.map(ind => (
+                    <button
+                      key={ind}
+                      onClick={() => set('industry', ind)}
+                      className={`text-left px-4 py-3 rounded-lg border text-sm font-medium transition-all ${
+                        form.industry === ind
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      {ind}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Address <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={form.address}
+                    onChange={e => set('address', e.target.value)}
+                    placeholder="123 Main St, City, State"
+                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Hours <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={form.hoursNote}
+                    onChange={e => set('hoursNote', e.target.value)}
+                    placeholder="e.g. Mon–Fri 9am–5pm, Sat 10am–3pm"
+                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
+      // ── Step 1: Choose employee type ────────────────────────────────────────
       case 1:
         return (
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                What's your primary use case?
-              </h2>
-              <p className="text-gray-600">
-                Help us customize VoiceFly to your specific needs
-              </p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Hire your first AI employee</h2>
+              <p className="text-gray-500">What role do you need filled?</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
-              {useCases.map((useCase) => (
+              {EMPLOYEE_TYPES.map(type => (
                 <button
-                  key={useCase.id}
-                  onClick={() => updateFormData('primaryUseCase', useCase.id)}
-                  className={`p-6 rounded-xl border-2 text-left transition-all hover:shadow-lg ${
-                    formData.primaryUseCase === useCase.id
+                  key={type.id}
+                  onClick={() => !type.comingSoon && set('employeeType', type.id)}
+                  disabled={type.comingSoon}
+                  className={`relative text-left p-6 rounded-xl border-2 transition-all ${
+                    type.comingSoon
+                      ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                      : form.employeeType === type.id
                       ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
                   }`}
                 >
-                  <div className="flex items-start space-x-4">
-                    <div className={`p-3 rounded-lg ${
-                      formData.primaryUseCase === useCase.id
-                        ? 'bg-blue-100 text-blue-600'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {useCase.icon}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center mb-2">
-                        <h3 className="font-semibold text-gray-900">{useCase.title}</h3>
-                        {useCase.popular && (
-                          <span className="ml-2 bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
-                            Popular
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-gray-600 text-sm">{useCase.description}</p>
-                    </div>
+                  {type.comingSoon && (
+                    <span className="absolute top-4 right-4 text-xs bg-gray-200 text-gray-600 font-semibold px-2 py-0.5 rounded-full">
+                      Coming soon
+                    </span>
+                  )}
+                  {type.popular && !type.comingSoon && (
+                    <span className="absolute top-4 right-4 text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">
+                      Most popular
+                    </span>
+                  )}
+                  <div className={`p-3 rounded-lg w-fit mb-4 ${
+                    type.comingSoon ? 'bg-gray-100 text-gray-400'
+                    : form.employeeType === type.id ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {type.icon}
                   </div>
+                  <h3 className={`font-semibold mb-1 ${type.comingSoon ? 'text-gray-400' : 'text-gray-900'}`}>{type.label}</h3>
+                  <p className={`text-sm ${type.comingSoon ? 'text-gray-400' : 'text-gray-500'}`}>{type.description}</p>
                 </button>
               ))}
             </div>
-
-            <div className="mt-8 grid md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Business Type
-                </label>
-                <select
-                  value={formData.businessType}
-                  onChange={(e) => updateFormData('businessType', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select business type</option>
-                  <option value="saas">SaaS / Technology</option>
-                  <option value="ecommerce">E-commerce</option>
-                  <option value="healthcare">Healthcare</option>
-                  <option value="finance">Finance / Insurance</option>
-                  <option value="realestate">Real Estate</option>
-                  <option value="education">Education</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Team Size
-                </label>
-                <select
-                  value={formData.teamSize}
-                  onChange={(e) => updateFormData('teamSize', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select team size</option>
-                  <option value="1-5">1-5 people</option>
-                  <option value="6-20">6-20 people</option>
-                  <option value="21-50">21-50 people</option>
-                  <option value="51-200">51-200 people</option>
-                  <option value="200+">200+ people</option>
-                </select>
-              </div>
-            </div>
           </div>
         )
 
-      case 2:
+      // ── Step 2: Configure employee ──────────────────────────────────────────
+      case 2: {
+        const selectedVoice = VOICES.find(v => v.id === form.voiceId)
         return (
-          <div className="max-w-2xl mx-auto">
+          <div className="max-w-xl mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Choose Your Voice
-              </h2>
-              <p className="text-gray-600">
-                Select a voice that represents your brand
-              </p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Configure your employee</h2>
+              <p className="text-gray-500">Personalize how they sound and what they know</p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4 mb-8">
-              {voiceOptions.map((voice) => (
-                <button
-                  key={voice.id}
-                  onClick={() => updateFormData('selectedVoice', voice.id)}
-                  className={`p-6 rounded-xl border-2 text-left transition-all hover:shadow-lg ${
-                    formData.selectedVoice === voice.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900">{voice.name}</h3>
-                    <button className={`p-2 rounded-full ${
-                      formData.selectedVoice === voice.id
-                        ? 'bg-blue-100 text-blue-600'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      <Play className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <p className="text-gray-600 text-sm mb-2">{voice.description}</p>
-                  <div className="flex items-center space-x-2 text-xs text-gray-500">
-                    <span className="capitalize">{voice.gender}</span>
-                    <span>•</span>
-                    <span className="capitalize">{voice.personality}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            <div className="bg-blue-50 rounded-lg p-6">
-              <h4 className="font-semibold text-gray-900 mb-2">Voice Customization</h4>
-              <p className="text-gray-600 text-sm mb-4">
-                Want a custom voice that sounds exactly like you or your team? We can create a personalized voice clone.
-              </p>
-              <button className="text-blue-600 hover:text-blue-700 font-semibold text-sm">
-                Learn about voice cloning →
-              </button>
-            </div>
-          </div>
-        )
-
-      case 3:
-        return (
-          <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Connect Your Tools
-              </h2>
-              <p className="text-gray-600">
-                Integrate with your existing CRM and phone systems
-              </p>
-            </div>
-
-            <div className="mb-8">
-              <h3 className="font-semibold text-gray-900 mb-4">CRM System</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {crmOptions.map((crm) => (
-                  <button
-                    key={crm.id}
-                    onClick={() => updateFormData('crmSystem', crm.id)}
-                    className={`p-4 rounded-lg border-2 text-center transition-all hover:shadow-md ${
-                      formData.crmSystem === crm.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    {crm.logo ? (
-                      <div className="w-8 h-8 mx-auto mb-2 bg-gray-200 rounded"></div>
-                    ) : (
-                      <Building className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    )}
-                    <div className="font-medium text-sm">{crm.name}</div>
-                  </button>
-                ))}
+            {/* Website URL auto-config */}
+            <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-4 w-4 text-blue-600" />
+                <label className="text-sm font-semibold text-gray-900">Auto-fill from your website</label>
+                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full font-medium">AI-powered</span>
               </div>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h4 className="font-semibold text-gray-900 mb-2">Phone System (Optional)</h4>
-              <p className="text-gray-600 text-sm mb-4">
-                Connect your existing phone system or use our built-in dialing
-              </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="url"
+                    value={websiteUrl}
+                    onChange={e => setWebsiteUrl(e.target.value)}
+                    placeholder="https://yourbusiness.com"
+                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
                 <button
-                  onClick={() => updateFormData('phoneSystem', 'builtin')}
-                  className={`p-3 rounded-lg border-2 text-center transition-all ${
-                    formData.phoneSystem === 'builtin'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                  onClick={generateFromWebsite}
+                  disabled={!websiteUrl.trim() || generating}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${
+                    websiteUrl.trim() && !generating
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                 >
-                  <Zap className="w-6 h-6 mx-auto mb-1 text-gray-600" />
-                  <div className="font-medium text-sm">VoiceFly Dialer</div>
-                </button>
-                <button
-                  onClick={() => updateFormData('phoneSystem', 'existing')}
-                  className={`p-3 rounded-lg border-2 text-center transition-all ${
-                    formData.phoneSystem === 'existing'
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <Phone className="w-6 h-6 mx-auto mb-1 text-gray-600" />
-                  <div className="font-medium text-sm">Existing System</div>
+                  {generating ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</>
+                  ) : generated ? (
+                    <><RotateCw className="h-4 w-4" /> Regenerate</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4" /> Generate</>
+                  )}
                 </button>
               </div>
-            </div>
-          </div>
-        )
-
-      case 4:
-        return (
-          <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Create Your First Campaign
-              </h2>
-              <p className="text-gray-600">
-                Let's set up your first voice AI campaign
-              </p>
+              {generated && (
+                <p className="text-xs text-green-700 mt-2 flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" /> Greeting and services auto-filled from your website. Edit anything below.
+                </p>
+              )}
+              {error && step === 2 && (
+                <p className="text-xs text-red-600 mt-2">{error}</p>
+              )}
             </div>
 
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Campaign Name
+                <label className="block text-sm font-medium text-gray-700 mb-1">Give them a name</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={form.employeeName}
+                    onChange={e => set('employeeName', e.target.value)}
+                    placeholder="e.g. Alex, Jordan, Sam..."
+                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Choose a voice</label>
+                <p className="text-xs text-gray-400 mb-3">Click the play button to preview each voice</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {VOICES.map(voice => (
+                    <div
+                      key={voice.id}
+                      onClick={() => set('voiceId', voice.id)}
+                      className={`flex items-center justify-between p-4 rounded-lg border-2 transition-all text-left cursor-pointer ${
+                        form.voiceId === voice.id
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <div className="font-medium text-sm text-gray-900">{voice.name}</div>
+                        <div className="text-xs text-gray-500">{voice.description}</div>
+                      </div>
+                      <button
+                        onClick={e => { e.stopPropagation(); playVoicePreview(voice.id) }}
+                        className={`p-2 rounded-full transition-all flex-shrink-0 ml-2 ${
+                          playingVoice === voice.id
+                            ? 'bg-blue-600 text-white'
+                            : loadingVoice === voice.id
+                            ? 'bg-blue-100 text-blue-400'
+                            : form.voiceId === voice.id
+                            ? 'bg-blue-100 text-blue-600 hover:bg-blue-200'
+                            : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                        }`}
+                        title={playingVoice === voice.id ? 'Stop' : 'Preview voice'}
+                      >
+                        {loadingVoice === voice.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : playingVoice === voice.id ? (
+                          <Square className="h-3.5 w-3.5" />
+                        ) : (
+                          <Play className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Opening greeting</label>
+                <textarea
+                  value={form.greeting}
+                  onChange={e => set('greeting', e.target.value)}
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  placeholder="What should they say when they pick up?"
+                />
+                <p className="text-xs text-gray-400 mt-1">Auto-generated — customize it if you'd like</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Services or products you offer <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
-                <input
-                  type="text"
-                  value={formData.campaignName}
-                  onChange={(e) => updateFormData('campaignName', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., Q1 Lead Qualification"
+                <textarea
+                  value={form.services}
+                  onChange={e => set('services', e.target.value)}
+                  rows={2}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  placeholder="e.g. haircuts $40, color $80, beard trim $20..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Campaign Goal
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Escalation phone number <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
-                <select
-                  value={formData.campaignGoal}
-                  onChange={(e) => updateFormData('campaignGoal', e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select your primary goal</option>
-                  <option value="qualify-leads">Qualify inbound leads</option>
-                  <option value="book-appointments">Book sales appointments</option>
-                  <option value="follow-up">Follow up with prospects</option>
-                  <option value="customer-service">Provide customer service</option>
-                  <option value="surveys">Conduct surveys</option>
-                </select>
-              </div>
-
-              <div className="bg-blue-50 rounded-lg p-6">
-                <h4 className="font-semibold text-gray-900 mb-2">Campaign Preview</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Voice:</span>
-                    <span className="font-medium">{voiceOptions.find(v => v.id === formData.selectedVoice)?.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Use Case:</span>
-                    <span className="font-medium capitalize">{formData.primaryUseCase?.replace('-', ' ')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">CRM:</span>
-                    <span className="font-medium">{crmOptions.find(c => c.id === formData.crmSystem)?.name}</span>
-                  </div>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="tel"
+                    value={form.escalationPhone}
+                    onChange={e => set('escalationPhone', e.target.value)}
+                    placeholder="+1 (555) 000-0000 — transfer if AI can't help"
+                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
                 </div>
               </div>
             </div>
           </div>
         )
+      }
 
-      case 5:
+      // ── Step 3: Get phone number ────────────────────────────────────────────
+      case 3:
         return (
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="mb-8">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="h-12 w-12 text-green-600" />
+          <div className="max-w-lg mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Get {form.employeeName || 'your employee'} a phone number</h2>
+              <p className="text-gray-500">We'll provision a dedicated Twilio number — calls <strong>and</strong> SMS included</p>
+            </div>
+
+            <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Preferred area code <span className="text-gray-400 font-normal">(optional — we'll find the best match)</span>
+              </label>
+              <input
+                type="text"
+                value={form.areaCode}
+                onChange={e => set('areaCode', e.target.value.replace(/\D/g, '').slice(0, 3))}
+                placeholder="e.g. 415, 312, 212"
+                maxLength={3}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg font-mono text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent tracking-widest"
+              />
+            </div>
+
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 space-y-3 text-sm">
+              <p className="font-semibold text-blue-900">What you get with this number:</p>
+              <ul className="space-y-1.5 text-blue-800">
+                {[
+                  'Inbound voice calls handled by your AI employee 24/7',
+                  'SMS capability — confirmations, reminders, follow-ups',
+                  'Keep your existing number — just forward calls to this one',
+                  'Full call recordings and transcripts in your dashboard',
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {error && (
+              <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {error}
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                You're All Set!
-              </h2>
-              <p className="text-gray-600 text-lg">
-                Your VoiceFly account is configured and ready to transform your business communication
+            )}
+          </div>
+        )
+
+      // ── Step 4: Connect calendar ─────────────────────────────────────────────
+      case 4: {
+        const isAppointmentType = form.employeeType === 'appointment-scheduler'
+        return (
+          <div className="max-w-lg mx-auto">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="h-8 w-8 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Connect your calendar</h2>
+              <p className="text-gray-500">
+                {isAppointmentType
+                  ? `Let ${form.employeeName || 'your employee'} book appointments directly on your calendar`
+                  : `Optional: let ${form.employeeName || 'your employee'} check your availability for callers`
+                }
               </p>
             </div>
 
-            {submitError && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                {submitError}
+            <div className="space-y-4 mb-8">
+              {/* Google Calendar — inline setup */}
+              <div className="bg-white border border-gray-200 rounded-xl p-5">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="p-2.5 bg-white border border-gray-200 rounded-lg">
+                    <svg className="h-6 w-6" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Google Calendar</h3>
+                    <p className="text-sm text-gray-500 mt-0.5">3 quick steps to connect</p>
+                  </div>
+                </div>
+
+                {calendarConnected ? (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-green-900 text-sm">Calendar connected!</p>
+                      <p className="text-xs text-green-700 mt-0.5">{form.employeeName || 'Your employee'} can now check your availability and book appointments.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Step 1: Copy service account email */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 mb-2">Copy this email address</p>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-xs font-mono text-gray-700 truncate">
+                            {SERVICE_ACCOUNT_EMAIL}
+                          </code>
+                          <button
+                            onClick={copyServiceEmail}
+                            className="p-2 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0"
+                            title="Copy email"
+                          >
+                            {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4 text-gray-500" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Step 2: Share calendar instructions */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900 mb-1">Share your Google Calendar</p>
+                        <ol className="text-xs text-gray-600 space-y-1.5 mb-2">
+                          <li className="flex items-start gap-1.5">
+                            <span className="text-gray-400 font-medium">a.</span>
+                            <span>Open{' '}
+                              <a href="https://calendar.google.com/calendar/r/settings" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline inline-flex items-center gap-0.5">
+                                Google Calendar Settings <ExternalLink className="h-3 w-3 inline" />
+                              </a>
+                            </span>
+                          </li>
+                          <li className="flex items-start gap-1.5">
+                            <span className="text-gray-400 font-medium">b.</span>
+                            <span>Click your calendar name in the left sidebar</span>
+                          </li>
+                          <li className="flex items-start gap-1.5">
+                            <span className="text-gray-400 font-medium">c.</span>
+                            <span>Scroll to <strong>&quot;Share with specific people&quot;</strong> → click <strong>&quot;+ Add people and groups&quot;</strong></span>
+                          </li>
+                          <li className="flex items-start gap-1.5">
+                            <span className="text-gray-400 font-medium">d.</span>
+                            <span>Paste the email above, select <strong>&quot;Make changes to events&quot;</strong>, then click <strong>&quot;Send&quot;</strong></span>
+                          </li>
+                        </ol>
+                      </div>
+                    </div>
+
+                    {/* Step 3: Paste Calendar ID */}
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900 mb-1">Enter your Calendar ID</p>
+                        <p className="text-xs text-gray-500 mb-2">
+                          In the same settings page, scroll down to <strong>&quot;Integrate calendar&quot;</strong>. Copy the <strong>Calendar ID</strong> — it usually looks like <code className="bg-gray-100 px-1 rounded text-gray-600">your-email@gmail.com</code>
+                        </p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={calendarId}
+                            onChange={e => setCalendarId(e.target.value)}
+                            placeholder="your-email@gmail.com or calendar ID"
+                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <button
+                            onClick={connectGoogleCalendar}
+                            disabled={!calendarId.trim() || calendarConnecting}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${
+                              calendarId.trim() && !calendarConnecting
+                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            }`}
+                          >
+                            {calendarConnecting ? (
+                              <><Loader2 className="h-4 w-4 animate-spin" /> Connecting...</>
+                            ) : (
+                              'Connect'
+                            )}
+                          </button>
+                        </div>
+                        {calendarError && (
+                          <p className="text-xs text-red-600 mt-2">{calendarError}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Calendly option — inline status */}
+              <div className="bg-white border border-gray-200 rounded-xl p-5">
+                <div className="flex items-start gap-4 mb-3">
+                  <div className="p-2.5 bg-white border border-gray-200 rounded-lg">
+                    <svg className="h-6 w-6" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" fill="#006BFF" />
+                      <path d="M15.5 8.5a4 4 0 1 0 0 7h0a3 3 0 0 0 2.12-.88" stroke="white" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">Calendly</h3>
+                    <p className="text-sm text-gray-500 mt-0.5">Connect with one click — you'll authorize on Calendly and come right back</p>
+                  </div>
+                </div>
+
+                {calendlyConnected ? (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-green-900 text-sm">Calendly connected!</p>
+                      <p className="text-xs text-green-700 mt-0.5">{form.employeeName || 'Your employee'} can now book appointments through your Calendly event types.</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <button
+                      onClick={() => {
+                        if (businessId) {
+                          window.location.href = `/api/integrations/calendly/oauth?businessId=${businessId}&from=onboarding`
+                        }
+                      }}
+                      className="w-full bg-[#006BFF] text-white font-medium px-4 py-2.5 rounded-lg hover:bg-[#0057d4] transition-colors flex items-center justify-center gap-2 text-sm"
+                    >
+                      Connect Calendly <ExternalLink className="h-3.5 w-3.5" />
+                    </button>
+                    {calendlyError && (
+                      <p className="text-xs text-red-600 mt-2">{calendlyError}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {isAppointmentType && (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800 mb-6">
+                <p className="font-semibold mb-1">Recommended for appointment setters</p>
+                <p>Without a calendar connection, {form.employeeName || 'your employee'} won't be able to check availability or book appointments. You can always connect one later from Settings.</p>
               </div>
             )}
 
-            <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-xl p-8 mb-8">
-              <h3 className="font-semibold text-gray-900 mb-4">What's Next?</h3>
-              <div className="grid md:grid-cols-3 gap-4 text-sm">
-                <div className="text-center">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Phone className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div className="font-medium">Test Your Voice</div>
-                  <div className="text-gray-600">Make a sample call</div>
-                </div>
-                <div className="text-center">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <Users className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div className="font-medium">Import Contacts</div>
-                  <div className="text-gray-600">Upload your lead list</div>
-                </div>
-                <div className="text-center">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <BarChart3 className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div className="font-medium">View Analytics</div>
-                  <div className="text-gray-600">Track performance</div>
-                </div>
-              </div>
+            <div className="flex gap-3">
+              <button
+                onClick={skipCalendarStep}
+                className="flex-1 px-6 py-3 rounded-xl font-medium text-gray-600 border border-gray-200 hover:bg-gray-50 transition-colors"
+              >
+                Skip for now
+              </button>
+              <button
+                onClick={() => setStep(5)}
+                className="flex-1 bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                Continue <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )
+      }
+
+      // ── Step 5: Live! ───────────────────────────────────────────────────────
+      case 5:
+        return (
+          <div className="max-w-lg mx-auto text-center">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="h-12 w-12 text-green-500" />
             </div>
 
-            <div className="bg-blue-50 rounded-lg p-6 mb-8">
-              <h4 className="font-semibold text-gray-900 mb-2">Configuration Summary</h4>
-              <div className="space-y-2 text-sm text-left">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Use Case:</span>
-                  <span className="font-medium capitalize">{formData.primaryUseCase?.replace('-', ' ')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Business Type:</span>
-                  <span className="font-medium capitalize">{formData.businessType}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Voice:</span>
-                  <span className="font-medium">{voiceOptions.find(v => v.id === formData.selectedVoice)?.name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">CRM:</span>
-                  <span className="font-medium">{crmOptions.find(c => c.id === formData.crmSystem)?.name}</span>
-                </div>
-              </div>
-            </div>
-
-            <p className="text-sm text-gray-500 mb-4">
-              Click "Complete Setup" to save your configuration and go to dashboard
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              {form.employeeName || 'Your employee'} is live!
+            </h2>
+            <p className="text-gray-500 mb-8">
+              Your AI phone employee is active and ready to take calls right now.
             </p>
+
+            {form.provisionedPhone ? (
+              <>
+                <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-8 text-white mb-6">
+                  <p className="text-blue-200 text-sm mb-2">Your new phone number</p>
+                  <p className="text-4xl font-bold font-mono tracking-wide mb-4">{form.provisionedPhone}</p>
+                  <a
+                    href={`tel:${form.provisionedPhone}`}
+                    className="inline-block bg-white text-blue-700 font-semibold px-8 py-3 rounded-xl hover:bg-blue-50 transition-colors"
+                  >
+                    Call now to test {form.employeeName}
+                  </a>
+                </div>
+
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-800 text-left mb-6">
+                  <p className="font-semibold mb-2">Want to keep your existing number?</p>
+                  <p>Forward calls from your current number to <strong>{form.provisionedPhone}</strong>. Most carriers let you do this in your account settings — search "call forwarding" + your carrier name for instructions.</p>
+                </div>
+              </>
+            ) : (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-800 mb-6">
+                <p className="font-semibold mb-1">Phone number provisioning is in progress</p>
+                <p>Check your dashboard in a moment — your number will appear there once it's ready.</p>
+              </div>
+            )}
+
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="w-full bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            >
+              Go to your dashboard <ArrowRight className="h-5 w-5" />
+            </button>
           </div>
         )
 
@@ -539,99 +1145,80 @@ export default function OnboardingPage() {
     }
   }
 
-  const isStepValid = () => {
-    switch (currentStep) {
-      case 1:
-        return formData.primaryUseCase && formData.businessType && formData.teamSize
-      case 2:
-        return formData.selectedVoice
-      case 3:
-        return formData.crmSystem
-      case 4:
-        return formData.campaignName && formData.campaignGoal
-      case 5:
-        return true
-      default:
-        return false
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Mic className="h-5 w-5 text-white" />
-              </div>
-              <span className="text-xl font-bold text-gray-900">VoiceFly</span>
+      <div className="bg-white border-b border-gray-200 px-4">
+        <div className="max-w-4xl mx-auto h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
+              <Mic className="h-4 w-4 text-white" />
             </div>
-
-            <div className="text-sm text-gray-600">
-              Step {currentStep} of {totalSteps}
-            </div>
+            <span className="font-bold text-gray-900">VoiceFly</span>
           </div>
+          {step < TOTAL_STEPS - 1 && step !== 4 && (
+            <div className="flex items-center gap-4">
+              <StepIndicator current={step} total={4} />
+              <span className="text-sm text-gray-400">Step {step + 1} of 4</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="h-2 bg-gray-200 rounded-full">
-            <div
-              className="h-2 bg-blue-600 rounded-full transition-all duration-300"
-              style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-            />
-          </div>
+      {/* Progress bar */}
+      {step < TOTAL_STEPS - 1 && step !== 4 && (
+        <div className="h-1 bg-gray-200">
+          <div
+            className="h-1 bg-blue-600 transition-all duration-500"
+            style={{ width: `${((step + 1) / (TOTAL_STEPS - 1)) * 100}%` }}
+          />
         </div>
-      </div>
+      )}
 
-      {/* Main Content */}
-      <div className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Content */}
+      <div className="py-12 px-4">
+        <div className="max-w-4xl mx-auto">
           {renderStep()}
+        </div>
+      </div>
 
-          {/* Navigation */}
-          <div className="max-w-2xl mx-auto mt-12 flex justify-between">
+      {/* Footer nav — hidden on calendar step (has own buttons) and success screen */}
+      {step < TOTAL_STEPS - 1 && step !== 4 && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4">
+          <div className="max-w-xl mx-auto flex justify-between items-center">
             <button
-              onClick={handlePrevious}
-              disabled={currentStep === 1}
-              className={`flex items-center px-6 py-3 rounded-lg font-semibold transition-colors ${
-                currentStep === 1
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-gray-700 hover:bg-gray-100'
+              onClick={() => setStep(s => Math.max(0, s - 1))}
+              disabled={step === 0}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-colors ${
+                step === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Previous
+              <ArrowLeft className="h-4 w-4" /> Back
             </button>
 
             <button
               onClick={handleNext}
-              disabled={!isStepValid() || isSubmitting}
-              className={`flex items-center px-6 py-3 rounded-lg font-semibold transition-colors ${
-                isStepValid() && !isSubmitting
+              disabled={!canAdvance() || submitting}
+              className={`flex items-center gap-2 px-8 py-2.5 rounded-lg font-semibold transition-all ${
+                canAdvance() && !submitting
                   ? 'bg-blue-600 text-white hover:bg-blue-700'
-                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-gray-200 text-gray-400 cursor-not-allowed'
               }`}
             >
-              {isSubmitting ? (
+              {submitting ? (
                 <>
-                  <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  Saving...
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Setting up...
                 </>
+              ) : step === 3 ? (
+                <>Activate employee <ArrowRight className="h-4 w-4" /></>
               ) : (
-                <>
-                  {currentStep === totalSteps ? 'Complete Setup' : 'Next'}
-                  <ArrowRight className="h-5 w-5 ml-2" />
-                </>
+                <>Next <ArrowRight className="h-4 w-4" /></>
               )}
             </button>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

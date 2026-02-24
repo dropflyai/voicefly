@@ -63,7 +63,7 @@ async function createCustomVapiAgent(
         stability: businessProfile.voiceSettings.stability
       },
       firstMessage: businessProfile.customGreeting,
-      serverUrl: `${WEBHOOK_BASE_URL}/webhook/vapi/${businessId}`,
+      serverUrl: `${WEBHOOK_BASE_URL}/api/webhooks/phone-employee`,
       serverUrlSecret: businessId,
       metadata: {
         businessId: businessId,
@@ -129,7 +129,7 @@ async function createJobSpecificSharedAgent(mayaJobId: string, businessId: strin
         stability: jobTemplate.voiceSettings.stability
       },
       firstMessage: jobTemplate.defaultGreeting,
-      serverUrl: `${WEBHOOK_BASE_URL}/webhook/vapi/shared-${mayaJobId}`,
+      serverUrl: `${WEBHOOK_BASE_URL}/api/webhooks/phone-employee`,
       serverUrlSecret: `shared-${mayaJobId}`,
       metadata: {
         agentType: 'shared-job-specific',

@@ -18,6 +18,9 @@ export { LeadQualificationAgent, leadQualificationAgent } from './lead-qualifica
 export { CustomerRetentionAgent, customerRetentionAgent } from './customer-retention'
 export { AppointmentRecoveryAgent, appointmentRecoveryAgent } from './appointment-recovery'
 export { RevenueIntelligenceAgent, revenueIntelligenceAgent } from './revenue-intelligence'
+export { CustomerMemoryAgent, customerMemoryAgent } from './customer-memory'
+export { RoutingAgent, routingAgent } from './routing-agent'
+export { SetupAgent, setupAgent } from './setup-agent'
 
 // Registry
 export { AgentRegistry, agentRegistry } from './agent-registry'

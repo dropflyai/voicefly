@@ -390,7 +390,7 @@ export function createOrderTakerEmployee(params: {
     complexity: 'simple',
 
     voice: params.voice || {
-      provider: 'elevenlabs',
+      provider: '11labs',
       voiceId: 'sarah',
       speed: 1.05,  // Slightly faster for efficiency
       stability: 0.75,

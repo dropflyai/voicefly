@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Layout from '../../../components/Layout'
 import ProtectedRoute from '../../../components/ProtectedRoute'
@@ -23,6 +23,13 @@ import {
   CheckIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
+  PencilSquareIcon,
+  MagnifyingGlassIcon,
+  GlobeAltIcon,
+  DocumentArrowUpIcon,
+  MicrophoneIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
 import VoiceInterview from '../../../components/VoiceInterview'
 
@@ -70,6 +77,42 @@ const JOB_TYPE_INFO: Record<string, { label: string; icon: any; color: string; d
     color: 'amber',
     description: 'Handles inquiries, complaints, and support',
   },
+  'after-hours-emergency': {
+    label: 'After-Hours Emergency',
+    icon: ExclamationTriangleIcon,
+    color: 'red',
+    description: 'Triage urgent calls, notify on-call staff, and handle emergencies',
+  },
+  'restaurant-host': {
+    label: 'Restaurant Host',
+    icon: ClipboardDocumentListIcon,
+    color: 'orange',
+    description: 'Handle reservations, waitlist, and dining inquiries',
+  },
+  'survey-caller': {
+    label: 'Survey Caller',
+    icon: SparklesIcon,
+    color: 'teal',
+    description: 'Call customers after visits to collect feedback and NPS scores',
+  },
+  'lead-qualifier': {
+    label: 'Lead Qualifier',
+    icon: MagnifyingGlassIcon,
+    color: 'violet',
+    description: 'Screen inbound prospects, score leads, and book discovery calls',
+  },
+  'appointment-reminder': {
+    label: 'Appointment Reminder',
+    icon: CalendarDaysIcon,
+    color: 'sky',
+    description: 'Call customers before appointments to confirm and reduce no-shows',
+  },
+  'collections': {
+    label: 'Collections',
+    icon: ClipboardDocumentListIcon,
+    color: 'rose',
+    description: 'Outbound payment collection with FDCPA-compliant scripts',
+  },
 }
 
 const TONE_OPTIONS = [
@@ -79,12 +122,248 @@ const TONE_OPTIONS = [
   { value: 'casual', label: 'Casual', description: 'Relaxed and conversational' },
 ]
 
-const VOICE_OPTIONS = [
-  { value: 'sarah', label: 'Sarah', description: 'Warm and professional female voice' },
-  { value: 'emma', label: 'Emma', description: 'Friendly and upbeat female voice' },
-  { value: 'michael', label: 'Michael', description: 'Confident and clear male voice' },
-  { value: 'james', label: 'James', description: 'Deep and authoritative male voice' },
+const TIMEZONE_OPTIONS = [
+  'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+  'America/Phoenix', 'America/Anchorage', 'Pacific/Honolulu',
+  'America/Toronto', 'America/Vancouver', 'America/Montreal',
+  'America/Sao_Paulo', 'America/Argentina/Buenos_Aires', 'America/Bogota',
+  'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Madrid',
+  'Europe/Rome', 'Europe/Amsterdam', 'Europe/Zurich', 'Europe/Stockholm',
+  'Europe/Helsinki', 'Europe/Warsaw', 'Europe/Istanbul', 'Europe/Moscow',
+  'Africa/Cairo', 'Africa/Johannesburg', 'Africa/Lagos', 'Africa/Nairobi',
+  'Asia/Dubai', 'Asia/Kolkata', 'Asia/Colombo', 'Asia/Bangkok',
+  'Asia/Singapore', 'Asia/Hong_Kong', 'Asia/Shanghai', 'Asia/Tokyo',
+  'Asia/Seoul', 'Asia/Jakarta', 'Asia/Manila', 'Asia/Karachi',
+  'Asia/Riyadh', 'Asia/Tehran',
+  'Australia/Sydney', 'Australia/Melbourne', 'Australia/Brisbane',
+  'Australia/Perth', 'Pacific/Auckland', 'Pacific/Fiji',
 ]
+
+// ============================================
+// VOICE PICKER COMPONENT
+// ============================================
+
+interface VoiceItem {
+  voiceId: string
+  name: string
+  gender: string | null
+  age: string | null
+  accent: string | null
+  description: string | null
+  previewUrl: string | null
+}
+
+function VoicePicker({
+  voiceId,
+  voiceName,
+  voicePreviewUrl,
+  onSelect,
+}: {
+  voiceId: string
+  voiceName: string
+  voicePreviewUrl: string | null
+  onSelect: (v: { voiceId: string; voiceName: string; voicePreviewUrl: string | null }) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [voices, setVoices] = useState<VoiceItem[]>([])
+  const [search, setSearch] = useState('')
+  const [gender, setGender] = useState<'all' | 'male' | 'female'>('all')
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [playingId, setPlayingId] = useState<string | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const fetchVoices = useCallback(async (searchTerm: string, genderFilter: string, pg: number, append = false) => {
+    setLoading(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token ?? ''
+      const params = new URLSearchParams({ page: String(pg), limit: '16' })
+      if (searchTerm) params.set('search', searchTerm)
+      if (genderFilter !== 'all') params.set('gender', genderFilter)
+
+      const res = await fetch(`/api/voices?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      setVoices(prev => append ? [...prev, ...data.voices] : data.voices)
+      setHasMore(data.hasMore ?? false)
+    } catch {}
+    finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => {
+    if (!open) return
+    if (voices.length === 0) fetchVoices('', 'all', 1)
+  }, [open, fetchVoices, voices.length])
+
+  const handleSearch = (val: string) => {
+    setSearch(val)
+    if (searchTimer.current) clearTimeout(searchTimer.current)
+    searchTimer.current = setTimeout(() => {
+      setPage(1)
+      fetchVoices(val, gender, 1)
+    }, 300)
+  }
+
+  const handleGender = (g: 'all' | 'male' | 'female') => {
+    setGender(g)
+    setPage(1)
+    fetchVoices(search, g, 1)
+  }
+
+  const handleLoadMore = () => {
+    const next = page + 1
+    setPage(next)
+    fetchVoices(search, gender, next, true)
+  }
+
+  const playPreview = (v: VoiceItem, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!v.previewUrl) return
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
+    if (playingId === v.voiceId) { setPlayingId(null); return }
+    const audio = new Audio(v.previewUrl)
+    audioRef.current = audio
+    setPlayingId(v.voiceId)
+    audio.play()
+    audio.onended = () => setPlayingId(null)
+  }
+
+  const selectVoice = (v: VoiceItem) => {
+    onSelect({ voiceId: v.voiceId, voiceName: v.name, voicePreviewUrl: v.previewUrl })
+    setOpen(false)
+    if (audioRef.current) { audioRef.current.pause(); setPlayingId(null) }
+  }
+
+  return (
+    <div>
+      {/* Selected voice chip */}
+      <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg flex-1 min-w-0">
+          <span className="text-sm font-medium text-blue-900 truncate">{voiceName || 'No voice selected'}</span>
+          {voicePreviewUrl && (
+            <button
+              type="button"
+              onClick={() => {
+                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; setPlayingId(null); return }
+                const audio = new Audio(voicePreviewUrl)
+                audioRef.current = audio
+                setPlayingId('selected')
+                audio.play()
+                audio.onended = () => setPlayingId(null)
+              }}
+              className="text-blue-600 hover:text-blue-800 flex-shrink-0 text-xs"
+            >
+              {playingId === 'selected' ? '⏹' : '▶ Preview'}
+            </button>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex-shrink-0"
+        >
+          {open ? 'Close' : 'Browse voices'}
+        </button>
+      </div>
+
+      {/* Browser panel */}
+      {open && (
+        <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+          {/* Filters */}
+          <div className="p-3 border-b border-gray-100 space-y-2">
+            <div className="relative">
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={e => handleSearch(e.target.value)}
+                placeholder="Search voices..."
+                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div className="flex gap-2">
+              {(['all', 'female', 'male'] as const).map(g => (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => handleGender(g)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors ${
+                    gender === g ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Voice grid */}
+          <div className="max-h-72 overflow-y-auto p-2">
+            {loading && voices.length === 0 ? (
+              <div className="text-center py-8 text-sm text-gray-500">Loading voices...</div>
+            ) : voices.length === 0 ? (
+              <div className="text-center py-8 text-sm text-gray-500">No voices found</div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {voices.map(v => (
+                  <button
+                    key={v.voiceId}
+                    type="button"
+                    onClick={() => selectVoice(v)}
+                    className={`text-left p-2 rounded-lg border transition-all ${
+                      voiceId === v.voiceId
+                        ? 'border-blue-400 bg-blue-50'
+                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-1">
+                      <span className="text-sm font-medium text-gray-900 truncate">{v.name}</span>
+                      {v.previewUrl && (
+                        <button
+                          type="button"
+                          onClick={e => playPreview(v, e)}
+                          className="text-blue-500 hover:text-blue-700 flex-shrink-0 text-xs mt-0.5"
+                        >
+                          {playingId === v.voiceId ? '⏹' : '▶'}
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {v.gender && (
+                        <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded capitalize">{v.gender}</span>
+                      )}
+                      {v.accent && (
+                        <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded capitalize">{v.accent}</span>
+                      )}
+                      {v.age && (
+                        <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded capitalize">{v.age}</span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {hasMore && (
+              <button
+                type="button"
+                onClick={handleLoadMore}
+                disabled={loading}
+                className="w-full mt-2 py-2 text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
+              >
+                {loading ? 'Loading...' : 'Load more voices'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
 
@@ -107,11 +386,212 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 }
 
 // ============================================
+// INTEGRATION CATALOG
+// ============================================
+
+const INTEGRATIONS_BY_JOB: Record<string, string[]> = {
+  'receptionist':           ['google-calendar', 'calendly'],
+  'personal-assistant':     ['google-calendar', 'calendly'],
+  'order-taker':            ['toast', 'square', 'clover', 'shopify'],
+  'appointment-scheduler':  ['google-calendar', 'calendly'],
+  'restaurant-host':        ['google-calendar', 'opentable', 'resy'],
+  'lead-qualifier':         ['hubspot', 'gohighlevel'],
+  'customer-service':       ['hubspot', 'shopify'],
+  'appointment-reminder':   ['google-calendar', 'calendly'],
+  'survey-caller':          [],
+  'collections':            ['stripe'],
+  'after-hours-emergency':  [],
+}
+
+const VOICEFLY_BUILTIN: Record<string, { name: string; description: string }> = {
+  'receptionist':           { name: 'VoiceFly Calendar',     description: 'Appointments stored in VoiceFly — no external calendar needed' },
+  'personal-assistant':     { name: 'VoiceFly Calendar',     description: 'Calendar and tasks stored in VoiceFly' },
+  'order-taker':            { name: 'VoiceFly Menu Builder', description: 'Enter your menu in the next step — no POS connection needed' },
+  'appointment-scheduler':  { name: 'VoiceFly Calendar',     description: 'Appointments stored in VoiceFly — no external calendar needed' },
+  'restaurant-host':        { name: 'VoiceFly Reservations', description: 'Reservations stored and managed entirely in VoiceFly' },
+  'lead-qualifier':         { name: 'VoiceFly Contacts',     description: 'Leads stored in VoiceFly — no external CRM needed' },
+  'customer-service':       { name: 'VoiceFly Contacts',     description: 'Customer data stored in VoiceFly' },
+  'appointment-reminder':   { name: 'VoiceFly Calendar',     description: 'Uses your existing VoiceFly appointments — no setup needed' },
+  'survey-caller':          { name: 'VoiceFly Built-in',     description: 'Uses your VoiceFly appointment history — no setup needed' },
+  'collections':            { name: 'VoiceFly Receivables',  description: 'Manage accounts receivable directly in VoiceFly' },
+  'after-hours-emergency':  { name: 'VoiceFly Built-in',     description: 'No external integrations needed for this employee type' },
+}
+
+interface IntegrationFieldDef {
+  name: string
+  label: string
+  placeholder: string
+  type?: string
+  hint?: string
+  optional?: boolean
+}
+
+interface IntegrationDef {
+  name: string
+  description: string
+  category: string
+  abbrev: string
+  color: string
+  fields: IntegrationFieldDef[]
+  connectUrl: string
+  syncUrl: string | null
+  importField: 'menu' | 'appointmentTypes' | null
+  comingSoon?: boolean
+}
+
+const INTEGRATION_CATALOG: Record<string, IntegrationDef> = {
+  'google-calendar': {
+    name: 'Google Calendar',
+    description: 'Live availability checks and booking during calls',
+    category: 'Calendar',
+    abbrev: 'GC',
+    color: 'bg-blue-100 text-blue-700',
+    fields: [
+      { name: 'calendarId', label: 'Calendar ID', placeholder: 'your-email@gmail.com', hint: 'Share your calendar with our service account first, then paste your Google Calendar ID here.' },
+    ],
+    connectUrl: '/api/integrations/google-calendar/connect',
+    syncUrl: null,
+    importField: null,
+  },
+  'calendly': {
+    name: 'Calendly',
+    description: 'Import your event types as appointment types',
+    category: 'Scheduling',
+    abbrev: 'CL',
+    color: 'bg-indigo-100 text-indigo-700',
+    fields: [
+      { name: 'accessToken', label: 'Personal Access Token', placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', type: 'password' },
+    ],
+    connectUrl: '/api/integrations/calendly/connect',
+    syncUrl: '/api/integrations/calendly/sync',
+    importField: 'appointmentTypes',
+  },
+  'toast': {
+    name: 'Toast POS',
+    description: 'Auto-import your menu (categories, items, prices, modifiers)',
+    category: 'POS',
+    abbrev: 'TP',
+    color: 'bg-orange-100 text-orange-700',
+    fields: [
+      { name: 'clientId', label: 'Client ID', placeholder: '' },
+      { name: 'clientSecret', label: 'Client Secret', placeholder: '', type: 'password' },
+      { name: 'restaurantGuid', label: 'Restaurant GUID', placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' },
+    ],
+    connectUrl: '/api/integrations/toast/connect',
+    syncUrl: '/api/integrations/toast/sync',
+    importField: 'menu',
+  },
+  'square': {
+    name: 'Square',
+    description: 'Auto-import your catalog and items',
+    category: 'POS',
+    abbrev: 'SQ',
+    color: 'bg-gray-100 text-gray-700',
+    fields: [
+      { name: 'accessToken', label: 'Access Token', placeholder: 'EAAAxxxxxxxx', type: 'password' },
+      { name: 'locationId', label: 'Location ID', placeholder: 'Lxxxxxxxxxx', optional: true },
+    ],
+    connectUrl: '/api/integrations/square/connect',
+    syncUrl: '/api/integrations/square/sync',
+    importField: 'menu',
+  },
+  'clover': {
+    name: 'Clover',
+    description: 'Auto-import your menu from Clover',
+    category: 'POS',
+    abbrev: 'CV',
+    color: 'bg-green-100 text-green-700',
+    fields: [
+      { name: 'accessToken', label: 'Access Token', placeholder: '', type: 'password' },
+      { name: 'merchantId', label: 'Merchant ID', placeholder: '' },
+    ],
+    connectUrl: '/api/integrations/clover/connect',
+    syncUrl: '/api/integrations/clover/sync',
+    importField: 'menu',
+  },
+  'shopify': {
+    name: 'Shopify',
+    description: 'Sync your product catalog as menu items',
+    category: 'E-commerce',
+    abbrev: 'SH',
+    color: 'bg-green-100 text-green-800',
+    fields: [
+      { name: 'shopDomain', label: 'Store Domain', placeholder: 'your-store.myshopify.com' },
+      { name: 'accessToken', label: 'Admin API Access Token', placeholder: 'shpat_xxxxxxxx', type: 'password' },
+    ],
+    connectUrl: '/api/integrations/shopify/connect',
+    syncUrl: '/api/integrations/shopify/sync',
+    importField: 'menu',
+  },
+  'hubspot': {
+    name: 'HubSpot',
+    description: 'Push leads and contacts to your CRM after calls',
+    category: 'CRM',
+    abbrev: 'HS',
+    color: 'bg-orange-100 text-orange-800',
+    fields: [
+      { name: 'token', label: 'Private App Token', placeholder: 'pat-na1-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', type: 'password' },
+    ],
+    connectUrl: '/api/integrations/hubspot/connect',
+    syncUrl: null,
+    importField: null,
+  },
+  'opentable': {
+    name: 'OpenTable',
+    description: 'Live reservation management through OpenTable',
+    category: 'Reservations',
+    abbrev: 'OT',
+    color: 'bg-red-100 text-red-700',
+    fields: [],
+    connectUrl: '',
+    syncUrl: null,
+    importField: null,
+    comingSoon: true,
+  },
+  'resy': {
+    name: 'Resy',
+    description: 'Live reservation management through Resy',
+    category: 'Reservations',
+    abbrev: 'RS',
+    color: 'bg-purple-100 text-purple-700',
+    fields: [],
+    connectUrl: '',
+    syncUrl: null,
+    importField: null,
+    comingSoon: true,
+  },
+  'gohighlevel': {
+    name: 'GoHighLevel',
+    description: 'Push leads to your GHL account after calls',
+    category: 'CRM',
+    abbrev: 'GHL',
+    color: 'bg-blue-100 text-blue-800',
+    fields: [],
+    connectUrl: '',
+    syncUrl: null,
+    importField: null,
+    comingSoon: true,
+  },
+  'stripe': {
+    name: 'Stripe',
+    description: 'Look up account balances during collection calls',
+    category: 'Payments',
+    abbrev: 'ST',
+    color: 'bg-purple-100 text-purple-700',
+    fields: [],
+    connectUrl: '',
+    syncUrl: null,
+    importField: null,
+    comingSoon: true,
+  },
+}
+
+// ============================================
 // WIZARD SUB-COMPONENTS
 // ============================================
 
 function StepIndicator({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) {
-  const stepLabels = ['Role & Voice', 'Business Info', 'Review Config', 'Confirm']
+  const stepLabels = ['Role & Voice', 'Business Info', 'Integrations', 'Data Sources', 'Review Config', 'Confirm']
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-2">
@@ -223,7 +703,7 @@ function WizardStep1({
   wizardData: WizardData
   setWizardData: React.Dispatch<React.SetStateAction<WizardData>>
 }) {
-  const hireableRoles = ['receptionist', 'personal-assistant', 'order-taker']
+  const hireableRoles = ['receptionist', 'personal-assistant', 'order-taker', 'after-hours-emergency', 'restaurant-host', 'lead-qualifier', 'survey-caller', 'appointment-reminder', 'collections']
 
   return (
     <div className="space-y-6">
@@ -262,6 +742,44 @@ function WizardStep1({
           })}
         </div>
       </div>
+
+      {/* Personal Assistant — Owner Role */}
+      {wizardData.jobType === 'personal-assistant' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-3">What type of professional is this assistant for?</label>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { value: 'general', label: 'General', description: 'Scheduling & messages' },
+              { value: 'medical', label: 'Medical', description: 'HIPAA-aware, clinical triage' },
+              { value: 'legal', label: 'Legal', description: 'Confidentiality, case handling' },
+              { value: 'real-estate', label: 'Real Estate', description: 'Listings, leads, showings' },
+              { value: 'executive', label: 'Executive', description: 'Board-level screening' },
+              { value: 'consultant', label: 'Consultant', description: 'Lead qualification' },
+              { value: 'financial', label: 'Financial', description: 'Advisor compliance' },
+            ].map(role => {
+              const isSelected = wizardData.ownerRole === role.value
+              return (
+                <button
+                  key={role.value}
+                  type="button"
+                  onClick={() => setWizardData(prev => ({ ...prev, ownerRole: role.value }))}
+                  className={`flex flex-col p-3 rounded-lg border-2 text-left transition-all ${
+                    isSelected
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                  }`}
+                >
+                  <span className={`font-medium text-sm ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>{role.label}</span>
+                  <span className={`text-xs mt-0.5 ${isSelected ? 'text-blue-600' : 'text-gray-500'}`}>{role.description}</span>
+                </button>
+              )
+            })}
+          </div>
+          <p className="mt-2 text-xs text-gray-400">
+            This adds industry-specific guidance to your assistant so it handles calls appropriately for your field.
+          </p>
+        </div>
+      )}
 
       {/* Employee Name */}
       <div>
@@ -305,29 +823,16 @@ function WizardStep1({
 
       {/* Voice Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">Voice</label>
-        <div className="flex flex-wrap gap-2">
-          {VOICE_OPTIONS.map(voice => {
-            const isSelected = wizardData.voiceId === voice.value
-            return (
-              <button
-                key={voice.value}
-                type="button"
-                onClick={() => setWizardData(prev => ({ ...prev, voiceId: voice.value }))}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  isSelected
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {voice.label}
-              </button>
-            )
-          })}
-        </div>
-        <p className="mt-2 text-xs text-gray-400">
-          {VOICE_OPTIONS.find(v => v.value === wizardData.voiceId)?.description}
-        </p>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Voice</label>
+        <VoicePicker
+          voiceId={wizardData.voiceId}
+          voiceName={wizardData.voiceName || wizardData.voiceId}
+          voicePreviewUrl={wizardData.voicePreviewUrl || null}
+          onSelect={({ voiceId, voiceName, voicePreviewUrl }) =>
+            setWizardData(prev => ({ ...prev, voiceId, voiceName, voicePreviewUrl: voicePreviewUrl ?? null }))
+          }
+        />
+        <p className="mt-1 text-xs text-gray-400">Browse ElevenLabs voices — click ▶ to preview before selecting.</p>
       </div>
     </div>
   )
@@ -348,8 +853,11 @@ function WizardStep2({
 }) {
   const [interviewConfig, setInterviewConfig] = useState<Record<string, any> | null>(null)
   const [isLoadingConfig, setIsLoadingConfig] = useState(false)
+  const [isExtracting, setIsExtracting] = useState(false)
+  const [extractError, setExtractError] = useState<string | null>(null)
+  const [extractSuccess, setExtractSuccess] = useState<string | null>(null)
 
-  const inputMode = wizardData.inputMode || 'text'
+  const inputMode = wizardData.inputMode || 'website'
 
   // Load interview config when switching to voice mode
   useEffect(() => {
@@ -397,35 +905,256 @@ function WizardStep2({
     // Don't auto-switch - let user see the error and choose
   }
 
+  const applyExtractedData = (extracted: any, source: 'website' | 'document') => {
+    const parts: string[] = []
+    if (extracted.businessDescription) parts.push('business description')
+    if (extracted.faqs?.length) parts.push(`${extracted.faqs.length} FAQs`)
+    if (extracted.services?.length) parts.push(`${extracted.services.length} services`)
+    if (extracted.appointmentTypes?.length) parts.push(`${extracted.appointmentTypes.length} appointment types`)
+    if (extracted.menu?.categories?.length) parts.push('menu items')
+    if (extracted.hours) parts.push('business hours')
+    if (extracted.supportedProducts?.length) parts.push('supported products')
+
+    const summary = parts.length
+      ? `Found: ${parts.join(', ')}. Review and edit in the next step.`
+      : 'Extracted some info. Review in the next step.'
+
+    setExtractSuccess(summary)
+
+    setWizardData(prev => ({
+      ...prev,
+      businessDescription: extracted.businessDescription || prev.businessDescription,
+      extractedData: extracted,
+      extractedFrom: source,
+    }))
+
+    setTimeout(() => onGenerate(), 800)
+  }
+
+  const handleWebsiteExtract = async () => {
+    if (!wizardData.websiteUrl) return
+    setIsExtracting(true)
+    setExtractError(null)
+    setExtractSuccess(null)
+    try {
+      const headers = await getAuthHeaders()
+      const businessId = getSecureBusinessId()
+      const res = await fetch('/api/phone-employees/extract-from-website', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          url: wizardData.websiteUrl,
+          jobType: wizardData.jobType,
+          businessId,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setExtractError(data.error || 'Could not extract info from that URL.')
+        return
+      }
+      applyExtractedData(data.extracted, 'website')
+    } catch {
+      setExtractError('Something went wrong. Try a different URL or upload a document instead.')
+    } finally {
+      setIsExtracting(false)
+    }
+  }
+
+  const handleDocumentExtract = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsExtracting(true)
+    setExtractError(null)
+    setExtractSuccess(null)
+    try {
+      const businessId = getSecureBusinessId()
+      const session = await supabase.auth.getSession()
+      const token = session.data.session?.access_token ?? ''
+      const form = new FormData()
+      form.append('file', file)
+      form.append('jobType', wizardData.jobType)
+      form.append('businessId', businessId ?? '')
+      const res = await fetch('/api/phone-employees/extract-from-document', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setExtractError(data.error || 'Could not extract info from that file.')
+        return
+      }
+      applyExtractedData(data.extracted, 'document')
+    } catch {
+      setExtractError('Something went wrong. Try a different file or use the website option.')
+    } finally {
+      setIsExtracting(false)
+      e.target.value = ''
+    }
+  }
+
+  const switchMode = (mode: WizardData['inputMode']) => {
+    setWizardData(prev => ({ ...prev, inputMode: mode }))
+    setExtractError(null)
+    setExtractSuccess(null)
+  }
+
+  const MODE_CARDS: {
+    mode: WizardData['inputMode']
+    icon: React.ElementType
+    title: string
+    subtitle: string
+  }[] = [
+    { mode: 'website', icon: GlobeAltIcon, title: 'From your website', subtitle: 'Paste your URL' },
+    { mode: 'document', icon: DocumentArrowUpIcon, title: 'Upload a document', subtitle: 'PDF, Word, or text' },
+    { mode: 'voice', icon: MicrophoneIcon, title: 'Voice interview', subtitle: 'Talk to our AI' },
+    { mode: 'text', icon: PencilSquareIcon, title: 'Type it yourself', subtitle: 'Manual entry' },
+  ]
+
   return (
-    <div className="space-y-6">
-      {/* Mode Toggle */}
-      <div className="flex rounded-lg border border-gray-200 p-1 bg-gray-50">
-        <button
-          type="button"
-          onClick={() => setWizardData(prev => ({ ...prev, inputMode: 'text' }))}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-            inputMode === 'text'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Type Description
-        </button>
-        <button
-          type="button"
-          onClick={() => setWizardData(prev => ({ ...prev, inputMode: 'voice' }))}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-            inputMode === 'voice'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Voice Interview
-        </button>
+    <div className="space-y-5">
+      {/* Mode selector — 4 cards in a 2x2 grid */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-3">
+          How would you like to set up {wizardData.name || 'this employee'}?
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          {MODE_CARDS.map(({ mode, icon: Icon, title, subtitle }) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => switchMode(mode)}
+              className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
+                inputMode === mode
+                  ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
+                  : 'border-gray-200 bg-white hover:border-gray-300'
+              }`}
+            >
+              <Icon className={`h-5 w-5 flex-shrink-0 ${inputMode === mode ? 'text-blue-600' : 'text-gray-400'}`} />
+              <div className="min-w-0">
+                <p className={`text-sm font-medium truncate ${inputMode === mode ? 'text-blue-900' : 'text-gray-700'}`}>
+                  {title}
+                </p>
+                <p className="text-xs text-gray-400 truncate">{subtitle}</p>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Text Mode */}
+      {/* Website panel */}
+      {inputMode === 'website' && (
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <input
+              type="url"
+              value={wizardData.websiteUrl}
+              onChange={e => setWizardData(prev => ({ ...prev, websiteUrl: e.target.value }))}
+              placeholder="https://yourbusiness.com"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+            <button
+              type="button"
+              onClick={handleWebsiteExtract}
+              disabled={!wizardData.websiteUrl || isExtracting}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium whitespace-nowrap"
+            >
+              {isExtracting ? 'Extracting...' : 'Pull Info'}
+            </button>
+          </div>
+          {extractError && <p className="text-sm text-red-600">{extractError}</p>}
+          {extractSuccess && (
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircleIcon className="h-4 w-4 text-green-600 flex-shrink-0" />
+              <p className="text-sm text-green-700">{extractSuccess}</p>
+            </div>
+          )}
+          <p className="text-xs text-gray-400">We'll read your website and pre-fill your employee's knowledge base.</p>
+        </div>
+      )}
+
+      {/* Document panel */}
+      {inputMode === 'document' && (
+        <div className="space-y-3">
+          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+            <input
+              type="file"
+              id="doc-upload"
+              accept=".pdf,.docx,.txt,.md"
+              onChange={handleDocumentExtract}
+              className="hidden"
+              disabled={isExtracting}
+            />
+            <label htmlFor="doc-upload" className="cursor-pointer">
+              <DocumentArrowUpIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm font-medium text-gray-700">
+                {isExtracting ? 'Extracting...' : 'Click to upload'}
+              </p>
+              <p className="text-xs text-gray-400 mt-1">PDF, Word (.docx), or text file — max 10MB</p>
+            </label>
+          </div>
+          {extractError && <p className="text-sm text-red-600">{extractError}</p>}
+          {extractSuccess && (
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircleIcon className="h-4 w-4 text-green-600 flex-shrink-0" />
+              <p className="text-sm text-green-700">{extractSuccess}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Voice panel */}
+      {inputMode === 'voice' && (
+        <>
+          {isLoadingConfig ? (
+            <div className="flex flex-col items-center py-8">
+              <div className="h-8 w-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+              <p className="mt-3 text-sm text-gray-500">Preparing voice interview...</p>
+            </div>
+          ) : interviewConfig ? (
+            <>
+              {wizardData.isGenerating ? (
+                <div className="flex flex-col items-center py-8">
+                  <div className="relative">
+                    <div className="h-12 w-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
+                    <SparklesIcon className="h-5 w-5 text-blue-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                  </div>
+                  <p className="mt-4 text-sm font-medium text-gray-700">AI is configuring your employee from the interview...</p>
+                  <p className="text-xs text-gray-400 mt-1">This usually takes 5-10 seconds</p>
+                </div>
+              ) : (
+                <VoiceInterview
+                  assistantConfig={interviewConfig}
+                  onCallEnd={handleCallEnd}
+                  onError={handleVoiceError}
+                />
+              )}
+            </>
+          ) : (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-700">
+                Voice interview could not be loaded.{' '}
+                <button
+                  type="button"
+                  onClick={() => switchMode('text')}
+                  className="underline font-medium"
+                >
+                  Switch to text mode
+                </button>
+              </p>
+            </div>
+          )}
+
+          {wizardData.generateError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">{wizardData.generateError}</p>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Text panel */}
       {inputMode === 'text' && (
         <>
           <div>
@@ -469,56 +1198,6 @@ function WizardStep2({
               <SparklesIcon className="h-5 w-5 mr-2" />
               Generate Configuration
             </button>
-          )}
-        </>
-      )}
-
-      {/* Voice Mode */}
-      {inputMode === 'voice' && (
-        <>
-          {isLoadingConfig ? (
-            <div className="flex flex-col items-center py-8">
-              <div className="h-8 w-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-              <p className="mt-3 text-sm text-gray-500">Preparing voice interview...</p>
-            </div>
-          ) : interviewConfig ? (
-            <>
-              {wizardData.isGenerating ? (
-                <div className="flex flex-col items-center py-8">
-                  <div className="relative">
-                    <div className="h-12 w-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
-                    <SparklesIcon className="h-5 w-5 text-blue-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                  </div>
-                  <p className="mt-4 text-sm font-medium text-gray-700">AI is configuring your employee from the interview...</p>
-                  <p className="text-xs text-gray-400 mt-1">This usually takes 5-10 seconds</p>
-                </div>
-              ) : (
-                <VoiceInterview
-                  assistantConfig={interviewConfig}
-                  onCallEnd={handleCallEnd}
-                  onError={handleVoiceError}
-                />
-              )}
-            </>
-          ) : (
-            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-700">
-                Voice interview could not be loaded.{' '}
-                <button
-                  type="button"
-                  onClick={() => setWizardData(prev => ({ ...prev, inputMode: 'text' }))}
-                  className="underline font-medium"
-                >
-                  Switch to text mode
-                </button>
-              </p>
-            </div>
-          )}
-
-          {wizardData.generateError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700">{wizardData.generateError}</p>
-            </div>
           )}
         </>
       )}
@@ -914,13 +1593,952 @@ function WizardStep3({
         </>
       )}
 
+      {jobType === 'appointment-scheduler' && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Business Description</label>
+            <textarea
+              rows={3}
+              value={config.businessDescription || ''}
+              onChange={e => updateConfig('businessDescription', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Appointment Types</label>
+            {(config.appointmentTypes || []).map((appt: { name: string; duration: number; price: number }, idx: number) => (
+              <div key={idx} className="flex items-center gap-2 mb-2">
+                <input
+                  type="text"
+                  value={appt.name}
+                  onChange={e => {
+                    const updated = [...(config.appointmentTypes || [])];
+                    updated[idx] = { ...updated[idx], name: e.target.value };
+                    updateConfig('appointmentTypes', updated);
+                  }}
+                  placeholder="Appointment name"
+                  className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <input
+                  type="number"
+                  value={appt.duration}
+                  onChange={e => {
+                    const updated = [...(config.appointmentTypes || [])];
+                    updated[idx] = { ...updated[idx], duration: parseInt(e.target.value) || 0 };
+                    updateConfig('appointmentTypes', updated);
+                  }}
+                  className="w-20 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <span className="text-xs text-gray-500">min</span>
+                <span className="text-xs text-gray-500">$</span>
+                <input
+                  type="number"
+                  value={appt.price}
+                  onChange={e => {
+                    const updated = [...(config.appointmentTypes || [])];
+                    updated[idx] = { ...updated[idx], price: parseFloat(e.target.value) || 0 };
+                    updateConfig('appointmentTypes', updated);
+                  }}
+                  placeholder="0"
+                  className="w-24 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <button
+                  onClick={() => {
+                    const updated = [...(config.appointmentTypes || [])];
+                    updated.splice(idx, 1);
+                    updateConfig('appointmentTypes', updated);
+                  }}
+                  className="p-1 text-gray-400 hover:text-red-500"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => updateConfig('appointmentTypes', [...(config.appointmentTypes || []), { name: '', duration: 30, price: 0 }])}
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            >
+              + Add Type
+            </button>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Booking Rules</label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Min Notice (hours)</label>
+                <input
+                  type="number"
+                  value={config.bookingRules?.minNoticeHours ?? 2}
+                  onChange={e => updateConfig('bookingRules', { ...config.bookingRules, minNoticeHours: parseInt(e.target.value) || 0 })}
+                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Max Advance (days)</label>
+                <input
+                  type="number"
+                  value={config.bookingRules?.maxAdvanceDays ?? 30}
+                  onChange={e => updateConfig('bookingRules', { ...config.bookingRules, maxAdvanceDays: parseInt(e.target.value) || 0 })}
+                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Buffer Between (min)</label>
+                <input
+                  type="number"
+                  value={config.bookingRules?.bufferMinutes ?? 15}
+                  onChange={e => updateConfig('bookingRules', { ...config.bookingRules, bufferMinutes: parseInt(e.target.value) || 0 })}
+                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div className="flex items-center gap-2 mt-4">
+                <input
+                  type="checkbox"
+                  checked={!!config.bookingRules?.sameDayBooking}
+                  onChange={e => updateConfig('bookingRules', { ...config.bookingRules, sameDayBooking: e.target.checked })}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label className="text-sm text-gray-700">Same-Day Booking</label>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {jobType === 'customer-service' && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Business Description</label>
+            <textarea
+              rows={3}
+              value={config.businessDescription || ''}
+              onChange={e => updateConfig('businessDescription', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Return Policy</label>
+            <textarea
+              rows={2}
+              value={config.returnPolicy || ''}
+              onChange={e => updateConfig('returnPolicy', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Common Issues</label>
+            {(config.commonIssues || []).map((item: { issue: string; resolution: string }, idx: number) => (
+              <div key={idx} className="p-3 bg-gray-50 rounded-lg mb-2">
+                <div className="flex items-start gap-2">
+                  <div className="flex-1 space-y-2">
+                    <input
+                      type="text"
+                      value={item.issue}
+                      onChange={e => {
+                        const updated = [...(config.commonIssues || [])];
+                        updated[idx] = { ...updated[idx], issue: e.target.value };
+                        updateConfig('commonIssues', updated);
+                      }}
+                      placeholder="Issue / complaint"
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <textarea
+                      rows={2}
+                      value={item.resolution}
+                      onChange={e => {
+                        const updated = [...(config.commonIssues || [])];
+                        updated[idx] = { ...updated[idx], resolution: e.target.value };
+                        updateConfig('commonIssues', updated);
+                      }}
+                      placeholder="Resolution / response"
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <button
+                    onClick={() => {
+                      const updated = [...(config.commonIssues || [])];
+                      updated.splice(idx, 1);
+                      updateConfig('commonIssues', updated);
+                    }}
+                    className="p-1 text-gray-400 hover:text-red-500"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={() => updateConfig('commonIssues', [...(config.commonIssues || []), { issue: '', resolution: '' }])}
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            >
+              + Add Issue
+            </button>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Resolution Authority</label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={!!config.resolutionAuthority?.canRefund}
+                  onChange={e => updateConfig('resolutionAuthority', { ...config.resolutionAuthority, canRefund: e.target.checked })}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label className="text-sm text-gray-700">Can issue refunds</label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={!!config.resolutionAuthority?.canOfferDiscount}
+                  onChange={e => updateConfig('resolutionAuthority', { ...config.resolutionAuthority, canOfferDiscount: e.target.checked })}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label className="text-sm text-gray-700">Can offer discounts</label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={!!config.resolutionAuthority?.canScheduleCallback}
+                  onChange={e => updateConfig('resolutionAuthority', { ...config.resolutionAuthority, canScheduleCallback: e.target.checked })}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label className="text-sm text-gray-700">Can schedule callbacks</label>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Max Refund Amount ($)</label>
+                <input
+                  type="number"
+                  value={config.resolutionAuthority?.maxRefundAmount ?? 0}
+                  onChange={e => updateConfig('resolutionAuthority', { ...config.resolutionAuthority, maxRefundAmount: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {jobType === 'after-hours-emergency' && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
+            <select
+              value={config.businessType || 'general'}
+              onChange={e => updateConfig('businessType', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            >
+              <option value="property-management">Property Management</option>
+              <option value="medical">Medical / Healthcare</option>
+              <option value="hvac-contractor">HVAC / Contractor</option>
+              <option value="legal">Legal</option>
+              <option value="general">General Business</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">On-Call Contacts</label>
+            {(config.onCallContacts || []).map((contact: { name: string; phone: string; role: string }, idx: number) => (
+              <div key={idx} className="flex items-center gap-2 mb-2">
+                <input
+                  type="text"
+                  value={contact.name}
+                  onChange={e => {
+                    const updated = [...(config.onCallContacts || [])];
+                    updated[idx] = { ...updated[idx], name: e.target.value };
+                    updateConfig('onCallContacts', updated);
+                  }}
+                  placeholder="Name"
+                  className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <input
+                  type="text"
+                  value={contact.phone}
+                  onChange={e => {
+                    const updated = [...(config.onCallContacts || [])];
+                    updated[idx] = { ...updated[idx], phone: e.target.value };
+                    updateConfig('onCallContacts', updated);
+                  }}
+                  placeholder="+1 555-000-0000"
+                  className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <input
+                  type="text"
+                  value={contact.role}
+                  onChange={e => {
+                    const updated = [...(config.onCallContacts || [])];
+                    updated[idx] = { ...updated[idx], role: e.target.value };
+                    updateConfig('onCallContacts', updated);
+                  }}
+                  placeholder="Role (optional)"
+                  className="w-32 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <button
+                  onClick={() => {
+                    const updated = [...(config.onCallContacts || [])];
+                    updated.splice(idx, 1);
+                    updateConfig('onCallContacts', updated);
+                  }}
+                  className="p-1 text-gray-400 hover:text-red-500"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => updateConfig('onCallContacts', [...(config.onCallContacts || []), { name: '', phone: '', role: '' }])}
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            >
+              + Add Contact
+            </button>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Keywords</label>
+            <textarea
+              rows={2}
+              value={(config.emergencyKeywords || []).join(', ')}
+              onChange={e => updateConfig('emergencyKeywords', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+            <p className="mt-1 text-xs text-gray-400">Comma-separated (e.g. fire, flood, gas leak)</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Urgent Keywords</label>
+            <textarea
+              rows={2}
+              value={(config.urgentKeywords || []).join(', ')}
+              onChange={e => updateConfig('urgentKeywords', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+            <p className="mt-1 text-xs text-gray-400">Comma-separated (e.g. fire, flood, gas leak)</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Non-Emergency Response</label>
+            <textarea
+              rows={2}
+              value={config.nonEmergencyResponse || ''}
+              onChange={e => updateConfig('nonEmergencyResponse', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+        </>
+      )}
+
+      {jobType === 'restaurant-host' && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Restaurant Name</label>
+            <input
+              type="text"
+              value={config.restaurantName || ''}
+              onChange={e => updateConfig('restaurantName', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Capacity</label>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Total Seats</label>
+                <input
+                  type="number"
+                  value={config.tableCapacity ?? 50}
+                  onChange={e => updateConfig('tableCapacity', parseInt(e.target.value) || 0)}
+                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Max Party Size</label>
+                <input
+                  type="number"
+                  value={config.partyMaxSize ?? 8}
+                  onChange={e => updateConfig('partyMaxSize', parseInt(e.target.value) || 0)}
+                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-4 items-center">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={!!config.waitlistEnabled}
+                onChange={e => updateConfig('waitlistEnabled', e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label className="text-sm text-gray-700">Waitlist enabled</label>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={!!config.specialOccasionsEnabled}
+                onChange={e => updateConfig('specialOccasionsEnabled', e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label className="text-sm text-gray-700">Special occasions</label>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Reservation Slots</label>
+            {(config.reservationSlots || []).map((slot: { day: string; openTime: string; closeTime: string; slotIntervalMinutes: number }, idx: number) => (
+              <div key={idx} className="p-3 bg-gray-50 rounded-lg mb-2">
+                <div className="flex items-center gap-2">
+                  <select
+                    value={slot.day}
+                    onChange={e => {
+                      const updated = [...(config.reservationSlots || [])];
+                      updated[idx] = { ...updated[idx], day: e.target.value };
+                      updateConfig('reservationSlots', updated);
+                    }}
+                    className="px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map(d => (
+                      <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={slot.openTime}
+                    onChange={e => {
+                      const updated = [...(config.reservationSlots || [])];
+                      updated[idx] = { ...updated[idx], openTime: e.target.value };
+                      updateConfig('reservationSlots', updated);
+                    }}
+                    placeholder="17:00"
+                    className="w-20 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <span className="text-xs text-gray-500">to</span>
+                  <input
+                    type="text"
+                    value={slot.closeTime}
+                    onChange={e => {
+                      const updated = [...(config.reservationSlots || [])];
+                      updated[idx] = { ...updated[idx], closeTime: e.target.value };
+                      updateConfig('reservationSlots', updated);
+                    }}
+                    placeholder="22:00"
+                    className="w-20 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <select
+                    value={slot.slotIntervalMinutes}
+                    onChange={e => {
+                      const updated = [...(config.reservationSlots || [])];
+                      updated[idx] = { ...updated[idx], slotIntervalMinutes: parseInt(e.target.value) };
+                      updateConfig('reservationSlots', updated);
+                    }}
+                    className="px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value={15}>15 min</option>
+                    <option value={30}>30 min</option>
+                    <option value={60}>60 min</option>
+                  </select>
+                  <button
+                    onClick={() => {
+                      const updated = [...(config.reservationSlots || [])];
+                      updated.splice(idx, 1);
+                      updateConfig('reservationSlots', updated);
+                    }}
+                    className="p-1 text-gray-400 hover:text-red-500"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={() => updateConfig('reservationSlots', [...(config.reservationSlots || []), { day: 'monday', openTime: '17:00', closeTime: '22:00', slotIntervalMinutes: 30 }])}
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            >
+              + Add Slot
+            </button>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <input
+                type="checkbox"
+                checked={!!config.depositRequired}
+                onChange={e => updateConfig('depositRequired', e.target.checked ? { partySize: 6, amount: 25 } : undefined)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label className="text-sm text-gray-700">Require deposit for large parties</label>
+            </div>
+            {config.depositRequired && (
+              <div className="grid grid-cols-2 gap-3 mt-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Party Size &ge;</label>
+                  <input
+                    type="number"
+                    value={config.depositRequired.partySize ?? 6}
+                    onChange={e => updateConfig('depositRequired', { ...config.depositRequired, partySize: parseInt(e.target.value) || 0 })}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Deposit Amount ($)</label>
+                  <input
+                    type="number"
+                    value={config.depositRequired.amount ?? 25}
+                    onChange={e => updateConfig('depositRequired', { ...config.depositRequired, amount: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {jobType === 'survey-caller' && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Survey Name</label>
+            <input
+              type="text"
+              value={config.surveyName || ''}
+              onChange={e => updateConfig('surveyName', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Call Trigger</label>
+            <select
+              value={config.callTrigger || 'post_appointment'}
+              onChange={e => updateConfig('callTrigger', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            >
+              <option value="post_appointment">After Appointment</option>
+              <option value="post_order">After Order</option>
+              <option value="manual">Manual / Scheduled</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Hours after trigger to call</label>
+            <input
+              type="number"
+              value={config.triggerDelayHours ?? 2}
+              onChange={e => updateConfig('triggerDelayHours', parseInt(e.target.value) || 0)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Questions</label>
+            {(config.questions || []).map((q: { id: string; question: string; type: string; required: boolean }, idx: number) => (
+              <div key={q.id || idx} className="p-3 bg-gray-50 rounded-lg mb-2">
+                <div className="flex items-start gap-2">
+                  <div className="flex-1 space-y-2">
+                    <textarea
+                      rows={1}
+                      value={q.question}
+                      onChange={e => {
+                        const updated = [...(config.questions || [])];
+                        updated[idx] = { ...updated[idx], question: e.target.value };
+                        updateConfig('questions', updated);
+                      }}
+                      placeholder="Question text"
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <div className="flex items-center gap-3">
+                      <select
+                        value={q.type}
+                        onChange={e => {
+                          const updated = [...(config.questions || [])];
+                          updated[idx] = { ...updated[idx], type: e.target.value };
+                          updateConfig('questions', updated);
+                        }}
+                        className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="rating">1–10 Rating</option>
+                        <option value="yes_no">Yes / No</option>
+                        <option value="nps">Net Promoter Score</option>
+                        <option value="open">Open-ended</option>
+                      </select>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={!!q.required}
+                          onChange={e => {
+                            const updated = [...(config.questions || [])];
+                            updated[idx] = { ...updated[idx], required: e.target.checked };
+                            updateConfig('questions', updated);
+                          }}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <label className="text-sm text-gray-700">Required</label>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const updated = [...(config.questions || [])];
+                      updated.splice(idx, 1);
+                      updateConfig('questions', updated);
+                    }}
+                    className="p-1 text-gray-400 hover:text-red-500"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={() => updateConfig('questions', [...(config.questions || []), { id: Date.now().toString(), question: '', type: 'rating', required: true }])}
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            >
+              + Add Question
+            </button>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Incentive Offer (optional)</label>
+            <input
+              type="text"
+              value={config.offerIncentive || ''}
+              onChange={e => updateConfig('offerIncentive', e.target.value)}
+              placeholder="e.g. 10% off your next visit (leave blank for none)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Closing (positive response)</label>
+            <textarea
+              rows={1}
+              value={config.positiveOutro || ''}
+              onChange={e => updateConfig('positiveOutro', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Closing (needs improvement)</label>
+            <textarea
+              rows={1}
+              value={config.negativeOutro || ''}
+              onChange={e => updateConfig('negativeOutro', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+        </>
+      )}
+
+      {jobType === 'lead-qualifier' && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Business Description</label>
+            <textarea
+              rows={3}
+              value={config.businessDescription || ''}
+              onChange={e => updateConfig('businessDescription', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Qualifying Questions</label>
+            {(config.qualifyingQuestions || []).map((q: { id: string; question: string; field: string; required: boolean }, idx: number) => (
+              <div key={q.id || idx} className="p-3 bg-gray-50 rounded-lg mb-2">
+                <div className="flex items-start gap-2">
+                  <div className="flex-1 space-y-2">
+                    <textarea
+                      rows={1}
+                      value={q.question}
+                      onChange={e => {
+                        const updated = [...(config.qualifyingQuestions || [])];
+                        updated[idx] = { ...updated[idx], question: e.target.value };
+                        updateConfig('qualifyingQuestions', updated);
+                      }}
+                      placeholder="Question text"
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <div className="flex items-center gap-3">
+                      <select
+                        value={q.field}
+                        onChange={e => {
+                          const updated = [...(config.qualifyingQuestions || [])];
+                          updated[idx] = { ...updated[idx], field: e.target.value };
+                          updateConfig('qualifyingQuestions', updated);
+                        }}
+                        className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="interest">Interest Level</option>
+                        <option value="timeline">Timeline</option>
+                        <option value="budget">Budget</option>
+                        <option value="authority">Decision Maker</option>
+                        <option value="custom">Custom</option>
+                      </select>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={!!q.required}
+                          onChange={e => {
+                            const updated = [...(config.qualifyingQuestions || [])];
+                            updated[idx] = { ...updated[idx], required: e.target.checked };
+                            updateConfig('qualifyingQuestions', updated);
+                          }}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <label className="text-sm text-gray-700">Required</label>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const updated = [...(config.qualifyingQuestions || [])];
+                      updated.splice(idx, 1);
+                      updateConfig('qualifyingQuestions', updated);
+                    }}
+                    className="p-1 text-gray-400 hover:text-red-500"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button
+              onClick={() => updateConfig('qualifyingQuestions', [...(config.qualifyingQuestions || []), { id: Date.now().toString(), question: '', field: 'interest', required: true }])}
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+            >
+              + Add Question
+            </button>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">When a hot lead is identified...</label>
+            <select
+              value={config.hotLeadAction || 'callback'}
+              onChange={e => updateConfig('hotLeadAction', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            >
+              <option value="transfer">Transfer to Human</option>
+              <option value="book">Book a Meeting</option>
+              <option value="callback">Schedule Callback</option>
+            </select>
+          </div>
+
+          {config.hotLeadAction === 'transfer' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Transfer Number</label>
+              <input
+                type="text"
+                value={config.transferNumber || ''}
+                onChange={e => updateConfig('transferNumber', e.target.value)}
+                placeholder="Transfer phone number"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Response for warm leads</label>
+            <textarea
+              rows={2}
+              value={config.warmLeadResponse || ''}
+              onChange={e => updateConfig('warmLeadResponse', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Response for cold/unqualified leads</label>
+            <textarea
+              rows={2}
+              value={config.coldLeadResponse || ''}
+              onChange={e => updateConfig('coldLeadResponse', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+        </>
+      )}
+
+      {jobType === 'appointment-reminder' && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Hours before appointment to call</label>
+            <input
+              type="number"
+              value={config.reminderLeadTimeHours ?? 24}
+              onChange={e => updateConfig('reminderLeadTimeHours', parseInt(e.target.value) || 0)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+            <p className="mt-1 text-xs text-gray-400">e.g. 24 = call the day before</p>
+          </div>
+
+          <div className="space-y-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={!!config.confirmationRequired}
+                  onChange={e => updateConfig('confirmationRequired', e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label className="text-sm text-gray-700">Ask for confirmation</label>
+              </div>
+              <p className="mt-1 text-xs text-gray-400 ml-6">If enabled, ask caller to confirm they&apos;ll attend.</p>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={!!config.rescheduleEnabled}
+                  onChange={e => updateConfig('rescheduleEnabled', e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label className="text-sm text-gray-700">Offer rescheduling</label>
+              </div>
+              <p className="mt-1 text-xs text-gray-400 ml-6">If they can&apos;t make it, offer to reschedule.</p>
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={!!config.sendConfirmationSms}
+                  onChange={e => updateConfig('sendConfirmationSms', e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label className="text-sm text-gray-700">Send SMS after call</label>
+              </div>
+              <p className="mt-1 text-xs text-gray-400 ml-6">Send a text summary after the reminder call.</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Cancellation Policy (read to caller if they want to cancel)</label>
+            <textarea
+              rows={2}
+              value={config.cancellationPolicy || ''}
+              onChange={e => updateConfig('cancellationPolicy', e.target.value)}
+              placeholder="e.g. Cancellations within 24 hours incur a $25 fee"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+        </>
+      )}
+
+      {jobType === 'collections' && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">FDCPA Compliance Disclaimer</label>
+            <textarea
+              rows={2}
+              value={config.complianceDisclaimer || ''}
+              onChange={e => updateConfig('complianceDisclaimer', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+            <p className="mt-1 text-xs text-gray-400">Read at the start of every call. Required by law.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Payment Options</label>
+            <div className="flex gap-4">
+              {[
+                { value: 'full', label: 'Full Payment' },
+                { value: 'payment-plan', label: 'Payment Plan' },
+                { value: 'settlement', label: 'Settlement' },
+              ].map(opt => (
+                <div key={opt.value} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={(config.paymentOptions || []).includes(opt.value)}
+                    onChange={e => {
+                      const current: string[] = config.paymentOptions || [];
+                      const updated = e.target.checked
+                        ? [...current, opt.value]
+                        : current.filter((v: string) => v !== opt.value);
+                      updateConfig('paymentOptions', updated);
+                    }}
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label className="text-sm text-gray-700">{opt.label}</label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Max Payment Plan Length (months)</label>
+            <input
+              type="number"
+              value={config.maxPaymentPlanMonths ?? 6}
+              onChange={e => updateConfig('maxPaymentPlanMonths', parseInt(e.target.value) || 0)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+
+          {(config.paymentOptions || []).includes('settlement') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Settlement Percentage (%)</label>
+              <input
+                type="number"
+                value={config.settlementPercentage ?? 70}
+                onChange={e => updateConfig('settlementPercentage', parseInt(e.target.value) || 0)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Communication Tone</label>
+            <select
+              value={config.escalationPolicy || 'empathetic'}
+              onChange={e => updateConfig('escalationPolicy', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            >
+              <option value="empathetic">Empathetic</option>
+              <option value="neutral">Neutral</option>
+              <option value="firm">Firm</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Dispute Contact</label>
+            <input
+              type="text"
+              value={config.disputeContact || ''}
+              onChange={e => updateConfig('disputeContact', e.target.value)}
+              placeholder="Phone number or email for disputes"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            />
+          </div>
+        </>
+      )}
+
       {/* Business Hours - common to all types */}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Business Hours</label>
         <BusinessHoursEditor
           hours={config.businessHours || DEFAULT_BUSINESS_HOURS}
           onChange={hours => updateConfig('businessHours', hours)}
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+        <select
+          value={config.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
+          onChange={e => updateConfig('timezone', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+        >
+          {TIMEZONE_OPTIONS.map(tz => (
+            <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-gray-400">Used to determine when your employee is "after hours".</p>
       </div>
     </div>
   )
@@ -936,12 +2554,25 @@ function WizardStep4({
   createError,
   createSuccess,
   onConfirm,
+  phoneStep,
+  setPhoneStep,
+  onProvisionPhone,
 }: {
   wizardData: WizardData
   isCreating: boolean
   createError: string | null
   createSuccess: boolean
   onConfirm: () => void
+  phoneStep: {
+    status: string
+    wantsPhone: boolean
+    phoneMode: 'vapi-only' | 'twilio-vapi'
+    areaCode: string
+    provisionedNumber: string | null
+    error: string | null
+  }
+  setPhoneStep: React.Dispatch<React.SetStateAction<any>>
+  onProvisionPhone: () => void
 }) {
   const jobInfo = JOB_TYPE_INFO[wizardData.jobType] || JOB_TYPE_INFO['receptionist']
   const Icon = jobInfo.icon
@@ -949,14 +2580,110 @@ function WizardStep4({
 
   if (createSuccess) {
     return (
-      <div className="flex flex-col items-center py-8">
-        <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-          <CheckIcon className="h-8 w-8 text-green-600" />
+      <div className="space-y-5">
+        <div className="flex flex-col items-center py-4">
+          <div className="h-14 w-14 bg-green-100 rounded-full flex items-center justify-center mb-3">
+            <CheckIcon className="h-7 w-7 text-green-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">Employee Created!</h3>
+          <p className="text-sm text-gray-500 text-center">
+            {wizardData.name} is ready to start handling calls as your {jobInfo.label.toLowerCase()}.
+          </p>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">Employee Created!</h3>
-        <p className="text-sm text-gray-500 text-center">
-          {wizardData.name} is ready to start handling calls as your {jobInfo.label.toLowerCase()}.
-        </p>
+
+        {/* Phone provisioning section */}
+        {phoneStep.status === 'done' ? (
+          <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <CheckIcon className="h-5 w-5 text-green-600 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium text-green-800">Phone number assigned</p>
+              <p className="text-sm text-green-700">{phoneStep.provisionedNumber}</p>
+            </div>
+          </div>
+        ) : phoneStep.status === 'choosing' ? (
+          <div className="border border-gray-200 rounded-lg p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-900">Add a dedicated phone number?</p>
+                <p className="text-xs text-gray-500 mt-0.5">Customers can call this employee directly</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPhoneStep((prev: any) => ({ ...prev, wantsPhone: !prev.wantsPhone }))}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  phoneStep.wantsPhone ? 'bg-blue-600' : 'bg-gray-200'
+                }`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  phoneStep.wantsPhone ? 'translate-x-6' : 'translate-x-1'
+                }`} />
+              </button>
+            </div>
+
+            {phoneStep.wantsPhone && (
+              <div className="space-y-3">
+                <div>
+                  <p className="text-xs font-medium text-gray-700 mb-2">Phone type</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'vapi-only' }))}
+                      className={`p-3 rounded-lg border text-left transition-all ${
+                        phoneStep.phoneMode === 'vapi-only'
+                          ? 'border-blue-400 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <p className="text-sm font-medium text-gray-900">Calls only</p>
+                      <p className="text-xs text-gray-500 mt-0.5">VAPI manages number</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'twilio-vapi' }))}
+                      className={`p-3 rounded-lg border text-left transition-all ${
+                        phoneStep.phoneMode === 'twilio-vapi'
+                          ? 'border-blue-400 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <p className="text-sm font-medium text-gray-900">Calls + SMS</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Twilio number</p>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-gray-700">Area code (optional)</label>
+                  <input
+                    type="text"
+                    value={phoneStep.areaCode}
+                    onChange={e => setPhoneStep((prev: any) => ({ ...prev, areaCode: e.target.value.replace(/\D/g, '').slice(0, 3) }))}
+                    placeholder="e.g. 415"
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    maxLength={3}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={onProvisionPhone}
+                  disabled={(phoneStep.status as string) === 'provisioning'}
+                  className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {(phoneStep.status as string) === 'provisioning' ? (
+                    <><div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Purchasing number...</>
+                  ) : (
+                    <><PhoneIcon className="h-4 w-4" /> Provision Number</>
+                  )}
+                </button>
+
+                {phoneStep.error && (
+                  <p className="text-xs text-red-600">{phoneStep.error}</p>
+                )}
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
     )
   }
@@ -1049,19 +2776,710 @@ function WizardStep4({
 }
 
 // ============================================
+// EDIT EMPLOYEE MODAL
+// ============================================
+
+function EditEmployeeModal({
+  employee,
+  onClose,
+  onSaved,
+}: {
+  employee: any
+  onClose: () => void
+  onSaved: (updated: any) => void
+}) {
+  const [name, setName] = useState(employee.name || '')
+  const [voiceId, setVoiceId] = useState(employee.voice?.voiceId || '')
+  const [voiceName, setVoiceName] = useState(employee.voice?.voiceId || '')
+  const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null)
+  const [greeting, setGreeting] = useState(employee.jobConfig?.greeting || '')
+  const [timezone, setTimezone] = useState(employee.schedule?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+
+  const handleSave = async () => {
+    const businessId = getSecureBusinessId()
+    if (!businessId) return
+    setSaving(true)
+    setSaveError(null)
+
+    try {
+      const headers = await getAuthHeaders()
+      const updatedJobConfig = { ...(employee.jobConfig || {}), greeting }
+      const updatedSchedule = { ...(employee.schedule || {}), timezone }
+
+      const res = await fetch(`/api/phone-employees/${employee.id}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({
+          businessId,
+          name: name !== employee.name ? name : undefined,
+          jobConfig: updatedJobConfig,
+          schedule: updatedSchedule,
+          voice: voiceId !== (employee.voice?.voiceId) ? {
+            provider: '11labs',
+            voiceId,
+            speed: employee.voice?.speed ?? 1.0,
+            stability: employee.voice?.stability ?? 0.8,
+          } : undefined,
+        }),
+      })
+
+      const data = await res.json()
+      if (data.success || data.employee) {
+        setSaved(true)
+        onSaved({ ...employee, name, jobConfig: updatedJobConfig, schedule: updatedSchedule })
+      } else {
+        setSaveError(data.error || 'Failed to save')
+      }
+    } catch (err: any) {
+      setSaveError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-xl font-bold text-gray-900">Edit {employee.name}</h2>
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="space-y-5">
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+
+          {/* Greeting */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Greeting</label>
+            <textarea
+              value={greeting}
+              onChange={e => setGreeting(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+            />
+          </div>
+
+          {/* Voice */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Voice</label>
+            <VoicePicker
+              voiceId={voiceId}
+              voiceName={voiceName}
+              voicePreviewUrl={voicePreviewUrl}
+              onSelect={({ voiceId: vId, voiceName: vName, voicePreviewUrl: vUrl }) => {
+                setVoiceId(vId)
+                setVoiceName(vName)
+                setVoicePreviewUrl(vUrl ?? null)
+              }}
+            />
+          </div>
+
+          {/* Timezone */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+            <select
+              value={timezone}
+              onChange={e => setTimezone(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              {TIMEZONE_OPTIONS.map(tz => (
+                <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
+              ))}
+            </select>
+          </div>
+
+          {saveError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{saveError}</div>
+          )}
+
+          {saved && (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center gap-2">
+              <CheckIcon className="h-4 w-4" /> Changes saved!
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm font-medium flex items-center gap-2"
+          >
+            {saving ? <><div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</> : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================
+// STEP 4: DATA SOURCES
+// ============================================
+
+function WizardStepDataSources({
+  wizardData,
+  setWizardData,
+  businessId,
+}: {
+  wizardData: WizardData
+  setWizardData: React.Dispatch<React.SetStateAction<WizardData>>
+  businessId: string
+}) {
+  const [webhookUrl, setWebhookUrl] = useState(wizardData.dataSource?.type === 'custom-webhook' ? (wizardData.dataSource.webhookUrl || '') : '')
+  const [webhookSecret, setWebhookSecret] = useState(wizardData.dataSource?.type === 'custom-webhook' ? (wizardData.dataSource.webhookSecret || '') : '')
+  const [testPhone, setTestPhone] = useState('')
+  const [testResult, setTestResult] = useState<any>(null)
+  const [isTesting, setIsTesting] = useState(false)
+
+  const selected = wizardData.dataSource?.type ?? null
+
+  const hubspotConnected = wizardData.connectedIntegrations.includes('hubspot')
+
+  const select = (type: string | null) => {
+    if (type === null) {
+      setWizardData(prev => ({ ...prev, dataSource: null }))
+      return
+    }
+    if (type === 'custom-webhook') {
+      setWizardData(prev => ({
+        ...prev,
+        dataSource: { type, webhookUrl: webhookUrl || undefined, webhookSecret: webhookSecret || undefined },
+      }))
+    } else {
+      setWizardData(prev => ({ ...prev, dataSource: { type } }))
+    }
+  }
+
+  const handleWebhookChange = (url: string, secret: string) => {
+    setWebhookUrl(url)
+    setWebhookSecret(secret)
+    setWizardData(prev => ({
+      ...prev,
+      dataSource: { type: 'custom-webhook', webhookUrl: url || undefined, webhookSecret: secret || undefined },
+    }))
+  }
+
+  const handleTest = async () => {
+    if (!testPhone.trim() || !webhookUrl.trim()) return
+    setIsTesting(true)
+    setTestResult(null)
+    try {
+      // Test the custom webhook directly
+      const res = await fetch(webhookUrl.trim(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(webhookSecret.trim() ? { 'X-Webhook-Secret': webhookSecret.trim() } : {}),
+        },
+        body: JSON.stringify({ phone: testPhone.trim() }),
+      })
+      const data = await res.json().catch(() => null)
+      setTestResult({ httpStatus: res.status, success: res.ok, result: data })
+    } catch (err: any) {
+      setTestResult({ error: err.message || 'Request failed — check the URL and CORS settings' })
+    } finally {
+      setIsTesting(false)
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900">Live Caller Lookup</h3>
+        <p className="text-sm text-gray-500 mt-1">
+          Give this employee real-time access to caller account data at the start of every call.
+          This is optional — skip if you don&apos;t need caller lookup.
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {/* No lookup */}
+        <button
+          type="button"
+          onClick={() => select(null)}
+          className={`w-full flex items-start p-4 rounded-lg border-2 text-left transition-all ${
+            selected === null
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-200 hover:border-gray-300'
+          }`}
+        >
+          <div className="flex-1">
+            <div className="font-medium text-gray-900">No lookup</div>
+            <div className="text-sm text-gray-500 mt-0.5">Employee starts fresh on every call</div>
+          </div>
+          {selected === null && <div className="w-4 h-4 rounded-full bg-blue-600 mt-1 flex-shrink-0" />}
+        </button>
+
+        {/* VoiceFly Contacts */}
+        <button
+          type="button"
+          onClick={() => select('voicefly-contacts')}
+          className={`w-full flex items-start p-4 rounded-lg border-2 text-left transition-all ${
+            selected === 'voicefly-contacts'
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-200 hover:border-gray-300'
+          }`}
+        >
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-gray-900">VoiceFly Contacts</span>
+              <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Built-in</span>
+            </div>
+            <div className="text-sm text-gray-500 mt-0.5">Look up callers in your VoiceFly contacts / customer list</div>
+          </div>
+          {selected === 'voicefly-contacts' && <div className="w-4 h-4 rounded-full bg-blue-600 mt-1 flex-shrink-0" />}
+        </button>
+
+        {/* HubSpot */}
+        <button
+          type="button"
+          onClick={() => hubspotConnected ? select('hubspot') : undefined}
+          disabled={!hubspotConnected}
+          className={`w-full flex items-start p-4 rounded-lg border-2 text-left transition-all ${
+            !hubspotConnected
+              ? 'border-gray-200 opacity-50 cursor-not-allowed'
+              : selected === 'hubspot'
+              ? 'border-blue-500 bg-blue-50'
+              : 'border-gray-200 hover:border-gray-300'
+          }`}
+        >
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <span className="font-medium text-gray-900">HubSpot CRM</span>
+              {!hubspotConnected && (
+                <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">Not connected</span>
+              )}
+            </div>
+            <div className="text-sm text-gray-500 mt-0.5">
+              {hubspotConnected
+                ? 'Search HubSpot contacts by phone number at call start'
+                : 'Connect HubSpot in the previous Integrations step to enable'}
+            </div>
+          </div>
+          {selected === 'hubspot' && <div className="w-4 h-4 rounded-full bg-blue-600 mt-1 flex-shrink-0" />}
+        </button>
+
+        {/* Custom Webhook */}
+        <div
+          className={`rounded-lg border-2 transition-all ${
+            selected === 'custom-webhook' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => select('custom-webhook')}
+            className="w-full flex items-start p-4 text-left"
+          >
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-gray-900">Custom Webhook</span>
+                <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">Any system</span>
+              </div>
+              <div className="text-sm text-gray-500 mt-0.5">
+                POST the caller&apos;s phone number to your own API — returns any JSON data
+              </div>
+            </div>
+            {selected === 'custom-webhook' && <div className="w-4 h-4 rounded-full bg-blue-600 mt-1 flex-shrink-0" />}
+          </button>
+
+          {selected === 'custom-webhook' && (
+            <div className="px-4 pb-4 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Webhook URL <span className="text-red-500">*</span></label>
+                <input
+                  type="url"
+                  value={webhookUrl}
+                  onChange={e => handleWebhookChange(e.target.value, webhookSecret)}
+                  placeholder="https://your-api.com/caller-lookup"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <p className="text-xs text-gray-400 mt-1">VoiceFly will POST <code className="bg-gray-100 px-1 rounded">{'{"phone": "+15551234567"}'}</code> to this URL</p>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Secret header (optional)</label>
+                <input
+                  type="text"
+                  value={webhookSecret}
+                  onChange={e => handleWebhookChange(webhookUrl, e.target.value)}
+                  placeholder="my-secret-key"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                <p className="text-xs text-gray-400 mt-1">Sent as <code className="bg-gray-100 px-1 rounded">X-Webhook-Secret</code> header</p>
+              </div>
+              <div className="flex items-end gap-2">
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Test with phone number</label>
+                  <input
+                    type="text"
+                    value={testPhone}
+                    onChange={e => setTestPhone(e.target.value)}
+                    placeholder="+15551234567"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleTest}
+                  disabled={isTesting || !webhookUrl.trim()}
+                  className="px-3 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                >
+                  {isTesting ? 'Testing...' : 'Test'}
+                </button>
+              </div>
+              {testResult && (
+                <div className={`text-xs rounded-lg p-3 font-mono overflow-auto max-h-32 ${testResult.error ? 'bg-red-50 text-red-700' : 'bg-gray-50 text-gray-700'}`}>
+                  {JSON.stringify(testResult, null, 2)}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// STEP 3: INTEGRATIONS
+// ============================================
+
+function WizardStepIntegrations({
+  wizardData,
+  setWizardData,
+  businessId,
+}: {
+  wizardData: WizardData
+  setWizardData: React.Dispatch<React.SetStateAction<WizardData>>
+  businessId: string
+}) {
+  const [existingIntegrations, setExistingIntegrations] = useState<Record<string, any>>({})
+  const [loadingIntegrations, setLoadingIntegrations] = useState(true)
+  const [expandedPlatform, setExpandedPlatform] = useState<string | null>(null)
+  const [connectFields, setConnectFields] = useState<Record<string, string>>({})
+  const [connecting, setConnecting] = useState(false)
+  const [connectError, setConnectError] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState<string | null>(null)
+  const [syncSummary, setSyncSummary] = useState<Record<string, string>>({})
+
+  const relevantPlatforms = INTEGRATIONS_BY_JOB[wizardData.jobType] || []
+  const builtin = VOICEFLY_BUILTIN[wizardData.jobType]
+
+  useEffect(() => {
+    if (!businessId) return
+    fetchIntegrations()
+  }, [businessId])
+
+  const fetchIntegrations = async () => {
+    setLoadingIntegrations(true)
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch(`/api/integrations?businessId=${businessId}`, { headers })
+      if (!res.ok) return
+      const data = await res.json()
+      const byPlatform: Record<string, any> = {}
+      for (const integ of (data.integrations || [])) {
+        byPlatform[integ.platform] = integ
+      }
+      setExistingIntegrations(byPlatform)
+    } catch {}
+    finally { setLoadingIntegrations(false) }
+  }
+
+  const handleExpand = (platform: string) => {
+    if (expandedPlatform === platform) {
+      setExpandedPlatform(null)
+      setConnectFields({})
+      setConnectError(null)
+    } else {
+      setExpandedPlatform(platform)
+      setConnectFields({})
+      setConnectError(null)
+    }
+  }
+
+  const triggerSync = async (platform: string) => {
+    const def = INTEGRATION_CATALOG[platform]
+    if (!def?.syncUrl || !def.importField) return
+    setSyncing(platform)
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch(def.syncUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ businessId }),
+      })
+      const data = await res.json()
+      if (!res.ok) return
+      if (def.importField === 'menu' && data.menu) {
+        setWizardData(prev => ({
+          ...prev,
+          generatedConfig: { ...(prev.generatedConfig || {}), menu: data.menu },
+        }))
+        const cats = data.menu?.categories?.length || 0
+        const items = data.menu?.categories?.reduce((sum: number, c: any) => sum + (c.items?.length || 0), 0) || 0
+        setSyncSummary(prev => ({ ...prev, [platform]: `${items} items across ${cats} categories imported` }))
+      } else if (def.importField === 'appointmentTypes' && data.eventTypes) {
+        const apptTypes = data.eventTypes.map((et: any) => ({
+          name: et.name, duration: et.duration, description: et.description,
+        }))
+        setWizardData(prev => ({
+          ...prev,
+          generatedConfig: { ...(prev.generatedConfig || {}), appointmentTypes: apptTypes },
+        }))
+        setSyncSummary(prev => ({ ...prev, [platform]: `${apptTypes.length} appointment types imported` }))
+      }
+    } catch {}
+    finally { setSyncing(null) }
+  }
+
+  const handleConnect = async (platform: string) => {
+    const def = INTEGRATION_CATALOG[platform]
+    if (!def) return
+    setConnecting(true)
+    setConnectError(null)
+    try {
+      const headers = await getAuthHeaders()
+      const body: Record<string, any> = { businessId, ...connectFields }
+      const res = await fetch(def.connectUrl, { method: 'POST', headers, body: JSON.stringify(body) })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setConnectError(data.error || 'Failed to connect. Check your credentials and try again.')
+        return
+      }
+      setExistingIntegrations(prev => ({
+        ...prev,
+        [platform]: { platform, status: 'connected', config: data },
+      }))
+      setWizardData(prev => ({
+        ...prev,
+        connectedIntegrations: [...(prev.connectedIntegrations || []).filter(p => p !== platform), platform],
+      }))
+      setExpandedPlatform(null)
+      setConnectFields({})
+      if (def.syncUrl && def.importField) {
+        await triggerSync(platform)
+      }
+    } catch (err: any) {
+      setConnectError(err.message || 'Connection failed')
+    } finally {
+      setConnecting(false)
+    }
+  }
+
+  if (relevantPlatforms.length === 0) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-gray-600">
+          {wizardData.name} works with VoiceFly's built-in system — no external connections are needed.
+        </p>
+        {builtin && (
+          <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <CheckCircleIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-green-900">{builtin.name}</p>
+              <p className="text-xs text-green-700 mt-0.5">{builtin.description}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-5">
+      {/* VoiceFly built-in — always default */}
+      {builtin && (
+        <div>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Default (no setup required)</p>
+          <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">VF</div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-blue-900">{builtin.name}</span>
+                <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">Active by default</span>
+              </div>
+              <p className="text-xs text-blue-700 mt-0.5">{builtin.description}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Third-party integrations */}
+      <div>
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Connect external platforms (optional)</p>
+        {loadingIntegrations ? (
+          <p className="text-xs text-gray-400 py-2">Loading...</p>
+        ) : (
+          <div className="space-y-2">
+            {relevantPlatforms.map(platform => {
+              const def = INTEGRATION_CATALOG[platform]
+              if (!def) return null
+              const existing = existingIntegrations[platform]
+              const isConnected = existing?.status === 'connected'
+              const isExpanded = expandedPlatform === platform
+              const summary = syncSummary[platform]
+
+              if (def.comingSoon) {
+                return (
+                  <div key={platform} className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg bg-gray-50 opacity-60">
+                    <div className={`w-8 h-8 rounded-lg ${def.color} flex items-center justify-center text-xs font-bold flex-shrink-0`}>{def.abbrev}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-700">{def.name}</span>
+                        <span className="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">Partnership coming soon</span>
+                      </div>
+                      <p className="text-xs text-gray-500">{def.description}</p>
+                    </div>
+                  </div>
+                )
+              }
+
+              return (
+                <div key={platform} className={`border rounded-lg overflow-hidden transition-all ${isConnected ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white'}`}>
+                  {/* Card header row */}
+                  <div className="flex items-center gap-3 p-3">
+                    <div className={`w-8 h-8 rounded-lg ${def.color} flex items-center justify-center text-xs font-bold flex-shrink-0`}>{def.abbrev}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium text-gray-900">{def.name}</span>
+                        <span className="text-xs text-gray-400">{def.category}</span>
+                        {isConnected && (
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Connected</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5">{def.description}</p>
+                      {isConnected && summary && (
+                        <p className="text-xs text-green-600 font-medium mt-1">✓ {summary}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {isConnected && def.syncUrl && (
+                        <button
+                          type="button"
+                          onClick={() => triggerSync(platform)}
+                          disabled={syncing === platform}
+                          className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50 transition-colors"
+                        >
+                          {syncing === platform ? 'Syncing…' : 'Re-sync'}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleExpand(platform)}
+                        className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
+                          isConnected
+                            ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            : isExpanded
+                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                        }`}
+                      >
+                        {isExpanded ? 'Cancel' : isConnected ? '···' : 'Connect'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Inline connect form */}
+                  {isExpanded && (
+                    <div className="px-3 pb-4 pt-3 border-t border-gray-100 bg-gray-50">
+                      {platform === 'google-calendar' && (
+                        <div className="mb-3 p-2.5 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700">
+                          First share your Google Calendar with our service account:<br />
+                          <span className="font-mono font-semibold select-all">calendar@voicefly-ai.iam.gserviceaccount.com</span>
+                        </div>
+                      )}
+                      <div className="space-y-3">
+                        {def.fields.map(field => (
+                          <div key={field.name}>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                              {field.label}
+                              {field.optional && <span className="text-gray-400 font-normal"> (optional)</span>}
+                            </label>
+                            <input
+                              type={field.type || 'text'}
+                              value={connectFields[field.name] || ''}
+                              onChange={e => setConnectFields(prev => ({ ...prev, [field.name]: e.target.value }))}
+                              placeholder={field.placeholder}
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            {field.hint && <p className="text-xs text-gray-500 mt-1">{field.hint}</p>}
+                          </div>
+                        ))}
+                      </div>
+                      {connectError && (
+                        <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
+                          <ExclamationTriangleIcon className="h-3 w-3 flex-shrink-0" />
+                          {connectError}
+                        </p>
+                      )}
+                      <div className="flex justify-end mt-3">
+                        <button
+                          type="button"
+                          onClick={() => handleConnect(platform)}
+                          disabled={
+                            connecting ||
+                            def.fields.filter(f => !f.optional).some(f => !connectFields[f.name]?.trim())
+                          }
+                          className="px-4 py-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+                        >
+                          {connecting ? 'Connecting…' : syncing === platform ? 'Importing data…' : `Connect ${def.name}`}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================
 // WIZARD DATA TYPE
 // ============================================
 
 interface WizardData {
   name: string
   jobType: string
+  ownerRole: string
   tone: string
   voiceId: string
-  inputMode: 'text' | 'voice'
+  voiceName: string
+  voiceProvider: string
+  voicePreviewUrl: string | null
+  inputMode: 'website' | 'document' | 'text' | 'voice'
   businessDescription: string
+  websiteUrl: string
+  extractedFrom: string | null
+  extractedData: any | null
   generatedConfig: any | null
   isGenerating: boolean
   generateError: string | null
+  connectedIntegrations: string[]
+  dataSource: { type: string; webhookUrl?: string; webhookSecret?: string } | null
 }
 
 // ============================================
@@ -1081,17 +3499,36 @@ function EmployeesDashboard() {
   const [wizardData, setWizardData] = useState<WizardData>({
     name: 'Maya',
     jobType: 'receptionist',
+    ownerRole: 'general',
     tone: 'professional',
     voiceId: 'sarah',
-    inputMode: 'text',
+    voiceName: 'Sarah',
+    voiceProvider: '11labs',
+    voicePreviewUrl: null,
+    inputMode: 'website',
     businessDescription: '',
+    websiteUrl: '',
+    extractedFrom: null,
+    extractedData: null,
     generatedConfig: null,
     isGenerating: false,
     generateError: null,
+    connectedIntegrations: [],
+    dataSource: null,
   })
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [createSuccess, setCreateSuccess] = useState(false)
+  const [createdEmployeeId, setCreatedEmployeeId] = useState<string | null>(null)
+  const [phoneStep, setPhoneStep] = useState<{
+    status: 'idle' | 'choosing' | 'provisioning' | 'done' | 'error'
+    wantsPhone: boolean
+    phoneMode: 'vapi-only' | 'twilio-vapi'
+    areaCode: string
+    provisionedNumber: string | null
+    error: string | null
+  }>({ status: 'idle', wantsPhone: false, phoneMode: 'vapi-only', areaCode: '', provisionedNumber: null, error: null })
+  const [editingEmployee, setEditingEmployee] = useState<any | null>(null)
 
   useEffect(() => {
     loadData()
@@ -1102,16 +3539,28 @@ function EmployeesDashboard() {
     setWizardData({
       name: 'Maya',
       jobType: 'receptionist',
+      ownerRole: 'general',
       tone: 'professional',
-      inputMode: 'text',
+      voiceId: 'sarah',
+      voiceName: 'Sarah',
+      voiceProvider: '11labs',
+      voicePreviewUrl: null,
+      inputMode: 'website',
       businessDescription: '',
+      websiteUrl: '',
+      extractedFrom: null,
+      extractedData: null,
       generatedConfig: null,
       isGenerating: false,
       generateError: null,
+      connectedIntegrations: [],
+      dataSource: null,
     })
     setCreating(false)
     setCreateError(null)
     setCreateSuccess(false)
+    setPhoneStep({ status: 'idle', wantsPhone: false, phoneMode: 'vapi-only', areaCode: '', provisionedNumber: null, error: null })
+    setCreatedEmployeeId(null)
   }
 
   const openWizard = () => {
@@ -1173,6 +3622,7 @@ function EmployeesDashboard() {
           jobType: wizardData.jobType,
           businessDescription: wizardData.businessDescription,
           employeeName: wizardData.name,
+          ...(wizardData.extractedData ? { extractedData: wizardData.extractedData } : {}),
         }),
       })
 
@@ -1225,7 +3675,7 @@ function EmployeesDashboard() {
           jobType: wizardData.jobType,
           name: wizardData.name,
           voice: {
-            provider: 'elevenlabs',
+            provider: wizardData.voiceProvider || '11labs',
             voiceId: wizardData.voiceId || 'sarah',
             speed: 1.0,
             stability: 0.8,
@@ -1238,6 +3688,9 @@ function EmployeesDashboard() {
           config: {
             ...jobConfig,
             type: wizardData.jobType,
+            ...(wizardData.jobType === 'personal-assistant' && wizardData.ownerRole
+              ? { ownerRole: wizardData.ownerRole }
+              : {}),
           },
           schedule: businessHours ? {
             timezone: timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Los_Angeles',
@@ -1251,7 +3704,22 @@ function EmployeesDashboard() {
 
       if (data.success) {
         setEmployees(prev => [data.employee, ...prev])
+        setCreatedEmployeeId(data.employee.id)
+
+        // Save data source config if one was selected
+        if (wizardData.dataSource) {
+          fetch(`/api/phone-employees/${data.employee.id}/data-source`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+              businessId,
+              ...wizardData.dataSource,
+            }),
+          }).catch(err => console.error('[wizard] Failed to save data source:', err))
+        }
+
         setCreateSuccess(true)
+        setPhoneStep(prev => ({ ...prev, status: 'choosing' }))
       } else {
         setCreateError(data.error || 'Failed to create employee')
       }
@@ -1259,6 +3727,38 @@ function EmployeesDashboard() {
       setCreateError(err.message || 'An unexpected error occurred')
     } finally {
       setCreating(false)
+    }
+  }
+
+  const provisionPhone = async () => {
+    if (!createdEmployeeId) return
+    const businessId = getSecureBusinessId()
+    if (!businessId) return
+
+    setPhoneStep(prev => ({ ...prev, status: 'provisioning', error: null }))
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch(`/api/phone-employees/${createdEmployeeId}/provision-phone`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          businessId,
+          phoneMode: phoneStep.phoneMode,
+          areaCode: phoneStep.areaCode || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setPhoneStep(prev => ({ ...prev, status: 'done', provisionedNumber: data.phoneNumber }))
+        // Update employee in list
+        setEmployees(prev => prev.map(e =>
+          e.id === createdEmployeeId ? { ...e, phoneNumber: data.phoneNumber } : e
+        ))
+      } else {
+        setPhoneStep(prev => ({ ...prev, status: 'error', error: data.error || 'Failed to provision phone number' }))
+      }
+    } catch (err: any) {
+      setPhoneStep(prev => ({ ...prev, status: 'error', error: err.message }))
     }
   }
 
@@ -1320,16 +3820,20 @@ function EmployeesDashboard() {
       case 2:
         return false // Step 2 advances via generate button
       case 3:
-        return wizardData.generatedConfig !== null
+        return true  // Integrations are optional — always can proceed
       case 4:
-        return false // Step 4 creates via confirm button
+        return true  // Data Sources are optional — always can proceed
+      case 5:
+        return wizardData.generatedConfig !== null
+      case 6:
+        return false // Step 6 creates via confirm button
       default:
         return false
     }
   }
 
   const goNext = () => {
-    if (wizardStep < 4) {
+    if (wizardStep < 6) {
       setWizardStep(wizardStep + 1)
     }
   }
@@ -1465,12 +3969,21 @@ function EmployeesDashboard() {
                       )}
                     </button>
 
-                    <button
-                      onClick={() => deleteEmployee(employee)}
-                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setEditingEmployee(employee)}
+                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
+                        title="Edit employee"
+                      >
+                        <PencilSquareIcon className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={() => deleteEmployee(employee)}
+                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )
@@ -1497,12 +4010,24 @@ function EmployeesDashboard() {
           </div>
         </div>
 
+        {/* Edit Employee Modal */}
+        {editingEmployee && (
+          <EditEmployeeModal
+            employee={editingEmployee}
+            onClose={() => setEditingEmployee(null)}
+            onSaved={(updated) => {
+              setEmployees(prev => prev.map(e => e.id === updated.id ? { ...e, ...updated } : e))
+              setEditingEmployee(null)
+            }}
+          />
+        )}
+
         {/* Create Employee Wizard Modal */}
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div
               className={`bg-white rounded-xl p-6 w-full mx-4 max-h-[90vh] overflow-y-auto transition-all ${
-                wizardStep >= 3 || (wizardStep === 2 && wizardData.inputMode === 'voice') ? 'max-w-2xl' : 'max-w-md'
+                wizardStep >= 3 || (wizardStep === 2 && (wizardData.inputMode === 'voice' || wizardData.inputMode === 'document')) ? 'max-w-2xl' : 'max-w-md'
               }`}
             >
               {/* Modal Header */}
@@ -1517,7 +4042,7 @@ function EmployeesDashboard() {
               </div>
 
               {/* Step Indicator */}
-              <StepIndicator currentStep={wizardStep} totalSteps={4} />
+              <StepIndicator currentStep={wizardStep} totalSteps={6} />
 
               {/* Step Content */}
               {wizardStep === 1 && (
@@ -1531,15 +4056,32 @@ function EmployeesDashboard() {
                 />
               )}
               {wizardStep === 3 && (
-                <WizardStep3 wizardData={wizardData} setWizardData={setWizardData} />
+                <WizardStepIntegrations
+                  wizardData={wizardData}
+                  setWizardData={setWizardData}
+                  businessId={business?.id || ''}
+                />
               )}
               {wizardStep === 4 && (
+                <WizardStepDataSources
+                  wizardData={wizardData}
+                  setWizardData={setWizardData}
+                  businessId={business?.id || ''}
+                />
+              )}
+              {wizardStep === 5 && (
+                <WizardStep3 wizardData={wizardData} setWizardData={setWizardData} />
+              )}
+              {wizardStep === 6 && (
                 <WizardStep4
                   wizardData={wizardData}
                   isCreating={creating}
                   createError={createError}
                   createSuccess={createSuccess}
                   onConfirm={createEmployee}
+                  phoneStep={phoneStep}
+                  setPhoneStep={setPhoneStep}
+                  onProvisionPhone={provisionPhone}
                 />
               )}
 
@@ -1587,6 +4129,24 @@ function EmployeesDashboard() {
                     </button>
                   )}
                   {wizardStep === 3 && (
+                    <button
+                      onClick={goNext}
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Continue
+                      <ArrowRightIcon className="h-4 w-4 ml-1" />
+                    </button>
+                  )}
+                  {wizardStep === 4 && (
+                    <button
+                      onClick={goNext}
+                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Continue
+                      <ArrowRightIcon className="h-4 w-4 ml-1" />
+                    </button>
+                  )}
+                  {wizardStep === 5 && (
                     <button
                       onClick={goNext}
                       className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"

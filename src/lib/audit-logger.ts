@@ -39,7 +39,15 @@ export enum AuditEventType {
   // Credit/Billing events
   CREDIT_DEDUCTED = 'billing.credit.deducted',
   CREDIT_PURCHASED = 'billing.credit.purchased',
-  CREDIT_RESET = 'billing.credit.reset'
+  CREDIT_RESET = 'billing.credit.reset',
+
+  // Billing Agent events
+  BILLING_OVERAGE_RECORDED = 'billing.overage.recorded',
+  BILLING_INVOICE_GENERATED = 'billing.invoice.generated',
+  BILLING_ALERT_SENT = 'billing.alert.sent',
+  BILLING_DUNNING_ESCALATED = 'billing.dunning.escalated',
+  BILLING_FRAUD_DETECTED = 'billing.fraud.detected',
+  BILLING_REFUND_ISSUED = 'billing.refund.issued'
 }
 
 export interface AuditLog {

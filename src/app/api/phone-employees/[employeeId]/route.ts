@@ -9,6 +9,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { employeeProvisioning } from '@/lib/phone-employees'
 import { validateBusinessAccess } from '@/lib/api-auth'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 export async function GET(
   request: NextRequest,
@@ -48,7 +54,7 @@ export async function PATCH(
   try {
     const { employeeId } = await params
     const body = await request.json()
-    const { businessId, name, personality, schedule, jobConfig, isActive } = body
+    const { businessId, name, personality, schedule, jobConfig, isActive, widgetConfig, voice } = body
 
     if (!businessId) {
       return NextResponse.json({ error: 'Business ID required' }, { status: 400 })
@@ -59,12 +65,27 @@ export async function PATCH(
       return NextResponse.json({ error: authResult.error }, { status: 403 })
     }
 
+    // If this is a widget-config-only update, handle it directly
+    if (widgetConfig !== undefined && !name && !personality && !schedule && !jobConfig && isActive === undefined) {
+      const { error: wcErr } = await supabase
+        .from('phone_employees')
+        .update({ widget_config: widgetConfig })
+        .eq('id', employeeId)
+        .eq('business_id', businessId)
+
+      if (wcErr) {
+        return NextResponse.json({ error: wcErr.message }, { status: 500 })
+      }
+      return NextResponse.json({ success: true })
+    }
+
     const employee = await employeeProvisioning.updateEmployee(employeeId, businessId, {
       name,
       personality,
       schedule,
       jobConfig,
       isActive,
+      voice,
     })
 
     if (!employee) {

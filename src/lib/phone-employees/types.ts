@@ -14,14 +14,18 @@
 // ============================================
 
 export type EmployeeJobType =
-  | 'receptionist'           // Answer calls, route, take messages, schedule
-  | 'personal-assistant'     // Scheduling, reminders, message management
-  | 'order-taker'            // Take orders, upsell, confirm, process
-  | 'appointment-scheduler'  // Focused on booking appointments
-  | 'customer-service'       // Handle inquiries, complaints, support
-  | 'outbound-sales'         // Proactive sales calls (Phase 2)
-  | 'collections'            // Payment reminders (Phase 2)
-  | 'survey-caller'          // Customer feedback (Phase 2)
+  | 'receptionist'              // Answer calls, route, take messages, schedule
+  | 'personal-assistant'        // Scheduling, reminders, message management
+  | 'order-taker'               // Take orders, upsell, confirm, process
+  | 'appointment-scheduler'     // Focused on booking appointments
+  | 'customer-service'          // Handle inquiries, complaints, support
+  | 'after-hours-emergency'     // Triage emergencies, notify on-call staff
+  | 'restaurant-host'           // Reservations, waitlist, dining inquiries
+  | 'lead-qualifier'            // Screen inbound prospects, score leads, book discovery calls
+  | 'outbound-sales'            // Proactive sales calls (Phase 2)
+  | 'collections'               // Payment collection outbound caller
+  | 'survey-caller'             // Customer feedback (Phase 2)
+  | 'appointment-reminder'      // Outbound appointment confirmation caller
 
 export type EmployeeComplexity = 'simple' | 'moderate' | 'complex'
 
@@ -38,7 +42,7 @@ export interface EmployeeConfig {
 
   // Voice settings
   voice: {
-    provider: 'elevenlabs' | 'openai'
+    provider: '11labs' | 'elevenlabs' | 'openai'
     voiceId: string               // sarah, michael, emma, etc.
     speed: number                 // 0.8 - 1.2
     stability: number             // 0.5 - 1.0
@@ -65,12 +69,14 @@ export interface EmployeeConfig {
   capabilities: EmployeeCapability[]
 
   // Job-specific configuration
-  jobConfig: ReceptionistConfig | PersonalAssistantConfig | OrderTakerConfig | GenericJobConfig
+  jobConfig: ReceptionistConfig | PersonalAssistantConfig | OrderTakerConfig | AppointmentSchedulerConfig | CustomerServiceConfig | AfterHoursEmergencyConfig | RestaurantHostConfig | LeadQualifierConfig | SurveyCallerConfig | AppointmentReminderConfig | CollectionsConfig | GenericJobConfig
 
   // VAPI integration
   vapiAssistantId?: string
   vapiPhoneId?: string
   phoneNumber?: string
+  phoneProvider?: 'vapi' | 'twilio-vapi'
+  twilioPhoneSid?: string
 
   // Status
   isActive: boolean
@@ -117,6 +123,9 @@ export type EmployeeCapability =
   | 'schedule_callbacks'
   | 'escalate_to_manager'
   | 'handle_complaints'
+  | 'screen_callers'
+  | 'lookup_contacts'
+  | 'create_tasks'
 
 // ============================================
 // JOB-SPECIFIC CONFIGURATIONS
@@ -158,6 +167,7 @@ export interface PersonalAssistantConfig {
   type: 'personal-assistant'
   ownerName: string
   greeting: string
+  ownerRole?: 'general' | 'medical' | 'legal' | 'real-estate' | 'executive' | 'consultant' | 'financial'
 
   // Calendar integration
   calendarProvider?: 'google' | 'outlook' | 'calendly' | 'cal.com'
@@ -231,11 +241,221 @@ export interface OrderTakerConfig {
   tipOptions?: number[]       // [15, 18, 20, 25]
 }
 
+export interface AppointmentSchedulerConfig {
+  type: 'appointment-scheduler'
+  greeting: string
+  businessDescription: string
+
+  // Appointment types offered
+  appointmentTypes: {
+    name: string
+    duration: number
+    description?: string
+    price?: number
+  }[]
+
+  // Booking constraints
+  bookingRules: {
+    minNoticeHours: number
+    maxAdvanceDays: number
+    bufferMinutes: number
+    sameDayBooking: boolean
+  }
+
+  // Optional staff roster
+  staffMembers?: {
+    name: string
+    specialties?: string[]
+  }[]
+
+  cancellationPolicy?: string
+
+  // FAQs
+  faqs: {
+    question: string
+    answer: string
+    keywords: string[]
+  }[]
+}
+
+export interface CustomerServiceConfig {
+  type: 'customer-service'
+  greeting: string
+  businessDescription: string
+  supportedProducts: string[]
+  commonIssues: { issue: string; resolution: string }[]
+  returnPolicy?: string
+  warrantyPolicy?: string
+  escalationTriggers: string[]
+  resolutionAuthority: {
+    canRefund: boolean
+    maxRefundAmount?: number
+    canOfferDiscount: boolean
+    canScheduleCallback: boolean
+  }
+  faqs: { question: string; answer: string; keywords: string[] }[]
+}
+
+export interface AfterHoursEmergencyConfig {
+  type: 'after-hours-emergency'
+  greeting: string
+  businessType: 'property-management' | 'medical' | 'hvac-contractor' | 'legal' | 'general'
+
+  // Emergency detection
+  emergencyKeywords: string[]        // triggers immediate escalation
+  urgentKeywords: string[]           // triggers high-priority message
+
+  // On-call contacts (ordered — try #1 first, then #2, etc.)
+  onCallContacts: {
+    name: string
+    phone: string
+    role?: string
+  }[]
+
+  // After-hours response
+  nonEmergencyResponse: string       // what to say for non-urgent calls
+  emergencyInstructions?: string     // any special handling notes
+}
+
+export interface RestaurantHostConfig {
+  type: 'restaurant-host'
+  restaurantName: string
+  greeting: string
+
+  // Capacity
+  tableCapacity: number             // total seats
+  partyMaxSize: number              // largest party accepted
+
+  // Reservation slots (which days and times are bookable)
+  reservationSlots: {
+    day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+    openTime: string               // '17:00'
+    closeTime: string              // '22:00'
+    slotIntervalMinutes: number    // 15, 30 or 60
+  }[]
+
+  // Features
+  waitlistEnabled: boolean
+  specialOccasionsEnabled: boolean  // birthday, anniversary handling
+  depositRequired?: {
+    partySize: number               // require deposit for parties >= this size
+    amount: number                  // deposit amount in dollars
+  }
+
+  // Cross-sell
+  orderTakerTransferPhone?: string  // if set, offer to transfer callers who want to order
+
+  // Policies
+  cancellationPolicy?: string
+  noShowPolicy?: string
+  dressCode?: string
+
+  // Menu/Special info the AI should know
+  specialties?: string[]           // signature dishes, specials
+  parkingInfo?: string
+}
+
 export interface GenericJobConfig {
   type: 'generic'
   greeting: string
   systemPrompt: string
   customInstructions?: string
+}
+
+export interface SurveyCallerConfig {
+  type: 'survey-caller'
+  greeting: string
+  surveyName: string
+
+  // Questions to ask (in order)
+  questions: {
+    id: string
+    question: string
+    type: 'rating'        // 1-10 scale
+         | 'yes_no'       // Yes or No
+         | 'nps'          // Net Promoter Score 0-10
+         | 'open'         // Open-ended response
+    required: boolean
+  }[]
+
+  // When to trigger this caller (set during config, used by Maya to schedule)
+  callTrigger: 'post_appointment' | 'post_order' | 'manual'
+  triggerDelayHours: number    // hours after trigger event to call (e.g. 2)
+
+  // Optional incentive offer
+  offerIncentive?: string      // e.g. "10% off your next visit"
+
+  // Outro
+  positiveOutro: string        // what to say when avg rating >= 4
+  negativeOutro: string        // what to say when avg rating < 3
+}
+
+export interface AppointmentReminderConfig {
+  type: 'appointment-reminder'
+  greeting: string
+
+  // Timing
+  reminderLeadTimeHours: number    // hours before appointment to call (default: 24)
+
+  // Call behavior
+  confirmationRequired: boolean    // if true, ask them to confirm; if false, just remind
+  rescheduleEnabled: boolean       // if true, offer to reschedule if they can't make it
+
+  // After-call follow-up
+  sendConfirmationSms: boolean     // send SMS after successful call
+
+  // Content
+  cancellationPolicy?: string      // mention during call if they want to cancel
+}
+
+export interface CollectionsConfig {
+  type: 'collections'
+  greeting: string
+
+  // Compliance
+  complianceDisclaimer: string     // FDCPA required: "This is an attempt to collect a debt"
+
+  // Payment options offered
+  paymentOptions: ('full' | 'payment-plan' | 'settlement')[]
+  maxPaymentPlanMonths: number     // max months for a payment plan
+  settlementPercentage?: number    // e.g. 70 means "settle for 70% of balance"
+
+  // Tone
+  escalationPolicy: 'firm' | 'empathetic' | 'neutral'
+
+  // What to do if disputed
+  disputeContact: string           // who to direct disputes to
+}
+
+export interface LeadQualifierConfig {
+  type: 'lead-qualifier'
+  greeting: string
+  businessDescription: string   // brief description of what the business offers
+
+  // Qualifying questions (asked in order)
+  qualifyingQuestions: {
+    id: string
+    question: string
+    field: string               // 'interest' | 'timeline' | 'budget' | 'authority' | 'custom'
+    required: boolean
+  }[]
+
+  // What makes a lead "hot" — any of these being true makes it hot
+  hotLeadCriteria: string[]     // e.g. ["timeline < 30 days", "budget > 5000", "decision maker"]
+
+  // What to do with hot leads
+  hotLeadAction: 'transfer' | 'book' | 'callback'
+  transferNumber?: string       // if hotLeadAction === 'transfer'
+
+  // Responses
+  coldLeadResponse: string      // what to say to unqualified leads
+  warmLeadResponse: string      // what to say to warm leads (interested but not ready)
+
+  // Optional disqualification
+  disqualifyingAnswers?: {
+    questionId: string
+    answer: string              // if caller says this, immediately mark cold
+  }[]
 }
 
 // ============================================
@@ -493,13 +713,17 @@ export const SIMPLE_EMPLOYEE_JOBS: EmployeeJobType[] = [
   'personal-assistant',
   'order-taker',
   'appointment-scheduler',
+  'customer-service',
+  'after-hours-emergency',
+  'restaurant-host',
+  'lead-qualifier',
+  'survey-caller',
+  'appointment-reminder',
+  'collections',
 ]
 
 export const COMPLEX_EMPLOYEE_JOBS: EmployeeJobType[] = [
   'outbound-sales',
-  'collections',
-  'survey-caller',
-  'customer-service',
 ]
 
 export const DEFAULT_CAPABILITIES_BY_JOB: Record<EmployeeJobType, EmployeeCapability[]> = {
@@ -524,10 +748,15 @@ export const DEFAULT_CAPABILITIES_BY_JOB: Record<EmployeeJobType, EmployeeCapabi
     'cancel_appointments',
     'send_reminders',
     'schedule_callbacks',
+    'transfer_to_human',
     'send_sms',
     'send_email',
     'check_availability',
+    'capture_lead_info',
     'log_interactions',
+    'screen_callers',
+    'lookup_contacts',
+    'create_tasks',
   ],
 
   'order-taker': [
@@ -564,6 +793,40 @@ export const DEFAULT_CAPABILITIES_BY_JOB: Record<EmployeeJobType, EmployeeCapabi
     'log_interactions',
   ],
 
+  'after-hours-emergency': [
+    'answer_calls',
+    'take_messages',
+    'transfer_to_human',
+    'screen_callers',
+    'send_sms',
+    'escalate_to_manager',
+  ],
+
+  'restaurant-host': [
+    'answer_calls',
+    'book_appointments',
+    'reschedule_appointments',
+    'cancel_appointments',
+    'check_availability',
+    'take_messages',
+    'provide_business_info',
+    'transfer_to_human',
+    'send_sms',
+    'capture_lead_info',
+    'log_interactions',
+  ],
+
+  'lead-qualifier': [
+    'answer_calls',
+    'screen_callers',
+    'capture_lead_info',
+    'book_appointments',
+    'transfer_to_human',
+    'send_sms',
+    'schedule_callbacks',
+    'log_interactions',
+  ],
+
   'outbound-sales': [
     'make_outbound_calls',
     'capture_lead_info',
@@ -576,10 +839,17 @@ export const DEFAULT_CAPABILITIES_BY_JOB: Record<EmployeeJobType, EmployeeCapabi
 
   'collections': [
     'make_outbound_calls',
-    'send_sms',
-    'send_email',
-    'schedule_callbacks',
     'process_payments',
+    'schedule_callbacks',
+    'send_sms',
+    'log_interactions',
+  ],
+
+  'appointment-reminder': [
+    'make_outbound_calls',
+    'reschedule_appointments',
+    'cancel_appointments',
+    'send_sms',
     'log_interactions',
   ],
 
@@ -587,6 +857,7 @@ export const DEFAULT_CAPABILITIES_BY_JOB: Record<EmployeeJobType, EmployeeCapabi
     'make_outbound_calls',
     'log_interactions',
     'send_sms',
+    'schedule_callbacks',
   ],
 }
 

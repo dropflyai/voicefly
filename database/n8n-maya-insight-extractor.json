@@ -1,0 +1,146 @@
+{
+  "name": "Maya Insight Extractor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 2,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Daily 2AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://voicefly-production.up.railway.app/api/admin/conversations?outcome=lead_captured&insights_extracted=false&limit=20",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-webhook-secret",
+              "value": "7e88c02c00ef1d88a613c4fa91dc7f490147e1f0a74f021e753157fbc0573d82"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fetch-conversations",
+      "name": "Fetch Unprocessed Conversations",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "conversations",
+        "options": {}
+      },
+      "id": "split-conversations",
+      "name": "Split Conversations",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "{{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "claude-haiku-4-5-20251001"
+            },
+            {
+              "name": "max_tokens",
+              "value": "1024"
+            },
+            {
+              "name": "messages",
+              "value": "=[{\"role\": \"user\", \"content\": \"Analyze this VoiceFly sales chat and extract 1-2 reusable insights.\\n\\nConversation ID: {{ $json.id }}\\nMessages: {{ JSON.stringify($json.messages) }}\\n\\nReturn ONLY a JSON array of objects with: category (objection/question/winning_close/demo_script), situation, winning_response, trigger_keywords (array). Return [] if nothing useful.\"}]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "extract-insights",
+      "name": "Extract Insights via Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://voicefly-production.up.railway.app/api/webhooks/n8n-insights",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-webhook-secret",
+              "value": "7e88c02c00ef1d88a613c4fa91dc7f490147e1f0a74f021e753157fbc0573d82"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "insights",
+              "value": "={{ JSON.parse($json.content[0].text.replace(/```json\\n?|\\n?```/g, '').trim()) }}"
+            },
+            {
+              "name": "conversation_ids",
+              "value": "=[\"{{ $('Split Conversations').item.json.id }}\"]"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "send-to-voicefly",
+      "name": "Send to VoiceFly",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1120, 300]
+    }
+  ],
+  "connections": {
+    "Daily 2AM": { "main": [[{ "node": "Fetch Unprocessed Conversations", "type": "main", "index": 0 }]] },
+    "Fetch Unprocessed Conversations": { "main": [[{ "node": "Split Conversations", "type": "main", "index": 0 }]] },
+    "Split Conversations": { "main": [[{ "node": "Extract Insights via Claude", "type": "main", "index": 0 }]] },
+    "Extract Insights via Claude": { "main": [[{ "node": "Send to VoiceFly", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

@@ -16,6 +16,34 @@ const getStripeClient = () => {
   })
 }
 
+/**
+ * Get a Stripe client using a business's own credentials from payment_processors table.
+ * Returns null if the business hasn't configured their own Stripe.
+ */
+async function getBusinessStripeClient(businessId: string): Promise<{
+  stripe: Stripe
+  accountId: string
+} | null> {
+  const { data: processor } = await supabase
+    .from('payment_processors')
+    .select('api_key_secret, account_id, is_live_mode')
+    .eq('business_id', businessId)
+    .eq('processor_type', 'stripe')
+    .eq('is_active', true)
+    .single()
+
+  if (!processor?.api_key_secret) {
+    return null
+  }
+
+  return {
+    stripe: new Stripe(processor.api_key_secret, {
+      apiVersion: '2025-08-27.basil',
+    }),
+    accountId: processor.account_id,
+  }
+}
+
 export interface PaymentIntentData {
   amount: number // in cents
   customerId: string
@@ -236,8 +264,9 @@ export class StripeService {
   }
 
   /**
-   * Create a Stripe Checkout Session for phone order payment
-   * Returns the checkout URL that can be sent to the customer via SMS
+   * Create a Stripe Checkout Session for phone order payment.
+   * Uses the business's own Stripe credentials from payment_processors table.
+   * Returns the checkout URL that can be sent to the customer via SMS.
    */
   static async createCheckoutSession(data: {
     amount: number // in cents
@@ -249,9 +278,12 @@ export class StripeService {
     successUrl?: string
   }): Promise<{ success: boolean; checkoutUrl?: string; sessionId?: string; error?: string }> {
     try {
-      const stripe = getStripeClient()
+      // Try business's own Stripe account first, fall back to platform key
+      const businessClient = await getBusinessStripeClient(data.businessId)
+      const stripe = businessClient?.stripe || getStripeClient()
+
       if (!stripe) {
-        return { success: false, error: 'Stripe client not initialized. Please configure Stripe credentials.' }
+        return { success: false, error: 'No Stripe account configured. Connect Stripe in Settings > Payments.' }
       }
 
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://voicefly.app'

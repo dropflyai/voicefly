@@ -64,7 +64,13 @@ export class GoogleCalendarService {
         return { success: false, error: 'Google Calendar not configured. Service account credentials missing.' }
       }
 
-      await calendar.calendarList.get({ calendarId })
+      // Use events.list as a connection test — calendarList.get doesn't work
+      // for shared calendars that haven't been explicitly added to the list
+      await calendar.events.list({
+        calendarId,
+        maxResults: 1,
+        timeMin: new Date().toISOString(),
+      })
       return { success: true }
     } catch (error: any) {
       if (error.code === 404) {

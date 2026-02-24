@@ -23,6 +23,8 @@ import {
   UserGroupIcon,
   MagnifyingGlassIcon,
   BeakerIcon,
+  ChatBubbleLeftRightIcon,
+  PuzzlePieceIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -69,6 +71,8 @@ const businessFeatures = [
 const sharedFeatures = [
   { name: 'Voice AI', href: '/dashboard/voice-ai', icon: PhoneIcon },
   { name: 'Phone Employees', href: '/dashboard/employees', icon: UsersIcon },
+  { name: 'Chat Widgets', href: '/dashboard/widget', icon: ChatBubbleLeftRightIcon },
+  { name: 'Integrations', href: '/dashboard/integrations', icon: PuzzlePieceIcon },
   { name: 'AI Agents', href: '/dashboard/agents', icon: SparklesIcon },
   { name: 'Agent Config', href: '/dashboard/agent', icon: CogIcon },
   { name: 'Research', href: '/dashboard/research', icon: BeakerIcon },

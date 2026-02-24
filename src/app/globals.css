@@ -34,6 +34,20 @@
   --color-beauty-700: #a21caf;
   --color-beauty-800: #86198f;
   --color-beauty-900: #701a75;
+
+  /* Custom animations */
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  --animate-slide-up: slide-up 0.3s ease-out;
 }
 
 @media (prefers-color-scheme: dark) {

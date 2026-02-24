@@ -1,63 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
-import { provisionVoiceAI, ProvisioningInput } from '@/lib/voice-ai-provisioning'
 import { validateBusinessAccess } from '@/lib/api-auth'
+import { employeeProvisioning } from '@/lib/phone-employees/employee-provisioning'
+import type { ReceptionistConfig, AppointmentSchedulerConfig, OrderTakerConfig, CustomerServiceConfig } from '@/lib/phone-employees/types'
 
-// Map use cases to maya job IDs
-const USE_CASE_TO_MAYA_JOB: Record<string, string> = {
-  'lead-qualification': 'business-lead-qualifier',
-  'appointment-booking': 'appointment-scheduler',
-  'customer-service': 'customer-service-assistant',
-  'sales-follow-up': 'sales-follow-up-agent'
+// Map onboarding employee type → job type + config builder
+const JOB_TYPE_MAP: Record<string, string> = {
+  'receptionist': 'receptionist',
+  'appointment-scheduler': 'appointment-scheduler',
+  'order-taker': 'order-taker',
+  'customer-service': 'customer-service',
 }
 
-// Map business types to maya job IDs (fallback)
-const BUSINESS_TYPE_TO_MAYA_JOB: Record<string, string> = {
-  'saas': 'business-lead-qualifier',
-  'ecommerce': 'customer-service-assistant',
-  'healthcare': 'medical-scheduler',
-  'finance': 'business-lead-qualifier',
-  'realestate': 'real-estate-assistant',
-  'education': 'appointment-scheduler',
-  'beauty': 'beauty-salon-assistant',
-  'spa': 'spa-wellness-assistant',
-  'salon': 'hair-salon-coordinator',
-  'dental': 'dental-coordinator',
-  'fitness': 'fitness-coordinator',
-  'other': 'appointment-scheduler'
+// ElevenLabs voice ID → VAPI-compatible voice ID mapping
+// We store the EL voice ID from onboarding and pass it through
+function buildVoiceConfig(voiceId: string) {
+  return {
+    voiceId,
+    speed: 1.0,
+    stability: 0.8,
+    similarityBoost: 0.75,
+  }
 }
 
-interface OnboardingData {
-  businessId: string
-  // Step 1: Use Case
-  primaryUseCase: string
-  businessType: string
-  teamSize: string
-  // Step 2: Voice Configuration
-  voicePersonality: string
-  voiceGender: string
-  selectedVoice: string
-  // Step 3: Integration
-  crmSystem: string
-  phoneSystem: string
-  // Step 4: First Campaign
-  campaignName: string
-  campaignGoal: string
+function buildJobConfig(
+  jobType: string,
+  params: {
+    businessName: string
+    industry: string
+    address: string
+    hoursNote: string
+    services: string
+    escalationPhone: string
+    greeting: string
+    employeeName: string
+  }
+): ReceptionistConfig | AppointmentSchedulerConfig | OrderTakerConfig | CustomerServiceConfig {
+  const base = {
+    greeting: params.greeting,
+    businessHours: params.hoursNote || 'Please check our website for current hours',
+    transferNumber: params.escalationPhone || undefined,
+    address: params.address || undefined,
+  }
+
+  switch (jobType) {
+    case 'receptionist':
+      return {
+        ...base,
+        departments: [],
+        commonQuestions: params.services
+          ? [{ question: 'What services do you offer?', answer: `We offer: ${params.services}` }]
+          : [],
+      } as ReceptionistConfig
+
+    case 'appointment-scheduler':
+      return {
+        ...base,
+        services: params.services ? params.services.split(',').map(s => s.trim()) : [],
+        confirmationMessage: `Your appointment has been confirmed. We look forward to seeing you!`,
+      } as AppointmentSchedulerConfig
+
+    case 'order-taker':
+      return {
+        ...base,
+        menuItems: params.services ? params.services.split(',').map(s => ({ name: s.trim(), price: 0 })) : [],
+      } as OrderTakerConfig
+
+    case 'customer-service':
+      return {
+        ...base,
+        commonIssues: [],
+        escalationPolicy: params.escalationPhone ? 'transfer' : 'message',
+      } as CustomerServiceConfig
+
+    default:
+      return base as ReceptionistConfig
+  }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body: OnboardingData = await request.json()
+    const body = await request.json()
+    const { businessId } = body
 
-    if (!body.businessId) {
-      return NextResponse.json(
-        { error: 'Business ID is required' },
-        { status: 400 }
-      )
+    if (!businessId) {
+      return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
     }
 
-    // Validate authentication and business access
-    const authResult = await validateBusinessAccess(request, body.businessId)
+    // Auth check
+    const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
       return NextResponse.json(
         { error: authResult.error || 'Unauthorized' },
@@ -65,138 +95,93 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log('📝 Processing onboarding completion for business:', body.businessId)
+    const {
+      industry,
+      address = '',
+      hoursNote = '',
+      employeeType,
+      employeeName,
+      voiceId,
+      greeting,
+      services = '',
+      escalationPhone = '',
+      areaCode,
+    } = body
 
-    // Determine maya_job_id based on use case or business type
-    let mayaJobId = USE_CASE_TO_MAYA_JOB[body.primaryUseCase]
-    if (!mayaJobId && body.businessType) {
-      mayaJobId = BUSINESS_TYPE_TO_MAYA_JOB[body.businessType]
-    }
-    if (!mayaJobId) {
-      mayaJobId = 'appointment-scheduler' // Default fallback
+    if (!employeeType || !employeeName) {
+      return NextResponse.json({ error: 'Employee type and name are required' }, { status: 400 })
     }
 
-    // Update business with onboarding data
-    const { data: business, error: updateError } = await supabase
+    const jobType = JOB_TYPE_MAP[employeeType]
+    if (!jobType) {
+      return NextResponse.json({ error: `Unknown employee type: ${employeeType}` }, { status: 400 })
+    }
+
+    // Get business name
+    const { createClient } = await import('@supabase/supabase-js')
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { data: business } = await supabase
+      .from('businesses')
+      .select('name')
+      .eq('id', businessId)
+      .single()
+
+    const businessName = business?.name || 'Your Business'
+
+    console.log(`[Onboarding] Creating ${jobType} employee "${employeeName}" for business ${businessId}`)
+
+    const jobConfig = buildJobConfig(jobType, {
+      businessName,
+      industry,
+      address,
+      hoursNote,
+      services,
+      escalationPhone,
+      greeting,
+      employeeName,
+    })
+
+    // Create employee + provision Twilio+VAPI number
+    const employee = await employeeProvisioning.createEmployee({
+      businessId,
+      jobType: jobType as any,
+      name: employeeName,
+      config: jobConfig,
+      voice: buildVoiceConfig(voiceId),
+      provisionPhone: true,
+      phoneMode: 'twilio-vapi',
+      areaCode: areaCode || undefined,
+    })
+
+    // Mark onboarding complete
+    await supabase
       .from('businesses')
       .update({
-        maya_job_id: mayaJobId,
-        business_type: body.businessType || 'general_business',
-        // Store voice preferences in metadata (or dedicated columns if they exist)
-        voice_settings: {
-          personality: body.voicePersonality,
-          gender: body.voiceGender,
-          voiceId: body.selectedVoice
-        },
-        // CRM integration preference
-        crm_integration: body.crmSystem,
-        phone_system: body.phoneSystem,
-        // Mark onboarding as complete
         onboarding_completed: true,
         onboarding_completed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        business_type: industry,
+        updated_at: new Date().toISOString(),
       })
-      .eq('id', body.businessId)
-      .select()
-      .single()
+      .eq('id', businessId)
 
-    if (updateError) {
-      console.error('Error updating business:', updateError)
-      // Try without voice_settings if column doesn't exist
-      const { data: businessRetry, error: retryError } = await supabase
-        .from('businesses')
-        .update({
-          maya_job_id: mayaJobId,
-          business_type: body.businessType || 'general_business',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', body.businessId)
-        .select()
-        .single()
-
-      if (retryError) {
-        console.error('Retry error:', retryError)
-        return NextResponse.json(
-          { error: 'Failed to save onboarding data' },
-          { status: 500 }
-        )
-      }
-    }
-
-    // Create first campaign if campaign name provided
-    if (body.campaignName) {
-      const { error: campaignError } = await supabase
-        .from('voice_campaigns')
-        .insert({
-          business_id: body.businessId,
-          name: body.campaignName,
-          goal: body.campaignGoal,
-          status: 'draft',
-          created_at: new Date().toISOString()
-        })
-
-      if (campaignError) {
-        console.warn('Failed to create campaign (non-critical):', campaignError)
-        // Don't fail the whole request for this
-      }
-    }
-
-    console.log('✅ Onboarding data saved for business:', body.businessId, 'with maya_job_id:', mayaJobId)
-
-    // Get business name for provisioning
-    const { data: businessData } = await supabase
-      .from('businesses')
-      .select('name, subscription_tier')
-      .eq('id', body.businessId)
-      .single()
-
-    // Trigger Voice AI provisioning (agent + phone)
-    let provisioningResult = null
-    if (businessData) {
-      console.log('🤖 Starting Voice AI provisioning...')
-
-      const provisioningInput: ProvisioningInput = {
-        businessId: body.businessId,
-        businessName: businessData.name,
-        mayaJobId: mayaJobId,
-        subscriptionTier: businessData.subscription_tier || 'trial',
-        selectedVoice: body.selectedVoice
-      }
-
-      try {
-        provisioningResult = await provisionVoiceAI(provisioningInput)
-
-        if (provisioningResult.success) {
-          console.log('✅ Voice AI provisioned:', provisioningResult.phoneNumber)
-        } else {
-          console.warn('⚠️ Voice AI provisioning failed:', provisioningResult.error)
-          // Don't fail onboarding - user can provision later from dashboard
-        }
-      } catch (provisionError) {
-        console.error('Voice AI provisioning error:', provisionError)
-        // Don't fail onboarding - user can provision later from dashboard
-      }
-    }
-
-    console.log('✅ Onboarding completed for business:', body.businessId)
+    console.log(`[Onboarding] Complete — employee: ${employee.id}, phone: ${employee.phoneNumber}`)
 
     return NextResponse.json({
       success: true,
-      businessId: body.businessId,
-      mayaJobId: mayaJobId,
-      voiceAI: provisioningResult ? {
-        provisioned: provisioningResult.success,
-        agentId: provisioningResult.agentId,
-        phoneNumber: provisioningResult.phoneNumber,
-        error: provisioningResult.error
-      } : null,
-      message: 'Onboarding completed successfully'
+      employeeId: employee.id,
+      employeeName: employee.name,
+      phoneNumber: employee.phoneNumber || null,
+      vapiAssistantId: employee.vapiAssistantId,
     })
 
-  } catch (error) {
-    console.error('Onboarding completion error:', error)
+  } catch (error: any) {
+    console.error('[Onboarding] Error:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error.message || 'Internal server error' },
       { status: 500 }
     )
   }

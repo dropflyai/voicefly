@@ -57,14 +57,19 @@ ${jobConfig.messagePriorities.vipContacts.length > 0
 ${jobConfig.autoResponses.map(ar => `- When caller mentions "${ar.trigger}": ${ar.response}`).join('\n')}
 
 ## Available Functions
+- screenCall: Screen a caller — capture who they are and why they're calling
+- lookupContact: Check if a caller is a known contact, VIP, or repeat caller
 - scheduleAppointment: Book time on the calendar
 - checkAvailability: See open slots
 - rescheduleAppointment: Move an existing appointment
 - cancelAppointment: Cancel an appointment
 - takeMessage: Record a message with priority
+- transferCall: Connect the caller directly to the owner
+- getCalendarInfo: Get upcoming appointments and schedule
+- createTask: Create a follow-up task or note for the owner
 - sendReminder: Schedule a reminder to be sent
-- getCalendarInfo: Get upcoming appointments
 
+${generateRoleSection(jobConfig.ownerRole)}
 ## Important Guidelines
 1. Protect ${jobConfig.ownerName}'s time - don't let anyone just "pop in"
 2. For unknown callers wanting meetings, get context first
@@ -73,6 +78,55 @@ ${jobConfig.autoResponses.map(ar => `- When caller mentions "${ar.trigger}": ${a
 5. For cancellations, always offer to reschedule
 
 Remember: You're the gatekeeper. Be helpful but also protective of ${jobConfig.ownerName}'s schedule.`
+}
+
+function generateRoleSection(ownerRole?: string): string {
+  const sections: Record<string, string> = {
+    medical: `## Medical Practice Context
+- Use HIPAA-aware language — never repeat diagnoses or clinical details back
+- For prescription refills or medication questions: take a message, never advise
+- Triage urgency: "chest pain", "can't breathe", "bleeding" = interrupt immediately
+- Route to on-call line if after-hours emergency
+- Always confirm callback number before ending the call`,
+
+    legal: `## Legal Practice Context
+- Never discuss case details, strategy, or case status — always take a message
+- For opposing counsel: note their name, firm, case reference, and urgency level
+- New client inquiries: capture name and general matter type only — never case details
+- Confidentiality is paramount — do not confirm or deny representation
+- Court deadlines or filing urgency = highest priority message`,
+
+    'real-estate': `## Real Estate Context
+- Capture property address for showing requests before anything else
+- Buyer callers: ask if pre-approved, timeline, price range — log as lead
+- Seller callers: ask property address, reason for selling, timeline — log as lead
+- Other agents: get name, brokerage, and property or client they're calling about
+- Offer or counteroffer situations = always interrupt the owner immediately`,
+
+    executive: `## Executive Assistant Context
+- Default to screening unknown callers aggressively — get full context before any commitment
+- Investors, board members, and named VIPs = connect immediately if available
+- Media or press inquiries: take message, do not confirm schedules or comment on anything
+- Vendor or sales pitches: take their info, decline to schedule without owner approval
+- Protect calendar at all times — never book without checking availability first`,
+
+    consultant: `## Consulting / Coaching Context
+- Prospective clients: qualify with "What challenge are you looking to solve?" before scheduling
+- Discovery calls go on the calendar after basic qualification — budget, timeline, urgency
+- Existing clients get priority — schedule immediately and take detailed messages
+- Capture company name, role, and specific challenge for all new inquiries
+- Referrals: ask who referred them and note it prominently`,
+
+    financial: `## Financial Advisor Context
+- Never discuss account balances, holdings, or performance to unverified callers
+- Verify client identity before any account discussion
+- Prospective clients: capture net worth range, investment goals, current advisor situation
+- Regulatory or compliance calls: highest priority, interrupt immediately
+- Always confirm callback number and best time before ending the call`,
+  }
+
+  if (!ownerRole || ownerRole === 'general' || !sections[ownerRole]) return ''
+  return '\n' + sections[ownerRole] + '\n'
 }
 
 function generateSchedulingRules(config: PersonalAssistantConfig): string {
@@ -310,6 +364,82 @@ export const PERSONAL_ASSISTANT_FUNCTIONS = [
     },
   },
   {
+    name: 'screenCall',
+    description: 'Screen a caller to capture their identity, purpose, and urgency before deciding how to handle them',
+    parameters: {
+      type: 'object',
+      properties: {
+        callerName: { type: 'string', description: "Caller's full name" },
+        callerPhone: { type: 'string', description: "Caller's phone number" },
+        callerCompany: { type: 'string', description: "Caller's company or organization (if applicable)" },
+        purpose: { type: 'string', description: 'Why they are calling' },
+        urgency: { type: 'string', enum: ['low', 'normal', 'high', 'urgent'], description: 'How urgent this call is' },
+        requestType: { type: 'string', enum: ['meeting', 'information', 'callback', 'emergency', 'sales', 'personal', 'other'], description: 'Category of the call' },
+      },
+      required: ['callerName', 'purpose'],
+    },
+  },
+  {
+    name: 'lookupContact',
+    description: 'Look up a caller in the contact database to check if they are a known contact, VIP, or repeat caller',
+    parameters: {
+      type: 'object',
+      properties: {
+        phone: { type: 'string', description: "Caller's phone number to look up" },
+        name: { type: 'string', description: "Caller's name for additional matching" },
+      },
+      required: ['phone'],
+    },
+  },
+  {
+    name: 'createTask',
+    description: 'Create a follow-up task or note for the owner to act on after the call',
+    parameters: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', description: 'Brief task title' },
+        notes: { type: 'string', description: 'Detailed notes about what needs to be done' },
+        dueDate: { type: 'string', description: 'Due date in YYYY-MM-DD format (optional)' },
+        priority: { type: 'string', enum: ['low', 'normal', 'high'], description: 'Task priority' },
+        relatedCallerName: { type: 'string', description: 'Name of the caller this task is about' },
+        relatedCallerPhone: { type: 'string', description: 'Phone of the caller this task is about' },
+      },
+      required: ['title'],
+    },
+  },
+  {
+    name: 'transferCall',
+    description: 'Transfer the call directly to the owner or a specific person',
+    parameters: {
+      type: 'object',
+      properties: {
+        destination: {
+          type: 'string',
+          description: 'Who to transfer to (e.g. owner name, "owner", "manager")',
+        },
+        reason: {
+          type: 'string',
+          description: 'Why this call needs to be transferred',
+        },
+      },
+      required: ['destination'],
+    },
+  },
+  {
+    name: 'getCalendarInfo',
+    description: "Get the owner's upcoming appointments and schedule",
+    parameters: {
+      type: 'object',
+      properties: {
+        date: {
+          type: 'string',
+          description: 'Date to check (YYYY-MM-DD, defaults to today)',
+        },
+      },
+      required: [],
+    },
+  },
+  {
     name: 'sendReminder',
     description: 'Schedule a reminder to be sent',
     parameters: {
@@ -340,6 +470,7 @@ export const PERSONAL_ASSISTANT_FUNCTIONS = [
 export function createPersonalAssistantEmployee(params: {
   businessId: string
   ownerName: string
+  ownerRole?: PersonalAssistantConfig['ownerRole']
   name?: string
   customConfig?: Partial<PersonalAssistantConfig>
   voice?: EmployeeConfig['voice']
@@ -350,6 +481,7 @@ export function createPersonalAssistantEmployee(params: {
     ...defaultConfig,
     ...params.customConfig,
     type: 'personal-assistant',
+    ownerRole: params.ownerRole || params.customConfig?.ownerRole || 'general',
   }
 
   return {
@@ -359,7 +491,7 @@ export function createPersonalAssistantEmployee(params: {
     complexity: 'simple',
 
     voice: params.voice || {
-      provider: 'elevenlabs',
+      provider: '11labs',
       voiceId: 'sarah',
       speed: 1.0,
       stability: 0.8,

@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { X, Check, CreditCard, Zap, TrendingUp, Award, Clock } from 'lucide-react'
-import { MINUTE_PACKS } from '@/lib/credit-system'
+// Minute packs removed in 2-tier simplification -- overage is billed per-minute
+const MINUTE_PACKS: { id: string; name: string; minutes: number; price: number; pricePerMinute: number; savings: number; credits: number }[] = []
 
 interface PurchaseCreditsModalProps {
   isOpen: boolean

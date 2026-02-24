@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Mic,
   CheckCircle,
@@ -30,31 +30,51 @@ export default function SignupPage() {
     password: '',
     agreeToTerms: false
   })
+
+  // Pre-fill from ?email= and ?name= passed by the chatbot lead capture
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const emailParam = params.get('email')
+    const nameParam = params.get('name')
+    if (emailParam || nameParam) {
+      setFormData(prev => {
+        const next = { ...prev }
+        if (emailParam) next.email = emailParam
+        if (nameParam) {
+          const parts = nameParam.trim().split(' ')
+          next.firstName = parts[0] || ''
+          next.lastName = parts.slice(1).join(' ') || ''
+        }
+        return next
+      })
+    }
+  }, [])
   const [isLoading, setIsLoading] = useState(false)
+  const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong' | null>(null)
 
   const benefits = [
     {
+      icon: <Clock className="h-6 w-6" />,
+      title: "Never Miss a Call",
+      description: "AI answers 24/7 so you never lose a client to voicemail"
+    },
+    {
       icon: <TrendingUp className="h-6 w-6" />,
-      title: "Boost Revenue by 40%",
-      description: "Average revenue increase within 90 days"
+      title: "Book More Appointments",
+      description: "Clients book instantly, even when you're with someone"
     },
     {
       icon: <Users className="h-6 w-6" />,
-      title: "300% More Qualified Leads",
-      description: "Automated qualification saves time and increases quality"
-    },
-    {
-      icon: <Clock className="h-6 w-6" />,
-      title: "60% Cost Reduction",
-      description: "Reduce call center costs while improving service"
+      title: "Reduce No-Shows",
+      description: "Automated SMS reminders keep your schedule full (Pro plan)"
     }
   ]
 
   const trustSignals = [
-    "SOC 2 Compliant",
-    "HIPAA Compliant",
-    "GDPR Compliant",
-    "99.9% Uptime SLA"
+    "14-day free trial",
+    "No credit card needed",
+    "Cancel anytime",
+    "Live in 10 minutes"
   ]
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,13 +103,32 @@ export default function SignupPage() {
         businessId: primaryBusinessId
       })
 
-      // Redirect to dashboard
-      window.location.href = '/dashboard'
+      // Redirect to onboarding
+      window.location.href = '/onboarding'
     } catch (error: any) {
       console.error('Signup error:', error)
       alert(error.message || 'Failed to create account. Please try again.')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const checkPasswordStrength = (password: string) => {
+    if (!password) {
+      setPasswordStrength(null)
+      return
+    }
+    const hasLetter = /[a-zA-Z]/.test(password)
+    const hasNumber = /[0-9]/.test(password)
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password)
+    const isLongEnough = password.length >= 8
+
+    if (isLongEnough && hasLetter && hasNumber && hasSpecial) {
+      setPasswordStrength('strong')
+    } else if (isLongEnough && hasLetter && hasNumber) {
+      setPasswordStrength('medium')
+    } else {
+      setPasswordStrength('weak')
     }
   }
 
@@ -99,6 +138,10 @@ export default function SignupPage() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }))
+
+    if (name === 'password') {
+      checkPasswordStrength(value)
+    }
   }
 
   const isFormValid = formData.firstName &&
@@ -161,7 +204,10 @@ export default function SignupPage() {
               Get Started with VoiceFly
             </h1>
             <p className="text-gray-600">
-              Join 258,000+ businesses transforming their communication
+              Set up your AI receptionist in minutes
+            </p>
+            <p className="text-sm text-blue-600 font-medium mt-2">
+              ⚡ Setup takes under 2 minutes • No credit card needed
             </p>
           </div>
 
@@ -329,6 +375,29 @@ export default function SignupPage() {
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
+              {passwordStrength && (
+                <div className="mt-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full transition-all duration-300 ${
+                          passwordStrength === 'weak' ? 'w-1/3 bg-red-500' :
+                          passwordStrength === 'medium' ? 'w-2/3 bg-yellow-500' :
+                          'w-full bg-green-500'
+                        }`}
+                      />
+                    </div>
+                    <span className={`text-xs font-medium ${
+                      passwordStrength === 'weak' ? 'text-red-600' :
+                      passwordStrength === 'medium' ? 'text-yellow-600' :
+                      'text-green-600'
+                    }`}>
+                      {passwordStrength === 'weak' ? 'Weak' :
+                       passwordStrength === 'medium' ? 'Good' : 'Strong'}
+                    </span>
+                  </div>
+                </div>
+              )}
               <p className="text-xs text-gray-500 mt-1">
                 Must be at least 8 characters with letters and numbers
               </p>
@@ -401,10 +470,10 @@ export default function SignupPage() {
         <div className="max-w-md">
           <div className="mb-12">
             <h2 className="text-3xl font-bold text-white mb-4">
-              Join 258,000+ Businesses Already Using VoiceFly
+              Stop Missing Client Calls
             </h2>
             <p className="text-blue-100 text-lg">
-              Transform your business communication with AI that delivers real results
+              Your AI receptionist answers every call, books appointments, and keeps your schedule full
             </p>
           </div>
 
@@ -427,31 +496,21 @@ export default function SignupPage() {
           </div>
 
           <div className="mt-12 p-6 bg-blue-500/20 rounded-xl">
-            <div className="flex items-center space-x-3 mb-3">
-              <div className="flex -space-x-2">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="w-8 h-8 bg-blue-300 rounded-full border-2 border-blue-600"></div>
-                ))}
-              </div>
-              <div className="text-white">
-                <div className="font-semibold">Sarah J. & 257,999 others</div>
-                <div className="text-sm text-blue-200">started their trial today</div>
-              </div>
-            </div>
-            <div className="text-blue-100 text-sm">
-              "Setup took 5 minutes and we saw results immediately. Our conversion rate doubled in the first month!"
-            </div>
+            <p className="text-blue-100 text-sm">
+              VoiceFly works for any appointment-based business. Set up your AI receptionist
+              in under 10 minutes and start capturing every call.
+            </p>
           </div>
 
           <div className="mt-8 text-center">
             <div className="flex items-center justify-center space-x-4 text-blue-200 text-sm">
               <span className="flex items-center">
                 <CheckCircle className="h-4 w-4 mr-1" />
-                14-day trial
+                14-day free trial
               </span>
               <span className="flex items-center">
                 <CheckCircle className="h-4 w-4 mr-1" />
-                Credit card required
+                No credit card needed
               </span>
             </div>
           </div>

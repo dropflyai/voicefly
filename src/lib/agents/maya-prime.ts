@@ -9,6 +9,7 @@ import { supabase } from '../supabase-client'
 import { CreditSystem, CreditCost } from '../credit-system'
 import { ErrorTracker, ErrorCategory, ErrorSeverity } from '../error-tracking'
 import AuditLogger, { AuditEventType } from '../audit-logger'
+import { actionExecutor } from '../phone-employees/action-executor'
 import {
   AgentConfig,
   AgentContext,
@@ -17,6 +18,7 @@ import {
   AgentAlert,
   AgentAction,
   AgentPriority,
+  AgentChain,
   BusinessHealthMetrics,
   DailySummary,
   HealthDimension,
@@ -38,6 +40,128 @@ const MAYA_PRIME_CONFIG = {
   },
 }
 
+// Agent chain definitions — Maya's decision graph
+// Defines which agents auto-trigger based on another agent's output
+const AGENT_CHAINS: AgentChain[] = [
+  // Call Intelligence → Lead Qualification (hot leads need immediate scoring)
+  {
+    sourceAgentId: 'call-intelligence',
+    condition: (r) => r.output?.leadQuality === 'hot' && r.output?.followUpRequired === true,
+    targetAgentId: 'lead-qualification',
+    extractData: (r) => ({ callId: r.output?.callId, fromCall: true, callAnalysis: r.output }),
+    priority: 'high',
+  },
+  // Call Intelligence → Customer Retention (frustrated callers are churn risks)
+  {
+    sourceAgentId: 'call-intelligence',
+    condition: (r) => r.output?.sentiment?.customerFrustration === true,
+    targetAgentId: 'customer-retention',
+    extractData: (r) => ({ callId: r.output?.callId, fromCall: true, sentiment: r.output?.sentiment }),
+    priority: 'high',
+  },
+  // Call Intelligence → Customer Retention (negative sentiment on warm/hot leads)
+  {
+    sourceAgentId: 'call-intelligence',
+    condition: (r) =>
+      r.output?.sentiment?.overall === 'negative' &&
+      r.output?.leadQuality !== 'cold',
+    targetAgentId: 'customer-retention',
+    extractData: (r) => ({ callId: r.output?.callId, fromCall: true }),
+    priority: 'medium',
+  },
+  // Lead Qualification → Customer Retention (hot leads need proactive monitoring)
+  {
+    sourceAgentId: 'lead-qualification',
+    condition: (r) =>
+      r.output?.tier === 'hot' ||
+      (r.insights || []).some((i) => i.type === 'opportunity' && i.impact === 'high'),
+    targetAgentId: 'customer-retention',
+    extractData: (r) => ({ leadId: r.output?.leadId, fromQualification: true }),
+    priority: 'medium',
+  },
+  // Customer Retention → Revenue Intelligence (churn risk = revenue impact)
+  {
+    sourceAgentId: 'customer-retention',
+    condition: (r) => (r.insights || []).some((i) => i.type === 'risk' && i.impact === 'high'),
+    targetAgentId: 'revenue-intelligence',
+    extractData: (r) => ({ triggeredBy: 'retention', insights: r.insights }),
+    priority: 'medium',
+  },
+  // After-hours emergency → Customer Retention (critical emergencies always fire follow-up)
+  // Note: fires when triageEmergency returns urgencyLevel of 'critical' or 'emergency'
+  {
+    sourceAgentId: 'phone-employee-emergency',
+    condition: (r) => r.output?.urgencyLevel === 'critical' || r.output?.urgencyLevel === 'emergency',
+    targetAgentId: 'customer-retention',
+    extractData: (r) => ({ triggeredBy: 'emergency', callId: r.output?.callId }),
+    priority: 'critical' as AgentPriority,
+  },
+  // Restaurant reservation booked (large party) → notify via customer-memory for follow-up
+  {
+    sourceAgentId: 'restaurant-host',
+    condition: (r) => r.output?.reservationId && r.output?.success === true,
+    targetAgentId: 'customer-memory',
+    extractData: (r) => ({ triggeredBy: 'reservation', reservationId: r.output?.reservationId }),
+    priority: 'low' as AgentPriority,
+  },
+  // Survey complete (negative) → Customer Retention (churn risk)
+  {
+    sourceAgentId: 'survey-caller',
+    condition: (r) => r.output?.sentiment === 'negative' || (r.output?.avgRating !== undefined && r.output.avgRating < 3),
+    targetAgentId: 'customer-retention',
+    extractData: (r) => ({ triggeredBy: 'survey-negative', avgRating: r.output?.avgRating, callId: r.output?.callId }),
+    priority: 'high' as AgentPriority,
+  },
+  // Survey complete (positive) → Revenue Intelligence (opportunity signal)
+  {
+    sourceAgentId: 'survey-caller',
+    condition: (r) => r.output?.avgRating !== undefined && r.output.avgRating >= 8,
+    targetAgentId: 'revenue-intelligence',
+    extractData: (r) => ({ triggeredBy: 'survey-positive', avgRating: r.output?.avgRating }),
+    priority: 'low' as AgentPriority,
+  },
+  // Lead qualifier hot lead → Lead Qualification agent (deep scoring + CRM sync)
+  {
+    sourceAgentId: 'lead-qualifier',
+    condition: (r) => r.output?.tier === 'hot',
+    targetAgentId: 'lead-qualification',
+    extractData: (r) => ({ triggeredBy: 'lead-qualifier', tier: r.output?.tier, callId: r.output?.callId }),
+    priority: 'high' as AgentPriority,
+  },
+  // Lead qualifier warm lead → Customer Retention (nurture sequence)
+  {
+    sourceAgentId: 'lead-qualifier',
+    condition: (r) => r.output?.tier === 'warm',
+    targetAgentId: 'customer-retention',
+    extractData: (r) => ({ triggeredBy: 'lead-qualifier-warm', callId: r.output?.callId }),
+    priority: 'medium' as AgentPriority,
+  },
+  // Appointment reminder unconfirmed → Appointment Recovery (follow-up needed)
+  {
+    sourceAgentId: 'appointment-reminder',
+    condition: (r) => r.output?.confirmed === false,
+    targetAgentId: 'appointment-recovery',
+    extractData: (r) => ({ triggeredBy: 'reminder-unconfirmed', callId: r.output?.callId }),
+    priority: 'medium' as AgentPriority,
+  },
+  // Collections dispute → Revenue Intelligence (escalate for review)
+  {
+    sourceAgentId: 'collections',
+    condition: (r) => r.output?.disputed === true,
+    targetAgentId: 'revenue-intelligence',
+    extractData: (r) => ({ triggeredBy: 'collections-dispute', callId: r.output?.callId }),
+    priority: 'high' as AgentPriority,
+  },
+  // Collections payment promise or plan → Revenue Intelligence (positive signal)
+  {
+    sourceAgentId: 'collections',
+    condition: (r) => r.output?.recorded === true || r.output?.planCreated === true,
+    targetAgentId: 'revenue-intelligence',
+    extractData: (r) => ({ triggeredBy: 'payment-promise', callId: r.output?.callId }),
+    priority: 'medium' as AgentPriority,
+  },
+]
+
 export class MayaPrime {
   private static instance: MayaPrime
   private errorTracker = ErrorTracker.getInstance()
@@ -48,7 +172,7 @@ export class MayaPrime {
 
   private constructor() {
     this.state = {
-      isRunning: false,
+      isRunning: true,   // In serverless, Maya is always "running" — initialize() upgrades health metrics
       lastHeartbeat: new Date(),
       activeAgents: [],
       queuedTasks: 0,
@@ -113,7 +237,10 @@ export class MayaPrime {
   }
 
   /**
-   * Process an event and trigger appropriate agents
+   * Process an event - handles Maya Prime's own responsibilities.
+   * Agent execution is delegated to AgentRegistry (which calls this AFTER
+   * dispatching agents). Maya Prime only handles orchestrator-level concerns:
+   * alerts, daily summaries, and health monitoring.
    */
   async handleEvent(
     event: AgentEvent,
@@ -121,32 +248,11 @@ export class MayaPrime {
     data: any
   ): Promise<AgentResult[]> {
     const results: AgentResult[] = []
-    const context: AgentContext = {
-      businessId,
-      triggeredBy: 'event',
-      triggerData: data,
-      startTime: new Date(),
-    }
 
     try {
       switch (event) {
-        case AgentEvent.CALL_ENDED:
-          // Trigger call intelligence analysis
-          results.push(await this.triggerAgent('call-intelligence', context))
-          break
-
-        case AgentEvent.LEAD_CREATED:
-          // Trigger lead qualification
-          results.push(await this.triggerAgent('lead-qualification', context))
-          break
-
-        case AgentEvent.APPOINTMENT_NOSHOW:
-          // Trigger follow-up and potential re-booking
-          results.push(await this.triggerAgent('appointment-recovery', context))
-          break
-
         case AgentEvent.CREDITS_LOW:
-          // Generate alert for low credits
+          // Generate alert for low credits (Maya Prime responsibility)
           await this.generateAlert({
             severity: 'warning',
             title: 'Credits Running Low',
@@ -157,15 +263,31 @@ export class MayaPrime {
           }, businessId)
           break
 
-        case AgentEvent.CHURN_RISK:
-          // Trigger customer retention agent
-          results.push(await this.triggerAgent('customer-retention', context))
-          break
-
         case AgentEvent.DAILY_SUMMARY:
-          // Generate daily summary
+          // Generate daily summary (Maya Prime responsibility)
           await this.generateDailySummary(businessId)
           break
+
+        case AgentEvent.ERROR_THRESHOLD:
+          // Generate system alert
+          await this.generateAlert({
+            severity: 'critical',
+            title: 'Error Rate Too High',
+            message: `System error rate exceeded threshold: ${data.errorCount} errors in the last hour.`,
+            category: 'system',
+            timestamp: new Date(),
+            metadata: data,
+          }, businessId)
+          break
+
+        case AgentEvent.HEALTH_CHECK:
+          // Run health check
+          await this.calculateBusinessHealth(businessId)
+          break
+
+        // All other events (CALL_ENDED, LEAD_CREATED, etc.) are handled
+        // by the AgentRegistry which dispatches to the correct agent.
+        // Maya Prime does NOT re-trigger them to avoid double execution.
       }
 
       return results
@@ -181,81 +303,45 @@ export class MayaPrime {
   }
 
   /**
-   * Trigger a specific agent
+   * Maya's core decision engine.
+   * After any agent completes, Maya evaluates its result and returns
+   * the list of agents that should run next (chaining).
+   * chainDepth prevents infinite loops — capped at 1 for Pass 1.
    */
-  private async triggerAgent(agentId: string, context: AgentContext): Promise<AgentResult> {
-    const startTime = Date.now()
-    const executionId = this.generateExecutionId()
+  async decide(
+    agentId: string,
+    result: AgentResult,
+    businessId: string,
+    chainDepth: number = 0
+  ): Promise<Array<{ targetAgentId: string; data: any; priority: AgentPriority }>> {
+    // Don't chain from failed runs or beyond depth limit
+    if (!result.success || chainDepth >= 1) return []
 
-    try {
-      // Check if agent exists and is enabled
-      const agent = this.registeredAgents.get(agentId)
-      if (!agent || !agent.enabled) {
-        return {
-          success: false,
-          executionId,
-          agentId,
-          businessId: context.businessId,
-          duration: Date.now() - startTime,
-          error: 'Agent not found or disabled',
+    const chains = AGENT_CHAINS.filter((c) => c.sourceAgentId === agentId)
+    const triggered: Array<{ targetAgentId: string; data: any; priority: AgentPriority }> = []
+
+    for (const chain of chains) {
+      try {
+        if (chain.condition(result)) {
+          triggered.push({
+            targetAgentId: chain.targetAgentId,
+            data: chain.extractData(result),
+            priority: chain.priority,
+          })
+          console.log(
+            `[MayaPrime] Chain triggered: ${agentId} → ${chain.targetAgentId} (${chain.priority})`
+          )
         }
-      }
-
-      // Add to active agents
-      this.state.activeAgents.push(agentId)
-
-      // Execute based on agent type (placeholder for actual agent execution)
-      const result = await this.executeAgent(agent, context, executionId)
-
-      // Remove from active agents
-      this.state.activeAgents = this.state.activeAgents.filter((id) => id !== agentId)
-
-      return result
-    } catch (error) {
-      this.state.activeAgents = this.state.activeAgents.filter((id) => id !== agentId)
-
-      return {
-        success: false,
-        executionId,
-        agentId,
-        businessId: context.businessId,
-        duration: Date.now() - startTime,
-        error: error instanceof Error ? error.message : 'Unknown error',
+      } catch (err) {
+        // Condition errors must never crash the orchestrator
+        console.error(
+          `[MayaPrime] Chain condition error for ${agentId} → ${chain.targetAgentId}:`,
+          err
+        )
       }
     }
-  }
 
-  /**
-   * Execute an agent (to be extended with actual agent implementations)
-   */
-  private async executeAgent(
-    agent: AgentConfig,
-    context: AgentContext,
-    executionId: string
-  ): Promise<AgentResult> {
-    const startTime = Date.now()
-
-    // Log execution start
-    await this.logExecution(executionId, agent.id, context.businessId, 'started')
-
-    // Placeholder - actual agent logic will be implemented in separate files
-    // and called via the agent registry
-
-    const result: AgentResult = {
-      success: true,
-      executionId,
-      agentId: agent.id,
-      businessId: context.businessId,
-      duration: Date.now() - startTime,
-      insights: [],
-      actions: [],
-      alerts: [],
-    }
-
-    // Log execution completion
-    await this.logExecution(executionId, agent.id, context.businessId, 'completed', result)
-
-    return result
+    return triggered
   }
 
   /**
@@ -495,6 +581,45 @@ export class MayaPrime {
   }
 
   /**
+   * Receive billing cycle results from the cron job.
+   * Maya generates platform-level alerts for critical billing events.
+   * Uses 'platform' as a sentinel businessId for admin-level alerts.
+   */
+  async onBillingCycleComplete(results: {
+    anomalies: { processed: number; flagged: number }
+    alerts: { processed: number; alerts: number }
+    dunning: { processed: number; recovered: number; escalated: number }
+    overages: { processed: number; newOverages: number }
+  }): Promise<void> {
+    const PLATFORM_ID = 'platform'
+    try {
+      if (results.anomalies.flagged > 0) {
+        await this.generateAlert({
+          severity: results.anomalies.flagged >= 3 ? 'critical' : 'warning',
+          title: `${results.anomalies.flagged} Usage Anomaly(s) Detected`,
+          message: `${results.anomalies.flagged} business(es) showing abnormal credit consumption. Possible fraud or runaway usage — review credit_alerts table.`,
+          category: 'billing',
+          timestamp: new Date(),
+          metadata: results.anomalies,
+        }, PLATFORM_ID)
+      }
+      if (results.dunning.escalated > 0) {
+        await this.generateAlert({
+          severity: 'warning',
+          title: `${results.dunning.escalated} Account(s) Escalated to Suspension`,
+          message: `${results.dunning.escalated} account(s) exhausted dunning retries and have been suspended.`,
+          category: 'billing',
+          timestamp: new Date(),
+          metadata: results.dunning,
+        }, PLATFORM_ID)
+      }
+      console.log(`[MayaPrime] Billing cycle received — anomalies: ${results.anomalies.flagged}, escalated: ${results.dunning.escalated}`)
+    } catch (err) {
+      console.error('[MayaPrime] onBillingCycleComplete error:', err)
+    }
+  }
+
+  /**
    * Queue an action for execution
    */
   queueAction(action: AgentAction): void {
@@ -538,11 +663,64 @@ export class MayaPrime {
   }
 
   /**
-   * Execute a queued action
+   * Execute a queued action by dispatching through the Action Executor
    */
   private async executeAction(action: AgentAction): Promise<void> {
-    // Placeholder for action execution
-    // Would route to appropriate service based on action.type
+    // Map AgentAction to ActionRequest and insert into action_requests table
+    // The action executor will pick it up via processQueue()
+    try {
+      const actionType = this.mapActionType(action.type)
+      if (!actionType) {
+        console.warn(`[MayaPrime] Unknown action type: ${action.type}`)
+        return
+      }
+
+      const { error } = await supabase.from('action_requests').insert({
+        business_id: action.payload?.businessId || '',
+        employee_id: action.payload?.employeeId || 'maya-prime',
+        action_type: actionType,
+        target: {
+          phone: action.payload?.phone,
+          email: action.payload?.email,
+          webhookUrl: action.payload?.webhookUrl,
+        },
+        content: {
+          message: action.payload?.message,
+          subject: action.payload?.subject,
+          data: action.payload,
+        },
+        execute_at: action.scheduledFor?.toISOString() || null,
+        status: 'pending',
+        triggered_by: 'agent',
+        created_at: new Date().toISOString(),
+      })
+
+      if (error) {
+        console.error('[MayaPrime] Failed to queue action:', error)
+      }
+    } catch (err) {
+      console.error('[MayaPrime] executeAction error:', err)
+    }
+  }
+
+  /**
+   * Map agent action types to action executor types
+   */
+  private mapActionType(type: string): string | null {
+    const mapping: Record<string, string> = {
+      'send_sms': 'send_sms',
+      'send_email': 'send_email',
+      'make_call': 'make_call',
+      'schedule_callback': 'schedule_callback',
+      'create_appointment': 'create_appointment',
+      'update_crm': 'update_crm',
+      'send_webhook': 'send_webhook',
+      'escalate': 'escalate',
+      'notify': 'send_sms',
+      'follow_up': 'send_sms',
+      'alert': 'send_email',
+    }
+    return mapping[type] || null
   }
 
   /**

@@ -14,9 +14,9 @@ import { validateBusinessAccess } from '@/lib/api-auth'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-type JobType = 'receptionist' | 'order-taker' | 'personal-assistant'
+type JobType = 'receptionist' | 'order-taker' | 'personal-assistant' | 'appointment-scheduler' | 'customer-service'
 
-const VALID_JOB_TYPES: JobType[] = ['receptionist', 'order-taker', 'personal-assistant']
+const VALID_JOB_TYPES: JobType[] = ['receptionist', 'order-taker', 'personal-assistant', 'appointment-scheduler', 'customer-service']
 
 // ============================================
 // INTERVIEW PROMPT BUILDERS
@@ -95,6 +95,54 @@ When you have enough information about their schedule and preferences, say:
 Then end the conversation naturally.`
 }
 
+function buildAppointmentSchedulerInterviewPrompt(businessName: string, employeeName?: string): string {
+  return `You are a friendly interviewer helping set up an appointment scheduler${employeeName ? ` named ${employeeName}` : ''} for ${businessName}. Have a natural 2-3 minute conversation to learn how their booking process works.
+
+## What to Ask About (in conversational order)
+1. What kinds of appointments they offer (consultations, services, classes, etc.)
+2. How long appointments typically last (15 minutes, 30 minutes, 1 hour?)
+3. How far out they schedule — do they book same day, or weeks in advance?
+4. How many staff members can take appointments — one person or multiple?
+5. Their cancellation and rescheduling policy
+6. Their hours and which days they accept bookings
+
+## Conversation Rules
+- Ask ONE question at a time, then listen
+- Be warm and encouraging ("Got it!", "That's really helpful")
+- If answers are vague, probe gently ("Could you give me a sense of the range?")
+- Ask natural follow-ups based on what they share
+- Keep the whole conversation under 3 minutes
+
+## Wrapping Up
+When you have a clear picture of their appointment types, availability, and policies, say:
+"Perfect, I've got a clear picture of how your scheduling works. Thanks for walking me through it!"
+Then end the conversation naturally.`
+}
+
+function buildCustomerServiceInterviewPrompt(businessName: string, employeeName?: string): string {
+  return `You are a friendly interviewer helping set up a customer service representative${employeeName ? ` named ${employeeName}` : ''} for ${businessName}. Have a natural 2-3 minute conversation to learn how they handle customer issues.
+
+## What to Ask About (in conversational order)
+1. What products or services their customers typically need support with
+2. The most common issues or questions customers call about
+3. Whether they handle returns or refunds, and what that process looks like
+4. What the representative can resolve on the spot vs. what needs to be escalated
+5. Their typical expectations for response and resolution time
+6. Any important policies callers should know about (warranty periods, exchange windows, etc.)
+
+## Conversation Rules
+- Ask ONE question at a time, then listen
+- Be warm and encouraging ("That makes sense!", "Good to know")
+- When answers are brief, probe gently ("Can you walk me through how that usually works?")
+- Ask natural follow-ups based on what they share
+- Keep the whole conversation under 3 minutes
+
+## Wrapping Up
+When you have a solid understanding of their support scope, escalation paths, and key policies, say:
+"Great, I have a solid understanding of how your customer service works. Thanks so much!"
+Then end the conversation naturally.`
+}
+
 // ============================================
 // ROUTE HANDLER
 // ============================================
@@ -154,6 +202,14 @@ export async function POST(request: NextRequest) {
       case 'personal-assistant':
         systemPrompt = buildPersonalAssistantInterviewPrompt(businessName, employeeName)
         firstMessage = `Hi! I'm going to help set up your personal assistant. I just need to learn a bit about your schedule and preferences. To start, can you tell me your name and what your typical work schedule looks like?`
+        break
+      case 'appointment-scheduler':
+        systemPrompt = buildAppointmentSchedulerInterviewPrompt(businessName, employeeName)
+        firstMessage = `Hi there! I'm here to help set up an appointment scheduler for ${businessName}. I just have a few questions about how you handle bookings. To start, what kinds of appointments do you offer?`
+        break
+      case 'customer-service':
+        systemPrompt = buildCustomerServiceInterviewPrompt(businessName, employeeName)
+        firstMessage = `Hi! I'm going to help you set up a customer service representative for ${businessName}. I have a few questions about how you handle customer issues. First, can you tell me what products or services your customers typically need support with?`
         break
       default:
         return NextResponse.json({ error: 'Invalid job type' }, { status: 400 })

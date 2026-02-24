@@ -21,6 +21,11 @@ import { LeadQualificationAgent, leadQualificationAgent } from './lead-qualifica
 import { CustomerRetentionAgent, customerRetentionAgent } from './customer-retention'
 import { AppointmentRecoveryAgent, appointmentRecoveryAgent } from './appointment-recovery'
 import { RevenueIntelligenceAgent, revenueIntelligenceAgent } from './revenue-intelligence'
+import { customerMemoryAgent } from './customer-memory'
+import { routingAgent } from './routing-agent'
+import { setupAgent } from './setup-agent'
+import { BillingAgent } from '../billing-agent'
+import { chatAgent } from './chat-agent'
 
 // Agent execution interface
 interface AgentExecutor {
@@ -105,6 +110,68 @@ export class AgentRegistry {
       errorCount: 0,
     })
 
+    // Register Customer Memory Agent
+    this.registerAgent({
+      config: {
+        id: 'customer-memory',
+        name: 'Customer Memory Agent',
+        description: 'Injects caller history into live VAPI calls at call start',
+        cluster: 'customer',
+        enabled: true,
+        triggers: [{ event: AgentEvent.CALL_STARTED }],
+      },
+      instance: customerMemoryAgent,
+      status: 'idle',
+      executionCount: 0,
+      errorCount: 0,
+    })
+
+    // Register Routing Agent
+    this.registerAgent({
+      config: {
+        id: 'routing',
+        name: 'Routing Agent',
+        description: 'Routes inbound calls to the best phone employee',
+        cluster: 'operations',
+        enabled: true,
+        triggers: [{ event: AgentEvent.CALL_STARTED }],
+      },
+      instance: routingAgent,
+      status: 'idle',
+      executionCount: 0,
+      errorCount: 0,
+    })
+
+    // Register Setup Agent
+    this.registerAgent({
+      config: {
+        id: 'setup',
+        name: 'Setup Agent',
+        description: 'Conversational onboarding agent for configuring phone employees',
+        cluster: 'system',
+        enabled: true,
+      },
+      instance: setupAgent,
+      status: 'idle',
+      executionCount: 0,
+      errorCount: 0,
+    })
+
+    // Register Billing Agent (admin-side, static class — no customer events)
+    this.registerAgent({
+      config: {
+        id: 'billing',
+        name: 'Billing Agent',
+        description: 'Handles credit alerts, fraud detection, dunning, and billing lifecycle',
+        cluster: 'financial',
+        enabled: true,
+      },
+      instance: null, // Static class — called directly in executeAgent
+      status: 'idle',
+      executionCount: 0,
+      errorCount: 0,
+    })
+
     // Subscribe agents to events
     // Call Intelligence
     this.subscribeToEvent(AgentEvent.CALL_ENDED, 'call-intelligence')
@@ -127,6 +194,20 @@ export class AgentRegistry {
     // Revenue Intelligence
     this.subscribeToEvent(AgentEvent.PAYMENT_RECEIVED, 'revenue-intelligence')
     this.subscribeToEvent(AgentEvent.DAILY_SUMMARY, 'revenue-intelligence')
+
+    // Customer Memory + Routing — both fire at call start
+    this.subscribeToEvent(AgentEvent.CALL_STARTED, 'customer-memory')
+    this.subscribeToEvent(AgentEvent.CALL_STARTED, 'routing')
+
+    // Chat Agent — fires when a widget chat session ends
+    this.registerAgent({
+      config: chatAgent.getConfig(),
+      instance: chatAgent,
+      status: 'idle',
+      executionCount: 0,
+      errorCount: 0,
+    })
+    this.subscribeToEvent(AgentEvent.CHAT_ENDED, 'chat')
 
     this.isInitialized = true
   }
@@ -366,6 +447,121 @@ export class AgentRegistry {
           }
           break
 
+        case 'customer-memory':
+          if (data?.callId && data?.callerPhone) {
+            const memResult = await customerMemoryAgent.injectCustomerContext(
+              data.callId,
+              businessId,
+              data.callerPhone,
+              data.employeeName || 'Assistant'
+            )
+            result = {
+              success: memResult !== null,
+              executionId: this.generateExecutionId(),
+              agentId,
+              businessId,
+              duration: Date.now() - context.startTime.getTime(),
+              output: memResult,
+            }
+          } else {
+            result = {
+              success: false,
+              executionId: this.generateExecutionId(),
+              agentId,
+              businessId,
+              duration: 0,
+              error: 'Missing callId or callerPhone',
+            }
+          }
+          break
+
+        case 'routing':
+          if (data?.callerPhone) {
+            const routeResult = await routingAgent.routeCall(businessId, data.callerPhone, data.context)
+            result = {
+              success: routeResult !== null,
+              executionId: this.generateExecutionId(),
+              agentId,
+              businessId,
+              duration: Date.now() - context.startTime.getTime(),
+              output: routeResult,
+            }
+          } else {
+            result = {
+              success: false,
+              executionId: this.generateExecutionId(),
+              agentId,
+              businessId,
+              duration: 0,
+              error: 'Missing callerPhone',
+            }
+          }
+          break
+
+        case 'setup':
+          if (data?.action === 'start') {
+            const state = await setupAgent.startSession(businessId)
+            result = {
+              success: true,
+              executionId: this.generateExecutionId(),
+              agentId,
+              businessId,
+              duration: Date.now() - context.startTime.getTime(),
+              output: state,
+            }
+          } else if (data?.sessionId && data?.message) {
+            const state = await setupAgent.chat(data.sessionId, data.message)
+            result = {
+              success: true,
+              executionId: this.generateExecutionId(),
+              agentId,
+              businessId,
+              duration: Date.now() - context.startTime.getTime(),
+              output: state,
+            }
+          } else {
+            result = {
+              success: false,
+              executionId: this.generateExecutionId(),
+              agentId,
+              businessId,
+              duration: 0,
+              error: 'Invalid setup action — use { action: "start" } or { sessionId, message }',
+            }
+          }
+          break
+
+        case 'billing': {
+          const [alertsResult, anomalyResult] = await Promise.all([
+            BillingAgent.processBillingAlerts(),
+            BillingAgent.detectAnomalies(),
+          ])
+          const hasAnomalies = anomalyResult.flagged > 0
+          result = {
+            success: true,
+            executionId: this.generateExecutionId(),
+            agentId,
+            businessId,
+            duration: Date.now() - context.startTime.getTime(),
+            output: { alerts: alertsResult, anomalies: anomalyResult },
+            insights: hasAnomalies ? [{
+              type: 'anomaly' as const,
+              title: `${anomalyResult.flagged} usage anomaly(s) detected`,
+              description: `Potential fraud or unusual usage patterns flagged for ${anomalyResult.flagged} business(es).`,
+              confidence: 0.9,
+              impact: 'high' as const,
+            }] : [],
+            alerts: hasAnomalies ? [{
+              severity: 'critical' as const,
+              title: 'Usage Anomaly Detected',
+              message: `${anomalyResult.flagged} business(es) showing abnormal credit consumption.`,
+              category: 'billing',
+              timestamp: new Date(),
+            }] : [],
+          }
+          break
+        }
+
         default:
           result = {
             success: false,
@@ -387,6 +583,21 @@ export class AgentRegistry {
 
       // Log execution
       await this.logExecution(agent.config.id, businessId, result)
+
+      // Maya decides what chains next (only for top-level executions, not chained ones)
+      if (result.success && !data?._chainedFrom) {
+        const chains = await mayaPrime.decide(agentId, result, businessId)
+        for (const chain of chains) {
+          // Fire chained agents async — don't block the current result
+          this.executeAgent(chain.targetAgentId, businessId, 'manual', {
+            ...chain.data,
+            _chainedFrom: agentId,
+            _chainPriority: chain.priority,
+          }).catch((err) =>
+            console.error(`[AgentRegistry] Chain execution failed (${agentId} → ${chain.targetAgentId}):`, err)
+          )
+        }
+      }
 
       return result
     } catch (error) {

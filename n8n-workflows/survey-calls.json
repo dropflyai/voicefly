@@ -1,0 +1,72 @@
+{
+  "name": "VoiceFly — Survey Calls",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 30 }]
+        }
+      },
+      "id": "node-schedule",
+      "name": "Every 30 Min",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ new Date().getHours() }}",
+              "rightValue": 10,
+              "operator": { "type": "number", "operation": "gte" }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ new Date().getHours() }}",
+              "rightValue": 18,
+              "operator": { "type": "number", "operation": "lt" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "node-hours-check",
+      "name": "10am–6pm?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.VOICEFLY_URL }}/api/cron/survey-calls",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ 'Bearer ' + $vars.CRON_SECRET }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "id": "node-http",
+      "name": "Fire Survey Calls",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 220]
+    }
+  ],
+  "connections": {
+    "Every 30 Min": {
+      "main": [[{ "node": "10am–6pm?", "type": "main", "index": 0 }]]
+    },
+    "10am–6pm?": {
+      "main": [[{ "node": "Fire Survey Calls", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" }
+}

@@ -41,102 +41,36 @@ export const CREDITS_PER_MINUTE = 5
 // Conversion: 5 credits = 1 voice minute
 export enum MonthlyCredits {
   TRIAL = 50,           // 10 minutes - One-time, doesn't reset
-  STARTER = 1000,       // 200 minutes - $97/mo
-  GROWTH = 2500,        // 500 minutes - $197/mo
-  PRO = 6000,           // 1,200 minutes - $297/mo
-  SCALE = 12500,        // 2,500 minutes - $497/mo
+  STARTER = 500,        // 100 minutes - $49/mo
+  PRO = 5000,           // 1,000 minutes - $199/mo
 }
 
 // Subscription tier pricing in cents
 export const TIER_PRICING = {
   trial: { price_cents: 0, name: 'Free Trial' },
-  starter: { price_cents: 9700, name: 'Starter' },
-  growth: { price_cents: 19700, name: 'Growth' },
-  pro: { price_cents: 29700, name: 'Pro' },
-  scale: { price_cents: 49700, name: 'Scale' },
+  starter: { price_cents: 4900, name: 'Starter' },
+  pro: { price_cents: 19900, name: 'Pro' },
 } as const
 
 // Minutes included per tier (for customer display)
 export const TIER_MINUTES = {
   trial: 10,
-  starter: 200,
-  growth: 500,
-  pro: 1200,
-  scale: 2500,
+  starter: 100,
+  pro: 1000,
 } as const
 
-// Additional minute packs (one-time purchase)
-// Presented as minutes to customers, stored as credits internally
-export interface MinutePack {
-  id: string
-  name: string
-  minutes: number        // Customer-facing
-  credits: number        // Internal (minutes * CREDITS_PER_MINUTE)
-  price: number          // In dollars
-  savings: number        // Savings vs pay-as-you-go
-  pricePerMinute: number // Customer-facing
-}
-
-export const MINUTE_PACKS: MinutePack[] = [
-  {
-    id: 'pack_starter',
-    name: 'Starter Pack',
-    minutes: 50,
-    credits: 250,         // 50 * 5
-    price: 20,
-    savings: 0,
-    pricePerMinute: 0.40
-  },
-  {
-    id: 'pack_growth',
-    name: 'Growth Pack',
-    minutes: 150,
-    credits: 750,         // 150 * 5
-    price: 50,
-    savings: 10,
-    pricePerMinute: 0.33
-  },
-  {
-    id: 'pack_pro',
-    name: 'Pro Pack',
-    minutes: 400,
-    credits: 2000,        // 400 * 5
-    price: 100,
-    savings: 60,
-    pricePerMinute: 0.25
-  },
-  {
-    id: 'pack_scale',
-    name: 'Scale Pack',
-    minutes: 1000,
-    credits: 5000,        // 1000 * 5
-    price: 200,
-    savings: 200,
-    pricePerMinute: 0.20
-  }
-]
-
-// Legacy alias for backwards compatibility
-export type CreditPack = MinutePack
-export const CREDIT_PACKS = MINUTE_PACKS
-
 // Overage pricing by tier (per minute for customer display)
-// Internal calculation: overage_per_minute / CREDITS_PER_MINUTE = per_credit_cost
 export const OVERAGE_PRICING_PER_MINUTE = {
   trial: 0.50,      // $0.50/min overage
-  starter: 0.45,    // $0.45/min overage ($0.09/credit)
-  growth: 0.38,     // $0.38/min overage ($0.076/credit)
-  pro: 0.28,        // $0.28/min overage ($0.056/credit)
-  scale: 0.22,      // $0.22/min overage ($0.044/credit)
+  starter: 0.15,    // $0.15/min overage
+  pro: 0.12,        // $0.12/min overage
 } as const
 
 // Internal overage pricing per credit (for actual billing)
 export const OVERAGE_PRICING_PER_CREDIT = {
   trial: 0.10,
-  starter: 0.09,
-  growth: 0.076,
-  pro: 0.056,
-  scale: 0.044,
+  starter: 0.03,
+  pro: 0.024,
 } as const
 
 interface CreditBalance {
@@ -401,21 +335,9 @@ export class CreditSystem {
         case 'starter':
           monthlyAllocation = MonthlyCredits.STARTER
           break
-        case 'growth':
-          monthlyAllocation = MonthlyCredits.GROWTH
-          break
         case 'pro':
+        case 'professional': // Legacy support
           monthlyAllocation = MonthlyCredits.PRO
-          break
-        case 'scale':
-          monthlyAllocation = MonthlyCredits.SCALE
-          break
-        // Legacy tier support
-        case 'professional':
-          monthlyAllocation = MonthlyCredits.PRO
-          break
-        case 'enterprise':
-          monthlyAllocation = MonthlyCredits.SCALE
           break
       }
 
@@ -460,7 +382,7 @@ export class CreditSystem {
    */
   static async initializeCredits(
     businessId: string,
-    tier: 'trial' | 'starter' | 'growth' | 'pro' | 'scale'
+    tier: 'trial' | 'starter' | 'pro'
   ): Promise<boolean> {
     try {
       let monthlyAllocation = MonthlyCredits.TRIAL
@@ -468,14 +390,8 @@ export class CreditSystem {
         case 'starter':
           monthlyAllocation = MonthlyCredits.STARTER
           break
-        case 'growth':
-          monthlyAllocation = MonthlyCredits.GROWTH
-          break
         case 'pro':
           monthlyAllocation = MonthlyCredits.PRO
-          break
-        case 'scale':
-          monthlyAllocation = MonthlyCredits.SCALE
           break
       }
 

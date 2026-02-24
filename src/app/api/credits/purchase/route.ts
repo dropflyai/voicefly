@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { MINUTE_PACKS } from '@/lib/credit-system'
+// Minute packs removed in 2-tier simplification -- overage is billed per-minute
+const MINUTE_PACKS: { id: string; name: string; minutes: number; price: number; pricePerMinute: number; savings: number; credits: number }[] = []
 import { validateBusinessAccess, checkRateLimit, rateLimitedResponse } from '@/lib/api-auth'
 import { creditPurchaseSchema, validate } from '@/lib/validations'
 import Stripe from 'stripe'

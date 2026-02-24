@@ -617,12 +617,36 @@ export class RevenueIntelligenceAgent {
   }
 
   /**
-   * Get daily revenue target
+   * Get daily revenue target from business settings, or calculate from 30-day average
    */
   private async getDailyTarget(businessId: string): Promise<number> {
-    // Would pull from business settings or calculate from historical
-    // For now, use a default
-    return 1000
+    // Try to load from business settings
+    const { data: business } = await supabase
+      .from('businesses')
+      .select('settings')
+      .eq('id', businessId)
+      .single()
+
+    if (business?.settings?.daily_revenue_target) {
+      return business.settings.daily_revenue_target
+    }
+
+    // Fall back to 30-day average * 1.1 (10% growth target)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: revenueData } = await supabase
+      .from('appointments')
+      .select('total_amount')
+      .eq('business_id', businessId)
+      .gte('created_at', thirtyDaysAgo)
+      .eq('status', 'completed')
+
+    if (revenueData && revenueData.length > 0) {
+      const totalRevenue = revenueData.reduce((sum, a) => sum + (a.total_amount || 0), 0)
+      const avgDaily = totalRevenue / 30
+      return Math.round(avgDaily * 1.1) || 1000
+    }
+
+    return 1000 // Default fallback
   }
 
   /**

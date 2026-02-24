@@ -69,6 +69,7 @@ You can use these functions:
 - takeMessage: Record a message for someone
 - transferCall: Transfer to another person
 - getBusinessInfo: Get business information to share
+- captureLeadInfo: Record contact info for interested callers not ready to act
 
 Remember: You represent ${businessName}. Every interaction should leave the caller feeling valued and heard.`
 }
@@ -313,6 +314,36 @@ export const RECEPTIONIST_FUNCTIONS = [
       required: ['infoType'],
     },
   },
+  {
+    name: 'captureLeadInfo',
+    description: 'Record contact information for a caller who is interested but not ready to act',
+    parameters: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description: "Caller's full name",
+        },
+        phone: {
+          type: 'string',
+          description: "Caller's phone number",
+        },
+        email: {
+          type: 'string',
+          description: "Caller's email address (optional)",
+        },
+        interestedIn: {
+          type: 'string',
+          description: 'What service or information the caller is interested in',
+        },
+        notes: {
+          type: 'string',
+          description: 'Any additional context or questions from the caller',
+        },
+      },
+      required: ['name', 'phone'],
+    },
+  },
 ]
 
 // ============================================
@@ -341,7 +372,7 @@ export function createReceptionistEmployee(params: {
     complexity: 'simple',
 
     voice: params.voice || {
-      provider: 'elevenlabs',
+      provider: '11labs',
       voiceId: 'sarah',
       speed: 1.0,
       stability: 0.8,

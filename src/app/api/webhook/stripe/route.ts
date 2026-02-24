@@ -210,6 +210,51 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Handle subscription checkout completion
+        if (session.metadata?.type === 'subscription' && session.metadata?.business_id) {
+          const businessId = session.metadata.business_id
+          const targetPlan = session.metadata.target_plan
+          const stripeCustomerId = typeof session.customer === 'string'
+            ? session.customer
+            : session.customer?.toString()
+
+          console.log(`💳 Subscription checkout completed: ${targetPlan} plan for business ${businessId}`)
+
+          // Determine credits allocation based on plan
+          const monthlyCredits = targetPlan === 'pro' ? 5000 : 500 // Pro: 1000 min, Starter: 100 min
+          const nextResetDate = new Date()
+          nextResetDate.setMonth(nextResetDate.getMonth() + 1)
+
+          // Update business with subscription info
+          await supabase
+            .from('businesses')
+            .update({
+              subscription_tier: targetPlan,
+              subscription_status: 'active',
+              stripe_customer_id: stripeCustomerId,
+              monthly_credits: monthlyCredits,
+              credits_used_this_month: 0,
+              credits_reset_date: nextResetDate.toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', businessId)
+
+          console.log(`✅ Business ${businessId} upgraded to ${targetPlan} plan`)
+
+          // Audit log
+          await AuditLogger.log({
+            event_type: AuditEventType.CREDIT_PURCHASED,
+            business_id: businessId,
+            metadata: {
+              event: 'subscription_activated',
+              plan: targetPlan,
+              monthly_credits: monthlyCredits,
+              stripe_session_id: session.id
+            },
+            severity: 'medium'
+          })
+        }
+
         break
 
       default:

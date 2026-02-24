@@ -259,6 +259,10 @@ export enum AgentEvent {
   // Customer events
   CUSTOMER_FEEDBACK = 'customer.feedback',
   CHURN_RISK = 'customer.churn_risk',
+
+  // Chat widget events
+  CHAT_STARTED = 'chat.started',
+  CHAT_ENDED = 'chat.ended',
 }
 
 // Credit cost for agent operations
@@ -268,4 +272,13 @@ export enum AgentCreditCost {
   DAILY_SUMMARY = 5,
   DEEP_ANALYSIS = 10,
   COMPETITIVE_RESEARCH = 15,
+}
+
+// Chain definition — what one agent's result triggers next
+export interface AgentChain {
+  sourceAgentId: string
+  condition: (result: AgentResult) => boolean
+  targetAgentId: string
+  extractData: (result: AgentResult) => any // maps source output to target agent input
+  priority: AgentPriority
 }

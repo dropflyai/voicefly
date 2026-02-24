@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Layout from '../../components/Layout'
 import ProtectedRoute from '../../components/ProtectedRoute'
-import { BusinessAPI, LocationAPIImpl, PaymentAPIImpl, LoyaltyAPIImpl, type Business, type DashboardStats, type Appointment } from '../../lib/supabase'
+import { BusinessAPI, LocationAPIImpl, PaymentAPIImpl, LoyaltyAPIImpl, supabase, type Business, type DashboardStats, type Appointment } from '../../lib/supabase'
 import type { Location, PaymentWithDetails, LoyaltyCustomer } from '../../lib/supabase-types-mvp'
 import { getServiceTerminology } from '../../lib/industry-service-templates'
 import {
@@ -19,6 +19,8 @@ import {
   GiftIcon,
   SparklesIcon,
   BoltIcon,
+  ArrowRightIcon,
+  CheckCircleIcon,
 } from '@heroicons/react/24/outline'
 import AppointmentLocationBadge from '../../components/AppointmentLocationBadge'
 import LocationSelector from '../../components/LocationSelector'
@@ -52,6 +54,7 @@ function DashboardPage() {
   const [selectedLocationId, setSelectedLocationId] = useState<string>('all')
   const [recentPayments, setRecentPayments] = useState<PaymentWithDetails[]>([])
   const [loyaltyStats, setLoyaltyStats] = useState({ totalMembers: 0, pointsAwarded: 0 })
+  const [employeeCount, setEmployeeCount] = useState<number>(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -128,6 +131,15 @@ function DashboardPage() {
       }
 
       setBusiness(businessData)
+
+      // Check if user has any phone employees
+      const { count: empCount } = await supabase
+        .from('phone_employees')
+        .select('*', { count: 'exact', head: true })
+        .eq('business_id', businessId)
+
+      setEmployeeCount(empCount || 0)
+      console.log('📞 Phone employees count:', empCount)
 
       // Load locations for Business tier
       if (businessData.subscription_tier === 'business') {
@@ -243,7 +255,7 @@ function DashboardPage() {
         <div className="p-8">
           <div className="text-center">
             <div className="text-red-600 text-lg font-medium mb-4">{error}</div>
-            <button 
+            <button
               onClick={() => loadDashboardData()}
               className="btn-primary"
             >
@@ -251,6 +263,166 @@ function DashboardPage() {
             </button>
             <div className="mt-4 text-sm text-gray-500">
               Make sure you have configured your Supabase credentials in .env.local
+            </div>
+          </div>
+        </div>
+      </Layout>
+    )
+  }
+
+  // Empty state: No employees created yet
+  if (employeeCount === 0) {
+    return (
+      <Layout business={business}>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-8">
+          <div className="max-w-5xl mx-auto">
+            {/* Hero Section */}
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 mb-6">
+                <PhoneIcon className="h-10 w-10 text-white" />
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                Welcome to VoiceFly!
+              </h1>
+              <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+                Let's create your first AI employee and start capturing calls 24/7
+              </p>
+
+              {/* Giant CTA Button */}
+              <a
+                href="/dashboard/employees"
+                className="inline-flex items-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                Create Your First Employee
+                <ArrowRightIcon className="ml-3 h-6 w-6" />
+              </a>
+            </div>
+
+            {/* 3-Step Visual */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mb-4">
+                  1
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Pick a Type</h3>
+                <p className="text-gray-600 text-sm">
+                  Choose from Receptionist, Order Taker, Customer Service, and more
+                </p>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-purple-100 text-purple-600 font-bold text-xl mb-4">
+                  2
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Configure</h3>
+                <p className="text-gray-600 text-sm">
+                  Set up your employee's name, voice, and capabilities in minutes
+                </p>
+              </div>
+
+              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-600 font-bold text-xl mb-4">
+                  3
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Go Live</h3>
+                <p className="text-gray-600 text-sm">
+                  Get a phone number and start answering calls immediately
+                </p>
+              </div>
+            </div>
+
+            {/* Preview Section */}
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+                <h2 className="text-xl font-semibold text-white">
+                  Your Dashboard Preview
+                </h2>
+                <p className="text-blue-100 text-sm mt-1">
+                  Here's what you'll see once your AI employee is active
+                </p>
+              </div>
+
+              <div className="p-6">
+                {/* Mock Dashboard Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
+                    <div className="flex items-center mb-2">
+                      <PhoneIcon className="h-5 w-5 text-blue-600 mr-2" />
+                      <span className="text-sm font-medium text-blue-900">Calls Today</span>
+                    </div>
+                    <div className="text-2xl font-bold text-blue-900">23</div>
+                    <div className="text-xs text-blue-600 mt-1">+12 after hours</div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
+                    <div className="flex items-center mb-2">
+                      <CheckCircleIcon className="h-5 w-5 text-green-600 mr-2" />
+                      <span className="text-sm font-medium text-green-900">Bookings Made</span>
+                    </div>
+                    <div className="text-2xl font-bold text-green-900">8</div>
+                    <div className="text-xs text-green-600 mt-1">34.8% conversion</div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
+                    <div className="flex items-center mb-2">
+                      <UsersIcon className="h-5 w-5 text-purple-600 mr-2" />
+                      <span className="text-sm font-medium text-purple-900">New Customers</span>
+                    </div>
+                    <div className="text-2xl font-bold text-purple-900">5</div>
+                    <div className="text-xs text-purple-600 mt-1">This week</div>
+                  </div>
+
+                  <div className="bg-gradient-to-br from-pink-50 to-pink-100 rounded-lg p-4 border border-pink-200">
+                    <div className="flex items-center mb-2">
+                      <CurrencyDollarIcon className="h-5 w-5 text-pink-600 mr-2" />
+                      <span className="text-sm font-medium text-pink-900">Revenue</span>
+                    </div>
+                    <div className="text-2xl font-bold text-pink-900">$2.4k</div>
+                    <div className="text-xs text-pink-600 mt-1">AI-generated</div>
+                  </div>
+                </div>
+
+                {/* Mock Call Activity */}
+                <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3">Recent Call Activity</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                          <PhoneIcon className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Sarah M. booked a haircut</p>
+                          <p className="text-xs text-gray-500">2 minutes ago</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                          <PhoneIcon className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Mike R. asked about pricing</p>
+                          <p className="text-xs text-gray-500">15 minutes ago</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom CTA */}
+            <div className="text-center mt-8">
+              <p className="text-gray-600 mb-4">Ready to get started?</p>
+              <a
+                href="/dashboard/employees"
+                className="inline-flex items-center px-6 py-3 text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+              >
+                Create Your First Employee
+                <ArrowRightIcon className="ml-2 h-5 w-5" />
+              </a>
             </div>
           </div>
         </div>

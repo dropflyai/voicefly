@@ -7,6 +7,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { ActionRequest } from './types'
+import CreditSystem, { CreditCost } from '@/lib/credit-system'
 
 // ============================================
 // CONFIGURATION
@@ -261,6 +262,13 @@ export class ActionExecutor {
     const toPhone = action.target.phone
     if (!toPhone) {
       throw new Error('No phone number provided')
+    }
+
+    // Check credits before making outbound call (minimum 2 minutes)
+    const minCredits = CreditCost.VOICE_CALL_OUTBOUND * 2
+    const hasCredits = await CreditSystem.hasCredits(action.businessId, minCredits)
+    if (!hasCredits) {
+      throw new Error('Insufficient credits for outbound call')
     }
 
     // Get business's VAPI assistant

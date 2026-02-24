@@ -46,3 +46,46 @@ export {
   SAMPLE_RESTAURANT_MENU,
   SAMPLE_UPSELL_RULES,
 } from './templates/order-taker'
+
+export {
+  createAfterHoursEmergencyEmployee,
+  generateAfterHoursEmergencyPrompt,
+  getDefaultAfterHoursEmergencyConfig,
+  generateBusinessTypeSection,
+  AFTER_HOURS_EMERGENCY_FUNCTIONS,
+} from './templates/after-hours-emergency'
+
+export {
+  createRestaurantHostEmployee,
+  generateRestaurantHostPrompt,
+  getDefaultRestaurantHostConfig,
+  RESTAURANT_HOST_FUNCTIONS,
+} from './templates/restaurant-host'
+
+export {
+  createSurveyCallerEmployee,
+  generateSurveyCallerPrompt,
+  getDefaultSurveyCallerConfig,
+  SURVEY_CALLER_FUNCTIONS,
+} from './templates/survey-caller'
+
+export {
+  createLeadQualifierEmployee,
+  generateLeadQualifierPrompt,
+  getDefaultLeadQualifierConfig,
+  LEAD_QUALIFIER_FUNCTIONS,
+} from './templates/lead-qualifier'
+
+export {
+  createAppointmentReminderEmployee,
+  generateAppointmentReminderPrompt,
+  getDefaultAppointmentReminderConfig,
+  APPOINTMENT_REMINDER_FUNCTIONS,
+} from './templates/appointment-reminder'
+
+export {
+  createCollectionsEmployee,
+  generateCollectionsPrompt,
+  getDefaultCollectionsConfig,
+  COLLECTIONS_FUNCTIONS,
+} from './templates/collections'
