@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
       nextBillingDate: business.trial_ends_at || new Date(Date.now() + 14 * 86400000).toISOString(),
       amount: pricing.price_cents / 100,
       paymentMethod: null,
-      subscriptionStatus: business.subscription_status || 'trialing'
+      subscriptionStatus: business.subscription_status || 'trial'
     }
 
     // If they have a Stripe customer, get real subscription details

@@ -301,19 +301,17 @@ export class AuthService {
       throw new Error('Permission denied')
     }
 
-    // Check if user already exists
-    const { data: existingUser } = await supabase
-      .from('business_users')
-      .select('user_id')
-      .eq('email', email)
-      .single()
+    // Check if user already exists by looking up their auth record
+    // business_users table has no email column - we need to find user_id from auth
+    const { data: { users: authUsers } } = await supabase.auth.admin.listUsers()
+    const matchedUser = authUsers?.find(u => u.email === email)
 
-    if (existingUser) {
-      // User exists, just add them to this business
+    if (matchedUser) {
+      // User exists, add them to this business
       const { error } = await supabase
         .from('business_users')
         .insert({
-          user_id: existingUser.user_id,
+          user_id: matchedUser.id,
           business_id: businessId,
           role
         })
@@ -323,7 +321,7 @@ export class AuthService {
       }
     } else {
       // Send email invitation (would need to implement email service)
-      console.log(`📧 Send invitation email to ${email}`)
+      console.log(`Send invitation email to ${email}`)
       // For now, just log - implement email service later
     }
   }

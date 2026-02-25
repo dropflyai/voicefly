@@ -18,7 +18,7 @@ export interface ProvisioningInput {
   businessId: string
   businessName: string
   mayaJobId: string
-  subscriptionTier: 'starter' | 'professional' | 'business' | 'trial'
+  subscriptionTier: 'starter' | 'pro' | 'professional' | 'business' | 'trial'
   // Optional - for Professional/Business tiers
   brandPersonality?: 'professional' | 'warm' | 'luxury' | 'casual'
   businessDescription?: string
@@ -270,9 +270,9 @@ async function updateBusinessRecord(
     const { error } = await supabase
       .from('businesses')
       .update({
-        agent_id: agentId,
+        vapi_assistant_id: agentId,
         agent_type: 'custom-starter', // Will be 'custom-professional' or 'custom-business' for upgrades
-        phone_number: phoneNumber,
+        ai_phone_number: phoneNumber,
         vapi_phone_number_id: phoneId,
         voice_ai_enabled: true,
         voice_ai_provisioned_at: new Date().toISOString(),
@@ -413,7 +413,7 @@ export async function upgradeVoiceAI(
     return { success: false, error: 'Business not found' }
   }
 
-  if (!business.agent_id) {
+  if (!business.vapi_assistant_id) {
     return { success: false, error: 'No existing agent to upgrade' }
   }
 
@@ -441,7 +441,7 @@ export async function upgradeVoiceAI(
 
   // Update existing agent
   try {
-    const response = await fetch(`https://api.vapi.ai/assistant/${business.agent_id}`, {
+    const response = await fetch(`https://api.vapi.ai/assistant/${business.vapi_assistant_id}`, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${VAPI_API_KEY}`,
@@ -509,7 +509,7 @@ export async function checkProvisioningStatus(businessId: string): Promise<{
 }> {
   const { data: business } = await supabase
     .from('businesses')
-    .select('agent_id, phone_number, voice_ai_enabled')
+    .select('vapi_assistant_id, ai_phone_number, voice_ai_enabled')
     .eq('id', businessId)
     .single()
 
@@ -518,8 +518,8 @@ export async function checkProvisioningStatus(businessId: string): Promise<{
   }
 
   return {
-    provisioned: !!(business.agent_id && business.phone_number),
-    agentId: business.agent_id,
-    phoneNumber: business.phone_number
+    provisioned: !!(business.vapi_assistant_id && business.ai_phone_number),
+    agentId: business.vapi_assistant_id,
+    phoneNumber: business.ai_phone_number
   }
 }

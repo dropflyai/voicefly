@@ -45,11 +45,8 @@ function getMonthlyAllocation(tier: string): number {
   switch (tier) {
     case 'trial': return MonthlyCredits.TRIAL
     case 'starter': return MonthlyCredits.STARTER
-    case 'growth': return MonthlyCredits.GROWTH
-    case 'pro': return MonthlyCredits.PRO
-    case 'scale': return MonthlyCredits.SCALE
+    case 'pro':
     case 'professional': return MonthlyCredits.PRO
-    case 'enterprise': return MonthlyCredits.SCALE
     default: return MonthlyCredits.STARTER
   }
 }

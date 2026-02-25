@@ -48,8 +48,8 @@ export const appointmentCreateSchema = z.object({
 
 export const appointmentUpdateSchema = z.object({
   appointment_id: uuidSchema,
-  status: z.enum(['scheduled', 'confirmed', 'cancelled', 'completed', 'no_show']).optional(),
-  payment_status: z.enum(['pending', 'paid', 'refunded', 'partial']).optional(),
+  status: z.enum(['pending', 'scheduled', 'confirmed', 'cancelled', 'completed', 'no_show']).optional(),
+  payment_status: z.enum(['pending', 'processing', 'paid', 'refunded', 'partially_refunded']).optional(),
   notes: z.string().max(2000).optional()
 })
 
@@ -58,7 +58,7 @@ export const appointmentQuerySchema = z.object({
   businessId: uuidSchema.optional(),
   business_id: uuidSchema.optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format').optional(),
-  status: z.enum(['scheduled', 'confirmed', 'cancelled', 'completed', 'no_show']).optional()
+  status: z.enum(['pending', 'scheduled', 'confirmed', 'cancelled', 'completed', 'no_show']).optional()
 })
 
 // ============================================

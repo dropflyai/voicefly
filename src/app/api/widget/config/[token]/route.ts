@@ -73,13 +73,12 @@ export async function GET(
   const config = { ...WIDGET_DEFAULTS, ...rawConfig }
 
   // Tier gating — override stored values for features above tier
-  const isGrowthPlus = ['growth', 'pro', 'scale'].includes(tier)
-  const isProPlus = ['pro', 'scale'].includes(tier)
-  const isScale = tier === 'scale'
+  const isPro = tier === 'pro' || tier === 'professional'
 
-  if (!isGrowthPlus)   config.bookingEnabled = false
-  if (!isProPlus)      config.voiceEscalationEnabled = false
-  if (!isScale)        config.hideBranding = false
+  if (!isPro)          config.bookingEnabled = false
+  if (!isPro)          config.voiceEscalationEnabled = false
+  // hideBranding is a Pro feature
+  if (!isPro)          config.hideBranding = false
 
   return NextResponse.json({
     token,

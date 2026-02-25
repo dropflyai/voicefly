@@ -28,7 +28,7 @@ interface BillingInfo {
     expiryMonth?: number
     expiryYear?: number
   }
-  subscriptionStatus: 'active' | 'canceled' | 'past_due' | 'trialing'
+  subscriptionStatus: 'active' | 'cancelled' | 'past_due' | 'trial'
 }
 
 interface InvoiceHistory {

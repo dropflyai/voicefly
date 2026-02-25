@@ -962,19 +962,19 @@ function DashboardPage() {
                 </h2>
                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                   business?.subscription_status === 'active' ? 'bg-green-100 text-green-800' :
-                  business?.subscription_status === 'trialing' ? 'bg-blue-100 text-blue-800' :
+                  business?.subscription_status === 'trial' ? 'bg-blue-100 text-blue-800' :
                   'bg-gray-100 text-gray-800'
                 }`}>
-                  {business?.subscription_status === 'trialing' ? 'Trial' : business?.subscription_status}
+                  {business?.subscription_status === 'trial' ? 'Trial' : business?.subscription_status}
                 </span>
               </div>
-              
+
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Current Plan</span>
                   <span className="font-medium capitalize">{business?.subscription_tier || 'Starter'}</span>
                 </div>
-                {business?.subscription_status === 'trialing' && business?.trial_ends_at && (
+                {business?.subscription_status === 'trial' && business?.trial_ends_at && (
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Trial Ends</span>
                     <span className="font-medium">

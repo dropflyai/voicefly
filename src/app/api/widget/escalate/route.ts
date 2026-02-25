@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     ? employee.businesses[0]
     : employee.businesses
   const tier: string = business?.subscription_tier ?? 'starter'
-  const isProPlus = ['pro', 'scale'].includes(tier)
+  const isProPlus = tier === 'pro' || tier === 'professional'
 
   if (!isProPlus) {
     return NextResponse.json({ error: 'Voice escalation requires Pro plan' }, { status: 403 })

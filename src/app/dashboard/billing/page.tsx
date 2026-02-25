@@ -180,10 +180,10 @@ function BillingPage() {
                   <h3 className="text-2xl font-bold text-gray-900 capitalize">{business?.subscription_tier || 'Starter'} Plan</h3>
                   <span className={`ml-3 px-3 py-1 text-sm font-medium rounded-full ${
                     business?.subscription_status === 'active' ? 'bg-green-100 text-green-800' :
-                    business?.subscription_status === 'trialing' ? 'bg-blue-100 text-blue-800' :
+                    business?.subscription_status === 'trial' ? 'bg-blue-100 text-blue-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
-                    {business?.subscription_status === 'trialing' ? 'Trial Period' : business?.subscription_status}
+                    {business?.subscription_status === 'trial' ? 'Trial Period' : business?.subscription_status}
                   </span>
                 </div>
                 <p className="text-gray-600">{getPlanDescription(business?.subscription_tier || 'starter')}</p>
@@ -233,7 +233,7 @@ function BillingPage() {
             </div>
 
             {/* Trial Information */}
-            {business?.subscription_status === 'trialing' && business?.trial_ends_at && (
+            {business?.subscription_status === 'trial' && business?.trial_ends_at && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                 <div className="flex items-center">
                   <ExclamationTriangleIcon className="h-5 w-5 text-blue-600 mr-2" />
