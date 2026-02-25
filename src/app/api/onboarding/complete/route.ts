@@ -22,6 +22,47 @@ function buildVoiceConfig(voiceId: string) {
   }
 }
 
+function buildExtraKnowledgePrompt(extraKnowledge: Record<string, any>): string {
+  const sections: string[] = []
+
+  if (extraKnowledge.businessDescription) {
+    sections.push(`Business: ${extraKnowledge.businessDescription}`)
+  }
+  if (extraKnowledge.faqs?.length) {
+    const faqText = extraKnowledge.faqs
+      .map((f: any) => `Q: ${f.question}\nA: ${f.answer}`)
+      .join('\n\n')
+    sections.push(`## Frequently Asked Questions\n${faqText}`)
+  }
+  if (extraKnowledge.staff?.length) {
+    const staffText = extraKnowledge.staff
+      .map((s: any) => `- ${s.name}${s.role ? ` (${s.role})` : ''}`)
+      .join('\n')
+    sections.push(`## Team Members\n${staffText}`)
+  }
+  if (extraKnowledge.policies) {
+    const p = extraKnowledge.policies
+    const policyLines: string[] = []
+    if (p.cancellation) policyLines.push(`Cancellation: ${p.cancellation}`)
+    if (p.booking) policyLines.push(`Booking: ${p.booking}`)
+    if (p.returns) policyLines.push(`Returns: ${p.returns}`)
+    if (p.warranty) policyLines.push(`Warranty: ${p.warranty}`)
+    if (p.lateFee) policyLines.push(`Late fee: ${p.lateFee}`)
+    if (policyLines.length) sections.push(`## Policies\n${policyLines.join('\n')}`)
+  }
+  if (extraKnowledge.paymentMethods?.length) {
+    sections.push(`## Payment Methods\nWe accept: ${extraKnowledge.paymentMethods.join(', ')}`)
+  }
+  if (extraKnowledge.parkingInfo) {
+    sections.push(`## Parking & Directions\n${extraKnowledge.parkingInfo}`)
+  }
+  if (extraKnowledge.promotions?.length) {
+    sections.push(`## Current Promotions\n${extraKnowledge.promotions.map((p: string) => `- ${p}`).join('\n')}`)
+  }
+
+  return sections.join('\n\n')
+}
+
 function buildJobConfig(
   jobType: string,
   params: {
@@ -33,13 +74,19 @@ function buildJobConfig(
     escalationPhone: string
     greeting: string
     employeeName: string
+    extraKnowledge?: Record<string, any>
   }
 ): ReceptionistConfig | AppointmentSchedulerConfig | OrderTakerConfig | CustomerServiceConfig {
-  const base = {
+  const base: Record<string, any> = {
     greeting: params.greeting,
     businessHours: params.hoursNote || 'Please check our website for current hours',
     transferNumber: params.escalationPhone || undefined,
     address: params.address || undefined,
+  }
+
+  // Attach extra knowledge as a text block for the system prompt
+  if (params.extraKnowledge && Object.keys(params.extraKnowledge).length > 0) {
+    base.extraKnowledge = buildExtraKnowledgePrompt(params.extraKnowledge)
   }
 
   switch (jobType) {
@@ -106,6 +153,7 @@ export async function POST(request: NextRequest) {
       services = '',
       escalationPhone = '',
       areaCode,
+      extraKnowledge,
     } = body
 
     if (!employeeType || !employeeName) {
@@ -143,6 +191,7 @@ export async function POST(request: NextRequest) {
       escalationPhone,
       greeting,
       employeeName,
+      extraKnowledge,
     })
 
     // Create employee + provision Twilio+VAPI number

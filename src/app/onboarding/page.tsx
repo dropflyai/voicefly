@@ -6,7 +6,7 @@ import {
   ArrowRight, ArrowLeft, CheckCircle, Mic, Phone, Calendar,
   ShoppingBag, Headphones, Play, Loader2, MapPin, Clock, User,
   Link2, ExternalLink, Globe, Sparkles, RotateCw, Copy, Check,
-  Volume2, Square
+  Volume2, Square, HelpCircle, X, Plus
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 
@@ -90,6 +90,44 @@ const INDUSTRIES = [
   'Beauty / Salon / Spa', 'Fitness & Wellness', 'Home Services',
   'Restaurant / Food', 'Retail', 'General Business',
 ]
+
+// Expanded service suggestions per industry (for chip selection)
+const INDUSTRY_SERVICES: Record<string, string[]> = {
+  'Beauty / Salon / Spa': ['Haircut', 'Color & Highlights', 'Blowout', 'Balayage', 'Manicure', 'Pedicure', 'Gel Nails', 'Facial', 'Waxing', 'Massage', 'Lash Extensions', 'Brow Tint', 'Keratin Treatment', 'Bridal Package'],
+  'Medical / Healthcare': ['New Patient Visit', 'Follow-up Appointment', 'Annual Physical', 'Lab Work', 'Vaccinations', 'Referral', 'Telehealth Visit', 'Urgent Care', 'Prescription Refill'],
+  'Dental': ['Cleaning', 'Exam & X-rays', 'Filling', 'Crown', 'Whitening', 'Root Canal', 'Extraction', 'Emergency Visit', 'Invisalign Consult', 'Pediatric Dentistry'],
+  'Law Firm': ['Free Consultation', 'Case Review', 'Document Preparation', 'Court Representation', 'Contract Review', 'Estate Planning', 'Mediation', 'Notarization'],
+  'Real Estate': ['Property Showing', 'Buyer Consultation', 'Listing Appointment', 'Home Valuation', 'Open House Info', 'Rental Inquiry', 'Pre-Approval Referral'],
+  'Fitness & Wellness': ['Personal Training', 'Group Classes', 'Yoga', 'Pilates', 'Nutrition Coaching', 'Membership Inquiry', 'Trial Visit', 'Spin Class', 'CrossFit', 'Meditation'],
+  'Home Services': ['Plumbing', 'Electrical', 'HVAC', 'Roofing', 'Painting', 'General Repair', 'Emergency Service', 'Inspection', 'Estimate', 'Landscaping'],
+  'Restaurant / Food': ['Dine-in Reservation', 'Takeout Order', 'Catering', 'Private Events', 'Gift Cards', 'Delivery', 'Menu Inquiry', 'Dietary Accommodations'],
+  'Retail': ['Product Inquiry', 'Order Status', 'Returns & Exchanges', 'Gift Cards', 'Personal Shopping', 'Product Demo', 'Curbside Pickup', 'Price Match'],
+  'General Business': ['General Inquiry', 'Scheduling', 'Support', 'Billing Questions', 'Consultation', 'Follow-up', 'Quote Request'],
+}
+
+// Tooltip component for field help
+function Tooltip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <span className="relative inline-flex ml-1">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        className="text-gray-400 hover:text-gray-600 transition-colors"
+        aria-label="Help"
+      >
+        <HelpCircle className="h-3.5 w-3.5" />
+      </button>
+      {open && (
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg z-50 leading-relaxed">
+          {text}
+          <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+        </span>
+      )}
+    </span>
+  )
+}
 
 // Smart defaults by industry + employee type
 const INDUSTRY_DEFAULTS: Record<string, Record<string, { services: string; greetingTemplate: (name: string, biz: string) => string }>> = {
@@ -254,6 +292,13 @@ export default function OnboardingPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const audioCacheRef = useRef<Map<string, string>>(new Map())
 
+  // Service chips state
+  const [selectedServices, setSelectedServices] = useState<string[]>([])
+  const [customServiceInput, setCustomServiceInput] = useState('')
+
+  // Extra knowledge from website scrape (passed to VAPI system prompt)
+  const [extraKnowledge, setExtraKnowledge] = useState<Record<string, any>>({})
+
   // Google Calendar inline setup state
   const [calendarId, setCalendarId] = useState('')
   const [calendarConnecting, setCalendarConnecting] = useState(false)
@@ -319,18 +364,49 @@ export default function OnboardingPage() {
   const set = (field: keyof FormData, value: string) =>
     setForm(prev => ({ ...prev, [field]: value }))
 
-  // Auto-fill greeting + services from smart defaults when name/type changes (unless AI-generated)
+  // Auto-fill greeting from smart defaults when name/type changes (unless AI-generated)
   useEffect(() => {
     if (!form.employeeName || !form.employeeType || generated) return
     const defaults = getSmartDefaults(form.industry, form.employeeType, form.employeeName, businessName)
     if (defaults) {
       set('greeting', defaults.greeting)
-      if (!form.services) set('services', defaults.services)
     } else {
       const typeLabel = EMPLOYEE_TYPES.find(t => t.id === form.employeeType)?.label || 'assistant'
       set('greeting', `Hello! Thank you for calling ${businessName}. I'm ${form.employeeName}, your ${typeLabel.toLowerCase()}. How can I help you today?`)
     }
   }, [form.employeeName, form.employeeType, businessName])
+
+  // Pre-select common services when industry is chosen (only on first entry to step 2)
+  useEffect(() => {
+    if (!form.industry || selectedServices.length > 0 || generated) return
+    const suggestions = INDUSTRY_SERVICES[form.industry]
+    if (suggestions) {
+      // Pre-select the first 6 as a reasonable default
+      const preSelected = suggestions.slice(0, 6)
+      setSelectedServices(preSelected)
+    }
+  }, [form.industry, step])
+
+  // Sync selectedServices -> form.services
+  useEffect(() => {
+    set('services', selectedServices.join(', '))
+  }, [selectedServices])
+
+  // Helper to toggle a service chip
+  const toggleService = (service: string) => {
+    setSelectedServices(prev =>
+      prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]
+    )
+  }
+
+  // Add a custom service
+  const addCustomService = () => {
+    const trimmed = customServiceInput.trim()
+    if (trimmed && !selectedServices.includes(trimmed)) {
+      setSelectedServices(prev => [...prev, trimmed])
+      setCustomServiceInput('')
+    }
+  }
 
   const canAdvance = () => {
     switch (step) {
@@ -448,7 +524,7 @@ export default function OnboardingPage() {
     }
   }
 
-  // Generate employee config from website URL using AI
+  // Scrape website and auto-fill business info across all steps
   const generateFromWebsite = async () => {
     if (!websiteUrl.trim() || !businessId || generating) return
     setGenerating(true)
@@ -458,7 +534,7 @@ export default function OnboardingPage() {
       const session = await supabase.auth.getSession()
       const token = session.data.session?.access_token
 
-      const res = await fetch('/api/phone-employees/generate-config', {
+      const res = await fetch('/api/phone-employees/extract-from-website', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -467,33 +543,45 @@ export default function OnboardingPage() {
         body: JSON.stringify({
           businessId,
           jobType: form.employeeType || 'receptionist',
-          businessDescription: `Website: ${websiteUrl}. Industry: ${form.industry}. Business name: ${businessName}.`,
-          employeeName: form.employeeName || undefined,
+          url: websiteUrl.trim(),
         }),
       })
 
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Failed to generate config')
+      if (!res.ok) throw new Error(data.error || 'Failed to scrape website')
 
-      // Pre-fill form with AI-generated data
-      if (data.greeting) set('greeting', data.greeting)
-      if (data.config) {
-        // Extract services from various config formats
-        const config = data.config
-        let services = ''
-        if (config.services && Array.isArray(config.services)) {
-          services = config.services.map((s: any) => typeof s === 'string' ? s : s.name).join(', ')
-        } else if (config.appointmentTypes && Array.isArray(config.appointmentTypes)) {
-          services = config.appointmentTypes.map((t: any) => t.name + (t.price ? ` $${t.price}` : '')).join(', ')
-        } else if (config.supportedProducts && Array.isArray(config.supportedProducts)) {
-          services = config.supportedProducts.join(', ')
-        }
-        if (services) set('services', services)
+      const ext = data.extracted || {}
+
+      // Step 0 fields: industry, address, hours
+      if (ext.detectedIndustry && INDUSTRIES.includes(ext.detectedIndustry)) {
+        set('industry', ext.detectedIndustry)
       }
+      if (ext.address) set('address', ext.address)
+      if (ext.hours) set('hoursNote', ext.hours)
+
+      // Step 2 fields: services (as chips), escalation phone
+      if (ext.services && Array.isArray(ext.services)) {
+        const serviceNames = ext.services.map((s: any) => typeof s === 'string' ? s : s.name).filter(Boolean)
+        if (serviceNames.length > 0) setSelectedServices(serviceNames)
+      }
+      if (ext.phone) set('escalationPhone', ext.phone)
+
+      // Store extra knowledge for VAPI system prompt
+      const knowledge: Record<string, any> = {}
+      if (ext.faqs?.length) knowledge.faqs = ext.faqs
+      if (ext.staff?.length) knowledge.staff = ext.staff
+      if (ext.policies && Object.keys(ext.policies).length) knowledge.policies = ext.policies
+      if (ext.paymentMethods?.length) knowledge.paymentMethods = ext.paymentMethods
+      if (ext.parkingInfo) knowledge.parkingInfo = ext.parkingInfo
+      if (ext.promotions?.length) knowledge.promotions = ext.promotions
+      if (ext.brandTone) knowledge.brandTone = ext.brandTone
+      if (ext.businessDescription) knowledge.businessDescription = ext.businessDescription
+      if (ext.socialMedia?.length) knowledge.socialMedia = ext.socialMedia
+      setExtraKnowledge(knowledge)
 
       setGenerated(true)
     } catch (err: any) {
-      setError(err.message || 'Failed to generate from website. You can fill in the details manually.')
+      setError(err.message || 'Failed to scrape website. You can fill in the details manually.')
     } finally {
       setGenerating(false)
     }
@@ -526,6 +614,7 @@ export default function OnboardingPage() {
           services: form.services,
           escalationPhone: form.escalationPhone,
           areaCode: form.areaCode || undefined,
+          extraKnowledge: Object.keys(extraKnowledge).length > 0 ? extraKnowledge : undefined,
         }),
       })
 
@@ -576,6 +665,53 @@ export default function OnboardingPage() {
               <p className="text-gray-500">We'll use this to train your AI employee</p>
             </div>
 
+            {/* Website URL auto-fill — scrapes business info into all fields */}
+            <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-4 w-4 text-blue-600" />
+                <label className="text-sm font-semibold text-gray-900">Auto-fill from your website</label>
+                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full font-medium">AI-powered</span>
+              </div>
+              <p className="text-xs text-gray-600 mb-3">We'll scan your website and auto-fill your industry, address, hours, services, and more.</p>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="url"
+                    value={websiteUrl}
+                    onChange={e => setWebsiteUrl(e.target.value)}
+                    placeholder="https://yourbusiness.com"
+                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <button
+                  onClick={generateFromWebsite}
+                  disabled={!websiteUrl.trim() || generating}
+                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${
+                    websiteUrl.trim() && !generating
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  {generating ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Scanning...</>
+                  ) : generated ? (
+                    <><RotateCw className="h-4 w-4" /> Re-scan</>
+                  ) : (
+                    <><Sparkles className="h-4 w-4" /> Scan</>
+                  )}
+                </button>
+              </div>
+              {generated && (
+                <p className="text-xs text-green-700 mt-2 flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" /> Business info auto-filled from your website. Review and edit anything below.
+                </p>
+              )}
+              {error && step === 0 && (
+                <p className="text-xs text-red-600 mt-2">{error}</p>
+              )}
+            </div>
+
             <div className="space-y-5">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Industry</label>
@@ -607,7 +743,7 @@ export default function OnboardingPage() {
                     value={form.address}
                     onChange={e => set('address', e.target.value)}
                     placeholder="123 Main St, City, State"
-                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -623,7 +759,7 @@ export default function OnboardingPage() {
                     value={form.hoursNote}
                     onChange={e => set('hoursNote', e.target.value)}
                     placeholder="e.g. Mon–Fri 9am–5pm, Sat 10am–3pm"
-                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -688,55 +824,23 @@ export default function OnboardingPage() {
               <p className="text-gray-500">Personalize how they sound and what they know</p>
             </div>
 
-            {/* Website URL auto-config */}
-            <div className="mb-6 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="h-4 w-4 text-blue-600" />
-                <label className="text-sm font-semibold text-gray-900">Auto-fill from your website</label>
-                <span className="text-xs text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full font-medium">AI-powered</span>
-              </div>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="url"
-                    value={websiteUrl}
-                    onChange={e => setWebsiteUrl(e.target.value)}
-                    placeholder="https://yourbusiness.com"
-                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+            {/* Show website scrape context if scraped in Step 0 */}
+            {generated && (
+              <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
+                <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-green-900">Services and greeting pre-filled from your website</p>
+                  <p className="text-xs text-green-700 mt-0.5">Review and edit anything below to get it just right.</p>
                 </div>
-                <button
-                  onClick={generateFromWebsite}
-                  disabled={!websiteUrl.trim() || generating}
-                  className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap ${
-                    websiteUrl.trim() && !generating
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  {generating ? (
-                    <><Loader2 className="h-4 w-4 animate-spin" /> Generating...</>
-                  ) : generated ? (
-                    <><RotateCw className="h-4 w-4" /> Regenerate</>
-                  ) : (
-                    <><Sparkles className="h-4 w-4" /> Generate</>
-                  )}
-                </button>
               </div>
-              {generated && (
-                <p className="text-xs text-green-700 mt-2 flex items-center gap-1">
-                  <CheckCircle className="h-3 w-3" /> Greeting and services auto-filled from your website. Edit anything below.
-                </p>
-              )}
-              {error && step === 2 && (
-                <p className="text-xs text-red-600 mt-2">{error}</p>
-              )}
-            </div>
+            )}
 
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Give them a name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                  Give them a name
+                  <Tooltip text="This is how your AI employee introduces itself on calls. Pick something friendly and professional." />
+                </label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
@@ -744,13 +848,16 @@ export default function OnboardingPage() {
                     value={form.employeeName}
                     onChange={e => set('employeeName', e.target.value)}
                     placeholder="e.g. Alex, Jordan, Sam..."
-                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Choose a voice</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                  Choose a voice
+                  <Tooltip text="This is the voice callers will hear. Preview a few to find one that matches your brand." />
+                </label>
                 <p className="text-xs text-gray-400 mb-3">Click the play button to preview each voice</p>
                 <div className="grid grid-cols-2 gap-3">
                   {VOICES.map(voice => (
@@ -794,33 +901,98 @@ export default function OnboardingPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Opening greeting</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                  Opening greeting
+                  <Tooltip text="This is exactly what your AI says when it picks up. Keep it natural, include your business name, and mention how you can help." />
+                </label>
                 <textarea
                   value={form.greeting}
                   onChange={e => set('greeting', e.target.value)}
                   rows={3}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   placeholder="What should they say when they pick up?"
                 />
                 <p className="text-xs text-gray-400 mt-1">Auto-generated — customize it if you'd like</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Services or products you offer <span className="text-gray-400 font-normal">(optional)</span>
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                  Services you offer
+                  <Tooltip text="Select the services your business provides. Your AI employee will use this to answer caller questions about what you offer." />
                 </label>
-                <textarea
-                  value={form.services}
-                  onChange={e => set('services', e.target.value)}
-                  rows={2}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  placeholder="e.g. haircuts $40, color $80, beard trim $20..."
-                />
+
+                {/* Selected services */}
+                {selectedServices.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {selectedServices.map(service => (
+                      <span
+                        key={service}
+                        className="inline-flex items-center gap-1 bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full"
+                      >
+                        {service}
+                        <button
+                          type="button"
+                          onClick={() => toggleService(service)}
+                          className="text-blue-600 hover:text-blue-800 transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Industry suggestions */}
+                {form.industry && INDUSTRY_SERVICES[form.industry] && (
+                  <div className="mb-3">
+                    <p className="text-xs text-gray-500 mb-2">Tap to add or remove:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {INDUSTRY_SERVICES[form.industry]
+                        .filter(s => !selectedServices.includes(s))
+                        .map(service => (
+                          <button
+                            key={service}
+                            type="button"
+                            onClick={() => toggleService(service)}
+                            className="inline-flex items-center gap-1 border border-gray-300 text-gray-600 text-sm px-2.5 py-1 rounded-full hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all"
+                          >
+                            <Plus className="h-3 w-3" />
+                            {service}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Custom service input */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={customServiceInput}
+                    onChange={e => setCustomServiceInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addCustomService() } }}
+                    placeholder="Add a custom service..."
+                    className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <button
+                    type="button"
+                    onClick={addCustomService}
+                    disabled={!customServiceInput.trim()}
+                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      customServiceInput.trim()
+                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-50 text-gray-300 cursor-not-allowed'
+                    }`}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Escalation phone number <span className="text-gray-400 font-normal">(optional)</span>
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                  Escalation phone number <span className="text-gray-400 font-normal ml-1">(optional)</span>
+                  <Tooltip text="If a caller needs a real person, your AI will transfer them to this number. Leave blank to skip." />
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -829,7 +1001,7 @@ export default function OnboardingPage() {
                     value={form.escalationPhone}
                     onChange={e => set('escalationPhone', e.target.value)}
                     placeholder="+1 (555) 000-0000 — transfer if AI can't help"
-                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -857,7 +1029,7 @@ export default function OnboardingPage() {
                 onChange={e => set('areaCode', e.target.value.replace(/\D/g, '').slice(0, 3))}
                 placeholder="e.g. 415, 312, 212"
                 maxLength={3}
-                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg font-mono text-center focus:ring-2 focus:ring-blue-500 focus:border-transparent tracking-widest"
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg font-mono text-center text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent tracking-widest"
               />
             </div>
 
@@ -996,7 +1168,7 @@ export default function OnboardingPage() {
                             value={calendarId}
                             onChange={e => setCalendarId(e.target.value)}
                             placeholder="your-email@gmail.com or calendar ID"
-                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           />
                           <button
                             onClick={connectGoogleCalendar}

@@ -194,12 +194,21 @@ function buildExtractionPrompt(text: string, jobType: string, schemaContext: str
 
 Return a JSON object with these fields (omit fields you can't find, use empty arrays not null):
 - businessDescription: string (1-2 sentence summary of what the business does)
-- faqs: array of { question: string, answer: string, keywords: string[] } (up to 10 common caller questions with answers from the content)
+- address: string (full street address if found)
+- phone: string (main business phone number)
 - hours: string (business hours if mentioned, e.g. "Mon-Fri 9am-5pm")
-- policies: { cancellation?: string, returns?: string, warranty?: string } (any policies mentioned)
+- detectedIndustry: string (must be one of: "Medical / Healthcare", "Dental", "Law Firm", "Real Estate", "Beauty / Salon / Spa", "Fitness & Wellness", "Home Services", "Restaurant / Food", "Retail", "General Business")
+- services: { name: string, duration?: number, description?: string, price?: number }[] (all services/offerings found)
+- faqs: array of { question: string, answer: string, keywords: string[] } (up to 10 common caller questions with answers from the content)
+- staff: { name: string, role: string }[] (team members, stylists, doctors, etc.)
+- policies: { cancellation?: string, booking?: string, returns?: string, warranty?: string, lateFee?: string } (any policies mentioned)
+- paymentMethods: string[] (e.g. ["Cash", "Visa", "Mastercard", "Apple Pay"])
+- parkingInfo: string (parking or directions info if mentioned)
+- socialMedia: { platform: string, url: string }[] (social media links found)
+- brandTone: string (one of: "professional", "friendly", "luxury", "casual", "clinical" — infer from the writing style)
+- promotions: string[] (any current deals, discounts, or special offers)
 ${jobType === 'order-taker' ? '- menu: { categories: { name: string, items: { name: string, price: number, description?: string }[] }[] }' : ''}
 ${jobType === 'appointment-scheduler' ? '- appointmentTypes: { name: string, duration: number, description?: string, price?: number }[]' : ''}
-${jobType === 'receptionist' || jobType === 'appointment-scheduler' ? '- services: { name: string, duration?: number, description?: string, price?: number }[]' : ''}
 ${jobType === 'customer-service' ? '- supportedProducts: string[]\n- commonIssues: { issue: string, resolution: string }[]' : ''}
 ${schemaContext}
 Website content:
@@ -293,7 +302,7 @@ export async function POST(request: NextRequest) {
     const extractionPrompt = buildExtractionPrompt(combinedText, jobType, schemaContext)
     const response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1500,
+      max_tokens: 3000,
       messages: [{ role: 'user', content: extractionPrompt }],
     })
 
@@ -312,9 +321,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Merge Schema.org data as fallbacks (Claude extraction takes priority)
+    const extracted = parsedData as Record<string, any>
+    if (schemaData.address && !extracted.address) extracted.address = schemaData.address
+    if (schemaData.phone && !extracted.phone) extracted.phone = schemaData.phone
+    if (schemaData.hours && !extracted.hours) extracted.hours = schemaData.hours
+    if (schemaData.businessName && !extracted.businessName) extracted.businessName = schemaData.businessName
+    if (schemaData.staff?.length && !extracted.staff?.length) extracted.staff = schemaData.staff
+    if (schemaData.faqs?.length && !extracted.faqs?.length) extracted.faqs = schemaData.faqs
+    if (schemaData.services?.length && !extracted.services?.length) extracted.services = schemaData.services
+
     return NextResponse.json({
       success: true,
-      extracted: parsedData,
+      extracted,
       source: 'website',
       pagesScanned: 1 + scored.length,
     })

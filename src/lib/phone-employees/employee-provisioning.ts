@@ -494,43 +494,52 @@ export class EmployeeProvisioningService {
       updatedAt: new Date(),
     }
 
+    let basePrompt: string
     switch (employee.job_type) {
       case 'receptionist':
-        return generateReceptionistPrompt(config, employee.job_config as ReceptionistConfig)
-
+        basePrompt = generateReceptionistPrompt(config, employee.job_config as ReceptionistConfig)
+        break
       case 'personal-assistant':
-        return generatePersonalAssistantPrompt(config, employee.job_config as PersonalAssistantConfig)
-
+        basePrompt = generatePersonalAssistantPrompt(config, employee.job_config as PersonalAssistantConfig)
+        break
       case 'order-taker':
-        return generateOrderTakerPrompt(config, employee.job_config as OrderTakerConfig)
-
+        basePrompt = generateOrderTakerPrompt(config, employee.job_config as OrderTakerConfig)
+        break
       case 'appointment-scheduler':
-        return generateAppointmentSchedulerPrompt(config, employee.job_config as AppointmentSchedulerConfig)
-
+        basePrompt = generateAppointmentSchedulerPrompt(config, employee.job_config as AppointmentSchedulerConfig)
+        break
       case 'customer-service':
-        return generateCustomerServicePrompt(config, employee.job_config as CustomerServiceConfig)
-
+        basePrompt = generateCustomerServicePrompt(config, employee.job_config as CustomerServiceConfig)
+        break
       case 'after-hours-emergency':
-        return generateAfterHoursEmergencyPrompt(config, employee.job_config as AfterHoursEmergencyConfig)
-
+        basePrompt = generateAfterHoursEmergencyPrompt(config, employee.job_config as AfterHoursEmergencyConfig)
+        break
       case 'restaurant-host':
-        return generateRestaurantHostPrompt(config, employee.job_config as RestaurantHostConfig)
-
+        basePrompt = generateRestaurantHostPrompt(config, employee.job_config as RestaurantHostConfig)
+        break
       case 'survey-caller':
-        return generateSurveyCallerPrompt(config, employee.job_config as SurveyCallerConfig)
-
+        basePrompt = generateSurveyCallerPrompt(config, employee.job_config as SurveyCallerConfig)
+        break
       case 'lead-qualifier':
-        return generateLeadQualifierPrompt(config, employee.job_config as LeadQualifierConfig)
-
+        basePrompt = generateLeadQualifierPrompt(config, employee.job_config as LeadQualifierConfig)
+        break
       case 'appointment-reminder':
-        return generateAppointmentReminderPrompt(config, employee.job_config as AppointmentReminderConfig)
-
+        basePrompt = generateAppointmentReminderPrompt(config, employee.job_config as AppointmentReminderConfig)
+        break
       case 'collections':
-        return generateCollectionsPrompt(config, employee.job_config as CollectionsConfig)
-
+        basePrompt = generateCollectionsPrompt(config, employee.job_config as CollectionsConfig)
+        break
       default:
-        return `You are ${employee.name}, an AI assistant for ${businessName}. Be helpful and professional.`
+        basePrompt = `You are ${employee.name}, an AI assistant for ${businessName}. Be helpful and professional.`
     }
+
+    // Append extra knowledge from website scrape if available
+    const extraKnowledge = employee.job_config?.extraKnowledge
+    if (extraKnowledge && typeof extraKnowledge === 'string' && extraKnowledge.trim()) {
+      basePrompt += `\n\n## Additional Business Knowledge\nUse the following information to answer caller questions accurately:\n\n${extraKnowledge}`
+    }
+
+    return basePrompt
   }
 
   private getFunctionsForJobType(jobType: EmployeeJobType, capabilities?: string[]): any[] {
