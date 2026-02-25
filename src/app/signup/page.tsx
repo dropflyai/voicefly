@@ -263,7 +263,7 @@ export default function SignupPage() {
                     required
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    className="pl-10 w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="pl-10 w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white placeholder:text-gray-400"
                     placeholder="John"
                   />
                 </div>
@@ -282,7 +282,7 @@ export default function SignupPage() {
                     required
                     value={formData.lastName}
                     onChange={handleInputChange}
-                    className="pl-10 w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="pl-10 w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white placeholder:text-gray-400"
                     placeholder="Doe"
                   />
                 </div>
