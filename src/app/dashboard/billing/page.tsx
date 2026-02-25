@@ -38,8 +38,11 @@ function BillingPage() {
       setLoading(true)
       setError(null)
       
-      const businessId = getCurrentBusinessId() || '8424aa26-4fd5-4d4b-92aa-8a9c5ba77dad'
-      console.log('Loading billing data for business:', businessId)
+      const businessId = getCurrentBusinessId()
+      if (!businessId) {
+        setError('Authentication required. Please log in.')
+        return
+      }
       
       // Load business data
       const businessData = await BusinessAPI.getBusiness(businessId)

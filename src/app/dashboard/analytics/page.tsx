@@ -26,9 +26,9 @@ import type { Location, Business } from '../../../lib/supabase-types-mvp'
 // Get business ID from auth context
 const getBusinessId = () => {
   if (typeof window !== 'undefined') {
-    return localStorage.getItem('authenticated_business_id') || '8424aa26-4fd5-4d4b-92aa-8a9c5ba77dad'
+    return localStorage.getItem('authenticated_business_id') || null
   }
-  return '8424aa26-4fd5-4d4b-92aa-8a9c5ba77dad'
+  return null
 }
 
 export default function AnalyticsPage() {
@@ -62,7 +62,8 @@ export default function AnalyticsPage() {
   const loadInitialData = async () => {
     try {
       const businessId = getBusinessId()
-      
+      if (!businessId) return
+
       // Load business info
       const businessData = await BusinessAPI.getBusiness(businessId)
       if (businessData) {
@@ -235,7 +236,7 @@ export default function AnalyticsPage() {
         {activeTab === 'overview' && (
           <div>
             <SmartAnalytics 
-              businessId={getBusinessId()}
+              businessId={getBusinessId() || ''}
               dateRange={dateRange}
               className="mb-8"
             />
@@ -270,7 +271,7 @@ export default function AnalyticsPage() {
 
         {activeTab === 'staff' && (
           <div>
-            <StaffPerformance businessId={getBusinessId()} dateRange={dateRange} />
+            <StaffPerformance businessId={getBusinessId() || ''} dateRange={dateRange} />
           </div>
         )}
 
@@ -321,7 +322,7 @@ export default function AnalyticsPage() {
         )}
 
         {activeTab === 'reports' && (
-          <DailyReport businessId={getBusinessId()} />
+          <DailyReport businessId={getBusinessId() || ''} />
         )}
 
         {/* Advanced Analytics for Professional+ */}
