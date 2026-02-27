@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import Layout from '../../../components/Layout'
 import ProtectedRoute from '../../../components/ProtectedRoute'
-import { getSecureBusinessId } from '../../../lib/multi-tenant-auth'
+import { BusinessAPI, type Business } from '../../../lib/supabase'
+import { getSecureBusinessId, redirectToLoginIfUnauthenticated } from '../../../lib/multi-tenant-auth'
 import { supabase } from '../../../lib/supabase-client'
 import { PuzzlePieceIcon } from '@heroicons/react/24/outline'
 
@@ -15,7 +16,38 @@ const EMPLOYEE_TYPE_LABELS: Record<string, string> = {
   'customer-service': 'Customer Service',
 }
 
-const AVAILABLE_INTEGRATIONS = [
+interface IntegrationDef {
+  id: string
+  name: string
+  description: string
+  category: string
+  employeeTypes: string[]
+  color: string
+  comingSoon: boolean
+  connectType: 'oauth' | 'apikey' | 'calendar-id' | 'none'
+}
+
+const AVAILABLE_INTEGRATIONS: IntegrationDef[] = [
+  {
+    id: 'google-calendar',
+    name: 'Google Calendar',
+    description: 'Let your AI employees check real availability and book appointments on your Google Calendar.',
+    category: 'Scheduling',
+    employeeTypes: ['receptionist', 'appointment-scheduler', 'personal-assistant'],
+    color: 'blue',
+    comingSoon: false,
+    connectType: 'calendar-id',
+  },
+  {
+    id: 'calendly',
+    name: 'Calendly',
+    description: 'Let your phone employee check real availability and book appointments via Calendly.',
+    category: 'Scheduling',
+    employeeTypes: ['receptionist', 'appointment-scheduler', 'personal-assistant'],
+    color: 'blue',
+    comingSoon: false,
+    connectType: 'oauth',
+  },
   {
     id: 'square',
     name: 'Square',
@@ -24,6 +56,7 @@ const AVAILABLE_INTEGRATIONS = [
     employeeTypes: ['order-taker'],
     color: 'green',
     comingSoon: false,
+    connectType: 'oauth',
   },
   {
     id: 'toast',
@@ -33,15 +66,7 @@ const AVAILABLE_INTEGRATIONS = [
     employeeTypes: ['order-taker'],
     color: 'red',
     comingSoon: true,
-  },
-  {
-    id: 'calendly',
-    name: 'Calendly',
-    description: 'Let your phone employee check real availability and book appointments.',
-    category: 'Scheduling',
-    employeeTypes: ['receptionist', 'appointment-scheduler', 'personal-assistant'],
-    color: 'blue',
-    comingSoon: true,
+    connectType: 'none',
   },
   {
     id: 'shopify',
@@ -51,14 +76,24 @@ const AVAILABLE_INTEGRATIONS = [
     employeeTypes: ['customer-service'],
     color: 'purple',
     comingSoon: true,
+    connectType: 'none',
   },
 ]
 
-const COLOR_MAP: Record<string, { bg: string; text: string; border: string }> = {
-  green: { bg: '#f0fdf4', text: '#166534', border: '#bbf7d0' },
-  red: { bg: '#fff1f2', text: '#9f1239', border: '#fecdd3' },
-  blue: { bg: '#eff6ff', text: '#1e40af', border: '#bfdbfe' },
-  purple: { bg: '#faf5ff', text: '#6b21a8', border: '#e9d5ff' },
+const COLOR_MAP: Record<string, { bg: string; text: string; border: string; iconBg: string }> = {
+  green: { bg: 'bg-green-50', text: 'text-green-800', border: 'border-green-200', iconBg: 'bg-green-100' },
+  red: { bg: 'bg-red-50', text: 'text-red-800', border: 'border-red-200', iconBg: 'bg-red-100' },
+  blue: { bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-200', iconBg: 'bg-blue-100' },
+  purple: { bg: 'bg-purple-50', text: 'text-purple-800', border: 'border-purple-200', iconBg: 'bg-purple-100' },
+}
+
+interface ConnectedIntegration {
+  id: string
+  platform: string
+  status: string
+  config: Record<string, any>
+  lastSyncedAt: string | null
+  syncError: string | null
 }
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
@@ -67,104 +102,147 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-export default function IntegrationsPage() {
-  const [integrations, setIntegrations] = useState<Record<string, any>>({})
+function IntegrationsPage() {
+  const [business, setBusiness] = useState<Business | null>(null)
+  const [integrations, setIntegrations] = useState<Record<string, ConnectedIntegration>>({})
   const [loading, setLoading] = useState(true)
   const [employees, setEmployees] = useState<any[]>([])
-  const [squareToken, setSquareToken] = useState('')
-  const [squareLocationId, setSquareLocationId] = useState('')
-  const [connectingSquare, setConnectingSquare] = useState(false)
-  const [syncingSquare, setSyncingSquare] = useState(false)
-  const [squareError, setSquareError] = useState<string | null>(null)
-  const [squareSuccess, setSquareSuccess] = useState<string | null>(null)
   const [expandedCard, setExpandedCard] = useState<string | null>(null)
+
+  // Square state
+  const [squareConnecting, setSquareConnecting] = useState(false)
+  const [squareSyncing, setSquareSyncing] = useState(false)
   const [syncEmployeeId, setSyncEmployeeId] = useState('')
 
+  // Google Calendar state
+  const [calendarId, setCalendarId] = useState('')
+  const [calendarConnecting, setCalendarConnecting] = useState(false)
+
+  // Feedback
+  const [feedback, setFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null)
+
   const loadData = useCallback(async () => {
-    const businessId = getSecureBusinessId()
-    if (!businessId) { setLoading(false); return }
+    try {
+      if (redirectToLoginIfUnauthenticated()) return
 
-    const headers = await getAuthHeaders()
+      const businessId = getSecureBusinessId()
+      if (!businessId) { setLoading(false); return }
 
-    const [intRes, empRes] = await Promise.all([
-      fetch(`/api/integrations?businessId=${businessId}`, { headers }),
-      fetch(`/api/phone-employees?businessId=${businessId}`, { headers }),
-    ])
+      const headers = await getAuthHeaders()
 
-    if (intRes.ok) {
-      const data = await intRes.json()
-      setIntegrations(data.integrations ?? data ?? {})
+      const [businessData, intRes, empRes] = await Promise.all([
+        BusinessAPI.getBusiness(businessId),
+        fetch(`/api/integrations?businessId=${businessId}`, { headers }),
+        fetch(`/api/phone-employees?businessId=${businessId}`, { headers }),
+      ])
+
+      if (businessData) setBusiness(businessData)
+
+      if (intRes.ok) {
+        const data = await intRes.json()
+        const list = data.integrations ?? []
+        // Convert array to Record keyed by platform
+        const map: Record<string, ConnectedIntegration> = {}
+        for (const item of list) {
+          const platform = item.platform ?? item.id
+          map[platform] = {
+            id: item.id,
+            platform,
+            status: item.status,
+            config: item.config ?? {},
+            lastSyncedAt: item.lastSyncedAt ?? item.last_synced_at ?? null,
+            syncError: item.syncError ?? item.sync_error ?? null,
+          }
+        }
+        setIntegrations(map)
+      }
+
+      if (empRes.ok) {
+        const data = await empRes.json()
+        setEmployees(data.employees ?? [])
+      }
+    } catch (err) {
+      console.error('Error loading integrations:', err)
+    } finally {
+      setLoading(false)
     }
-
-    if (empRes.ok) {
-      const data = await empRes.json()
-      setEmployees(data.employees ?? data ?? [])
-    }
-
-    setLoading(false)
   }, [])
 
   useEffect(() => { loadData() }, [loadData])
 
-  const handleSquareConnect = async () => {
-    setConnectingSquare(true)
-    setSquareError(null)
-    setSquareSuccess(null)
+  const showFeedback = (type: 'error' | 'success', message: string) => {
+    setFeedback({ type, message })
+    setTimeout(() => setFeedback(null), 5000)
+  }
 
+  // --- Google Calendar ---
+  const handleGoogleCalendarConnect = async () => {
+    if (!calendarId.trim()) {
+      showFeedback('error', 'Please enter your Google Calendar ID.')
+      return
+    }
+    setCalendarConnecting(true)
     const businessId = getSecureBusinessId()
     const headers = await getAuthHeaders()
 
     try {
-      // Prefer OAuth flow if no manual token entered
-      if (!squareToken.trim()) {
-        const res = await fetch('/api/integrations/square/authorize', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', ...headers },
-          body: JSON.stringify({ businessId }),
-        })
-        const data = await res.json()
-        if (data.authUrl) {
-          window.location.href = data.authUrl
-          return
-        }
-        setSquareError(data.error ?? 'Failed to start Square authorization.')
-        setConnectingSquare(false)
-        return
-      }
-
-      // API key fallback
-      const res = await fetch('/api/integrations/square/connect', {
+      const res = await fetch('/api/integrations/google-calendar/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...headers },
-        body: JSON.stringify({
-          businessId,
-          accessToken: squareToken,
-          ...(squareLocationId ? { locationId: squareLocationId } : {}),
-        }),
+        body: JSON.stringify({ businessId, calendarId: calendarId.trim() }),
       })
-
       const data = await res.json()
-
       if (!res.ok) {
-        setSquareError(data.error ?? 'Failed to connect Square.')
+        showFeedback('error', data.error ?? 'Failed to connect Google Calendar.')
       } else {
-        setSquareSuccess('Square connected successfully.')
-        setSquareToken('')
-        setSquareLocationId('')
+        showFeedback('success', 'Google Calendar connected successfully.')
+        setCalendarId('')
+        setExpandedCard(null)
         loadData()
       }
     } catch {
-      setSquareError('Network error. Please try again.')
+      showFeedback('error', 'Network error. Please try again.')
     }
+    setCalendarConnecting(false)
+  }
 
-    setConnectingSquare(false)
+  // --- Calendly ---
+  const handleCalendlyConnect = async () => {
+    const businessId = getSecureBusinessId()
+    const headers = await getAuthHeaders()
+    // Redirect to OAuth flow
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+    const url = `/api/integrations/calendly/oauth?businessId=${businessId}${token ? `&token=${token}` : ''}&from=/dashboard/integrations`
+    window.location.href = url
+  }
+
+  // --- Square ---
+  const handleSquareConnect = async () => {
+    setSquareConnecting(true)
+    const businessId = getSecureBusinessId()
+    const headers = await getAuthHeaders()
+
+    try {
+      const res = await fetch('/api/integrations/square/authorize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ businessId }),
+      })
+      const data = await res.json()
+      if (data.authUrl) {
+        window.location.href = data.authUrl
+        return
+      }
+      showFeedback('error', data.error ?? 'Failed to start Square authorization.')
+    } catch {
+      showFeedback('error', 'Network error. Please try again.')
+    }
+    setSquareConnecting(false)
   }
 
   const handleSquareSync = async (employeeId: string) => {
-    setSyncingSquare(true)
-    setSquareError(null)
-    setSquareSuccess(null)
-
+    setSquareSyncing(true)
     const businessId = getSecureBusinessId()
     const headers = await getAuthHeaders()
 
@@ -174,29 +252,23 @@ export default function IntegrationsPage() {
         headers: { 'Content-Type': 'application/json', ...headers },
         body: JSON.stringify({ businessId, employeeId }),
       })
-
       const data = await res.json()
-
       if (!res.ok) {
-        setSquareError(data.error ?? 'Sync failed.')
+        showFeedback('error', data.error ?? 'Sync failed.')
       } else {
         const emp = employees.find(e => e.id === employeeId)
-        const empName = emp?.name ?? 'your employee'
-        setSquareSuccess(
-          data.message ?? `Synced ${data.itemCount ?? ''} items across ${data.categoryCount ?? ''} categories to ${empName}.`
-        )
+        showFeedback('success', data.message ?? `Synced menu to ${emp?.name ?? 'employee'}.`)
         loadData()
       }
     } catch {
-      setSquareError('Network error. Please try again.')
+      showFeedback('error', 'Network error. Please try again.')
     }
-
-    setSyncingSquare(false)
+    setSquareSyncing(false)
   }
 
+  // --- Disconnect any ---
   const handleDisconnect = async (platform: string) => {
     if (!confirm(`Disconnect ${platform}?`)) return
-
     const businessId = getSecureBusinessId()
     const headers = await getAuthHeaders()
 
@@ -204,240 +276,291 @@ export default function IntegrationsPage() {
       method: 'DELETE',
       headers,
     })
-
     loadData()
   }
 
-  const squareIntegration = integrations['square']
-  const isSquareConnected = !!squareIntegration
-  const compatibleEmployees = employees.filter(e =>
-    ['order-taker', 'order_taker'].includes(e.job_type)
-  )
+  const compatibleEmployees = (types: string[]) =>
+    employees.filter(e => types.some(t => e.job_type === t || e.job_type === t.replace('-', '_')))
 
-  return (
-    <ProtectedRoute>
-      <Layout>
-        <div style={{ maxWidth: 896, margin: '0 auto', padding: '24px 16px' }}>
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-              <PuzzlePieceIcon style={{ width: 28, height: 28, color: '#6366f1' }} />
-              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#111827' }}>Integrations</h1>
+  if (loading) {
+    return (
+      <Layout business={business}>
+        <div className="p-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-48 bg-gray-200 rounded-xl"></div>
+              ))}
             </div>
-            <p style={{ margin: 0, fontSize: 14, color: '#6b7280' }}>
-              Connect your business tools to power your phone employees.
-            </p>
           </div>
-
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: 40, color: '#9ca3af' }}>Loading integrations…</div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-              gap: 16,
-            }}>
-              {AVAILABLE_INTEGRATIONS.map(integration => {
-                const colors = COLOR_MAP[integration.color] ?? COLOR_MAP.blue
-                const isConnected = !!integrations[integration.id]
-                const connectedData = integrations[integration.id]
-                const isExpanded = expandedCard === integration.id
-
-                return (
-                  <div
-                    key={integration.id}
-                    style={{
-                      border: `1px solid ${integration.comingSoon ? '#e5e7eb' : isConnected ? '#bbf7d0' : '#e5e7eb'}`,
-                      borderRadius: 12,
-                      background: integration.comingSoon ? '#fafafa' : '#fff',
-                      overflow: 'hidden',
-                      opacity: integration.comingSoon ? 0.75 : 1,
-                    }}
-                  >
-                    <div style={{ padding: '18px 18px 14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 12 }}>
-                        <div style={{
-                          width: 44, height: 44, borderRadius: 10,
-                          background: colors.bg,
-                          border: `1px solid ${colors.border}`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 20, fontWeight: 700, color: colors.text,
-                          flexShrink: 0,
-                        }}>
-                          {integration.name.charAt(0)}
-                        </div>
-
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                            <span style={{ fontWeight: 700, fontSize: 15, color: '#111827' }}>{integration.name}</span>
-                            {integration.comingSoon && (
-                              <span style={{
-                                fontSize: 11, fontWeight: 600,
-                                background: '#f3f4f6', color: '#6b7280',
-                                padding: '2px 7px', borderRadius: 20,
-                              }}>
-                                Coming Soon
-                              </span>
-                            )}
-                            {isConnected && (
-                              <span style={{
-                                fontSize: 11, fontWeight: 600,
-                                background: '#dcfce7', color: '#166534',
-                                padding: '2px 7px', borderRadius: 20,
-                              }}>
-                                Connected
-                              </span>
-                            )}
-                          </div>
-                          <span style={{
-                            fontSize: 11, color: colors.text,
-                            background: colors.bg, padding: '1px 6px', borderRadius: 4,
-                            display: 'inline-block', marginTop: 3,
-                          }}>
-                            {integration.category}
-                          </span>
-                        </div>
-                      </div>
-
-                      <p style={{ margin: '0 0 12px', fontSize: 13, color: '#4b5563', lineHeight: 1.5 }}>
-                        {integration.description}
-                      </p>
-
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 14 }}>
-                        {integration.employeeTypes.map(type => (
-                          <span key={type} style={{
-                            fontSize: 11, padding: '2px 8px', borderRadius: 20,
-                            background: '#f0f9ff', color: '#0369a1', border: '1px solid #bae6fd',
-                          }}>
-                            {EMPLOYEE_TYPE_LABELS[type] ?? type}
-                          </span>
-                        ))}
-                      </div>
-
-                      {!integration.comingSoon && (
-                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                          {isConnected ? (
-                            <>
-                              {connectedData?.last_synced && (
-                                <span style={{ fontSize: 12, color: '#6b7280', alignSelf: 'center' }}>
-                                  Last synced {new Date(connectedData.last_synced).toLocaleDateString()}
-                                </span>
-                              )}
-                              <button
-                                onClick={() => setExpandedCard(isExpanded ? null : integration.id)}
-                                style={{
-                                  padding: '6px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500,
-                                  background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer',
-                                }}
-                              >
-                                Sync Now
-                              </button>
-                              <button
-                                onClick={() => handleDisconnect(integration.id)}
-                                style={{
-                                  padding: '6px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500,
-                                  background: '#fff', color: '#ef4444', border: '1px solid #fca5a5', cursor: 'pointer',
-                                }}
-                              >
-                                Disconnect
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              onClick={() => setExpandedCard(isExpanded ? null : integration.id)}
-                              style={{
-                                padding: '6px 14px', borderRadius: 7, fontSize: 13, fontWeight: 500,
-                                background: '#6366f1', color: '#fff', border: 'none', cursor: 'pointer',
-                              }}
-                            >
-                              {isExpanded ? 'Cancel' : 'Connect'}
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    {isExpanded && integration.id === 'square' && (
-                      <div style={{ borderTop: '1px solid #e5e7eb', padding: '16px 18px', background: '#f9fafb' }}>
-                        {!isSquareConnected ? (
-                          <>
-                            <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 600, color: '#111827' }}>
-                              Connect Square
-                            </p>
-                            <p style={{ margin: '0 0 14px', fontSize: 12, color: '#6b7280' }}>
-                              Click below to authorize VoiceFly with your Square account.
-                            </p>
-
-                            <button
-                              onClick={handleSquareConnect}
-                              disabled={connectingSquare}
-                              style={{
-                                padding: '8px 16px', borderRadius: 7, fontSize: 13, fontWeight: 600,
-                                background: connectingSquare ? '#c7d2fe' : '#6366f1',
-                                color: '#fff', border: 'none',
-                                cursor: connectingSquare ? 'default' : 'pointer',
-                              }}
-                            >
-                              {connectingSquare ? 'Redirecting…' : 'Authorize with Square'}
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <p style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 600, color: '#111827' }}>
-                              Sync to Employee
-                            </p>
-
-                            {compatibleEmployees.length === 0 ? (
-                              <p style={{ fontSize: 13, color: '#6b7280' }}>
-                                No order-taker employees found.{' '}
-                                <a href="/dashboard/employees" style={{ color: '#6366f1' }}>Create one first.</a>
-                              </p>
-                            ) : (
-                              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                                <select
-                                  value={syncEmployeeId}
-                                  onChange={e => setSyncEmployeeId(e.target.value)}
-                                  style={{
-                                    flex: 1, minWidth: 160, padding: '7px 10px', borderRadius: 7,
-                                    border: '1px solid #d1d5db', fontSize: 13,
-                                  }}
-                                >
-                                  <option value="">Select employee…</option>
-                                  {compatibleEmployees.map(emp => (
-                                    <option key={emp.id} value={emp.id}>{emp.name}</option>
-                                  ))}
-                                </select>
-                                <button
-                                  onClick={() => handleSquareSync(syncEmployeeId)}
-                                  disabled={syncingSquare || !syncEmployeeId}
-                                  style={{
-                                    padding: '8px 16px', borderRadius: 7, fontSize: 13, fontWeight: 600,
-                                    background: syncingSquare || !syncEmployeeId ? '#c7d2fe' : '#6366f1',
-                                    color: '#fff', border: 'none',
-                                    cursor: syncingSquare || !syncEmployeeId ? 'default' : 'pointer',
-                                  }}
-                                >
-                                  {syncingSquare ? 'Syncing…' : 'Sync Menu'}
-                                </button>
-                              </div>
-                            )}
-                          </>
-                        )}
-
-                        {squareError && (
-                          <p style={{ margin: '10px 0 0', fontSize: 12, color: '#dc2626' }}>{squareError}</p>
-                        )}
-                        {squareSuccess && (
-                          <p style={{ margin: '10px 0 0', fontSize: 12, color: '#16a34a' }}>{squareSuccess}</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
         </div>
       </Layout>
+    )
+  }
+
+  return (
+    <Layout business={business}>
+      <div className="max-w-4xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-7">
+          <div className="flex items-center gap-2.5 mb-1.5">
+            <PuzzlePieceIcon className="h-7 w-7 text-indigo-500" />
+            <h1 className="text-2xl font-bold text-gray-900">Integrations</h1>
+          </div>
+          <p className="text-sm text-gray-500">
+            Connect your business tools to power your phone employees.
+          </p>
+        </div>
+
+        {/* Feedback banner */}
+        {feedback && (
+          <div className={`mb-4 px-4 py-3 rounded-lg text-sm font-medium ${
+            feedback.type === 'error'
+              ? 'bg-red-50 text-red-700 border border-red-200'
+              : 'bg-green-50 text-green-700 border border-green-200'
+          }`}>
+            {feedback.message}
+          </div>
+        )}
+
+        {/* Integration cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {AVAILABLE_INTEGRATIONS.map(integration => {
+            const colors = COLOR_MAP[integration.color] ?? COLOR_MAP.blue
+            const connected = integrations[integration.id]
+            const isConnected = !!connected
+            const isExpanded = expandedCard === integration.id
+
+            return (
+              <div
+                key={integration.id}
+                className={`rounded-xl border overflow-hidden ${
+                  integration.comingSoon
+                    ? 'border-gray-200 bg-gray-50 opacity-75'
+                    : isConnected && connected.syncError
+                      ? 'border-yellow-200 bg-white'
+                      : isConnected
+                        ? 'border-green-200 bg-white'
+                        : 'border-gray-200 bg-white'
+                }`}
+              >
+                <div className="p-5">
+                  {/* Top row: icon + name + badges */}
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className={`w-11 h-11 rounded-lg ${colors.iconBg} border ${colors.border} flex items-center justify-center flex-shrink-0`}>
+                      <span className={`text-lg font-bold ${colors.text}`}>
+                        {integration.name.charAt(0)}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-[15px] text-gray-900">{integration.name}</span>
+                        {integration.comingSoon && (
+                          <span className="text-[11px] font-semibold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                            Coming Soon
+                          </span>
+                        )}
+                        {isConnected && !connected.syncError && (
+                          <span className="text-[11px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                            Healthy
+                          </span>
+                        )}
+                        {isConnected && connected.syncError && (
+                          <span className="text-[11px] font-semibold bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
+                            Issue
+                          </span>
+                        )}
+                      </div>
+                      <span className={`text-[11px] ${colors.text} ${colors.bg} px-1.5 py-0.5 rounded inline-block mt-1`}>
+                        {integration.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Sync error warning */}
+                  {isConnected && connected.syncError && (
+                    <div className="mb-3 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-xs text-yellow-700">
+                        <span className="font-medium">Sync issue:</span> {connected.syncError}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Description */}
+                  <p className="text-[13px] text-gray-600 leading-relaxed mb-3">
+                    {integration.description}
+                  </p>
+
+                  {/* Compatible employee types */}
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {integration.employeeTypes.map(type => (
+                      <span key={type} className="text-[11px] px-2 py-0.5 rounded-full bg-sky-50 text-sky-700 border border-sky-200">
+                        {EMPLOYEE_TYPE_LABELS[type] ?? type}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Action buttons */}
+                  {!integration.comingSoon && (
+                    <div className="flex gap-2 flex-wrap items-center">
+                      {isConnected ? (
+                        <>
+                          {connected.lastSyncedAt && (
+                            <span className="text-xs text-gray-500 mr-auto">
+                              Last synced {new Date(connected.lastSyncedAt).toLocaleDateString()}
+                            </span>
+                          )}
+                          {integration.id === 'square' && (
+                            <button
+                              onClick={() => setExpandedCard(isExpanded ? null : integration.id)}
+                              className="px-3.5 py-1.5 rounded-lg text-[13px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                            >
+                              Sync Now
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDisconnect(integration.id)}
+                            className="px-3.5 py-1.5 rounded-lg text-[13px] font-medium text-red-600 border border-red-200 hover:bg-red-50 transition-colors"
+                          >
+                            Disconnect
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => setExpandedCard(isExpanded ? null : integration.id)}
+                          className="px-3.5 py-1.5 rounded-lg text-[13px] font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                        >
+                          {isExpanded ? 'Cancel' : 'Connect'}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Expanded connect/sync panel */}
+                {isExpanded && (
+                  <div className="border-t border-gray-200 bg-gray-50 p-5">
+                    {/* Google Calendar connect */}
+                    {integration.id === 'google-calendar' && !isConnected && (
+                      <>
+                        <p className="text-[13px] font-semibold text-gray-900 mb-1">Connect Google Calendar</p>
+                        <p className="text-xs text-gray-500 mb-3">
+                          Share your calendar with <span className="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">voicefly-calendar@voice-fly.iam.gserviceaccount.com</span>, then enter your Calendar ID below.
+                        </p>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={calendarId}
+                            onChange={e => setCalendarId(e.target.value)}
+                            placeholder="your-email@gmail.com or calendar ID"
+                            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          />
+                          <button
+                            onClick={handleGoogleCalendarConnect}
+                            disabled={calendarConnecting}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors ${
+                              calendarConnecting ? 'bg-indigo-300 cursor-default' : 'bg-indigo-600 hover:bg-indigo-700'
+                            }`}
+                          >
+                            {calendarConnecting ? 'Connecting...' : 'Connect'}
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Calendly connect */}
+                    {integration.id === 'calendly' && !isConnected && (
+                      <>
+                        <p className="text-[13px] font-semibold text-gray-900 mb-1">Connect Calendly</p>
+                        <p className="text-xs text-gray-500 mb-3">
+                          Authorize VoiceFly to access your Calendly account to check availability and book appointments.
+                        </p>
+                        <button
+                          onClick={handleCalendlyConnect}
+                          className="px-4 py-2 rounded-lg text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                        >
+                          Authorize with Calendly
+                        </button>
+                      </>
+                    )}
+
+                    {/* Square connect */}
+                    {integration.id === 'square' && !isConnected && (
+                      <>
+                        <p className="text-[13px] font-semibold text-gray-900 mb-1">Connect Square</p>
+                        <p className="text-xs text-gray-500 mb-3">
+                          Authorize VoiceFly with your Square account to sync your menu.
+                        </p>
+                        <button
+                          onClick={handleSquareConnect}
+                          disabled={squareConnecting}
+                          className={`px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors ${
+                            squareConnecting ? 'bg-indigo-300 cursor-default' : 'bg-indigo-600 hover:bg-indigo-700'
+                          }`}
+                        >
+                          {squareConnecting ? 'Redirecting...' : 'Authorize with Square'}
+                        </button>
+                      </>
+                    )}
+
+                    {/* Square sync (when already connected) */}
+                    {integration.id === 'square' && isConnected && (
+                      <>
+                        <p className="text-[13px] font-semibold text-gray-900 mb-3">Sync to Employee</p>
+                        {(() => {
+                          const compat = compatibleEmployees(integration.employeeTypes)
+                          if (compat.length === 0) {
+                            return (
+                              <p className="text-[13px] text-gray-500">
+                                No order-taker employees found.{' '}
+                                <a href="/dashboard/employees" className="text-indigo-600 hover:text-indigo-700">Create one first.</a>
+                              </p>
+                            )
+                          }
+                          return (
+                            <div className="flex gap-2 items-center flex-wrap">
+                              <select
+                                value={syncEmployeeId}
+                                onChange={e => setSyncEmployeeId(e.target.value)}
+                                className="flex-1 min-w-[160px] px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              >
+                                <option value="">Select employee...</option>
+                                {compat.map(emp => (
+                                  <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                ))}
+                              </select>
+                              <button
+                                onClick={() => handleSquareSync(syncEmployeeId)}
+                                disabled={squareSyncing || !syncEmployeeId}
+                                className={`px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors ${
+                                  squareSyncing || !syncEmployeeId ? 'bg-indigo-300 cursor-default' : 'bg-indigo-600 hover:bg-indigo-700'
+                                }`}
+                              >
+                                {squareSyncing ? 'Syncing...' : 'Sync Menu'}
+                              </button>
+                            </div>
+                          )
+                        })()}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </Layout>
+  )
+}
+
+export default function ProtectedIntegrationsPage() {
+  return (
+    <ProtectedRoute>
+      <IntegrationsPage />
     </ProtectedRoute>
   )
 }

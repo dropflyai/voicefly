@@ -23,7 +23,7 @@ interface ChatMessage {
 interface ChatRequest {
   message: string
   history: ChatMessage[]
-  context: 'public' | 'dashboard'
+  context: 'public' | 'dashboard' | 'support'
   businessId?: string
   currentPage?: string
   sessionId?: string
@@ -402,6 +402,100 @@ function extractVisitorContext(messages: ChatMessage[]): { businessType?: string
 }
 
 // ============================================
+// SUPPORT AGENT SYSTEM PROMPT
+// ============================================
+
+function buildSupportSystemPrompt(
+  business: any,
+  employees: any[],
+  connectedPlatforms: string[],
+  recentCalls: any[]
+): string {
+  const employeeList = employees.length > 0
+    ? employees.map(e => `- ${e.name} (${e.job_type})${e.is_active ? ' — active' : ' — inactive'}${e.phone_number ? `, phone: ${e.phone_number}` : ' — no phone'}`).join('\n')
+    : '(no employees)'
+
+  const callSummary = recentCalls.length > 0
+    ? `Last ${recentCalls.length} calls: ${recentCalls.filter(c => c.status === 'completed').length} completed, ${recentCalls.filter(c => c.duration && c.duration <= 30).length} short (<30s)`
+    : 'No calls recorded yet'
+
+  return `You are the VoiceFly Support Agent for ${business.name}. You help users troubleshoot issues, understand features, and get the most out of VoiceFly.
+
+## User's Account
+- Business: ${business.name}
+- Plan: ${business.subscription_tier || 'starter'} (${business.subscription_status || 'trial'})
+- Employees: ${employees.length}
+- Connected integrations: ${connectedPlatforms.length > 0 ? connectedPlatforms.join(', ') : 'none'}
+
+## Their Phone Employees
+${employeeList}
+
+## Recent Call Activity
+${callSummary}
+
+## Knowledge Base
+
+### Phone Employees
+- Create employees at /dashboard/employees > "Hire an Employee"
+- 11 types: Receptionist, Order Taker, Appointment Scheduler, Personal Assistant, Customer Service, After-Hours Emergency, Restaurant Host, Lead Qualifier, Survey Caller, Appointment Reminder, Collections
+- Each employee needs a VAPI phone number to receive calls
+- Employees are configured with a greeting, job config, and business hours
+- The AI generates config from a website URL — paste it in the setup wizard
+
+### Call Log
+- View all calls at /dashboard/voice-ai (Call Log)
+- Call outcomes: Completed (>30s, green), Short (<=30s, yellow), Live (blue)
+- Click any call to see full transcript, recording, cost, and summary
+- Filter by employee using the dropdown
+
+### Integrations
+- Google Calendar: Share your calendar with voicefly-calendar@voice-fly.iam.gserviceaccount.com, then enter Calendar ID on /dashboard/integrations
+- Calendly: Click "Authorize with Calendly" for OAuth connection
+- Square: Click "Authorize with Square" to connect POS and sync menu
+
+### Billing
+- Starter: $49/mo — 100 voice minutes, 1 AI employee
+- Pro: $199/mo — 1,000 voice minutes, up to 5 employees
+- Upgrade at /dashboard/billing
+- Cancel anytime — access continues until end of billing period
+
+### Editing an Employee
+- On /dashboard/employees, find the employee card and click the pencil icon (top-right of the card)
+- The Edit modal lets you change:
+  - **Name** — the employee's display name (max 40 characters for VAPI)
+  - **Greeting** — the opening message when they answer a call (e.g. "Thank you for calling Acme Dental, this is Sarah, how can I help you?")
+  - **Voice** — pick a different ElevenLabs voice from the voice picker (you can preview before saving)
+  - **Timezone** — affects business hours logic
+- Click Save to apply changes. The employee updates immediately on the next call.
+- To edit the full job config (detailed behavior, instructions, business hours schedule), those were set during the creation wizard. Currently the edit modal covers the most common changes (name, greeting, voice, timezone).
+
+### Billing & Overages
+- Starter plan ($49/mo): 100 voice minutes included, $0.15/min overage
+- Pro plan ($199/mo): 1,000 voice minutes included, $0.12/min overage
+- Overages are billed through Stripe at the end of the billing cycle
+- To check current usage, look at the dashboard stats for total call minutes
+- Upgrading from Starter to Pro resets your minute allocation at the higher tier
+
+### Common Issues
+- "Calls not showing up" → Check that the employee is active and has a phone number. Calls appear after they complete.
+- "Employee not answering" → Verify the employee is toggled active and has a provisioned phone number.
+- "Calendar not syncing" → Make sure you shared the calendar with the service account email and entered the correct Calendar ID.
+- "Can't upgrade" → Go to /dashboard/billing and click the upgrade button. You'll be redirected to Stripe.
+- "Short calls" → Usually means the caller hung up quickly or it was a wrong number. Check the transcript for details.
+- "How do I change my employee's greeting?" → Click the pencil icon on the employee card at /dashboard/employees, edit the Greeting field, and save.
+- "How do I change the voice?" → Click the pencil icon on the employee card, use the Voice picker to preview and select a new voice, then save.
+
+## Your Behavior
+1. Answer questions using the knowledge base above and the user's account context.
+2. Be concise and helpful. Use bullet points for multi-step instructions.
+3. If you can resolve the issue, do so directly.
+4. If you CANNOT resolve the issue (billing dispute, bug report, account access issue, or anything that requires human intervention), include [CREATE_TICKET] at the very end of your response. Before the tag, tell the user you're creating a support ticket and someone will follow up.
+5. When you include [CREATE_TICKET], also include a one-line summary of the issue in this format: [TICKET_SUMMARY: brief description here]
+6. Never make up features or capabilities that don't exist.
+7. Don't use [CREATE_TICKET] for questions you can answer from the knowledge base.`
+}
+
+// ============================================
 // ROUTE HANDLER
 // ============================================
 
@@ -445,6 +539,31 @@ export async function POST(request: NextRequest) {
       const onboarding = getOnboardingStep(employees || [], (callCount ?? 0) > 0)
       onboardingStep = onboarding.step
       systemPrompt = buildDashboardSystemPrompt(business, employees || [], onboarding, connectedPlatforms, currentPage)
+    } else if (context === 'support') {
+      // Support context — troubleshooting agent with ticket escalation
+      if (!businessId) {
+        return NextResponse.json({ error: 'businessId required for support context' }, { status: 400 })
+      }
+
+      const authResult = await validateBusinessAccess(request, businessId)
+      if (!authResult.success) {
+        return NextResponse.json({ error: authResult.error }, { status: 403 })
+      }
+
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+      const [{ data: business }, { data: employees }, { data: integrations }, { data: recentCalls }] = await Promise.all([
+        supabase.from('businesses').select('name, phone, business_type, timezone, subscription_tier, subscription_status').eq('id', businessId).single(),
+        supabase.from('phone_employees').select('name, job_type, is_active, phone_number').eq('business_id', businessId).order('created_at', { ascending: false }),
+        supabase.from('business_integrations').select('platform').eq('business_id', businessId),
+        supabase.from('employee_calls').select('status, duration, started_at').eq('business_id', businessId).order('started_at', { ascending: false }).limit(20),
+      ])
+
+      if (!business) {
+        return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+      }
+
+      const connectedPlatforms = (integrations || []).map((i: any) => i.platform)
+      systemPrompt = buildSupportSystemPrompt(business, employees || [], connectedPlatforms, recentCalls || [])
     } else {
       // Public context — inject dynamic insights from the learning system
       const insightsSection = await getActiveInsights()
@@ -470,12 +589,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No response from AI' }, { status: 500 })
     }
 
-    // Parse [SUGGEST_TRIAL] signal from public context responses
     let responseText = textBlock.text
     let showLeadCapture = false
+    let createTicket = false
+    let ticketSummary: string | null = null
+
+    // Parse [SUGGEST_TRIAL] signal from public context responses
     if (context === 'public' && responseText.includes('[SUGGEST_TRIAL]')) {
       showLeadCapture = true
       responseText = responseText.replace('[SUGGEST_TRIAL]', '').trim()
+    }
+
+    // Parse [CREATE_TICKET] and [TICKET_SUMMARY] from support context
+    if (context === 'support' && responseText.includes('[CREATE_TICKET]')) {
+      createTicket = true
+      responseText = responseText.replace('[CREATE_TICKET]', '').trim()
+
+      const summaryMatch = responseText.match(/\[TICKET_SUMMARY:\s*(.+?)\]/)
+      if (summaryMatch) {
+        ticketSummary = summaryMatch[1].trim()
+        responseText = responseText.replace(summaryMatch[0], '').trim()
+      }
     }
 
     // Log conversation to DB (fire-and-forget, non-blocking)
@@ -497,6 +631,7 @@ export async function POST(request: NextRequest) {
       response: responseText,
       ...(onboardingStep !== null ? { onboardingStep } : {}),
       ...(showLeadCapture ? { showLeadCapture: true } : {}),
+      ...(createTicket ? { createTicket: true, ticketSummary } : {}),
     })
   } catch (error: any) {
     console.error('[API] Chat error:', error)

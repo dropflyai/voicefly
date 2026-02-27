@@ -243,6 +243,45 @@ Write ONLY the brief (2-3 sentences). No labels, no formatting.`,
   }
 
   // ============================================
+  // PUBLIC BRIEF (for SMS AI responses)
+  // ============================================
+
+  /**
+   * Get a customer context brief without injecting into VAPI.
+   * Used by the SMS AI responder to build system prompt context.
+   */
+  async getCustomerBrief(
+    businessId: string,
+    callerPhone: string,
+    employeeName: string
+  ): Promise<string> {
+    try {
+      const [callHistory, orders, appointments, messages] = await Promise.all([
+        this.getCallHistory(businessId, callerPhone),
+        this.getOrderHistory(businessId, callerPhone),
+        this.getAppointments(businessId, callerPhone),
+        this.getRecentMessages(businessId, callerPhone),
+      ])
+
+      if (callHistory.length === 0 && orders.length === 0 && appointments.length === 0) {
+        return ''
+      }
+
+      return this.generateBrief({
+        callerPhone,
+        employeeName,
+        callHistory,
+        orders,
+        appointments,
+        messages,
+      })
+    } catch (err) {
+      console.error('[CustomerMemory] getCustomerBrief error:', err)
+      return ''
+    }
+  }
+
+  // ============================================
   // VAPI INJECTION
   // ============================================
 

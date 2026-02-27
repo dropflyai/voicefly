@@ -12,6 +12,7 @@ import {
   PuzzlePieceIcon,
   QuestionMarkCircleIcon,
   ArrowRightOnRectangleIcon,
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -22,7 +23,8 @@ import { getAuthenticatedUser, logout } from '../lib/auth-utils'
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Phone Employees', href: '/dashboard/employees', icon: PhoneIcon },
-  { name: 'Voice AI', href: '/dashboard/voice-ai', icon: PhoneIcon },
+  { name: 'Call Log', href: '/dashboard/voice-ai', icon: PhoneIcon },
+  { name: 'Messages', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon },
   { name: 'Integrations', href: '/dashboard/integrations', icon: PuzzlePieceIcon },
   { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
   { name: 'Billing', href: '/dashboard/billing', icon: CreditCardIcon },

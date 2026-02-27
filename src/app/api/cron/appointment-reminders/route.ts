@@ -8,6 +8,9 @@ const supabase = createClient(
 
 const VAPI_API_KEY = process.env.VAPI_API_KEY!
 const CRON_SECRET = process.env.CRON_SECRET
+const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID
+const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN
+const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
 
 /**
  * POST /api/cron/appointment-reminders
@@ -83,6 +86,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     for (const appt of appointments) {
       try {
         await fireReminderCall(appt, employee)
+
+        // Also send SMS reminder
+        await sendReminderSMS(appt, employee.business_id).catch(err =>
+          console.error(`[appointment-reminders] SMS failed for appt ${appt.id}:`, err)
+        )
+
         await supabase
           .from('appointments')
           .update({ reminder_sent_at: new Date().toISOString() })
@@ -211,4 +220,56 @@ async function fireReminderCall(
 
   const call = await response.json()
   console.log(`[appointment-reminders] Call fired for appt ${appt.id} → VAPI call ${call.id}`)
+}
+
+// ─── SMS Reminder ─────────────────────────────────────────────────────────────
+
+async function sendReminderSMS(
+  appt: { id: string; customer_name: string | null; customer_phone: string; start_time: string },
+  businessId: string
+): Promise<void> {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+    return // Twilio not configured — skip silently
+  }
+
+  const [hour, minute] = appt.start_time.split(':').map(Number)
+  const period = hour >= 12 ? 'PM' : 'AM'
+  const displayHour = hour % 12 || 12
+  const displayTime = `${displayHour}:${String(minute).padStart(2, '0')} ${period}`
+  const firstName = appt.customer_name?.split(' ')[0]
+
+  // Get business name for the message
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('name')
+    .eq('id', businessId)
+    .single()
+
+  const businessName = business?.name || 'us'
+  const greeting = firstName ? `Hi ${firstName}, r` : 'R'
+  const message = `${greeting}eminder: You have an appointment at ${businessName} tomorrow at ${displayTime}. Reply CONFIRM or call us to reschedule.`
+
+  const response = await fetch(
+    `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${Buffer.from(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`).toString('base64')}`,
+      },
+      body: new URLSearchParams({
+        From: TWILIO_PHONE_NUMBER,
+        To: appt.customer_phone,
+        Body: message,
+      }).toString(),
+    }
+  )
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    throw new Error(`Twilio SMS error ${response.status}: ${(err as any).message || response.statusText}`)
+  }
+
+  const result = await response.json()
+  console.log(`[appointment-reminders] SMS sent for appt ${appt.id} → SID: ${result.sid}`)
 }

@@ -23,20 +23,21 @@ export default function PricingPage() {
       subtitle: 'For businesses getting started with AI',
       monthlyPrice: 49,
       yearlyPrice: 42,
-      description: 'Your AI receptionist answers calls, books appointments, and never puts a client on hold.',
+      description: 'Your AI employee answers calls, books appointments, and sends confirmations via text.',
       features: [
         '100 AI voice minutes/month',
-        '1 AI receptionist',
+        '1 AI employee',
         '24/7 call answering',
         'Appointment booking',
         'Lead capture',
+        'SMS appointment confirmations',
         'Call analytics dashboard',
         'Email support'
       ],
       limitations: [
-        'SMS appointment reminders',
+        'AI SMS conversations',
         'Custom call scripts',
-        'Multiple AI receptionists',
+        'Multiple AI employees',
         'Priority support'
       ],
       cta: 'Start 14-Day Trial',
@@ -49,13 +50,14 @@ export default function PricingPage() {
       subtitle: 'For busy businesses ready to grow',
       monthlyPrice: 199,
       yearlyPrice: 169,
-      description: 'Everything in Starter plus SMS reminders, custom scripts, and analytics to reduce no-shows.',
+      description: 'Everything in Starter plus AI-powered SMS conversations, custom scripts, and advanced analytics.',
       features: [
         '1,000 AI voice minutes/month',
-        'Up to 5 AI receptionists',
+        'Up to 5 AI employees',
         '24/7 call answering',
         'Appointment booking',
         'Lead capture',
+        'AI SMS conversations',
         'SMS appointment reminders',
         'Custom call scripts',
         'Advanced analytics dashboard',
@@ -75,10 +77,19 @@ export default function PricingPage() {
       category: 'AI Voice & Calls',
       items: [
         { name: 'AI voice minutes per month', starter: '100', pro: '1,000' },
-        { name: 'AI receptionists included', starter: '1', pro: '5' },
+        { name: 'AI employees included', starter: '1', pro: '5' },
         { name: 'Overage pricing', starter: '$0.15/min', pro: '$0.12/min' },
         { name: '24/7 call answering', starter: true, pro: true },
         { name: 'Voice customization', starter: false, pro: true }
+      ]
+    },
+    {
+      category: 'SMS & Messaging',
+      items: [
+        { name: 'SMS appointment confirmations', starter: true, pro: true },
+        { name: 'SMS appointment reminders', starter: false, pro: true },
+        { name: 'AI SMS conversations', starter: false, pro: true },
+        { name: 'Book appointments via text', starter: false, pro: true }
       ]
     },
     {
@@ -86,7 +97,6 @@ export default function PricingPage() {
       items: [
         { name: 'Appointment booking', starter: true, pro: true },
         { name: 'Lead capture', starter: true, pro: true },
-        { name: 'SMS appointment reminders', starter: false, pro: true },
         { name: 'Custom call scripts', starter: false, pro: true },
         { name: 'Calendar integration', starter: true, pro: true }
       ]

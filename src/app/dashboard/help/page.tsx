@@ -1,212 +1,205 @@
-"use client"
+'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import Layout from '../../../components/Layout'
+import ProtectedRoute from '../../../components/ProtectedRoute'
+import { BusinessAPI, type Business } from '../../../lib/supabase'
+import { getCurrentBusinessId } from '../../../lib/auth-utils'
 import {
-  BookOpen,
-  Video,
-  MessageCircle,
-  Search,
-  ChevronDown,
-  ChevronRight,
-  Phone,
-  Mail,
-  ExternalLink
-} from 'lucide-react'
+  QuestionMarkCircleIcon,
+  PhoneIcon,
+  EnvelopeIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  BookOpenIcon,
+  CogIcon,
+  PuzzlePieceIcon,
+  CreditCardIcon,
+  UserGroupIcon,
+} from '@heroicons/react/24/outline'
+import SupportAgent from '../../../components/SupportAgent'
 
-export default function HelpCenter() {
+const helpSections = [
+  {
+    id: 'getting-started',
+    title: 'Getting Started',
+    icon: BookOpenIcon,
+    articles: [
+      {
+        title: 'Quick Start Guide',
+        content: 'Create your first phone employee, assign a phone number, and start receiving AI-handled calls in minutes.',
+      },
+      {
+        title: 'How Phone Employees Work',
+        content: 'Your AI phone employees answer calls 24/7, follow your instructions, take messages, book appointments, and more.',
+      },
+      {
+        title: 'Understanding the Dashboard',
+        content: 'The dashboard shows today\'s calls, messages, and employee activity at a glance.',
+      },
+    ],
+  },
+  {
+    id: 'phone-employees',
+    title: 'Phone Employees',
+    icon: UserGroupIcon,
+    articles: [
+      {
+        title: 'Creating a Phone Employee',
+        content: 'Go to Phone Employees > Create New. Choose a job type (receptionist, order taker, appointment scheduler, etc.), give it a name, and configure its behavior.',
+      },
+      {
+        title: 'Job Types Explained',
+        content: 'Receptionist handles general calls and takes messages. Order Taker processes food/retail orders. Appointment Scheduler books calendar slots. Customer Service answers FAQs.',
+      },
+      {
+        title: 'Assigning Phone Numbers',
+        content: 'Each employee needs a VAPI phone number. This is provisioned automatically when you activate an employee.',
+      },
+    ],
+  },
+  {
+    id: 'call-log',
+    title: 'Call Log & Transcripts',
+    icon: PhoneIcon,
+    articles: [
+      {
+        title: 'Viewing Call History',
+        content: 'The Call Log page shows all calls handled by your AI employees. Filter by employee, see call outcomes, and click any call to view the full transcript.',
+      },
+      {
+        title: 'Call Outcomes',
+        content: 'Completed (green) = call lasted 30+ seconds. Short (yellow) = call under 30 seconds. Live (blue) = currently in progress.',
+      },
+      {
+        title: 'Reading Transcripts',
+        content: 'Click any call row to open the detail panel. You\'ll see the caller, duration, summary, and full conversation transcript.',
+      },
+    ],
+  },
+  {
+    id: 'integrations',
+    title: 'Integrations',
+    icon: PuzzlePieceIcon,
+    articles: [
+      {
+        title: 'Google Calendar',
+        content: 'Share your Google Calendar with the VoiceFly service account, then enter your Calendar ID on the Integrations page. Your AI employees will check real availability before booking.',
+      },
+      {
+        title: 'Calendly',
+        content: 'Click "Authorize with Calendly" on the Integrations page. Once connected, your AI employees can check your Calendly availability and book appointments.',
+      },
+      {
+        title: 'Square POS',
+        content: 'Connect your Square account to let order-taker employees access your live menu and process orders during calls.',
+      },
+    ],
+  },
+  {
+    id: 'settings',
+    title: 'Settings & Configuration',
+    icon: CogIcon,
+    articles: [
+      {
+        title: 'Business Profile',
+        content: 'Update your business name, phone number, and address from Settings > Business Profile.',
+      },
+      {
+        title: 'Business Hours',
+        content: 'Set your operating hours so your AI employees know when you\'re open and can inform callers accordingly.',
+      },
+      {
+        title: 'Notifications',
+        content: 'Configure email and SMS alerts for new bookings, cancellations, and daily/weekly reports.',
+      },
+    ],
+  },
+  {
+    id: 'billing',
+    title: 'Billing & Plans',
+    icon: CreditCardIcon,
+    articles: [
+      {
+        title: 'Plans Overview',
+        content: 'Starter ($49/mo) includes 100 voice minutes and 1 AI employee. Pro ($199/mo) includes 1,000 minutes and up to 5 employees.',
+      },
+      {
+        title: 'Upgrading Your Plan',
+        content: 'Go to Billing and click "Upgrade to Pro". You\'ll be redirected to Stripe Checkout to enter your payment details.',
+      },
+      {
+        title: 'Cancelling',
+        content: 'You can cancel anytime from the Billing page. You\'ll retain access until the end of your billing period.',
+      },
+    ],
+  },
+]
+
+function HelpPage() {
+  const [business, setBusiness] = useState<Business | null>(null)
   const [expandedSection, setExpandedSection] = useState<string | null>('getting-started')
-  const [searchQuery, setSearchQuery] = useState('')
 
-  const toggleSection = (section: string) => {
-    setExpandedSection(expandedSection === section ? null : section)
-  }
-
-  const helpSections = [
-    {
-      id: 'getting-started',
-      title: 'Getting Started',
-      icon: BookOpen,
-      articles: [
-        {
-          title: 'Quick Start Guide',
-          content: 'Learn the basics of VoiceFly in 5 minutes',
-          link: '#quick-start'
-        },
-        {
-          title: 'Setting Up Your First Campaign',
-          content: 'Step-by-step guide to creating your first voice AI campaign',
-          link: '#first-campaign'
-        },
-        {
-          title: 'Importing Your Contacts',
-          content: 'How to add customers and manage your contact database',
-          link: '#import-contacts'
-        }
-      ]
-    },
-    {
-      id: 'voice-ai',
-      title: 'Voice AI Setup',
-      icon: Phone,
-      articles: [
-        {
-          title: 'Configuring Your AI Voice',
-          content: 'Customize tone, personality, and conversation style',
-          link: '#voice-config'
-        },
-        {
-          title: 'Phone Number Setup',
-          content: 'Connect your business phone number to VoiceFly',
-          link: '#phone-setup'
-        },
-        {
-          title: 'Call Scripts & Templates',
-          content: 'Create effective conversation flows for your AI',
-          link: '#call-scripts'
-        }
-      ]
-    },
-    {
-      id: 'services',
-      title: 'Managing Services',
-      icon: BookOpen,
-      articles: [
-        {
-          title: 'Adding Services',
-          content: 'Create and customize services for your business',
-          link: '#add-services'
-        },
-        {
-          title: 'Pricing & Duration',
-          content: 'Set up service pricing and appointment durations',
-          link: '#pricing'
-        },
-        {
-          title: 'Service Categories',
-          content: 'Organize services by category for easier booking',
-          link: '#categories'
-        }
-      ]
-    },
-    {
-      id: 'appointments',
-      title: 'Appointments & Scheduling',
-      icon: BookOpen,
-      articles: [
-        {
-          title: 'Viewing Your Calendar',
-          content: 'Navigate your appointment dashboard',
-          link: '#calendar'
-        },
-        {
-          title: 'Managing Bookings',
-          content: 'Confirm, reschedule, or cancel appointments',
-          link: '#manage-bookings'
-        },
-        {
-          title: 'Automated Reminders',
-          content: 'Set up SMS and voice reminders for clients',
-          link: '#reminders'
-        }
-      ]
-    },
-    {
-      id: 'analytics',
-      title: 'Analytics & Reporting',
-      icon: BookOpen,
-      articles: [
-        {
-          title: 'Understanding Your Dashboard',
-          content: 'Key metrics and what they mean for your business',
-          link: '#dashboard-metrics'
-        },
-        {
-          title: 'Call Performance Reports',
-          content: 'Track AI call success rates and outcomes',
-          link: '#call-reports'
-        },
-        {
-          title: 'Revenue Tracking',
-          content: 'Monitor bookings and revenue trends',
-          link: '#revenue'
-        }
-      ]
+  useEffect(() => {
+    const businessId = getCurrentBusinessId()
+    if (businessId) {
+      BusinessAPI.getBusiness(businessId).then(b => { if (b) setBusiness(b) })
     }
-  ]
+  }, [])
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <Layout business={business}>
+      <div className="p-8 max-w-4xl">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Help Center
-          </h1>
-          <p className="text-gray-600 mb-6">
-            Find answers, learn best practices, and get the most out of VoiceFly
-          </p>
-
-          {/* Search */}
-          <div className="relative max-w-2xl">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search for help articles..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+        <div className="mb-8">
+          <div className="flex items-center gap-2.5 mb-1">
+            <QuestionMarkCircleIcon className="h-7 w-7 text-blue-500" />
+            <h1 className="text-2xl font-bold text-gray-900">Help Center</h1>
           </div>
+          <p className="text-sm text-gray-500">
+            Learn how to get the most out of VoiceFly
+          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-4">
+          {/* Articles */}
+          <div className="lg:col-span-2 space-y-3">
             {helpSections.map((section) => {
               const Icon = section.icon
               const isExpanded = expandedSection === section.id
 
               return (
-                <div key={section.id} className="bg-white rounded-lg shadow-sm">
+                <div key={section.id} className="bg-white rounded-lg border border-gray-200">
                   <button
-                    onClick={() => toggleSection(section.id)}
-                    className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                    onClick={() => setExpandedSection(isExpanded ? null : section.id)}
+                    className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
                   >
-                    <div className="flex items-center space-x-4">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Icon className="h-6 w-6 text-blue-600" />
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-50 rounded-lg">
+                        <Icon className="h-5 w-5 text-blue-600" />
                       </div>
                       <div className="text-left">
-                        <h2 className="text-xl font-semibold text-gray-900">
-                          {section.title}
-                        </h2>
-                        <p className="text-sm text-gray-600">
-                          {section.articles.length} articles
-                        </p>
+                        <h2 className="text-sm font-semibold text-gray-900">{section.title}</h2>
+                        <p className="text-xs text-gray-500">{section.articles.length} articles</p>
                       </div>
                     </div>
                     {isExpanded ? (
-                      <ChevronDown className="h-5 w-5 text-gray-400" />
+                      <ChevronDownIcon className="h-4 w-4 text-gray-400" />
                     ) : (
-                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                      <ChevronRightIcon className="h-4 w-4 text-gray-400" />
                     )}
                   </button>
 
                   {isExpanded && (
-                    <div className="px-6 pb-6 space-y-3">
+                    <div className="px-5 pb-4 space-y-2">
                       {section.articles.map((article, index) => (
-                        <a
+                        <div
                           key={index}
-                          href={article.link}
-                          className="block p-4 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
+                          className="p-3 rounded-lg bg-gray-50 border border-gray-100"
                         >
-                          <h3 className="font-semibold text-gray-900 mb-1">
-                            {article.title}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {article.content}
-                          </p>
-                        </a>
+                          <h3 className="text-sm font-medium text-gray-900 mb-1">{article.title}</h3>
+                          <p className="text-xs text-gray-600 leading-relaxed">{article.content}</p>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -216,107 +209,43 @@ export default function HelpCenter() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">
-                Need More Help?
-              </h3>
-              <div className="space-y-3">
-                <a
-                  href="https://youtube.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
-                >
-                  <div className="flex items-center space-x-3">
-                    <Video className="h-5 w-5 text-red-600" />
-                    <span className="text-sm font-medium text-gray-900">
-                      Video Tutorials
-                    </span>
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-gray-400" />
-                </a>
+          <div className="space-y-4">
+            <SupportAgent businessId={business?.id || null} />
 
-                <a
-                  href="mailto:support@voiceflyai.com"
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
-                >
-                  <div className="flex items-center space-x-3">
-                    <Mail className="h-5 w-5 text-blue-600" />
-                    <span className="text-sm font-medium text-gray-900">
-                      Email Support
-                    </span>
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-gray-400" />
-                </a>
-
-                <a
-                  href="tel:+15551234567"
-                  className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-200"
-                >
-                  <div className="flex items-center space-x-3">
-                    <Phone className="h-5 w-5 text-green-600" />
-                    <span className="text-sm font-medium text-gray-900">
-                      Call Support
-                    </span>
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-gray-400" />
-                </a>
-              </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-5">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Still need help?</h3>
+              <a
+                href="mailto:support@voiceflyai.com"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
+              >
+                <EnvelopeIcon className="h-5 w-5 text-blue-600" />
+                <div>
+                  <span className="text-sm font-medium text-gray-900 block">Email Support</span>
+                  <span className="text-xs text-gray-500">support@voiceflyai.com</span>
+                </div>
+              </a>
             </div>
 
-            {/* Popular Topics */}
-            <div className="bg-blue-50 rounded-lg p-6">
-              <h3 className="font-semibold text-gray-900 mb-4">
-                Popular Right Now
-              </h3>
-              <ul className="space-y-3">
-                <li>
-                  <a href="#" className="text-sm text-blue-600 hover:text-blue-800 hover:underline">
-                    How to add my first service
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-sm text-blue-600 hover:text-blue-800 hover:underline">
-                    Setting up voice AI personality
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-sm text-blue-600 hover:text-blue-800 hover:underline">
-                    Importing customer contacts
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="text-sm text-blue-600 hover:text-blue-800 hover:underline">
-                    Understanding analytics dashboard
-                  </a>
-                </li>
+            <div className="bg-blue-50 rounded-lg p-5 border border-blue-100">
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Quick Tips</h3>
+              <ul className="space-y-2 text-xs text-gray-700">
+                <li>Start with a Receptionist employee to handle general calls</li>
+                <li>Connect Google Calendar so your AI can book real appointments</li>
+                <li>Check the Call Log daily to review how your AI is performing</li>
+                <li>Use the transcript viewer to spot areas for improvement</li>
               </ul>
-            </div>
-
-            {/* Support Hours */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="font-semibold text-gray-900 mb-3">
-                Support Hours
-              </h3>
-              <div className="text-sm text-gray-600 space-y-2">
-                <p>
-                  <strong>Monday - Friday:</strong><br />
-                  9:00 AM - 6:00 PM EST
-                </p>
-                <p>
-                  <strong>Saturday - Sunday:</strong><br />
-                  10:00 AM - 4:00 PM EST
-                </p>
-                <p className="text-xs text-gray-500 mt-3">
-                  Average response time: &lt;2 hours
-                </p>
-              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </Layout>
+  )
+}
+
+export default function ProtectedHelpPage() {
+  return (
+    <ProtectedRoute>
+      <HelpPage />
+    </ProtectedRoute>
   )
 }

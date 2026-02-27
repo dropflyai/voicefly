@@ -24,9 +24,10 @@ export enum CreditCost {
   APPOINTMENT_REMINDER = 1,
   LEAD_ENRICHMENT = 5,
 
-  // Marketing (per 100 contacts)
+  // SMS
+  SMS_OUTBOUND = 1,              // Single outbound SMS
+  SMS_CAMPAIGN_PER_100 = 20,     // Bulk campaign per 100 contacts
   EMAIL_CAMPAIGN_PER_100 = 15,
-  SMS_CAMPAIGN_PER_100 = 20,
 
   // Automation
   WORKFLOW_EXECUTION = 3,

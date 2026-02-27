@@ -157,6 +157,15 @@ function CreditsPageContent() {
                   Schedule appointments with customers
                 </p>
               </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="text-3xl font-bold text-blue-600 mb-2">~0.1 min</div>
+                <div className="text-sm text-gray-500 mb-3">per message</div>
+                <h4 className="font-semibold text-gray-900 mb-2">SMS Messages</h4>
+                <p className="text-sm text-gray-600">
+                  AI-powered text conversations and appointment confirmations
+                </p>
+              </div>
             </div>
           </div>
 

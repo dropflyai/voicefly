@@ -32,6 +32,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
 import VoiceInterview from '../../../components/VoiceInterview'
+import { formatDistanceToNow } from 'date-fns'
 
 interface PhoneEmployee {
   id: string
@@ -2557,6 +2558,7 @@ function WizardStep4({
   phoneStep,
   setPhoneStep,
   onProvisionPhone,
+  isTrial,
 }: {
   wizardData: WizardData
   isCreating: boolean
@@ -2571,12 +2573,20 @@ function WizardStep4({
     provisionedNumber: string | null
     error: string | null
   }
+  isTrial: boolean
   setPhoneStep: React.Dispatch<React.SetStateAction<any>>
   onProvisionPhone: () => void
 }) {
   const jobInfo = JOB_TYPE_INFO[wizardData.jobType] || JOB_TYPE_INFO['receptionist']
   const Icon = jobInfo.icon
   const config = wizardData.generatedConfig
+
+  // Force vapi-only during trial
+  useEffect(() => {
+    if (isTrial && phoneStep.phoneMode !== 'vapi-only') {
+      setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'vapi-only' }))
+    }
+  }, [isTrial, phoneStep.phoneMode, setPhoneStep])
 
   if (createSuccess) {
     return (
@@ -2622,35 +2632,44 @@ function WizardStep4({
 
             {phoneStep.wantsPhone && (
               <div className="space-y-3">
-                <div>
-                  <p className="text-xs font-medium text-gray-700 mb-2">Phone type</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'vapi-only' }))}
-                      className={`p-3 rounded-lg border text-left transition-all ${
-                        phoneStep.phoneMode === 'vapi-only'
-                          ? 'border-blue-400 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <p className="text-sm font-medium text-gray-900">Calls only</p>
-                      <p className="text-xs text-gray-500 mt-0.5">VAPI manages number</p>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'twilio-vapi' }))}
-                      className={`p-3 rounded-lg border text-left transition-all ${
-                        phoneStep.phoneMode === 'twilio-vapi'
-                          ? 'border-blue-400 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <p className="text-sm font-medium text-gray-900">Calls + SMS</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Twilio number</p>
-                    </button>
+                {isTrial ? (
+                  <div>
+                    <div className="p-3 rounded-lg border border-blue-400 bg-blue-50">
+                      <p className="text-sm font-medium text-gray-900">Calls only (Trial)</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Voice calls included during trial. Upgrade to add SMS conversations.</p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div>
+                    <p className="text-xs font-medium text-gray-700 mb-2">Phone type</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'twilio-vapi' }))}
+                        className={`p-3 rounded-lg border text-left transition-all ${
+                          phoneStep.phoneMode === 'twilio-vapi'
+                            ? 'border-blue-400 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <p className="text-sm font-medium text-gray-900">Calls + SMS (Recommended)</p>
+                        <p className="text-xs text-gray-500 mt-0.5">AI answers calls and texts customers</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'vapi-only' }))}
+                        className={`p-3 rounded-lg border text-left transition-all ${
+                          phoneStep.phoneMode === 'vapi-only'
+                            ? 'border-blue-400 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <p className="text-sm font-medium text-gray-900">Calls only</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Voice calls only, no SMS</p>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="text-xs font-medium text-gray-700">Area code (optional)</label>
@@ -2794,9 +2813,13 @@ function EditEmployeeModal({
   const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null)
   const [greeting, setGreeting] = useState(employee.jobConfig?.greeting || '')
   const [timezone, setTimezone] = useState(employee.schedule?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone)
+  const [sendPostCallSms, setSendPostCallSms] = useState(employee.jobConfig?.sendPostCallSms || false)
+  const [smsAutoReply, setSmsAutoReply] = useState(employee.jobConfig?.smsAutoReply || '')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saved, setSaved] = useState(false)
+
+  const hasSmsCapability = employee.phoneProvider === 'twilio-vapi'
 
   const handleSave = async () => {
     const businessId = getSecureBusinessId()
@@ -2806,7 +2829,7 @@ function EditEmployeeModal({
 
     try {
       const headers = await getAuthHeaders()
-      const updatedJobConfig = { ...(employee.jobConfig || {}), greeting }
+      const updatedJobConfig = { ...(employee.jobConfig || {}), greeting, sendPostCallSms, smsAutoReply: smsAutoReply || undefined }
       const updatedSchedule = { ...(employee.schedule || {}), timezone }
 
       const res = await fetch(`/api/phone-employees/${employee.id}`, {
@@ -2900,6 +2923,50 @@ function EditEmployeeModal({
                 <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
               ))}
             </select>
+          </div>
+
+          {/* SMS Settings */}
+          <div className="border-t border-gray-200 pt-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">SMS Settings</h3>
+            {!hasSmsCapability ? (
+              <p className="text-xs text-gray-500">
+                SMS features require a Twilio number (Calls + SMS mode). This employee uses a VAPI-only number.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {/* Post-call follow-up SMS toggle */}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-700">Post-call follow-up SMS</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Send a follow-up text after calls over 30 seconds</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSendPostCallSms(!sendPostCallSms)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      sendPostCallSms ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      sendPostCallSms ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
+                </div>
+
+                {/* SMS auto-reply fallback */}
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">Fallback auto-reply</label>
+                  <p className="text-xs text-gray-500 mb-1.5">Used when AI is unavailable or credits run out</p>
+                  <textarea
+                    value={smsAutoReply}
+                    onChange={e => setSmsAutoReply(e.target.value)}
+                    rows={2}
+                    placeholder={`Hi! You've reached ${name || 'us'}. We received your message and will get back to you shortly.`}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {saveError && (
@@ -3490,6 +3557,7 @@ function EmployeesDashboard() {
   const router = useRouter()
   const [business, setBusiness] = useState<Business | null>(null)
   const [employees, setEmployees] = useState<PhoneEmployee[]>([])
+  const [employeeStats, setEmployeeStats] = useState<Record<string, { totalCalls: number; lastCallAt: string | null }>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -3527,7 +3595,7 @@ function EmployeesDashboard() {
     areaCode: string
     provisionedNumber: string | null
     error: string | null
-  }>({ status: 'idle', wantsPhone: false, phoneMode: 'vapi-only', areaCode: '', provisionedNumber: null, error: null })
+  }>({ status: 'idle', wantsPhone: false, phoneMode: 'twilio-vapi', areaCode: '', provisionedNumber: null, error: null })
   const [editingEmployee, setEditingEmployee] = useState<any | null>(null)
 
   useEffect(() => {
@@ -3559,7 +3627,7 @@ function EmployeesDashboard() {
     setCreating(false)
     setCreateError(null)
     setCreateSuccess(false)
-    setPhoneStep({ status: 'idle', wantsPhone: false, phoneMode: 'vapi-only', areaCode: '', provisionedNumber: null, error: null })
+    setPhoneStep({ status: 'idle', wantsPhone: false, phoneMode: 'twilio-vapi', areaCode: '', provisionedNumber: null, error: null })
     setCreatedEmployeeId(null)
   }
 
@@ -3597,6 +3665,34 @@ function EmployeesDashboard() {
 
       if (data.employees) {
         setEmployees(data.employees)
+
+        // Fetch per-employee call stats
+        const empIds = data.employees.map((e: PhoneEmployee) => e.id)
+        if (empIds.length > 0) {
+          const { data: callRows } = await supabase
+            .from('employee_calls')
+            .select('employee_id, started_at')
+            .eq('business_id', businessId)
+            .in('employee_id', empIds)
+            .order('started_at', { ascending: false })
+
+          const stats: Record<string, { totalCalls: number; lastCallAt: string | null }> = {}
+          for (const id of empIds) {
+            stats[id] = { totalCalls: 0, lastCallAt: null }
+          }
+          if (callRows) {
+            for (const row of callRows) {
+              if (!stats[row.employee_id]) {
+                stats[row.employee_id] = { totalCalls: 0, lastCallAt: null }
+              }
+              stats[row.employee_id].totalCalls++
+              if (!stats[row.employee_id].lastCallAt) {
+                stats[row.employee_id].lastCallAt = row.started_at
+              }
+            }
+          }
+          setEmployeeStats(stats)
+        }
       }
     } catch (err: any) {
       console.error('Failed to load data:', err)
@@ -3932,7 +4028,7 @@ function EmployeesDashboard() {
 
                   {/* Body */}
                   <div className="p-4">
-                    <p className="text-sm text-gray-600 mb-4">{jobInfo.description}</p>
+                    <p className="text-sm text-gray-600 mb-3">{jobInfo.description}</p>
 
                     {employee.phoneNumber && (
                       <div className="flex items-center text-sm text-gray-700 mb-3">
@@ -3941,8 +4037,15 @@ function EmployeesDashboard() {
                       </div>
                     )}
 
-                    <div className="flex items-center text-sm text-gray-500">
-                      <span className="capitalize">Tone: {employee.personality?.tone || 'Professional'}</span>
+                    {/* Stats */}
+                    <div className="flex items-center gap-4 text-sm text-gray-500 mt-3 pt-3 border-t border-gray-100">
+                      <span>{employeeStats[employee.id]?.totalCalls || 0} calls</span>
+                      <span className="text-gray-300">|</span>
+                      <span>
+                        {employeeStats[employee.id]?.lastCallAt
+                          ? `Last call ${formatDistanceToNow(new Date(employeeStats[employee.id].lastCallAt!), { addSuffix: true })}`
+                          : 'No calls yet'}
+                      </span>
                     </div>
                   </div>
 
@@ -3990,25 +4093,6 @@ function EmployeesDashboard() {
             })}
           </div>
         )}
-
-        {/* Job Types Info */}
-        <div className="mt-12">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Available Roles</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {Object.entries(JOB_TYPE_INFO).slice(0, 3).map(([type, info]) => {
-              const Icon = info.icon
-              return (
-                <div key={type} className="p-4 bg-white rounded-lg border border-gray-200">
-                  <div className="flex items-center mb-2">
-                    <Icon className={`h-5 w-5 text-${info.color}-600 mr-2`} />
-                    <span className="font-medium text-gray-900">{info.label}</span>
-                  </div>
-                  <p className="text-sm text-gray-600">{info.description}</p>
-                </div>
-              )
-            })}
-          </div>
-        </div>
 
         {/* Edit Employee Modal */}
         {editingEmployee && (
@@ -4082,6 +4166,7 @@ function EmployeesDashboard() {
                   phoneStep={phoneStep}
                   setPhoneStep={setPhoneStep}
                   onProvisionPhone={provisionPhone}
+                  isTrial={business?.subscription_status === 'trial'}
                 />
               )}
 

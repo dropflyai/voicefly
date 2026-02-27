@@ -640,11 +640,11 @@ export class ActionExecutor {
   private async getBusinessPhoneNumber(businessId: string): Promise<string | null> {
     const { data } = await supabase
       .from('businesses')
-      .select('phone_number, phone')
+      .select('ai_phone_number, phone')
       .eq('id', businessId)
       .single()
 
-    return data?.phone_number || data?.phone || null
+    return data?.ai_phone_number || data?.phone || null
   }
 
   private async getBusinessEmail(businessId: string): Promise<string | null> {

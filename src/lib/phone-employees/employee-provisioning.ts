@@ -983,6 +983,86 @@ export class EmployeeProvisioningService {
   }
 
   /**
+   * Upgrade an employee's phone from vapi-only to twilio-vapi.
+   * Used when a trial business converts to a paid plan.
+   * Keeps the same VAPI assistant — just swaps the phone number.
+   */
+  async upgradePhoneToTwilioVapi(
+    employeeId: string,
+    businessId: string,
+    areaCode?: string
+  ): Promise<{ phoneNumber: string; phoneProvider: string } | null> {
+    const { data: employee } = await supabase
+      .from('phone_employees')
+      .select('id, name, vapi_assistant_id, phone_number, vapi_phone_id, phone_provider, business_id')
+      .eq('id', employeeId)
+      .eq('business_id', businessId)
+      .single()
+
+    if (!employee || !employee.vapi_assistant_id) return null
+    if (employee.phone_provider === 'twilio-vapi') return null // Already upgraded
+
+    // Release old VAPI-only number
+    if (employee.vapi_phone_id && VAPI_API_KEY) {
+      await fetch(`https://api.vapi.ai/phone-number/${employee.vapi_phone_id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${VAPI_API_KEY}` },
+      }).catch(err => console.error('[EmployeeProvisioning] Failed to release VAPI number:', err))
+    }
+
+    // Clear existing phone fields so provisionPhoneForEmployee doesn't reject
+    await supabase
+      .from('phone_employees')
+      .update({
+        phone_number: null,
+        vapi_phone_id: null,
+        phone_provider: null,
+        twilio_phone_sid: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', employeeId)
+
+    // Provision new Twilio-VAPI number
+    try {
+      const result = await this.provisionPhoneForEmployee(
+        employeeId,
+        businessId,
+        'twilio-vapi',
+        areaCode
+      )
+      console.log(`[EmployeeProvisioning] Upgraded employee ${employeeId} to twilio-vapi: ${result.phoneNumber}`)
+      return result
+    } catch (err) {
+      console.error(`[EmployeeProvisioning] Failed to upgrade employee ${employeeId}:`, err)
+      return null
+    }
+  }
+
+  /**
+   * Upgrade all vapi-only employees for a business to twilio-vapi.
+   * Called when a business converts from trial to paid.
+   */
+  async upgradeAllPhonesToTwilioVapi(businessId: string): Promise<number> {
+    const { data: employees } = await supabase
+      .from('phone_employees')
+      .select('id')
+      .eq('business_id', businessId)
+      .eq('phone_provider', 'vapi-only')
+      .eq('is_active', true)
+
+    if (!employees || employees.length === 0) return 0
+
+    let upgraded = 0
+    for (const emp of employees) {
+      const result = await this.upgradePhoneToTwilioVapi(emp.id, businessId)
+      if (result) upgraded++
+    }
+
+    console.log(`[EmployeeProvisioning] Upgraded ${upgraded}/${employees.length} employees for business ${businessId}`)
+    return upgraded
+  }
+
+  /**
    * Deactivate an employee
    */
   async deactivateEmployee(employeeId: string, businessId: string): Promise<boolean> {

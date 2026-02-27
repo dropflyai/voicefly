@@ -5,8 +5,9 @@
  * 'twilio-vapi' provisioning mode (Twilio-owned number). Twilio
  * POSTs to this URL when an SMS arrives on the employee's number.
  *
- * Saves the message to phone_messages and optionally triggers an
- * automated reply via the employee's configured job type.
+ * Returns empty TwiML immediately, then processes the message
+ * asynchronously: generates an AI response and sends it via
+ * Twilio REST API.
  *
  * POST /api/webhooks/sms
  */
@@ -14,25 +15,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
+import { generateSmsResponse } from '@/lib/sms/ai-responder'
+import { sendSms } from '@/lib/sms/twilio-client'
+import CreditSystem, { CreditCost } from '@/lib/credit-system'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
+const OPT_OUT_KEYWORDS = ['stop', 'unsubscribe', 'cancel', 'quit', 'end']
+const EMPTY_TWIML = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>'
+
 export async function POST(request: NextRequest) {
-  // Parse Twilio's form-encoded body
   const formData = await request.formData()
 
-  const from = formData.get('From') as string        // caller's phone number
-  const to = formData.get('To') as string            // our employee's number
-  const body = formData.get('Body') as string        // SMS message text
+  const from = formData.get('From') as string
+  const to = formData.get('To') as string
+  const body = formData.get('Body') as string
   const messageSid = formData.get('MessageSid') as string
 
   // Validate Twilio signature
-  const accountSid = process.env.TWILIO_ACCOUNT_SID
   const authToken = process.env.TWILIO_AUTH_TOKEN
-
   if (authToken && !authToken.startsWith('placeholder')) {
     const twilioSignature = request.headers.get('x-twilio-signature') || ''
     const url = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/sms`
@@ -53,7 +57,7 @@ export async function POST(request: NextRequest) {
   // Find the employee associated with this Twilio number
   const { data: employee } = await supabase
     .from('phone_employees')
-    .select('id, business_id, name, job_type, job_config')
+    .select('id, business_id, name, job_type, job_config, schedule')
     .eq('phone_number', to)
     .eq('phone_provider', 'twilio-vapi')
     .eq('is_active', true)
@@ -61,56 +65,166 @@ export async function POST(request: NextRequest) {
 
   if (!employee) {
     console.warn(`[SMS Webhook] No employee found for number ${to}`)
-    // Return empty TwiML so Twilio doesn't retry
-    return new NextResponse('<Response></Response>', {
+    return new NextResponse(EMPTY_TWIML, {
       status: 200,
       headers: { 'Content-Type': 'text/xml' },
     })
   }
 
-  // Save the inbound SMS to phone_messages
-  const { error: saveError } = await supabase.from('phone_messages').insert({
+  console.log(`[SMS Webhook] Received SMS for employee ${employee.id} from ${from}: "${body.substring(0, 80)}"`)
+
+  // Save inbound to phone_messages (backward compat with dashboard)
+  supabase.from('phone_messages').insert({
     business_id: employee.business_id,
     employee_id: employee.id,
     caller_phone: from,
     reason: 'Inbound SMS',
     full_message: body,
     created_at: new Date().toISOString(),
+  }).then(({ error }) => {
+    if (error) console.error('[SMS Webhook] phone_messages save error:', error)
   })
 
-  if (saveError) {
-    console.error('[SMS Webhook] Failed to save message:', saveError)
-  }
+  // Save inbound to communication_logs (for conversation threading)
+  supabase.from('communication_logs').insert({
+    business_id: employee.business_id,
+    employee_id: employee.id,
+    type: 'sms',
+    direction: 'inbound',
+    to_phone: to,
+    from_phone: from,
+    customer_phone: from,
+    content: body,
+    status: 'received',
+    metadata: { twilioSid: messageSid },
+  }).then(({ error }) => {
+    if (error) console.error('[SMS Webhook] communication_logs save error:', error)
+  })
 
-  console.log(`[SMS Webhook] Received SMS for employee ${employee.id} from ${from}: "${body.substring(0, 80)}"`)
+  // Return empty TwiML immediately — reply sent asynchronously
+  // Fire async processing (non-blocking)
+  processInboundSms(employee, from, to, body).catch(err => {
+    console.error('[SMS Webhook] Async processing error:', err)
+  })
 
-  // Build an auto-reply using TwiML
-  // For now: acknowledge receipt. Future: route to AI for a smart reply.
-  const replyText = buildAutoReply(employee.name, employee.job_config)
-
-  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Message>${escapeXml(replyText)}</Message>
-</Response>`
-
-  return new NextResponse(twiml, {
+  return new NextResponse(EMPTY_TWIML, {
     status: 200,
     headers: { 'Content-Type': 'text/xml' },
   })
 }
 
-function buildAutoReply(employeeName: string, jobConfig: any): string {
-  if (jobConfig?.smsAutoReply) {
-    return jobConfig.smsAutoReply
+// ============================================
+// ASYNC PROCESSING
+// ============================================
+
+async function processInboundSms(
+  employee: any,
+  customerPhone: string,
+  employeePhone: string,
+  message: string
+) {
+  // Check opt-out keywords
+  if (OPT_OUT_KEYWORDS.includes(message.trim().toLowerCase())) {
+    console.log(`[SMS Webhook] Opt-out keyword from ${customerPhone}, skipping AI reply`)
+    return
   }
-  return `Hi! You've reached ${employeeName}. We received your message and will get back to you shortly.`
+
+  // Rate limit: max 5 inbound SMS from same number in 60 seconds
+  const { count } = await supabase
+    .from('communication_logs')
+    .select('id', { count: 'exact', head: true })
+    .eq('customer_phone', customerPhone)
+    .eq('direction', 'inbound')
+    .eq('type', 'sms')
+    .gte('created_at', new Date(Date.now() - 60_000).toISOString())
+
+  if (count && count > 5) {
+    console.warn(`[SMS Webhook] Rate limit hit for ${customerPhone} (${count} in 60s)`)
+    return
+  }
+
+  // Trial tier gating: AI SMS conversations are a paid-only feature
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('subscription_tier, subscription_status')
+    .eq('id', employee.business_id)
+    .single()
+
+  const isTrial = !business || business.subscription_status === 'trial' || business.subscription_tier === 'trial'
+  if (isTrial) {
+    console.log(`[SMS Webhook] Trial business ${employee.business_id}, sending static reply`)
+    const fallback = employee.job_config?.smsAutoReply ||
+      `Hi! You've reached ${employee.name}. We received your message and will get back to you shortly.`
+    await sendAndLog(fallback, employee, customerPhone, employeePhone)
+    return
+  }
+
+  // Credit check
+  const creditsNeeded = CreditCost.AI_CHAT_MESSAGE + CreditCost.SMS_OUTBOUND
+  const balance = await CreditSystem.getBalance(employee.business_id)
+  if (balance && balance.total_credits < creditsNeeded) {
+    console.warn(`[SMS Webhook] Insufficient credits for business ${employee.business_id}`)
+    // Send static fallback instead of AI response
+    const fallback = employee.job_config?.smsAutoReply ||
+      `Hi! You've reached ${employee.name}. We received your message and will get back to you shortly.`
+    await sendAndLog(fallback, employee, customerPhone, employeePhone)
+    return
+  }
+
+  // Generate AI response
+  const reply = await generateSmsResponse({
+    employee,
+    customerPhone,
+    inboundMessage: message,
+  })
+
+  if (!reply) {
+    console.error('[SMS Webhook] Empty AI response')
+    return
+  }
+
+  // Send reply and log
+  await sendAndLog(reply, employee, customerPhone, employeePhone)
+
+  // Deduct credits
+  CreditSystem.deductCredits(
+    employee.business_id,
+    creditsNeeded,
+    'sms_ai_reply',
+    { customerPhone, employeeId: employee.id }
+  ).catch(err => console.error('[SMS Webhook] Credit deduction error:', err))
 }
 
-function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
+async function sendAndLog(
+  reply: string,
+  employee: any,
+  customerPhone: string,
+  employeePhone: string
+) {
+  const result = await sendSms({
+    to: customerPhone,
+    from: employeePhone,
+    body: reply,
+  })
+
+  if (!result.success) {
+    console.error(`[SMS Webhook] Failed to send reply to ${customerPhone}:`, result.error)
+    return
+  }
+
+  console.log(`[SMS Webhook] Sent AI reply to ${customerPhone}: "${reply.substring(0, 80)}"`)
+
+  // Log outbound reply to communication_logs
+  await supabase.from('communication_logs').insert({
+    business_id: employee.business_id,
+    employee_id: employee.id,
+    type: 'sms',
+    direction: 'outbound',
+    to_phone: customerPhone,
+    from_phone: employeePhone,
+    customer_phone: customerPhone,
+    content: reply,
+    status: 'sent',
+    metadata: { trigger: 'ai_auto_reply', twilioSid: result.sid },
+  })
 }

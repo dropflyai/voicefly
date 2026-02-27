@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, Suspense, Fragment } from 'react'
 import Layout from '../../components/Layout'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import { BusinessAPI, type Business } from '../../lib/supabase'
@@ -17,7 +17,9 @@ import {
   UserGroupIcon,
   Cog6ToothIcon,
   CreditCardIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline'
+import { Dialog, Transition } from '@headlessui/react'
 import { formatDistanceToNow } from 'date-fns'
 
 // ============================================
@@ -45,6 +47,7 @@ interface EmployeeCall {
   ended_at?: string
   duration?: number
   transcript?: string
+  recording_url?: string
   summary?: string
   cost?: number
 }
@@ -66,6 +69,9 @@ interface DashboardData {
   recentMessages: PhoneMessage[]
   totalCalls: number
   totalMessages: number
+  callsToday: number
+  messagesToday: number
+  avgCallDuration: number
 }
 
 // ============================================
@@ -92,6 +98,19 @@ function formatPhoneNumber(phone?: string): string {
   return phone
 }
 
+function getCallOutcome(call: EmployeeCall): { label: string; color: string; bg: string } {
+  if (call.status === 'in-progress') {
+    return { label: 'Live', color: 'text-blue-700', bg: 'bg-blue-100' }
+  }
+  if (call.status === 'completed' && call.duration && call.duration > 30) {
+    return { label: 'Completed', color: 'text-green-700', bg: 'bg-green-100' }
+  }
+  if (call.status === 'completed' && (!call.duration || call.duration <= 30)) {
+    return { label: 'Short', color: 'text-yellow-700', bg: 'bg-yellow-100' }
+  }
+  return { label: call.status || 'Unknown', color: 'text-gray-700', bg: 'bg-gray-100' }
+}
+
 // ============================================
 // MAIN DASHBOARD COMPONENT
 // ============================================
@@ -104,8 +123,12 @@ function DashboardPage() {
     recentMessages: [],
     totalCalls: 0,
     totalMessages: 0,
+    callsToday: 0,
+    messagesToday: 0,
+    avgCallDuration: 0,
   })
   const [employeeCount, setEmployeeCount] = useState<number>(0)
+  const [selectedCall, setSelectedCall] = useState<EmployeeCall | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -166,21 +189,47 @@ function DashboardPage() {
 
       setEmployeeCount(employees.length)
 
-      // Fetch recent calls from employee_calls
-      const { data: callsData, count: callsCount } = await supabase
-        .from('employee_calls')
-        .select('*', { count: 'exact' })
-        .eq('business_id', businessId)
-        .order('started_at', { ascending: false })
-        .limit(10)
+      // Today's date at midnight (local timezone)
+      const todayStart = new Date()
+      todayStart.setHours(0, 0, 0, 0)
+      const todayISO = todayStart.toISOString()
 
-      // Fetch recent messages from phone_messages
-      const { data: messagesData, count: messagesCount } = await supabase
-        .from('phone_messages')
-        .select('*', { count: 'exact' })
-        .eq('business_id', businessId)
-        .order('created_at', { ascending: false })
-        .limit(10)
+      // Fetch recent calls from employee_calls
+      const [
+        { data: callsData, count: callsCount },
+        { count: callsTodayCount },
+        { data: messagesData, count: messagesCount },
+        { count: messagesTodayCount },
+      ] = await Promise.all([
+        supabase
+          .from('employee_calls')
+          .select('*', { count: 'exact' })
+          .eq('business_id', businessId)
+          .order('started_at', { ascending: false })
+          .limit(10),
+        supabase
+          .from('employee_calls')
+          .select('*', { count: 'exact', head: true })
+          .eq('business_id', businessId)
+          .gte('started_at', todayISO),
+        supabase
+          .from('phone_messages')
+          .select('*', { count: 'exact' })
+          .eq('business_id', businessId)
+          .order('created_at', { ascending: false })
+          .limit(10),
+        supabase
+          .from('phone_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('business_id', businessId)
+          .gte('created_at', todayISO),
+      ])
+
+      // Calculate avg call duration from recent calls
+      const completedCalls = (callsData || []).filter(c => c.status === 'completed' && c.duration)
+      const avgDuration = completedCalls.length > 0
+        ? Math.round(completedCalls.reduce((sum, c) => sum + (c.duration || 0), 0) / completedCalls.length)
+        : 0
 
       setData({
         employees,
@@ -188,6 +237,9 @@ function DashboardPage() {
         recentMessages: messagesData || [],
         totalCalls: callsCount || 0,
         totalMessages: messagesCount || 0,
+        callsToday: callsTodayCount || 0,
+        messagesToday: messagesTodayCount || 0,
+        avgCallDuration: avgDuration,
       })
     } catch (err) {
       console.error('Error loading dashboard data:', err)
@@ -368,10 +420,13 @@ function DashboardPage() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">
-                  Total Calls
+                  Calls Today
                 </p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {data.totalCalls}
+                  {data.callsToday}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {data.totalCalls} all time
                 </p>
               </div>
             </div>
@@ -384,10 +439,13 @@ function DashboardPage() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">
-                  Total Messages
+                  Messages Today
                 </p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {data.totalMessages}
+                  {data.messagesToday}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {data.totalMessages} all time
                 </p>
               </div>
             </div>
@@ -405,21 +463,27 @@ function DashboardPage() {
                 <p className="text-2xl font-semibold text-gray-900">
                   {activeEmployees.length}
                 </p>
+                <p className="text-xs text-gray-400">
+                  {data.employees.length} total
+                </p>
               </div>
             </div>
           </div>
 
           <div className="bg-white rounded-lg border border-gray-200 p-5">
             <div className="flex items-center">
-              <div className="flex-shrink-0 w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                <UserGroupIcon className="h-5 w-5 text-gray-600" />
+              <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                <ClockIcon className="h-5 w-5 text-orange-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">
-                  Total Employees
+                  Avg Duration
                 </p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {data.employees.length}
+                  {formatDuration(data.avgCallDuration)}
+                </p>
+                <p className="text-xs text-gray-400">
+                  per completed call
                 </p>
               </div>
             </div>
@@ -513,52 +577,61 @@ function DashboardPage() {
                   </div>
                 ) : (
                   <div className="divide-y divide-gray-100">
-                    {data.recentCalls.map((call) => (
-                      <div
-                        key={call.call_id}
-                        className="p-4 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center min-w-0">
-                            <div
-                              className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                                call.direction === 'inbound'
-                                  ? 'bg-blue-100'
-                                  : 'bg-purple-100'
-                              }`}
-                            >
-                              <PhoneIcon
-                                className={`h-4 w-4 ${
+                    {data.recentCalls.map((call) => {
+                      const outcome = getCallOutcome(call)
+                      return (
+                        <button
+                          key={call.call_id}
+                          onClick={() => setSelectedCall(call)}
+                          className="w-full p-4 hover:bg-gray-50 transition-colors text-left"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center min-w-0">
+                              <div
+                                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
                                   call.direction === 'inbound'
-                                    ? 'text-blue-600'
-                                    : 'text-purple-600'
+                                    ? 'bg-blue-100'
+                                    : 'bg-purple-100'
                                 }`}
-                              />
+                              >
+                                <PhoneIcon
+                                  className={`h-4 w-4 ${
+                                    call.direction === 'inbound'
+                                      ? 'text-blue-600'
+                                      : 'text-purple-600'
+                                  }`}
+                                />
+                              </div>
+                              <div className="ml-3 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    {call.customer_phone || 'Unknown caller'}
+                                  </p>
+                                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${outcome.bg} ${outcome.color}`}>
+                                    {outcome.label}
+                                  </span>
+                                </div>
+                                {call.summary && (
+                                  <p className="text-sm text-gray-500 truncate">
+                                    {call.summary}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                            <div className="ml-3 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">
-                                {call.customer_phone || 'Unknown caller'}
+                            <div className="flex-shrink-0 text-right ml-4">
+                              <p className="text-xs text-gray-500">
+                                {formatDistanceToNow(new Date(call.started_at), {
+                                  addSuffix: true,
+                                })}
                               </p>
-                              {call.summary && (
-                                <p className="text-sm text-gray-500 truncate">
-                                  {call.summary}
-                                </p>
-                              )}
+                              <p className="text-xs text-gray-400 mt-0.5">
+                                {formatDuration(call.duration)}
+                              </p>
                             </div>
                           </div>
-                          <div className="flex-shrink-0 text-right ml-4">
-                            <p className="text-xs text-gray-500">
-                              {formatDistanceToNow(new Date(call.started_at), {
-                                addSuffix: true,
-                              })}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-0.5">
-                              {formatDuration(call.duration)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                        </button>
+                      )
+                    })}
                   </div>
                 )}
               </div>
@@ -736,6 +809,155 @@ function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Call Detail Slide-over */}
+      <Transition.Root show={!!selectedCall} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setSelectedCall(null)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-in-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in-out duration-300"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-50 transition-opacity" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-hidden">
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+                <Transition.Child
+                  as={Fragment}
+                  enter="transform transition ease-in-out duration-300"
+                  enterFrom="translate-x-full"
+                  enterTo="translate-x-0"
+                  leave="transform transition ease-in-out duration-300"
+                  leaveFrom="translate-x-0"
+                  leaveTo="translate-x-full"
+                >
+                  <Dialog.Panel className="pointer-events-auto w-screen max-w-md">
+                    <div className="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
+                      {/* Header */}
+                      <div className="px-6 py-5 border-b border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <Dialog.Title className="text-lg font-semibold text-gray-900">
+                            Call Details
+                          </Dialog.Title>
+                          <button
+                            onClick={() => setSelectedCall(null)}
+                            className="rounded-md text-gray-400 hover:text-gray-500"
+                          >
+                            <XMarkIcon className="h-6 w-6" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {selectedCall && (() => {
+                        const outcome = getCallOutcome(selectedCall)
+                        return (
+                          <div className="flex-1 px-6 py-5 space-y-6">
+                            {/* Call Info Grid */}
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase">Caller</p>
+                                <p className="mt-1 text-sm font-medium text-gray-900">
+                                  {selectedCall.customer_phone || 'Unknown'}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase">Direction</p>
+                                <p className="mt-1 text-sm font-medium text-gray-900 capitalize">
+                                  {selectedCall.direction || 'inbound'}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase">Status</p>
+                                <span className={`mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${outcome.bg} ${outcome.color}`}>
+                                  {outcome.label}
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase">Duration</p>
+                                <p className="mt-1 text-sm font-medium text-gray-900">
+                                  {formatDuration(selectedCall.duration)}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase">When</p>
+                                <p className="mt-1 text-sm text-gray-900">
+                                  {selectedCall.started_at
+                                    ? new Date(selectedCall.started_at).toLocaleString()
+                                    : '--'}
+                                </p>
+                              </div>
+                              {selectedCall.cost != null && (
+                                <div>
+                                  <p className="text-xs font-medium text-gray-500 uppercase">Cost</p>
+                                  <p className="mt-1 text-sm font-medium text-gray-900">
+                                    ${selectedCall.cost.toFixed(2)}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Recording */}
+                            {selectedCall.recording_url && (
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase mb-2">Recording</p>
+                                <a
+                                  href={selectedCall.recording_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                                >
+                                  Listen to Recording
+                                </a>
+                              </div>
+                            )}
+
+                            {/* Summary */}
+                            {selectedCall.summary && (
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase mb-2">Summary</p>
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                                    {selectedCall.summary}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Transcript */}
+                            {selectedCall.transcript ? (
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase mb-2">Transcript</p>
+                                <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                                  <p className="text-sm text-gray-700 whitespace-pre-wrap font-mono leading-relaxed">
+                                    {selectedCall.transcript}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div>
+                                <p className="text-xs font-medium text-gray-500 uppercase mb-2">Transcript</p>
+                                <div className="bg-gray-50 rounded-lg p-4 text-center">
+                                  <p className="text-sm text-gray-400">No transcript available</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
+            </div>
+          </div>
+        </Dialog>
+      </Transition.Root>
     </Layout>
   )
 }

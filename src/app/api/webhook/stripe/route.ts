@@ -4,6 +4,7 @@ import { createServerClient } from '@/lib/supabase'
 import Stripe from 'stripe'
 import CreditSystem, { CREDITS_PER_MINUTE } from '@/lib/credit-system'
 import AuditLogger, { AuditEventType } from '@/lib/audit-logger'
+import { employeeProvisioning } from '@/lib/phone-employees'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-08-27.basil'
@@ -240,6 +241,13 @@ export async function POST(request: NextRequest) {
             .eq('id', businessId)
 
           console.log(`✅ Business ${businessId} upgraded to ${targetPlan} plan`)
+
+          // Upgrade trial employees from vapi-only to twilio-vapi (adds SMS capability)
+          employeeProvisioning.upgradeAllPhonesToTwilioVapi(businessId)
+            .then(count => {
+              if (count > 0) console.log(`✅ Upgraded ${count} employee phone(s) to Twilio-VAPI for business ${businessId}`)
+            })
+            .catch(err => console.error(`❌ Failed to upgrade employee phones for business ${businessId}:`, err))
 
           // Audit log
           await AuditLogger.log({
