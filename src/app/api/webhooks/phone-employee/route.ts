@@ -163,6 +163,9 @@ export async function POST(request: NextRequest) {
       case 'function-call':
         return handleFunctionCall(message, employee, businessId)
 
+      case 'tool-calls':
+        return handleToolCalls(message, employee, businessId)
+
       case 'status-update':
         return handleStatusUpdate(message, employee, businessId)
 
@@ -439,6 +442,265 @@ async function handleFunctionCall(
       result: { error: error.message, success: false }
     })
   }
+}
+
+// ============================================
+// TOOL-CALLS HANDLER (new VAPI format)
+// ============================================
+
+async function handleToolCalls(
+  message: any,
+  employee: any,
+  businessId: string
+): Promise<NextResponse> {
+  const toolCallList = message.toolCallList || message.toolWithToolCallList?.map((t: any) => ({
+    id: t.toolCall?.id,
+    name: t.name || t.toolCall?.name,
+    parameters: t.toolCall?.parameters,
+  })) || []
+
+  const callId = message.call?.id
+
+  console.log(`[PhoneEmployeeWebhook] tool-calls: ${toolCallList.map((t: any) => t.name).join(', ')}`)
+
+  const results = []
+
+  for (const toolCall of toolCallList) {
+    const functionName = toolCall.name
+    const parameters = toolCall.parameters || {}
+    const toolCallId = toolCall.id
+
+    try {
+      let result: any
+
+      switch (functionName) {
+        case 'scheduleAppointment':
+        case 'bookAppointment':
+          result = await handleScheduleAppointment(parameters, businessId, employee.id)
+          break
+
+        case 'checkAvailability':
+          result = await handleCheckAvailability(parameters, businessId, employee)
+          break
+
+        case 'takeMessage':
+          result = await handleTakeMessage(parameters, businessId, employee.id, callId)
+          break
+
+        case 'transferCall':
+        case 'transferToHuman':
+          result = await handleTransferCall(parameters, businessId, callId)
+          break
+
+        case 'getBusinessInfo':
+          result = await handleGetBusinessInfo(parameters, businessId, employee)
+          break
+
+        case 'rescheduleAppointment':
+          result = await handleRescheduleAppointment(parameters, businessId)
+          break
+
+        case 'cancelAppointment':
+          result = await handleCancelAppointment(parameters, businessId)
+          break
+
+        case 'sendReminder':
+          result = await handleSendReminder(parameters, businessId, employee.id)
+          break
+
+        case 'addToOrder':
+          result = await handleAddToOrder(parameters, callId, employee)
+          break
+
+        case 'modifyOrderItem':
+          result = await handleModifyOrderItem(parameters, callId, employee)
+          break
+
+        case 'removeFromOrder':
+          result = await handleRemoveFromOrder(parameters, callId, employee)
+          break
+
+        case 'getOrderSummary':
+        case 'calculateTotal':
+          result = await handleGetOrderSummary(callId, employee)
+          break
+
+        case 'setOrderType':
+          result = await handleSetOrderType(parameters, callId, employee)
+          break
+
+        case 'setCustomerInfo':
+          result = await handleSetCustomerInfo(parameters, callId, employee)
+          break
+
+        case 'confirmOrder':
+          result = await handleConfirmOrder(callId, businessId, employee.id, employee)
+          break
+
+        case 'getEstimatedTime':
+          result = await handleGetEstimatedTime(parameters, employee)
+          break
+
+        case 'processPayment':
+          result = await handleProcessPayment(parameters, callId, employee)
+          break
+
+        case 'checkItemAvailability':
+          result = await handleCheckItemAvailability(parameters, employee)
+          break
+
+        case 'getCalendarInfo':
+          result = await handleGetCalendarInfo(parameters, businessId)
+          break
+
+        case 'captureLeadInfo':
+          result = await handleCaptureLeadInfo(parameters, businessId, employee.id, callId)
+          break
+
+        case 'screenCall':
+          result = await handleScreenCall(parameters, businessId, employee.id, callId)
+          break
+
+        case 'lookupContact':
+          result = await handleLookupContact(parameters, businessId, employee)
+          break
+
+        case 'createTask':
+          result = await handleCreateTask(parameters, businessId, employee.id, callId)
+          break
+
+        case 'triageEmergency':
+          result = await handleTriageEmergency(parameters, businessId, employee.id, callId)
+          break
+
+        case 'notifyOnCall':
+          result = await handleNotifyOnCall(parameters, businessId, employee.id, callId)
+          break
+
+        case 'escalateToBackup':
+          result = await handleEscalateToBackup(parameters, businessId, employee.id)
+          break
+
+        case 'takeEmergencyMessage':
+          result = await handleTakeEmergencyMessage(parameters, businessId, employee.id, callId)
+          break
+
+        case 'checkReservationAvailability':
+          result = await handleCheckReservationAvailability(parameters, businessId, employee)
+          break
+
+        case 'bookReservation':
+          result = await handleBookReservation(parameters, businessId, employee.id, callId)
+          break
+
+        case 'cancelReservation':
+          result = await handleCancelReservation(parameters, businessId, employee.id)
+          break
+
+        case 'modifyReservation':
+          result = await handleModifyReservation(parameters, businessId, employee.id)
+          break
+
+        case 'addToWaitlist':
+          result = await handleAddToWaitlist(parameters, businessId, employee.id, callId)
+          break
+
+        case 'recordResponse':
+          result = await handleRecordSurveyResponse(parameters, businessId, employee.id, callId)
+          break
+
+        case 'completeSurvey':
+          result = await handleCompleteSurvey(parameters, businessId, employee.id, callId)
+          break
+
+        case 'requestReview':
+          result = await handleRequestReview(parameters, businessId, employee.id, callId)
+          break
+
+        case 'qualifyLead':
+          result = await handleQualifyLead(parameters, businessId, employee.id, callId)
+          break
+
+        case 'scoreLead':
+          result = await handleScoreLead(parameters, businessId, employee.id, callId)
+          break
+
+        case 'bookDiscoveryCall':
+          result = await handleBookDiscoveryCall(parameters, businessId, employee.id, callId)
+          break
+
+        case 'confirmAppointment':
+          result = await handleConfirmAppointment(parameters, businessId, employee.id, callId)
+          break
+
+        case 'requestReschedule':
+          result = await handleRescheduleRequest(parameters, businessId, employee.id, callId)
+          break
+
+        case 'recordNoAnswer':
+          result = await handleRecordNoAnswer(parameters, businessId, employee.id, callId)
+          break
+
+        case 'lookupBalance':
+          result = await handleLookupBalance(parameters, businessId, employee.id)
+          break
+
+        case 'recordPaymentPromise':
+          result = await handleRecordPaymentPromise(parameters, businessId, employee.id, callId)
+          break
+
+        case 'offerPaymentPlan':
+          result = await handleOfferPaymentPlan(parameters, businessId, employee.id, callId)
+          break
+
+        case 'recordDispute':
+          result = await handleRecordDispute(parameters, businessId, employee.id, callId)
+          break
+
+        case 'scheduleCallback':
+          result = await handleScheduleCallback(parameters, businessId, employee.id, callId)
+          break
+
+        case 'lookupOrder':
+          result = await handleLookupOrder(parameters, businessId)
+          break
+
+        case 'logComplaint':
+          result = await handleLogComplaint(parameters, businessId, employee.id, callId)
+          break
+
+        case 'processReturnRequest':
+          result = await handleProcessReturnRequest(parameters, businessId, employee.id, callId)
+          break
+
+        case 'escalateToManager':
+          result = await handleEscalateToManager(parameters, businessId, employee.id, callId)
+          break
+
+        case 'lookupCaller':
+          result = await handleLookupCaller(parameters, businessId, employee)
+          break
+
+        default:
+          result = { error: `Unknown function: ${functionName}` }
+      }
+
+      results.push({
+        name: functionName,
+        toolCallId,
+        result: typeof result === 'string' ? result : JSON.stringify(result),
+      })
+    } catch (error: any) {
+      console.error(`[PhoneEmployeeWebhook] Tool call error (${functionName}):`, error)
+      results.push({
+        name: functionName,
+        toolCallId,
+        result: JSON.stringify({ error: error.message, success: false }),
+      })
+    }
+  }
+
+  return NextResponse.json({ results })
 }
 
 // ============================================
