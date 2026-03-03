@@ -453,13 +453,34 @@ async function handleToolCalls(
   employee: any,
   businessId: string
 ): Promise<NextResponse> {
-  const toolCallList = message.toolCallList || message.toolWithToolCallList?.map((t: any) => ({
-    id: t.toolCall?.id,
-    name: t.name || t.toolCall?.name,
-    parameters: t.toolCall?.parameters,
-  })) || []
-
   const callId = message.call?.id
+
+  // Log raw structure to debug VAPI payload format
+  console.log(`[PhoneEmployeeWebhook] tool-calls raw keys:`, {
+    hasToolCallList: !!message.toolCallList,
+    hasToolWithToolCallList: !!message.toolWithToolCallList,
+    toolCallListSample: message.toolCallList?.[0] ? JSON.stringify(message.toolCallList[0]).substring(0, 300) : 'empty',
+    toolWithToolCallListSample: message.toolWithToolCallList?.[0] ? JSON.stringify(message.toolWithToolCallList[0]).substring(0, 300) : 'empty',
+  })
+
+  // Normalize tool calls from various VAPI payload formats
+  const rawList = message.toolCallList || message.toolWithToolCallList || []
+  const toolCallList = rawList.map((t: any) => {
+    // Format 1: { id, function: { name, arguments } } (OpenAI format)
+    // Format 2: { id, name, parameters } (simple format)
+    // Format 3: { toolCall: { id, function: { name, arguments } }, type, function: { name } } (toolWithToolCallList)
+    const tc = t.toolCall || t
+    const name = tc.function?.name || tc.name || t.function?.name || t.name
+    let parameters = tc.parameters || {}
+    if (tc.function?.arguments) {
+      try {
+        parameters = typeof tc.function.arguments === 'string'
+          ? JSON.parse(tc.function.arguments)
+          : tc.function.arguments
+      } catch { parameters = {} }
+    }
+    return { id: tc.id || t.id, name, parameters }
+  })
 
   console.log(`[PhoneEmployeeWebhook] tool-calls: ${toolCallList.map((t: any) => t.name).join(', ')}`)
 
