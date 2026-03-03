@@ -21,16 +21,15 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    // Support both organization_id and businessId for backward compatibility
-    const organization_id = searchParams.get('organization_id') ||
-                           searchParams.get('businessId') ||
-                           searchParams.get('business_id') ||
-                           authResult.user.businessId
+    const businessId = searchParams.get('businessId') ||
+                       searchParams.get('business_id') ||
+                       searchParams.get('organization_id') ||
+                       authResult.user.businessId
     const date = searchParams.get('date')
     const status = searchParams.get('status')
 
     // Verify user has access to this business
-    if (!authResult.user.businessIds.includes(organization_id)) {
+    if (!authResult.user.businessIds.includes(businessId)) {
       return NextResponse.json(
         { error: 'Access denied to this business' },
         { status: 403 }
@@ -39,27 +38,8 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('appointments')
-      .select(`
-        *,
-        customers (
-          first_name,
-          last_name,
-          phone,
-          email
-        ),
-        services (
-          name,
-          duration_minutes,
-          price_cents,
-          category
-        ),
-        staff (
-          first_name,
-          last_name,
-          specialties
-        )
-      `)
-      .eq('organization_id', organization_id)
+      .select('*')
+      .eq('business_id', businessId)
       .order('appointment_date', { ascending: true })
       .order('start_time', { ascending: true })
 
@@ -301,7 +281,7 @@ export async function PATCH(request: NextRequest) {
     // First verify the appointment belongs to a business the user has access to
     const { data: existingAppointment, error: fetchError } = await supabase
       .from('appointments')
-      .select('organization_id')
+      .select('business_id')
       .eq('id', appointment_id)
       .single()
 
@@ -309,7 +289,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
     }
 
-    if (!authResult.user.businessIds.includes(existingAppointment.organization_id)) {
+    if (!authResult.user.businessIds.includes(existingAppointment.business_id)) {
       return NextResponse.json(
         { error: 'Access denied to this appointment' },
         { status: 403 }
@@ -325,18 +305,7 @@ export async function PATCH(request: NextRequest) {
         updated_at: new Date().toISOString()
       })
       .eq('id', appointment_id)
-      .select(`
-        *,
-        customers (
-          first_name,
-          last_name,
-          phone
-        ),
-        services (
-          name,
-          price_cents
-        )
-      `)
+      .select('*')
       .single()
 
     if (error) {
