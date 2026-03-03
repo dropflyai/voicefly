@@ -2709,9 +2709,22 @@ async function handleTranscript(message: any, employee: any, businessId: string)
 
 async function handleCallEnd(message: any, employee: any, businessId: string) {
   const callId = message.call?.id
-  const report = message.call || message
 
   console.log(`[PhoneEmployeeWebhook] Call ended: ${callId}`)
+
+  // VAPI end-of-call-report puts data at message level and message.artifact
+  // Calculate duration from startedAt/endedAt since VAPI doesn't provide a duration field
+  const startedAt = message.startedAt || message.call?.startedAt
+  const endedAt = message.endedAt || message.call?.endedAt
+  const calculatedDuration = startedAt && endedAt
+    ? Math.round((new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000)
+    : null
+
+  const transcript = message.transcript || message.artifact?.transcript || null
+  const recordingUrl = message.recordingUrl || message.artifact?.recordingUrl || null
+  const summary = message.summary || message.analysis?.summary || null
+  const cost = message.cost ?? message.costBreakdown?.total ?? null
+  const endedReason = message.endedReason || null
 
   // Clean up any in-progress order for this call (mark abandoned if not confirmed)
   await supabase
@@ -2725,12 +2738,13 @@ async function handleCallEnd(message: any, employee: any, businessId: string) {
     .from('employee_calls')
     .update({
       status: 'completed',
-      ended_at: new Date().toISOString(),
-      duration: report.duration,
-      transcript: report.transcript,
-      recording_url: report.recordingUrl,
-      summary: report.summary,
-      cost: report.cost,
+      ended_at: endedAt || new Date().toISOString(),
+      started_at: startedAt || undefined,
+      duration: calculatedDuration,
+      transcript,
+      recording_url: recordingUrl,
+      summary,
+      cost,
       updated_at: new Date().toISOString(),
     })
     .eq('call_id', callId)
@@ -2739,11 +2753,11 @@ async function handleCallEnd(message: any, employee: any, businessId: string) {
   await updateEmployeeMetrics(employee.id, businessId)
 
   // --- Deduct credits based on call duration ---
-  const durationSeconds = report.duration || 0
+  const durationSeconds = calculatedDuration || 0
   if (durationSeconds > 0) {
     const durationMinutes = Math.ceil(durationSeconds / 60) // Round up to nearest minute
-    const isOutbound = report.type === 'outboundPhoneCall' ||
-      message.call?.type === 'outboundPhoneCall'
+    const isOutbound = message.call?.type === 'outboundPhoneCall' ||
+      message.type === 'outboundPhoneCall'
     const costPerMinute = isOutbound ? CreditCost.VOICE_CALL_OUTBOUND : CreditCost.VOICE_CALL_INBOUND
     const totalCredits = durationMinutes * costPerMinute
 
@@ -2769,15 +2783,15 @@ async function handleCallEnd(message: any, employee: any, businessId: string) {
 
   // --- Integration hooks (fire-and-forget) ---
 
-  const callerPhone = report.customer?.number || message.call?.customer?.number
+  const callerPhone = message.customer?.number || message.call?.customer?.number
 
   // Fire webhook event
   webhookService.fireEvent(businessId, 'call_completed', {
     callId,
     employeeId: employee.id,
     employeeName: employee.name,
-    duration: report.duration,
-    summary: report.summary,
+    duration: calculatedDuration,
+    summary,
     callerPhone,
   }).catch(err => console.error('[Webhook] call_completed fire error:', err))
 
@@ -2786,8 +2800,8 @@ async function handleCallEnd(message: any, employee: any, businessId: string) {
     callId,
     employeeId: employee.id,
     employeeName: employee.name,
-    duration: report.duration,
-    summary: report.summary,
+    duration: calculatedDuration,
+    summary,
     callerPhone,
   }).catch(err => console.error('[Automation] call_completed error:', err))
 
@@ -2820,12 +2834,12 @@ async function handleCallEnd(message: any, employee: any, businessId: string) {
       .then(result => {
         if (result.contactId) {
           HubSpotService.createCallEngagement(businessId, result.contactId, {
-            duration: report.duration || 0,
-            transcript: typeof report.transcript === 'string' ? report.transcript : undefined,
+            duration: calculatedDuration || 0,
+            transcript: typeof transcript === 'string' ? transcript : undefined,
             outcome: 'completed',
             timestamp: new Date(),
             callId: callId || '',
-            callNotes: report.summary,
+            callNotes: summary,
           }).catch(err => console.error('[HubSpot] call engagement error:', err))
         }
       })
@@ -2836,12 +2850,12 @@ async function handleCallEnd(message: any, employee: any, businessId: string) {
   if (callId) {
     agentRegistry.processVAPICall(businessId, {
       callId,
-      duration: report.duration || 0,
-      transcript: typeof report.transcript === 'string' ? report.transcript : undefined,
-      outcome: report.summary,
-      recordingUrl: report.recordingUrl,
-      startTime: new Date(report.startedAt || Date.now()),
-      endTime: new Date(),
+      duration: calculatedDuration || 0,
+      transcript: typeof transcript === 'string' ? transcript : undefined,
+      outcome: summary,
+      recordingUrl,
+      startTime: new Date(startedAt || Date.now()),
+      endTime: new Date(endedAt || Date.now()),
       metadata: {
         employeeId: employee.id,
         employeeName: employee.name,
