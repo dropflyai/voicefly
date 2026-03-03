@@ -33,6 +33,12 @@ export async function handleScheduleAppointment(
   employeeId: string,
   options?: AppointmentHandlerOptions
 ) {
+  // Calculate end_time (default 30 min after start)
+  const startTimeParts = (params.time || '09:00').split(':')
+  const startMinutes = parseInt(startTimeParts[0]) * 60 + parseInt(startTimeParts[1] || '0')
+  const endMinutes = startMinutes + 30
+  const endTime = `${Math.floor(endMinutes / 60).toString().padStart(2, '0')}:${(endMinutes % 60).toString().padStart(2, '0')}`
+
   const { data: appointment, error } = await supabase
     .from('appointments')
     .insert({
@@ -40,18 +46,18 @@ export async function handleScheduleAppointment(
       customer_name: params.customerName || params.name,
       customer_phone: params.customerPhone || params.phone,
       customer_email: params.customerEmail || params.email,
-      service: params.service,
       appointment_date: params.date,
       start_time: params.time,
-      notes: params.notes,
+      end_time: endTime,
+      notes: params.service ? `Service: ${params.service}. ${params.notes || ''}`.trim() : (params.notes || null),
       status: 'confirmed',
-      source: options?.source === 'sms' ? 'sms' : 'phone_employee',
-      created_at: new Date().toISOString(),
+      booking_source: options?.source === 'sms' ? 'sms' : 'phone_employee',
     })
     .select()
     .single()
 
   if (error) {
+    console.error('[ScheduleAppointment] Insert error:', error)
     return { success: false, error: 'Failed to book appointment' }
   }
 
