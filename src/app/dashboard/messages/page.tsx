@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef, Fragment } from 'react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Layout from '../../../components/Layout'
 import ProtectedRoute from '../../../components/ProtectedRoute'
-import { BusinessAPI, type Business } from '../../../lib/supabase'
-import { supabase } from '../../../lib/supabase-client'
+import { type Business } from '../../../lib/supabase'
 import { getSecureBusinessId, redirectToLoginIfUnauthenticated } from '../../../lib/multi-tenant-auth'
 import {
   ChatBubbleLeftRightIcon,
@@ -69,6 +69,7 @@ interface Employee {
 // ============================================
 
 function MessagesPage() {
+  const supabase = createClientComponentClient()
   const [business, setBusiness] = useState<Business | null>(null)
   const [activeTab, setActiveTab] = useState<'calls' | 'sms'>('calls')
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -108,8 +109,12 @@ function MessagesPage() {
     }
     setBusinessId(bId)
 
-    const b = await BusinessAPI.getBusiness(bId)
-    if (b) setBusiness(b)
+    const { data: b } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('id', bId)
+      .single()
+    if (b) setBusiness(b as Business)
 
     const { data: { session } } = await supabase.auth.getSession()
     const t = session?.access_token || ''
