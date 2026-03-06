@@ -269,7 +269,7 @@ export class SmartSchedulingEngine {
       hours[h.day_of_week] = {
         open: h.open_time,
         close: h.close_time,
-        closed: h.is_closed
+        closed: !h.is_open
       }
     })
 

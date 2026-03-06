@@ -3352,7 +3352,7 @@ async function handleLookupCaller(params: any, businessId: string, employee: any
 async function getBusinessHoursContext(businessId: string, timezone: string): Promise<string> {
   const { data: hours } = await supabase
     .from('business_hours')
-    .select('day_of_week, open_time, close_time, is_closed')
+    .select('day_of_week, open_time, close_time, is_open')
     .eq('business_id', businessId)
 
   if (!hours || hours.length === 0) return ''
@@ -3370,7 +3370,7 @@ async function getBusinessHoursContext(businessId: string, timezone: string): Pr
   const todayHours = hours.find(h => h.day_of_week === dayOfWeek)
 
   let isOpen = false
-  if (todayHours && !todayHours.is_closed && todayHours.open_time && todayHours.close_time) {
+  if (todayHours && todayHours.is_open && todayHours.open_time && todayHours.close_time) {
     const openTime = todayHours.open_time.slice(0, 5)
     const closeTime = todayHours.close_time.slice(0, 5)
     isOpen = currentTime >= openTime && currentTime < closeTime
@@ -3392,7 +3392,7 @@ async function getBusinessHoursContext(businessId: string, timezone: string): Pr
       const checkDay = (dayOfWeek + (offset === 0 ? 1 : offset)) % 7
       if (offset === 0) {
         // Check if business opens later today
-        if (todayHours && !todayHours.is_closed && todayHours.open_time) {
+        if (todayHours && todayHours.is_open && todayHours.open_time) {
           const openTime = todayHours.open_time.slice(0, 5)
           if (currentTime < openTime) {
             nextOpenInfo = `The business opens today at ${formatTime12(todayHours.open_time)}.`
@@ -3402,7 +3402,7 @@ async function getBusinessHoursContext(businessId: string, timezone: string): Pr
         continue
       }
       const nextDayHours = hours.find(h => h.day_of_week === checkDay)
-      if (nextDayHours && !nextDayHours.is_closed && nextDayHours.open_time) {
+      if (nextDayHours && nextDayHours.is_open && nextDayHours.open_time) {
         const nextDayName = dayNames[checkDay]
         nextOpenInfo = `The business next opens on ${nextDayName} at ${formatTime12(nextDayHours.open_time)}.`
         break

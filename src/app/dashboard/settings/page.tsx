@@ -147,7 +147,7 @@ export default function SettingsPage() {
       // Load business hours
       const { data: hoursData } = await supabase
         .from('business_hours')
-        .select('day_of_week, open_time, close_time, is_closed')
+        .select('day_of_week, open_time, close_time, is_open')
         .eq('business_id', membership.business_id)
       if (hoursData && hoursData.length > 0) {
         const dayMap: Record<number, string> = {
@@ -161,7 +161,7 @@ export default function SettingsPage() {
             loaded[dayKey] = {
               open: row.open_time?.slice(0, 5) || '09:00',
               close: row.close_time?.slice(0, 5) || '18:00',
-              isOpen: !row.is_closed,
+              isOpen: row.is_open !== false,
             }
           }
         }
@@ -240,7 +240,7 @@ export default function SettingsPage() {
       day_of_week: dayKeyToNum[key],
       open_time: businessHours[key].open + ':00',
       close_time: businessHours[key].close + ':00',
-      is_closed: !businessHours[key].isOpen,
+      is_open: businessHours[key].isOpen,
     }))
     await supabase
       .from('business_hours')
