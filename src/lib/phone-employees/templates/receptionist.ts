@@ -15,10 +15,10 @@ import { EmployeeConfig, ReceptionistConfig, DEFAULT_CAPABILITIES_BY_JOB } from 
 // SYSTEM PROMPT GENERATOR
 // ============================================
 
-export function generateReceptionistPrompt(config: EmployeeConfig, jobConfig: ReceptionistConfig): string {
-  const businessName = jobConfig.businessDescription?.split('.')[0] || 'the business'
+export function generateReceptionistPrompt(config: EmployeeConfig, jobConfig: ReceptionistConfig, businessName?: string): string {
+  const name = businessName || jobConfig.businessDescription?.split('.')[0] || 'the business'
 
-  return `You are ${config.name}, a professional and friendly receptionist for ${businessName}.
+  return `You are ${config.name}, a professional and friendly receptionist for ${name}.
 
 ## Your Role
 You are the first point of contact for callers. Your job is to:
@@ -61,6 +61,7 @@ ${generateTransferRules(jobConfig)}
 3. Be patient with callers who are confused or frustrated
 4. Keep a professional demeanor at all times
 5. If someone seems upset, acknowledge their feelings and offer to help
+6. CONVERSATIONAL STYLE: Always ask for ONE piece of information at a time. Never list multiple questions or fields at once. Keep each response short (1-2 sentences). Let the caller respond before asking the next question.
 
 ## Available Functions
 You can use these functions:
@@ -71,7 +72,7 @@ You can use these functions:
 - getBusinessInfo: Get business information to share
 - captureLeadInfo: Record contact info for interested callers not ready to act
 
-Remember: You represent ${businessName}. Every interaction should leave the caller feeling valued and heard.`
+Remember: You represent ${name}. Every interaction should leave the caller feeling valued and heard.`
 }
 
 function generateCapabilitiesSection(config: EmployeeConfig, jobConfig: ReceptionistConfig): string {
@@ -82,11 +83,18 @@ function generateCapabilitiesSection(config: EmployeeConfig, jobConfig: Receptio
 You can book appointments for these services:
 ${jobConfig.services.map(s => `- ${s.name} (${s.duration} minutes)${s.description ? ` - ${s.description}` : ''}`).join('\n')}
 
-When booking:
-1. Ask what service they need
-2. Check availability for their preferred date/time
-3. Collect their name and phone number
-4. Confirm all details before booking`)
+When booking, gather info naturally through conversation — ask for ONE thing at a time:
+1. First, ask what service they need
+2. Then ask when they'd like to come in (date and time)
+3. Use checkAvailability to verify the slot before confirming
+4. Get their name (if you don't already have it from the conversation)
+5. Confirm their phone number — you may already have it from caller ID
+6. Repeat the details back and book it
+
+IMPORTANT: Do NOT list all required fields at once. Have a natural back-and-forth conversation. For example:
+- "What service are you looking to book?"
+- (they answer) "Great! When would you like to come in?"
+- (they answer) "Let me check if that's available..."`)
   }
 
   if (config.capabilities.includes('take_messages')) {
@@ -188,7 +196,7 @@ export function getDefaultReceptionistConfig(businessName: string): Receptionist
 export const RECEPTIONIST_FUNCTIONS = [
   {
     name: 'scheduleAppointment',
-    description: 'Book an appointment for a customer',
+    description: 'Book an appointment for a customer. Gather info conversationally — do NOT ask for all fields at once.',
     parameters: {
       type: 'object',
       properties: {
@@ -198,11 +206,11 @@ export const RECEPTIONIST_FUNCTIONS = [
         },
         customerPhone: {
           type: 'string',
-          description: "Customer's phone number",
+          description: "Customer's phone number (may already be available from caller ID)",
         },
         customerEmail: {
           type: 'string',
-          description: "Customer's email (optional)",
+          description: "Customer's email (optional, only if offered)",
         },
         service: {
           type: 'string',
@@ -218,10 +226,10 @@ export const RECEPTIONIST_FUNCTIONS = [
         },
         notes: {
           type: 'string',
-          description: 'Any special requests or notes',
+          description: 'Any special requests or notes (optional, only if mentioned)',
         },
       },
-      required: ['customerName', 'customerPhone', 'service', 'date', 'time'],
+      required: ['customerName', 'service', 'date', 'time'],
     },
   },
   {

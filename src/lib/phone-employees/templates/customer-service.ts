@@ -15,10 +15,10 @@ import { EmployeeConfig, CustomerServiceConfig, DEFAULT_CAPABILITIES_BY_JOB } fr
 // SYSTEM PROMPT GENERATOR
 // ============================================
 
-export function generateCustomerServicePrompt(config: EmployeeConfig, jobConfig: CustomerServiceConfig): string {
-  const businessName = jobConfig.businessDescription?.split('.')[0] || 'the business'
+export function generateCustomerServicePrompt(config: EmployeeConfig, jobConfig: CustomerServiceConfig, businessName?: string): string {
+  const name = businessName || jobConfig.businessDescription?.split('.')[0] || 'the business'
 
-  return `You are ${config.name}, a professional and empathetic customer service representative for ${businessName}.
+  return `You are ${config.name}, a professional and empathetic customer service representative for ${name}.
 
 ## Your Role
 You are the primary point of contact for customers with questions, issues, or requests. Your job is to:
@@ -75,7 +75,7 @@ You can use these functions:
 - escalateToManager: Escalate the call to a manager with context
 - captureLeadInfo: Capture contact information for follow-up
 
-Remember: You represent ${businessName}. Every resolution should leave the customer feeling heard and valued.`
+Remember: You represent ${name}. Every resolution should leave the customer feeling heard and valued.`
 }
 
 function generateCapabilitiesSection(config: EmployeeConfig, jobConfig: CustomerServiceConfig): string {

@@ -373,6 +373,18 @@ export interface PlanTierLimits {
     automated_reminders?: boolean
     voice_ai_type?: 'shared' | 'custom'
   }
+  pro: {
+    max_locations: 1
+    payment_processors: string[]
+    loyalty_program: true
+    monthly_price: number
+    max_appointments?: number
+    analytics_dashboard?: boolean
+    marketing_campaigns?: boolean
+    custom_branding?: boolean
+    automated_reminders?: boolean
+    voice_ai_type?: 'shared' | 'custom'
+  }
   professional: {
     max_locations: 1
     payment_processors: string[]

@@ -14,6 +14,7 @@ import {
   MapPinIcon,
   PencilIcon,
   CheckIcon,
+  ChatBubbleLeftRightIcon,
 } from '@heroicons/react/24/outline'
 import { clsx } from 'clsx'
 
@@ -35,9 +36,17 @@ export default function SettingsPage() {
   const supabase = createClientComponentClient()
   const [activeTab, setActiveTab] = useState('business')
   const [business, setBusiness] = useState<{ name: string; subscription_tier: string } | null>(null)
+  const [profile, setProfile] = useState({
+    name: '', business_type: '', phone: '', email: '',
+    address: '', website: '', timezone: 'America/Los_Angeles',
+  })
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileSaved, setProfileSaved] = useState(false)
   const [ownerPhone, setOwnerPhone] = useState('')
   const [ownerPhoneSaving, setOwnerPhoneSaving] = useState(false)
   const [ownerPhoneSaved, setOwnerPhoneSaved] = useState(false)
+  const [hoursSaving, setHoursSaving] = useState(false)
+  const [hoursSaved, setHoursSaved] = useState(false)
   const [businessHours, setBusinessHours] = useState<BusinessHours>({
     monday: { open: '09:00', close: '18:00', isOpen: true },
     tuesday: { open: '09:00', close: '18:00', isOpen: true },
@@ -59,9 +68,23 @@ export default function SettingsPage() {
   })
 
   const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [businessId, setBusinessId] = useState<string | null>(null)
+  const [businessContext, setBusinessContext] = useState<{
+    owner_name?: string
+    address_display?: string
+    hours_summary?: string
+    payment_methods?: string
+    parking_info?: string
+    languages?: string
+    policies?: string
+    special_notes?: string
+  }>({})
+  const [contextSaving, setContextSaving] = useState(false)
+  const [contextSaved, setContextSaved] = useState(false)
 
   const tabs = [
     { id: 'business', name: 'Business Profile', icon: BuildingOfficeIcon },
+    { id: 'ai-context', name: 'AI Knowledge', icon: ChatBubbleLeftRightIcon },
     { id: 'hours', name: 'Business Hours', icon: ClockIcon },
     { id: 'notifications', name: 'Notifications', icon: BellIcon },
     { id: 'security', name: 'Security', icon: ShieldCheckIcon },
@@ -96,20 +119,163 @@ export default function SettingsPage() {
         .eq('user_id', session.user.id)
         .single()
       if (!membership) return
+      setBusinessId(membership.business_id)
       const { data: bizData } = await supabase
         .from('businesses')
-        .select('name, subscription_tier, settings')
+        .select('name, subscription_tier, business_type, phone, email, address, website, timezone, settings, business_context')
         .eq('id', membership.business_id)
         .single()
       if (bizData) {
         setBusiness({ name: bizData.name, subscription_tier: bizData.subscription_tier })
+        setProfile({
+          name: bizData.name || '',
+          business_type: bizData.business_type || '',
+          phone: bizData.phone || '',
+          email: bizData.email || '',
+          address: bizData.address || '',
+          website: bizData.website || '',
+          timezone: bizData.timezone || 'America/Los_Angeles',
+        })
         if (bizData.settings?.owner_phone) {
           setOwnerPhone(bizData.settings.owner_phone)
         }
+        if (bizData.business_context) {
+          setBusinessContext(bizData.business_context)
+        }
+      }
+
+      // Load business hours
+      const { data: hoursData } = await supabase
+        .from('business_hours')
+        .select('day_of_week, open_time, close_time, is_closed')
+        .eq('business_id', membership.business_id)
+      if (hoursData && hoursData.length > 0) {
+        const dayMap: Record<number, string> = {
+          0: 'sunday', 1: 'monday', 2: 'tuesday', 3: 'wednesday',
+          4: 'thursday', 5: 'friday', 6: 'saturday',
+        }
+        const loaded: BusinessHours = { ...businessHours }
+        for (const row of hoursData) {
+          const dayKey = dayMap[row.day_of_week]
+          if (dayKey) {
+            loaded[dayKey] = {
+              open: row.open_time?.slice(0, 5) || '09:00',
+              close: row.close_time?.slice(0, 5) || '18:00',
+              isOpen: !row.is_closed,
+            }
+          }
+        }
+        setBusinessHours(loaded)
       }
     }
     loadBusinessData()
   }, [supabase])
+
+  const saveBusinessContext = async () => {
+    if (!businessId) return
+    setContextSaving(true)
+    await supabase
+      .from('businesses')
+      .update({ business_context: businessContext })
+      .eq('id', businessId)
+    setContextSaving(false)
+    setContextSaved(true)
+    setTimeout(() => setContextSaved(false), 3000)
+  }
+
+  const updateContext = (key: string, value: string) => {
+    setBusinessContext(prev => ({ ...prev, [key]: value }))
+  }
+
+  const saveProfile = async () => {
+    if (!businessId) return
+    setProfileSaving(true)
+    await supabase
+      .from('businesses')
+      .update({
+        name: profile.name,
+        business_type: profile.business_type,
+        phone: profile.phone,
+        email: profile.email,
+        address: profile.address,
+        website: profile.website,
+        timezone: profile.timezone,
+      })
+      .eq('id', businessId)
+    setBusiness(prev => prev ? { ...prev, name: profile.name } : prev)
+    setProfileSaving(false)
+    setProfileSaved(true)
+    setIsEditingProfile(false)
+    setTimeout(() => setProfileSaved(false), 3000)
+  }
+
+  const generateHoursSummary = (hours: BusinessHours): string => {
+    const parts: string[] = []
+    const formatTime = (t: string) => {
+      const [h, m] = t.split(':').map(Number)
+      const suffix = h >= 12 ? 'pm' : 'am'
+      const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h
+      return m === 0 ? `${hour12}${suffix}` : `${hour12}:${m.toString().padStart(2, '0')}${suffix}`
+    }
+    for (const { key, label } of daysOfWeek) {
+      const day = hours[key]
+      if (day.isOpen) {
+        parts.push(`${label} ${formatTime(day.open)}-${formatTime(day.close)}`)
+      } else {
+        parts.push(`${label} Closed`)
+      }
+    }
+    return parts.join(', ')
+  }
+
+  const saveBusinessHours = async () => {
+    if (!businessId) return
+    setHoursSaving(true)
+    const dayKeyToNum: Record<string, number> = {
+      sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+      thursday: 4, friday: 5, saturday: 6,
+    }
+    const rows = daysOfWeek.map(({ key }) => ({
+      business_id: businessId,
+      day_of_week: dayKeyToNum[key],
+      open_time: businessHours[key].open + ':00',
+      close_time: businessHours[key].close + ':00',
+      is_closed: !businessHours[key].isOpen,
+    }))
+    await supabase
+      .from('business_hours')
+      .upsert(rows, { onConflict: 'business_id,day_of_week' })
+    // Auto-sync hours_summary to business_context
+    const summary = generateHoursSummary(businessHours)
+    const updatedContext = { ...businessContext, hours_summary: summary }
+    await supabase
+      .from('businesses')
+      .update({ business_context: updatedContext })
+      .eq('id', businessId)
+    setBusinessContext(updatedContext)
+    setHoursSaving(false)
+    setHoursSaved(true)
+    setTimeout(() => setHoursSaved(false), 3000)
+  }
+
+  const copyMondayToWeekdays = () => {
+    const monday = businessHours.monday
+    setBusinessHours(prev => ({
+      ...prev,
+      tuesday: { ...monday },
+      wednesday: { ...monday },
+      thursday: { ...monday },
+      friday: { ...monday },
+    }))
+  }
+
+  const setWeekendHours = () => {
+    setBusinessHours(prev => ({
+      ...prev,
+      saturday: { open: '09:00', close: '16:00', isOpen: true },
+      sunday: { open: '09:00', close: '16:00', isOpen: true },
+    }))
+  }
 
   const saveOwnerPhone = async () => {
     setOwnerPhoneSaving(true)
@@ -190,7 +356,8 @@ export default function SettingsPage() {
                       <input
                         type="text"
                         className="input-field"
-                        defaultValue="dropfly"
+                        value={profile.name}
+                        onChange={e => setProfile(p => ({ ...p, name: e.target.value }))}
                         disabled={!isEditingProfile}
                       />
                     </div>
@@ -199,13 +366,22 @@ export default function SettingsPage() {
                       <label className="label">Business Type</label>
                       <select
                         className="input-field"
-                        defaultValue="nail_salon"
+                        value={profile.business_type}
+                        onChange={e => setProfile(p => ({ ...p, business_type: e.target.value }))}
                         disabled={!isEditingProfile}
                       >
+                        <option value="">Select type...</option>
                         <option value="nail_salon">Nail Salon</option>
                         <option value="spa">Beauty Spa</option>
                         <option value="beauty_clinic">Beauty Clinic</option>
                         <option value="barbershop">Barbershop</option>
+                        <option value="restaurant">Restaurant</option>
+                        <option value="medical">Medical Office</option>
+                        <option value="legal">Legal Office</option>
+                        <option value="hvac">HVAC / Contractor</option>
+                        <option value="consulting">Consulting</option>
+                        <option value="real_estate">Real Estate</option>
+                        <option value="general">General Business</option>
                       </select>
                     </div>
 
@@ -218,7 +394,9 @@ export default function SettingsPage() {
                         <input
                           type="tel"
                           className="input-field rounded-l-none"
-                          defaultValue="(555) 123-4567"
+                          placeholder="(555) 123-4567"
+                          value={profile.phone}
+                          onChange={e => setProfile(p => ({ ...p, phone: e.target.value }))}
                           disabled={!isEditingProfile}
                         />
                       </div>
@@ -233,7 +411,9 @@ export default function SettingsPage() {
                         <input
                           type="email"
                           className="input-field rounded-l-none"
-                          defaultValue="hello@bellanails.com"
+                          placeholder="hello@yourbusiness.com"
+                          value={profile.email}
+                          onChange={e => setProfile(p => ({ ...p, email: e.target.value }))}
                           disabled={!isEditingProfile}
                         />
                       </div>
@@ -248,7 +428,9 @@ export default function SettingsPage() {
                         <input
                           type="text"
                           className="input-field rounded-l-none"
-                          defaultValue="123 Beauty Lane, Los Angeles, CA 90210"
+                          placeholder="123 Main St, City, State ZIP"
+                          value={profile.address}
+                          onChange={e => setProfile(p => ({ ...p, address: e.target.value }))}
                           disabled={!isEditingProfile}
                         />
                       </div>
@@ -259,7 +441,9 @@ export default function SettingsPage() {
                       <input
                         type="url"
                         className="input-field"
-                        defaultValue="https://bellanails.com"
+                        placeholder="https://yourbusiness.com"
+                        value={profile.website}
+                        onChange={e => setProfile(p => ({ ...p, website: e.target.value }))}
                         disabled={!isEditingProfile}
                       />
                     </div>
@@ -268,19 +452,27 @@ export default function SettingsPage() {
                       <label className="label">Timezone</label>
                       <select
                         className="input-field"
-                        defaultValue="America/Los_Angeles"
+                        value={profile.timezone}
+                        onChange={e => setProfile(p => ({ ...p, timezone: e.target.value }))}
                         disabled={!isEditingProfile}
                       >
                         <option value="America/Los_Angeles">Pacific (PT)</option>
                         <option value="America/Denver">Mountain (MT)</option>
                         <option value="America/Chicago">Central (CT)</option>
                         <option value="America/New_York">Eastern (ET)</option>
+                        <option value="America/Anchorage">Alaska (AKT)</option>
+                        <option value="Pacific/Honolulu">Hawaii (HT)</option>
                       </select>
                     </div>
                   </div>
 
                   {isEditingProfile && (
-                    <div className="flex justify-end space-x-3 mt-6 pt-6 border-t">
+                    <div className="flex items-center justify-end space-x-3 mt-6 pt-6 border-t">
+                      {profileSaved && (
+                        <span className="flex items-center gap-1 text-sm text-green-600">
+                          <CheckIcon className="h-4 w-4" /> Saved
+                        </span>
+                      )}
                       <button
                         onClick={() => setIsEditingProfile(false)}
                         className="btn-secondary"
@@ -288,13 +480,137 @@ export default function SettingsPage() {
                         Cancel
                       </button>
                       <button
-                        onClick={() => setIsEditingProfile(false)}
+                        onClick={saveProfile}
+                        disabled={profileSaving}
                         className="btn-primary"
                       >
-                        Save Changes
+                        {profileSaving ? 'Saving...' : 'Save Changes'}
                       </button>
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'ai-context' && (
+              <div className="card">
+                <div className="p-6">
+                  <div className="mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">AI Knowledge</h2>
+                    <p className="text-sm text-gray-500 mt-1">
+                      This information is automatically shared with Maya on every call so she can answer caller questions accurately.
+                    </p>
+                  </div>
+
+                  <div className="space-y-5">
+                    <div>
+                      <label className="label">Owner / Manager Name</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        placeholder="e.g. Dr. Sarah Johnson"
+                        value={businessContext.owner_name || ''}
+                        onChange={e => updateContext('owner_name', e.target.value)}
+                      />
+                      <p className="text-xs text-gray-400 mt-1">When a caller asks to speak with the owner or manager</p>
+                    </div>
+
+                    <div>
+                      <label className="label">Location / Address (as you want it spoken)</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        placeholder="e.g. 123 Main Street, Suite 200, downtown Los Angeles"
+                        value={businessContext.address_display || ''}
+                        onChange={e => updateContext('address_display', e.target.value)}
+                      />
+                      <p className="text-xs text-gray-400 mt-1">How Maya should describe your location to callers</p>
+                    </div>
+
+                    <div>
+                      <label className="label">Business Hours Summary</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        placeholder="e.g. Monday through Friday 9am to 5pm, Saturday 10am to 2pm, closed Sunday"
+                        value={businessContext.hours_summary || ''}
+                        onChange={e => updateContext('hours_summary', e.target.value)}
+                      />
+                      <p className="text-xs text-gray-400 mt-1">A natural-language summary Maya can read to callers</p>
+                    </div>
+
+                    <div>
+                      <label className="label">Payment Methods</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        placeholder="e.g. Cash, all major credit cards, Apple Pay, Venmo"
+                        value={businessContext.payment_methods || ''}
+                        onChange={e => updateContext('payment_methods', e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="label">Parking Information</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        placeholder="e.g. Free parking in the rear lot, street parking available"
+                        value={businessContext.parking_info || ''}
+                        onChange={e => updateContext('parking_info', e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="label">Languages Spoken</label>
+                      <input
+                        type="text"
+                        className="input-field"
+                        placeholder="e.g. English, Spanish, Vietnamese"
+                        value={businessContext.languages || ''}
+                        onChange={e => updateContext('languages', e.target.value)}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="label">Policies</label>
+                      <textarea
+                        className="input-field"
+                        rows={3}
+                        placeholder="e.g. 24-hour cancellation policy. No refunds on completed services. Walk-ins welcome but appointments preferred."
+                        value={businessContext.policies || ''}
+                        onChange={e => updateContext('policies', e.target.value)}
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Cancellation, refund, walk-in policies, etc.</p>
+                    </div>
+
+                    <div>
+                      <label className="label">Additional Notes for Maya</label>
+                      <textarea
+                        className="input-field"
+                        rows={3}
+                        placeholder="e.g. We're running a 20% off special this month. We're closed for renovation March 15-20."
+                        value={businessContext.special_notes || ''}
+                        onChange={e => updateContext('special_notes', e.target.value)}
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Anything else Maya should know — promos, closures, special instructions</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t">
+                    {contextSaved && (
+                      <span className="flex items-center gap-1 text-sm text-green-600">
+                        <CheckIcon className="h-4 w-4" /> Saved
+                      </span>
+                    )}
+                    <button
+                      onClick={saveBusinessContext}
+                      disabled={contextSaving}
+                      className="btn-primary"
+                    >
+                      {contextSaving ? 'Saving...' : 'Save AI Knowledge'}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -355,19 +671,28 @@ export default function SettingsPage() {
                   <div className="mt-6 pt-6 border-t">
                     <h3 className="text-sm font-medium text-gray-900 mb-4">Quick Settings</h3>
                     <div className="space-y-2">
-                      <button className="text-sm text-blue-600 hover:text-blue-700">
+                      <button onClick={copyMondayToWeekdays} className="text-sm text-blue-600 hover:text-blue-700">
                         Copy Monday hours to all weekdays
                       </button>
                       <br />
-                      <button className="text-sm text-blue-600 hover:text-blue-700">
+                      <button onClick={setWeekendHours} className="text-sm text-blue-600 hover:text-blue-700">
                         Set weekend hours (9 AM - 4 PM)
                       </button>
                     </div>
                   </div>
 
-                  <div className="flex justify-end mt-6">
-                    <button className="btn-primary">
-                      Save Business Hours
+                  <div className="flex items-center justify-end gap-3 mt-6">
+                    {hoursSaved && (
+                      <span className="flex items-center gap-1 text-sm text-green-600">
+                        <CheckIcon className="h-4 w-4" /> Saved
+                      </span>
+                    )}
+                    <button
+                      onClick={saveBusinessHours}
+                      disabled={hoursSaving}
+                      className="btn-primary"
+                    >
+                      {hoursSaving ? 'Saving...' : 'Save Business Hours'}
                     </button>
                   </div>
                 </div>

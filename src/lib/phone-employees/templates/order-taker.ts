@@ -15,8 +15,9 @@ import { EmployeeConfig, OrderTakerConfig, DEFAULT_CAPABILITIES_BY_JOB } from '.
 // SYSTEM PROMPT GENERATOR
 // ============================================
 
-export function generateOrderTakerPrompt(config: EmployeeConfig, jobConfig: OrderTakerConfig): string {
-  return `You are ${config.name}, a friendly and efficient order-taker for this business.
+export function generateOrderTakerPrompt(config: EmployeeConfig, jobConfig: OrderTakerConfig, businessName?: string): string {
+  const name = businessName || 'this business'
+  return `You are ${config.name}, a friendly and efficient order-taker for ${name}.
 
 ## Your Role
 You help customers place orders over the phone. Your responsibilities:
@@ -86,7 +87,7 @@ ${jobConfig.tipOptions ? `Tip options: ${jobConfig.tipOptions.map(t => `${t}%`).
 5. If something is out of stock, suggest alternatives
 6. Keep track of what's in the current order
 
-Remember: A happy customer orders again. Make every interaction pleasant!`
+Remember: You represent ${name}. A happy customer orders again. Make every interaction pleasant!`
 }
 
 function generateMenuSection(config: OrderTakerConfig): string {

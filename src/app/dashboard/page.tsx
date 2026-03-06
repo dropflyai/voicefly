@@ -18,6 +18,8 @@ import {
   Cog6ToothIcon,
   CreditCardIcon,
   XMarkIcon,
+  ShoppingBagIcon,
+  BoltIcon,
 } from '@heroicons/react/24/outline'
 import { Dialog, Transition } from '@headlessui/react'
 import { formatDistanceToNow } from 'date-fns'
@@ -72,6 +74,11 @@ interface DashboardData {
   callsToday: number
   messagesToday: number
   avgCallDuration: number
+  totalOrders: number
+  ordersToday: number
+  creditsRemaining: number
+  creditsUsed: number
+  isTrial: boolean
 }
 
 // ============================================
@@ -126,6 +133,11 @@ function DashboardPage() {
     callsToday: 0,
     messagesToday: 0,
     avgCallDuration: 0,
+    totalOrders: 0,
+    ordersToday: 0,
+    creditsRemaining: 0,
+    creditsUsed: 0,
+    isTrial: false,
   })
   const [employeeCount, setEmployeeCount] = useState<number>(0)
   const [selectedCall, setSelectedCall] = useState<EmployeeCall | null>(null)
@@ -194,12 +206,15 @@ function DashboardPage() {
       todayStart.setHours(0, 0, 0, 0)
       const todayISO = todayStart.toISOString()
 
-      // Fetch recent calls from employee_calls
+      // Fetch recent calls, messages, orders, and credits in parallel
       const [
         { data: callsData, count: callsCount },
         { count: callsTodayCount },
         { data: messagesData, count: messagesCount },
         { count: messagesTodayCount },
+        { count: ordersCount },
+        { count: ordersTodayCount },
+        { data: creditData },
       ] = await Promise.all([
         supabase
           .from('employee_calls')
@@ -223,6 +238,20 @@ function DashboardPage() {
           .select('*', { count: 'exact', head: true })
           .eq('business_id', businessId)
           .gte('created_at', todayISO),
+        supabase
+          .from('phone_orders')
+          .select('*', { count: 'exact', head: true })
+          .eq('business_id', businessId),
+        supabase
+          .from('phone_orders')
+          .select('*', { count: 'exact', head: true })
+          .eq('business_id', businessId)
+          .gte('created_at', todayISO),
+        supabase
+          .from('businesses')
+          .select('monthly_credits, purchased_credits, credits_used_this_month, subscription_status')
+          .eq('id', businessId)
+          .single(),
       ])
 
       // Calculate avg call duration from recent calls
@@ -230,6 +259,11 @@ function DashboardPage() {
       const avgDuration = completedCalls.length > 0
         ? Math.round(completedCalls.reduce((sum, c) => sum + (c.duration || 0), 0) / completedCalls.length)
         : 0
+
+      const monthly = creditData?.monthly_credits || 0
+      const purchased = creditData?.purchased_credits || 0
+      const used = creditData?.credits_used_this_month || 0
+      const isTrial = creditData?.subscription_status === 'trial'
 
       setData({
         employees,
@@ -240,6 +274,11 @@ function DashboardPage() {
         callsToday: callsTodayCount || 0,
         messagesToday: messagesTodayCount || 0,
         avgCallDuration: avgDuration,
+        totalOrders: ordersCount || 0,
+        ordersToday: ordersTodayCount || 0,
+        creditsRemaining: Math.max(0, monthly + purchased - used),
+        creditsUsed: used,
+        isTrial,
       })
     } catch (err) {
       console.error('Error loading dashboard data:', err)
@@ -412,7 +451,7 @@ function DashboardPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-lg border border-gray-200 p-5">
             <div className="flex items-center">
               <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -453,18 +492,18 @@ function DashboardPage() {
 
           <div className="bg-white rounded-lg border border-gray-200 p-5">
             <div className="flex items-center">
-              <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <UserGroupIcon className="h-5 w-5 text-purple-600" />
+              <div className="flex-shrink-0 w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <ShoppingBagIcon className="h-5 w-5 text-indigo-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500">
-                  Active Employees
+                  Orders
                 </p>
                 <p className="text-2xl font-semibold text-gray-900">
-                  {activeEmployees.length}
+                  {data.ordersToday}
                 </p>
                 <p className="text-xs text-gray-400">
-                  {data.employees.length} total
+                  {data.totalOrders} all time
                 </p>
               </div>
             </div>
@@ -484,6 +523,44 @@ function DashboardPage() {
                 </p>
                 <p className="text-xs text-gray-400">
                   per completed call
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                <UserGroupIcon className="h-5 w-5 text-purple-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">
+                  Active Employees
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {activeEmployees.length}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {data.employees.length} total
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                <BoltIcon className="h-5 w-5 text-amber-600" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">
+                  Credits
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {data.isTrial ? 'Free' : data.creditsRemaining.toLocaleString()}
+                </p>
+                <p className="text-xs text-gray-400">
+                  {data.isTrial ? 'trial plan' : `${data.creditsUsed.toLocaleString()} used this month`}
                 </p>
               </div>
             </div>

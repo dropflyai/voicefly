@@ -338,9 +338,20 @@ export class EmployeeProvisioningService {
     let phoneNumber: string | undefined
     let vapiPhoneId: string | undefined
     let twilioPhoneSid: string | undefined
+    let phoneError: string | undefined
     const phoneMode: PhoneMode = params.phoneMode || 'twilio-vapi'
 
     if (params.provisionPhone) {
+      // Mark provisioning as started
+      await supabase
+        .from('phone_employees')
+        .update({
+          provisioning_status: 'provisioning',
+          provisioning_started_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', savedEmployee.id)
+
       try {
         if (phoneMode === 'twilio-vapi') {
           // Twilio purchases + owns the number; VAPI imports it for calls; SMS stays with Twilio
@@ -361,7 +372,7 @@ export class EmployeeProvisioningService {
           vapiPhoneId = phoneResult.phoneId
         }
 
-        // Update with phone info
+        // Update with phone info + mark as active
         await supabase
           .from('phone_employees')
           .update({
@@ -369,26 +380,51 @@ export class EmployeeProvisioningService {
             phone_number: phoneNumber,
             phone_provider: phoneMode,
             twilio_phone_sid: twilioPhoneSid || null,
+            provisioning_status: 'active',
+            provisioning_error: null,
+            provisioning_completed_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           })
           .eq('id', savedEmployee.id)
-      } catch (phoneError) {
-        console.warn('[EmployeeProvisioning] Phone provisioning failed:', phoneError)
-        // Continue without phone - employee can still handle inbound via shared number
+      } catch (err: any) {
+        phoneError = err.message || 'Phone provisioning failed'
+        console.warn('[EmployeeProvisioning] Phone provisioning failed:', err)
+        // Record the failure — employee still exists but phone setup needs retry
+        await supabase
+          .from('phone_employees')
+          .update({
+            provisioning_status: 'failed',
+            provisioning_error: phoneError,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', savedEmployee.id)
       }
+    } else {
+      // User chose not to provision a phone
+      await supabase
+        .from('phone_employees')
+        .update({
+          provisioning_status: 'no_phone',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', savedEmployee.id)
     }
 
     console.log(`[EmployeeProvisioning] Employee created: ${savedEmployee.id}`, {
       vapiAssistantId: vapiResult.assistantId,
       phoneNumber,
+      phoneError,
     })
 
-    return this.mapToEmployeeConfig({
+    const employeeConfig = this.mapToEmployeeConfig({
       ...updatedEmployee,
       vapi_assistant_id: vapiResult.assistantId,
       vapi_phone_id: vapiPhoneId,
       phone_number: phoneNumber,
     })
+
+    // Attach phoneError so API callers can surface it
+    return Object.assign(employeeConfig, { phoneError })
   }
 
   // ============================================
@@ -497,22 +533,22 @@ export class EmployeeProvisioningService {
     let basePrompt: string
     switch (employee.job_type) {
       case 'receptionist':
-        basePrompt = generateReceptionistPrompt(config, employee.job_config as ReceptionistConfig)
+        basePrompt = generateReceptionistPrompt(config, employee.job_config as ReceptionistConfig, businessName)
         break
       case 'personal-assistant':
         basePrompt = generatePersonalAssistantPrompt(config, employee.job_config as PersonalAssistantConfig)
         break
       case 'order-taker':
-        basePrompt = generateOrderTakerPrompt(config, employee.job_config as OrderTakerConfig)
+        basePrompt = generateOrderTakerPrompt(config, employee.job_config as OrderTakerConfig, businessName)
         break
       case 'appointment-scheduler':
-        basePrompt = generateAppointmentSchedulerPrompt(config, employee.job_config as AppointmentSchedulerConfig)
+        basePrompt = generateAppointmentSchedulerPrompt(config, employee.job_config as AppointmentSchedulerConfig, businessName)
         break
       case 'customer-service':
-        basePrompt = generateCustomerServicePrompt(config, employee.job_config as CustomerServiceConfig)
+        basePrompt = generateCustomerServicePrompt(config, employee.job_config as CustomerServiceConfig, businessName)
         break
       case 'after-hours-emergency':
-        basePrompt = generateAfterHoursEmergencyPrompt(config, employee.job_config as AfterHoursEmergencyConfig)
+        basePrompt = generateAfterHoursEmergencyPrompt(config, employee.job_config as AfterHoursEmergencyConfig, businessName)
         break
       case 'restaurant-host':
         basePrompt = generateRestaurantHostPrompt(config, employee.job_config as RestaurantHostConfig)
@@ -537,6 +573,48 @@ export class EmployeeProvisioningService {
     const extraKnowledge = employee.job_config?.extraKnowledge
     if (extraKnowledge && typeof extraKnowledge === 'string' && extraKnowledge.trim()) {
       basePrompt += `\n\n## Additional Business Knowledge\nUse the following information to answer caller questions accurately:\n\n${extraKnowledge}`
+    }
+
+    // Append custom training fields (user-provided via chat or form)
+    const customInstructions = employee.job_config?.customInstructions
+    if (customInstructions && typeof customInstructions === 'string' && customInstructions.trim()) {
+      basePrompt += `\n\n## Custom Business Context\n${customInstructions}`
+    }
+
+    const callHandlingRules = employee.job_config?.callHandlingRules
+    if (callHandlingRules && typeof callHandlingRules === 'string' && callHandlingRules.trim()) {
+      basePrompt += `\n\n## Call Handling Rules\n${callHandlingRules}`
+    }
+
+    const restrictions = employee.job_config?.restrictions
+    if (restrictions && typeof restrictions === 'string' && restrictions.trim()) {
+      basePrompt += `\n\n## Rules & Restrictions\nYou MUST follow these rules:\n${restrictions}`
+    }
+
+    // Inject universal business context from the businesses table
+    const biz = employee.businesses
+    if (biz) {
+      const contextLines: string[] = []
+      if (biz.phone) contextLines.push(`- Phone: ${biz.phone}`)
+      if (biz.email) contextLines.push(`- Email: ${biz.email}`)
+      if (biz.address) contextLines.push(`- Address: ${biz.address}`)
+      if (biz.website) contextLines.push(`- Website: ${biz.website}`)
+
+      const ctx = biz.business_context
+      if (ctx) {
+        if (ctx.owner_name) contextLines.push(`- Owner/Manager: ${ctx.owner_name}`)
+        if (ctx.address_display) contextLines.push(`- Location: ${ctx.address_display}`)
+        if (ctx.hours_summary) contextLines.push(`- Hours: ${ctx.hours_summary}`)
+        if (ctx.payment_methods) contextLines.push(`- Payment methods: ${ctx.payment_methods}`)
+        if (ctx.parking_info) contextLines.push(`- Parking: ${ctx.parking_info}`)
+        if (ctx.languages) contextLines.push(`- Languages spoken: ${ctx.languages}`)
+        if (ctx.policies) contextLines.push(`- Policies: ${ctx.policies}`)
+        if (ctx.special_notes) contextLines.push(`- Note: ${ctx.special_notes}`)
+      }
+
+      if (contextLines.length > 0) {
+        basePrompt += `\n\n## Business Contact & Details\nUse this information when callers ask about the business:\n${contextLines.join('\n')}`
+      }
     }
 
     return basePrompt
@@ -621,6 +699,54 @@ export class EmployeeProvisioningService {
     }
 
     return allFunctions
+  }
+
+  /**
+   * Build a full VAPI assistant config for a given employee.
+   * Used by the webhook's assistant-request handler to dynamically
+   * configure the shared trial assistant per-call.
+   */
+  buildAssistantConfig(employee: any, businessName: string): {
+    model: any
+    voice: any
+    firstMessage: string
+    endCallMessage?: string
+    endCallPhrases?: string[]
+    voicemailDetection?: any
+    maxDurationSeconds?: number
+    backgroundSound?: string
+  } {
+    const systemPrompt = this.generateSystemPrompt(employee, businessName)
+    const functions = this.getFunctionsForJobType(employee.job_type, employee.capabilities)
+
+    return {
+      model: {
+        provider: 'openai',
+        model: 'gpt-4o',
+        messages: [{ role: 'system', content: systemPrompt }],
+        functions,
+      },
+      voice: {
+        provider: '11labs',
+        voiceId: 'EXAVITQu4vr4xnSDxMaL', // Sarah — warm, professional, low latency
+        model: 'eleven_flash_v2_5',
+        stability: 0.5,
+        similarityBoost: 0.75,
+        style: 0,
+        useSpeakerBoost: true,
+        speed: 1.0,
+      },
+      firstMessage: employee.job_config?.greeting
+        || `Thank you for calling ${businessName}! How can I help you today?`,
+      endCallMessage: 'Thank you for calling! Have a great day.',
+      endCallPhrases: ['goodbye', 'bye', 'have a good day', 'that will be all', 'nothing else', 'no thank you'],
+      voicemailDetection: {
+        provider: 'twilio',
+        enabled: true,
+      },
+      maxDurationSeconds: 1800,
+      backgroundSound: 'off',
+    }
   }
 
   /**
@@ -932,6 +1058,18 @@ export class EmployeeProvisioningService {
     if (!employee.vapi_assistant_id) throw new Error('Employee has no VAPI assistant — cannot provision phone')
     if (employee.phone_number) throw new Error('Employee already has a phone number')
 
+    // Mark provisioning as started
+    await supabase
+      .from('phone_employees')
+      .update({
+        provisioning_status: 'provisioning',
+        provisioning_error: null,
+        provisioning_started_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', employeeId)
+      .eq('business_id', businessId)
+
     // Fetch business name for Twilio subaccount label
     const { data: business } = await supabase
       .from('businesses')
@@ -946,26 +1084,40 @@ export class EmployeeProvisioningService {
     let twilioPhoneSid: string | undefined
     let phoneProvider: string
 
-    if (phoneMode === 'twilio-vapi') {
-      const result = await this.provisionTwilioVAPINumber(
-        employeeId,
-        employee.vapi_assistant_id,
-        businessId,
-        businessName,
-        areaCode
-      )
-      phoneNumber = result.phoneNumber
-      vapiPhoneId = result.vapiPhoneId
-      twilioPhoneSid = result.twilioPhoneSid
-      phoneProvider = 'twilio-vapi'
-    } else {
-      const result = await this.provisionVAPIOnlyNumber(employeeId, businessId)
-      phoneNumber = result.phoneNumber
-      vapiPhoneId = result.phoneId
-      phoneProvider = 'vapi-only'
+    try {
+      if (phoneMode === 'twilio-vapi') {
+        const result = await this.provisionTwilioVAPINumber(
+          employeeId,
+          employee.vapi_assistant_id,
+          businessId,
+          businessName,
+          areaCode
+        )
+        phoneNumber = result.phoneNumber
+        vapiPhoneId = result.vapiPhoneId
+        twilioPhoneSid = result.twilioPhoneSid
+        phoneProvider = 'twilio-vapi'
+      } else {
+        const result = await this.provisionVAPIOnlyNumber(employeeId, businessId)
+        phoneNumber = result.phoneNumber
+        vapiPhoneId = result.phoneId
+        phoneProvider = 'vapi-only'
+      }
+    } catch (err: any) {
+      // Record the failure persistently
+      await supabase
+        .from('phone_employees')
+        .update({
+          provisioning_status: 'failed',
+          provisioning_error: err.message || 'Phone provisioning failed',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', employeeId)
+        .eq('business_id', businessId)
+      throw err
     }
 
-    // Persist phone info
+    // Persist phone info + mark as active
     await supabase
       .from('phone_employees')
       .update({
@@ -973,6 +1125,9 @@ export class EmployeeProvisioningService {
         vapi_phone_id: vapiPhoneId ?? null,
         phone_provider: phoneProvider,
         twilio_phone_sid: twilioPhoneSid ?? null,
+        provisioning_status: 'active',
+        provisioning_error: null,
+        provisioning_completed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
       .eq('id', employeeId)
@@ -1060,6 +1215,213 @@ export class EmployeeProvisioningService {
 
     console.log(`[EmployeeProvisioning] Upgraded ${upgraded}/${employees.length} employees for business ${businessId}`)
     return upgraded
+  }
+
+  /**
+   * Provision a dedicated Twilio number for a Starter-tier employee.
+   * Uses the shared VAPI assistant — no dedicated assistant created.
+   * The number is imported to VAPI with serverUrl + serverUrlSecret for webhook routing.
+   */
+  private async provisionStarterTwilioNumber(
+    employeeId: string,
+    businessId: string,
+    businessName: string,
+    areaCode?: string | number,
+  ): Promise<{ phoneNumber: string; vapiPhoneId: string; twilioPhoneSid: string }> {
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_API_KEY || !TWILIO_API_SECRET) {
+      throw new Error('Twilio credentials not configured')
+    }
+    if (!VAPI_API_KEY) {
+      throw new Error('VAPI API key not configured')
+    }
+
+    const masterClient = twilio(TWILIO_API_KEY, TWILIO_API_SECRET, { accountSid: TWILIO_ACCOUNT_SID })
+
+    // 1. Get or create Twilio subaccount for the business
+    const subaccount = await this.getOrCreateTwilioSubaccount(masterClient, businessId, businessName)
+    const subClient = twilio(subaccount.sid, subaccount.authToken)
+
+    // 2. Search for an available number
+    const searchParams: { limit: number; areaCode?: number } = { limit: 1 }
+    if (areaCode) searchParams.areaCode = Number(areaCode)
+
+    const available = await subClient
+      .availablePhoneNumbers('US')
+      .local.list(searchParams)
+
+    if (!available.length) {
+      const hint = areaCode ? ` in area code ${areaCode}` : ''
+      throw new Error(`No available Twilio phone numbers found${hint}`)
+    }
+
+    const numberToPurchase = available[0].phoneNumber
+
+    // 3. Purchase the number with SMS webhook
+    const purchased = await subClient.incomingPhoneNumbers.create({
+      phoneNumber: numberToPurchase,
+      smsUrl: `${APP_URL}/api/webhooks/sms`,
+      smsMethod: 'POST',
+      friendlyName: `VoiceFly Starter - ${employeeId}`,
+    })
+
+    console.log(`[EmployeeProvisioning] Starter number purchased: ${purchased.phoneNumber} (subaccount: ${subaccount.sid})`)
+
+    // 4. Import into VAPI with serverUrl + serverUrlSecret (NOT assistantId)
+    //    This makes VAPI send webhook requests with x-vapi-secret header
+    const vapiResponse = await fetch('https://api.vapi.ai/phone-number', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${VAPI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        provider: 'twilio',
+        twilioAccountSid: subaccount.sid,
+        twilioAuthToken: subaccount.authToken,
+        twilioPhoneNumber: purchased.phoneNumber,
+        serverUrl: `${APP_URL}/api/webhooks/phone-employee`,
+        serverUrlSecret: employeeId,
+        name: `Starter Employee - ${employeeId}`,
+      }),
+    })
+
+    if (!vapiResponse.ok) {
+      await subClient.incomingPhoneNumbers(purchased.sid).remove().catch(() => {})
+      const errorData = await vapiResponse.json()
+      throw new Error(`VAPI import failed: ${errorData.message || vapiResponse.statusText}`)
+    }
+
+    const vapiPhoneData = await vapiResponse.json()
+    console.log(`[EmployeeProvisioning] Starter number ready: ${purchased.phoneNumber}`)
+
+    // Record in phone_numbers for SMS routing
+    await supabase.from('phone_numbers').upsert({
+      business_id: businessId,
+      vapi_phone_id: vapiPhoneData.id,
+      phone_number: purchased.phoneNumber,
+      vapi_phone_number_id: vapiPhoneData.id,
+      is_active: true,
+      assigned_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'vapi_phone_id' })
+
+    return {
+      phoneNumber: purchased.phoneNumber,
+      vapiPhoneId: vapiPhoneData.id,
+      twilioPhoneSid: purchased.sid,
+    }
+  }
+
+  /**
+   * Provision a Starter-tier business after Stripe checkout.
+   * Finds the existing trial employee, buys a dedicated number,
+   * and upgrades capabilities (transfer, SMS).
+   */
+  async provisionStarterForBusiness(businessId: string): Promise<void> {
+    const sharedAssistantId = process.env.VAPI_SHARED_ASSISTANT_ID
+
+    // Find existing trial employee
+    const { data: employee } = await supabase
+      .from('phone_employees')
+      .select('id, name, capabilities, vapi_assistant_id, phone_number, vapi_phone_id, phone_provider')
+      .eq('business_id', businessId)
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (!employee) {
+      console.error(`[EmployeeProvisioning] No active employee found for Starter business ${businessId}`)
+      return
+    }
+
+    // Get business name
+    const { data: business } = await supabase
+      .from('businesses')
+      .select('name')
+      .eq('id', businessId)
+      .single()
+
+    const businessName = business?.name ?? 'Business'
+
+    // Release old phone if it was the shared trial number
+    if (employee.vapi_phone_id && employee.phone_provider === 'vapi-only' && VAPI_API_KEY) {
+      await fetch(`https://api.vapi.ai/phone-number/${employee.vapi_phone_id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${VAPI_API_KEY}` },
+      }).catch(() => {})
+    }
+
+    // Clear old phone fields
+    await supabase
+      .from('phone_employees')
+      .update({
+        phone_number: null,
+        vapi_phone_id: null,
+        phone_provider: null,
+        twilio_phone_sid: null,
+        provisioning_status: 'provisioning',
+        provisioning_error: null,
+        provisioning_started_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', employee.id)
+
+    try {
+      // Provision dedicated Twilio number (no dedicated VAPI assistant)
+      const result = await this.provisionStarterTwilioNumber(
+        employee.id,
+        businessId,
+        businessName,
+      )
+
+      // Upgrade capabilities: add transfer and SMS
+      const currentCapabilities: string[] = employee.capabilities || []
+      const starterCapabilities = [...new Set([
+        ...currentCapabilities,
+        'transfer_to_human',
+        'send_sms',
+      ])]
+
+      // Update employee with new phone and capabilities
+      await supabase
+        .from('phone_employees')
+        .update({
+          phone_number: result.phoneNumber,
+          vapi_phone_id: result.vapiPhoneId,
+          twilio_phone_sid: result.twilioPhoneSid,
+          phone_provider: 'twilio-vapi',
+          capabilities: starterCapabilities,
+          vapi_assistant_id: sharedAssistantId || employee.vapi_assistant_id,
+          provisioning_status: 'active',
+          provisioning_error: null,
+          provisioning_completed_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', employee.id)
+
+      // Update business phone number
+      await supabase
+        .from('businesses')
+        .update({
+          ai_phone_number: result.phoneNumber,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', businessId)
+
+      console.log(`[EmployeeProvisioning] Starter provisioning complete for business ${businessId}: ${result.phoneNumber}`)
+    } catch (err: any) {
+      await supabase
+        .from('phone_employees')
+        .update({
+          provisioning_status: 'failed',
+          provisioning_error: err.message || 'Starter provisioning failed',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', employee.id)
+      throw err
+    }
   }
 
   /**
@@ -1241,6 +1603,8 @@ export class EmployeeProvisioningService {
       phoneNumber: data.phone_number,
       phoneProvider: data.phone_provider || 'vapi',
       twilioPhoneSid: data.twilio_phone_sid,
+      provisioningStatus: data.provisioning_status || 'pending',
+      provisioningError: data.provisioning_error || null,
       isActive: data.is_active,
       createdAt: new Date(data.created_at),
       updatedAt: new Date(data.updated_at),

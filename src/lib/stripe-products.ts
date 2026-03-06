@@ -7,18 +7,17 @@
 export const SUBSCRIPTION_PRODUCTS = {
   starter: {
     name: 'VoiceFly Starter',
-    description: '100 voice minutes per month. AI employee for businesses getting started.',
+    description: '100 voice minutes per month. Maya, your dedicated AI receptionist.',
     price_cents: 4900,
     interval: 'month' as const,
     features: [
       '100 voice minutes/month',
-      '1 AI employee',
-      '24/7 call answering',
+      'Dedicated phone number',
+      '24/7 AI receptionist (Maya)',
       'Appointment booking',
-      'Lead capture',
-      'SMS appointment confirmations',
-      'Call analytics dashboard',
-      'Email support',
+      'Message taking & lead capture',
+      'Call transfers',
+      'SMS & email notifications',
       '$0.15/min overage'
     ],
     metadata: {

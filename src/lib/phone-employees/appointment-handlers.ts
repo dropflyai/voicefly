@@ -12,6 +12,7 @@ import { actionExecutor } from '@/lib/phone-employees/action-executor'
 import { webhookService } from '@/lib/webhooks/webhook-service'
 import { automationEngine } from '@/lib/automation/automation-engine'
 import { taskScheduler } from '@/lib/phone-employees/task-scheduler'
+import { sendAppointmentNotification, getOwnerEmail } from '@/lib/notifications/email-notifications'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,6 +22,7 @@ const supabase = createClient(
 export interface AppointmentHandlerOptions {
   suppressConfirmationSms?: boolean
   source?: 'voice' | 'sms' | 'web'
+  isTrial?: boolean
 }
 
 // ============================================
@@ -58,7 +60,7 @@ export async function handleScheduleAppointment(
 
   if (error) {
     console.error('[ScheduleAppointment] Insert error:', error)
-    return { success: false, error: 'Failed to book appointment' }
+    return { success: false, message: "I'm sorry, I wasn't able to book that appointment right now. Would you like me to try a different time, or I can take your information and have someone call you back to confirm?" }
   }
 
   // Create calendar event if connected (Google Calendar or Calendly)
@@ -126,8 +128,24 @@ export async function handleScheduleAppointment(
   const customerPhone = params.customerPhone || params.phone
   const customerName = params.customerName || params.name || 'Customer'
 
-  // Send confirmation SMS (unless suppressed by SMS AI caller)
-  if (customerPhone && !options?.suppressConfirmationSms) {
+  if (options?.isTrial) {
+    // Trial: email the business owner instead of SMS to customer
+    const ownerEmail = await getOwnerEmail(businessId)
+    const { data: biz } = await supabase.from('businesses').select('name').eq('id', businessId).single()
+    if (ownerEmail) {
+      sendAppointmentNotification({
+        businessId,
+        ownerEmail,
+        businessName: biz?.name || 'Your Business',
+        customerName,
+        customerPhone,
+        service: params.service,
+        date: params.date,
+        time: params.time,
+      }).catch(err => console.error('[AppointmentEmail] error:', err))
+    }
+  } else if (customerPhone && !options?.suppressConfirmationSms) {
+    // Paid: send confirmation SMS to customer
     await actionExecutor.execute({
       id: `appt-confirm-${appointment.id}`,
       businessId,
@@ -142,7 +160,7 @@ export async function handleScheduleAppointment(
       createdAt: new Date(),
     })
 
-    // Schedule day-before reminder
+    // Schedule day-before reminder (paid only)
     const appointmentDateTime = new Date(`${params.date}T${params.time}:00`)
     const reminderTime = new Date(appointmentDateTime)
     reminderTime.setDate(reminderTime.getDate() - 1)
@@ -164,7 +182,9 @@ export async function handleScheduleAppointment(
   return {
     success: true,
     appointmentId: appointment.id,
-    message: `Great! I've booked your ${params.service} appointment for ${params.date} at ${params.time}. You'll receive a confirmation text shortly.`,
+    message: options?.isTrial
+      ? `Great! I've booked your ${params.service || 'appointment'} for ${params.date} at ${params.time}. Is there anything else I can help with?`
+      : `Great! I've booked your ${params.service} appointment for ${params.date} at ${params.time}. You'll receive a confirmation text shortly.`,
   }
 }
 

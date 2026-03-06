@@ -14,12 +14,13 @@ import { EmployeeConfig, AfterHoursEmergencyConfig, DEFAULT_CAPABILITIES_BY_JOB 
 // SYSTEM PROMPT GENERATOR
 // ============================================
 
-export function generateAfterHoursEmergencyPrompt(config: EmployeeConfig, jobConfig: AfterHoursEmergencyConfig): string {
+export function generateAfterHoursEmergencyPrompt(config: EmployeeConfig, jobConfig: AfterHoursEmergencyConfig, businessName?: string): string {
   const onCallList = jobConfig.onCallContacts.length > 0
     ? jobConfig.onCallContacts.map((c, i) => `  ${i + 1}. ${c.name}${c.role ? ` (${c.role})` : ''}`).join('\n')
     : '  No on-call contacts configured — notify business owner.'
 
-  return `You are ${config.name}, the after-hours emergency line for this business.
+  const name = businessName || 'this business'
+  return `You are ${config.name}, the after-hours emergency line for ${name}.
 
 ## Your Purpose
 This is NOT a general receptionist line. This line exists for one reason: to handle emergencies outside business hours. Every second matters — do not waste time on pleasantries. Get to the point, triage quickly, and take the right action.

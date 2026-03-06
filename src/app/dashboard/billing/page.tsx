@@ -149,7 +149,9 @@ function BillingPage() {
   const currentTier = business?.subscription_tier || 'starter'
   const isOnTrial = business?.subscription_status === 'trial'
   const isPaidPlan = ['starter', 'pro'].includes(currentTier) && business?.subscription_status === 'active'
-  const canUpgradeToPro = currentTier !== 'pro'
+  const isStarter = currentTier === 'starter' && !isOnTrial && isPaidPlan
+  const isPro = currentTier === 'pro' && isPaidPlan
+  const canUpgrade = !isPro
 
   if (loading) {
     return (
@@ -228,7 +230,7 @@ function BillingPage() {
               <div>
                 <div className="flex items-center gap-3 mb-1">
                   <h3 className="text-2xl font-bold text-gray-900 capitalize">
-                    {currentTier === 'pro' ? 'Pro' : 'Starter'}
+                    {isOnTrial ? 'Free Trial' : currentTier === 'pro' ? 'Pro' : 'Starter'}
                   </h3>
                   <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
                     business?.subscription_status === 'active' ? 'bg-green-100 text-green-700' :
@@ -243,9 +245,9 @@ function BillingPage() {
                   </span>
                 </div>
                 <p className="text-sm text-gray-500">
-                  {currentTier === 'pro'
-                    ? '1,000 voice minutes/month, up to 5 AI employees, AI SMS conversations'
-                    : '100 voice minutes/month, 1 AI employee, SMS confirmations'}
+                  {isOnTrial ? '10 free calls, shared phone number, basic AI receptionist'
+                    : currentTier === 'pro' ? '1,000 voice minutes/month, up to 5 AI employees, custom training & voice'
+                    : '100 voice minutes/month, dedicated number, Maya AI receptionist'}
                 </p>
               </div>
               <div className="text-right">
@@ -288,56 +290,78 @@ function BillingPage() {
         </div>
 
         {/* Upgrade Options */}
-        {canUpgradeToPro && (
+        {canUpgrade && (
           <div className="bg-white rounded-xl border border-gray-200 mb-8">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">
-                {isOnTrial || currentTier === 'starter' ? 'Choose a Plan' : 'Upgrade'}
+                {isOnTrial ? 'Choose a Plan' : 'Upgrade'}
               </h2>
             </div>
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Starter Plan */}
-                {(isOnTrial || currentTier !== 'starter') && (
-                  <div className={`border-2 rounded-xl p-6 transition-colors ${
-                    currentTier === 'starter' && !isOnTrial
-                      ? 'border-blue-300 bg-blue-50'
-                      : 'border-gray-200 hover:border-blue-200'
-                  }`}>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-bold text-gray-900">Starter</h3>
-                      <div className="text-2xl font-bold text-blue-600">$49<span className="text-sm font-normal text-gray-500">/mo</span></div>
-                    </div>
-                    <ul className="space-y-2 mb-6">
-                      {SUBSCRIPTION_PRODUCTS.starter.features.slice(0, 5).map((f, i) => (
-                        <li key={i} className="flex items-center text-sm text-gray-700">
-                          <SparklesIcon className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
-                          {f}
-                        </li>
-                      ))}
-                    </ul>
-                    {currentTier === 'starter' && !isOnTrial ? (
-                      <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium bg-blue-100 text-blue-700">
-                        Current Plan
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => handleUpgrade('starter')}
-                        disabled={upgrading === 'starter'}
-                        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                      >
-                        {upgrading === 'starter' ? (
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        ) : (
-                          <>
-                            Get Starter
-                            <ArrowRightIcon className="h-4 w-4 ml-2" />
-                          </>
-                        )}
-                      </button>
-                    )}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Trial / Free */}
+                <div className={`border-2 rounded-xl p-6 transition-colors ${
+                  isOnTrial ? 'border-gray-300 bg-gray-50' : 'border-gray-200'
+                }`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">Trial</h3>
+                    <div className="text-2xl font-bold text-gray-500">Free</div>
                   </div>
-                )}
+                  <ul className="space-y-2 mb-6">
+                    <li className="flex items-center text-sm text-gray-600"><CheckCircleIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />10 free calls</li>
+                    <li className="flex items-center text-sm text-gray-600"><CheckCircleIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />Shared phone number</li>
+                    <li className="flex items-center text-sm text-gray-600"><CheckCircleIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />Basic AI receptionist</li>
+                    <li className="flex items-center text-sm text-gray-600"><CheckCircleIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />Appointment booking</li>
+                    <li className="flex items-center text-sm text-gray-600"><CheckCircleIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />Email notifications</li>
+                  </ul>
+                  {isOnTrial ? (
+                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium bg-gray-100 text-gray-700">
+                      Current Plan
+                    </div>
+                  ) : (
+                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium text-gray-400">
+                      Trial expired
+                    </div>
+                  )}
+                </div>
+
+                {/* Starter Plan */}
+                <div className={`border-2 rounded-xl p-6 transition-colors ${
+                  isStarter ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:border-blue-200'
+                }`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">Starter</h3>
+                    <div className="text-2xl font-bold text-blue-600">$49<span className="text-sm font-normal text-gray-500">/mo</span></div>
+                  </div>
+                  <ul className="space-y-2 mb-6">
+                    {SUBSCRIPTION_PRODUCTS.starter.features.slice(0, 7).map((f, i) => (
+                      <li key={i} className="flex items-center text-sm text-gray-700">
+                        <SparklesIcon className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  {isStarter ? (
+                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium bg-blue-100 text-blue-700">
+                      Current Plan
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleUpgrade('starter')}
+                      disabled={upgrading === 'starter'}
+                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                      {upgrading === 'starter' ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      ) : (
+                        <>
+                          Get Starter
+                          <ArrowRightIcon className="h-4 w-4 ml-2" />
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
 
                 {/* Pro Plan */}
                 <div className="border-2 border-indigo-200 rounded-xl p-6 hover:border-indigo-300 transition-colors relative">

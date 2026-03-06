@@ -26,6 +26,7 @@ export type EmployeeJobType =
   | 'collections'               // Payment collection outbound caller
   | 'survey-caller'             // Customer feedback (Phase 2)
   | 'appointment-reminder'      // Outbound appointment confirmation caller
+  | 'trial-receptionist'        // Shared generic receptionist for trial users
 
 export type EmployeeComplexity = 'simple' | 'moderate' | 'complex'
 
@@ -77,6 +78,10 @@ export interface EmployeeConfig {
   phoneNumber?: string
   phoneProvider?: 'vapi' | 'twilio-vapi'
   twilioPhoneSid?: string
+
+  // Provisioning status
+  provisioningStatus?: 'pending' | 'provisioning' | 'active' | 'failed' | 'no_phone'
+  provisioningError?: string | null
 
   // Status
   isActive: boolean
@@ -161,6 +166,12 @@ export interface ReceptionistConfig {
     duration: number
     description?: string
   }[]
+
+  // Custom training (user-provided via chat or form)
+  customInstructions?: string    // "About your business" free text
+  callHandlingRules?: string     // "How should calls be handled?" free text
+  restrictions?: string          // "Things to never do" free text
+  extraKnowledge?: string        // Auto-scraped from website
 }
 
 export interface PersonalAssistantConfig {
@@ -192,6 +203,12 @@ export interface PersonalAssistantConfig {
     trigger: string
     response: string
   }[]
+
+  // Custom training
+  customInstructions?: string
+  callHandlingRules?: string
+  restrictions?: string
+  extraKnowledge?: string
 }
 
 export interface OrderTakerConfig {
@@ -239,6 +256,12 @@ export interface OrderTakerConfig {
   // Payment
   acceptedPayments: ('cash' | 'card' | 'online')[]
   tipOptions?: number[]       // [15, 18, 20, 25]
+
+  // Custom training
+  customInstructions?: string
+  callHandlingRules?: string
+  restrictions?: string
+  extraKnowledge?: string
 }
 
 export interface AppointmentSchedulerConfig {
@@ -720,6 +743,7 @@ export const SIMPLE_EMPLOYEE_JOBS: EmployeeJobType[] = [
   'survey-caller',
   'appointment-reminder',
   'collections',
+  'trial-receptionist',
 ]
 
 export const COMPLEX_EMPLOYEE_JOBS: EmployeeJobType[] = [
@@ -858,6 +882,13 @@ export const DEFAULT_CAPABILITIES_BY_JOB: Record<EmployeeJobType, EmployeeCapabi
     'log_interactions',
     'send_sms',
     'schedule_callbacks',
+  ],
+
+  'trial-receptionist': [
+    'answer_calls',
+    'take_messages',
+    'provide_business_info',
+    'log_interactions',
   ],
 }
 

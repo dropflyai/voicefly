@@ -5,7 +5,7 @@
 
 import { PLAN_TIER_LIMITS } from './supabase'
 
-export type SubscriptionTier = 'starter' | 'professional' | 'business' | 'enterprise'
+export type SubscriptionTier = 'starter' | 'pro' | 'professional' | 'business' | 'enterprise'
 
 interface FeatureAccessResult {
   hasAccess: boolean

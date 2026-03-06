@@ -57,7 +57,7 @@ export interface Business {
   zip_code?: string // Database uses zip_code, not postal_code
   country?: string
   timezone?: string
-  subscription_tier: 'starter' | 'professional' | 'business' | 'enterprise'
+  subscription_tier: 'starter' | 'pro' | 'professional' | 'business' | 'enterprise'
   subscription_status: 'trial' | 'active' | 'cancelled' | 'past_due' | 'suspended'
   trial_ends_at?: string
   settings?: {
@@ -68,6 +68,16 @@ export interface Business {
     selected_addons?: string[]
     monthly_price?: number
     tech_calendar_count?: number
+  }
+  business_context?: {
+    owner_name?: string
+    address_display?: string
+    hours_summary?: string
+    payment_methods?: string
+    parking_info?: string
+    languages?: string
+    policies?: string
+    special_notes?: string
   }
   created_at: string
   updated_at: string
@@ -1599,11 +1609,33 @@ export const PLAN_TIER_LIMITS: PlanTierLimits = {
     geo_optimization: false, // NO GEO tools
     voice_ai_type: 'shared'
   },
+  pro: {
+    max_locations: 1,
+    payment_processors: ['square', 'stripe'],
+    loyalty_program: true,
+    monthly_price: 199,
+    max_ai_minutes: 1000,
+    max_ai_agents: 5,
+    max_appointments: 500,
+    max_sms: 1000,
+    max_customers: 2000,
+    max_services: 50,
+    max_user_seats: 3,
+    additional_seat_price: 50,
+    additional_location_price: 0,
+    analytics_dashboard: true,
+    marketing_campaigns: true,
+    custom_branding: true,
+    automated_reminders: true,
+    payment_processing: true,
+    geo_optimization: true,
+    voice_ai_type: 'custom' as const,
+  },
   professional: {
     max_locations: 1,
     payment_processors: ['square', 'stripe'],
     loyalty_program: true,
-    monthly_price: 394, // THE MONEY MAKER (doubled)
+    monthly_price: 394, // Legacy
 
     // CAPPED USAGE (Generous but predictable costs)
     max_ai_minutes: 500, // 500 minutes/month (~250 calls)

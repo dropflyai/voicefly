@@ -14,6 +14,8 @@ import {
   ArrowRightOnRectangleIcon,
   ChatBubbleLeftRightIcon,
   CalendarIcon,
+  EnvelopeIcon,
+  ShoppingBagIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -25,7 +27,9 @@ const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Phone Employees', href: '/dashboard/employees', icon: PhoneIcon },
   { name: 'Call Log', href: '/dashboard/voice-ai', icon: PhoneIcon },
-  { name: 'Messages', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon },
+  { name: 'SMS', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon },
+  { name: 'Phone Messages', href: '/dashboard/phone-messages', icon: EnvelopeIcon },
+  { name: 'Orders', href: '/dashboard/orders', icon: ShoppingBagIcon },
   { name: 'Calendar', href: '/dashboard/appointments', icon: CalendarIcon },
   { name: 'Integrations', href: '/dashboard/integrations', icon: PuzzlePieceIcon },
   { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },

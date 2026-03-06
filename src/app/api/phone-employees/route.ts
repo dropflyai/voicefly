@@ -65,6 +65,8 @@ export async function POST(request: NextRequest) {
       personality,
       schedule,
       provisionPhone,
+      phoneMode,
+      areaCode,
     } = body
 
     if (!businessId) {
@@ -126,11 +128,17 @@ export async function POST(request: NextRequest) {
       personality,
       schedule,
       provisionPhone: provisionPhone || false,
+      phoneMode: phoneMode || 'twilio-vapi',
+      areaCode,
     })
+
+    // Extract phoneError if present (phone failed but employee was still created)
+    const { phoneError, ...employeeData } = employee as any
 
     return NextResponse.json({
       success: true,
-      employee,
+      employee: employeeData,
+      phoneError: phoneError || null,
       message: `${jobType} employee "${employee.name}" created successfully`,
     }, { status: 201 })
 

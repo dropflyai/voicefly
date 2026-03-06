@@ -13,6 +13,7 @@ import { createClient } from '@supabase/supabase-js'
 import { messageSystem } from '@/lib/phone-employees/message-system'
 import { taskScheduler } from '@/lib/phone-employees/task-scheduler'
 import { actionExecutor } from '@/lib/phone-employees/action-executor'
+import { employeeProvisioning } from '@/lib/phone-employees'
 import { StripeService } from '@/lib/stripe-service'
 import { GoogleCalendarService } from '@/lib/google-calendar-service'
 import { webhookService } from '@/lib/webhooks/webhook-service'
@@ -33,10 +34,40 @@ import {
   handleCancelAppointment,
 } from '@/lib/phone-employees/appointment-handlers'
 import { sendSms } from '@/lib/sms/twilio-client'
+import {
+  sendMessageNotification,
+  sendAppointmentNotification,
+  sendCallSummaryNotification,
+  sendOrderNotification,
+  getOwnerEmail,
+} from '@/lib/notifications/email-notifications'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+// ============================================
+// TRIAL LIMITS
+// ============================================
+
+const TRIAL_LIMITS = {
+  maxCalls: 10,
+  maxCallDurationSeconds: 300, // 5 minutes
+  trialDays: 14,
+}
+
+// ============================================
+// BUSINESS SUBSCRIPTION HELPERS
+// ============================================
+
+async function isTrialBusiness(businessId: string): Promise<boolean> {
+  const { data } = await supabase
+    .from('businesses')
+    .select('subscription_status')
+    .eq('id', businessId)
+    .single()
+  return data?.subscription_status === 'trial'
+}
 
 // ============================================
 // ORDER STATE HELPERS (Supabase-backed)
@@ -94,6 +125,83 @@ async function upsertActiveOrder(callId: string, businessId: string, employeeId:
   }
 }
 
+/**
+ * Get or create a trial employee for a business.
+ * Used when calls come in via the shared trial assistant.
+ * Looks for any employee using the shared assistant ID, regardless of job type.
+ */
+async function getOrCreateTrialEmployee(businessId: string): Promise<any | null> {
+  const sharedAssistantId = process.env.VAPI_SHARED_ASSISTANT_ID || ''
+
+  // Find existing employee using the shared assistant
+  const { data: existing } = await supabase
+    .from('phone_employees')
+    .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
+    .eq('business_id', businessId)
+    .eq('vapi_assistant_id', sharedAssistantId)
+    .limit(1)
+    .single()
+
+  if (existing) {
+    return existing
+  }
+
+  // Fallback: create a default receptionist trial employee
+  const { data: business } = await supabase
+    .from('businesses')
+    .select('name')
+    .eq('id', businessId)
+    .single()
+
+  const businessName = business?.name || 'the business'
+
+  const { data: newEmployee, error } = await supabase
+    .from('phone_employees')
+    .insert({
+      business_id: businessId,
+      name: 'Trial Receptionist',
+      job_type: 'receptionist',
+      is_active: true,
+      vapi_assistant_id: sharedAssistantId,
+      job_config: {
+        type: 'receptionist',
+        greeting: `Thank you for calling ${businessName}! How can I help you today?`,
+        businessDescription: businessName,
+        transferRules: [],
+        messagePrompt: "I'd be happy to take a message. Can I get your name?",
+        messageFields: ['name', 'phone', 'reason', 'urgency'],
+        faqs: [],
+        services: [],
+      },
+      personality: { tone: 'warm', enthusiasm: 'medium', formality: 'semi-formal' },
+      voice: { provider: '11labs', voiceId: 'EXAVITQu4vr4xnSDxMaL', speed: 1.0, stability: 0.5 },
+      schedule: {
+        timezone: 'America/New_York',
+        businessHours: {
+          monday: { start: '00:00', end: '23:59' },
+          tuesday: { start: '00:00', end: '23:59' },
+          wednesday: { start: '00:00', end: '23:59' },
+          thursday: { start: '00:00', end: '23:59' },
+          friday: { start: '00:00', end: '23:59' },
+          saturday: { start: '00:00', end: '23:59' },
+          sunday: { start: '00:00', end: '23:59' },
+        },
+      },
+      // Trial capabilities — no transfer_to_human or send_sms (paid features)
+      capabilities: ['answer_calls', 'take_messages', 'provide_business_info', 'answer_faqs', 'book_appointments', 'check_availability', 'capture_lead_info', 'log_interactions'],
+      provisioning_status: 'active',
+    })
+    .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
+    .single()
+
+  if (error) {
+    console.error('[getOrCreateTrialEmployee] Insert failed:', error)
+    return null
+  }
+
+  return newEmployee
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -105,6 +213,52 @@ export async function POST(request: NextRequest) {
     const metadataBusinessId = message?.call?.assistant?.metadata?.businessId
 
     const lookupId = secretHeader || metadataEmployeeId
+
+    // Check if this call is from the shared trial assistant
+    const assistantId = message?.call?.assistantId || message?.call?.assistant?.id
+    const sharedAssistantId = process.env.VAPI_SHARED_ASSISTANT_ID
+
+    if (sharedAssistantId && assistantId === sharedAssistantId) {
+      const trialBusinessId = message?.call?.assistant?.metadata?.businessId || metadataBusinessId
+      if (!trialBusinessId) {
+        console.warn('[PhoneEmployeeWebhook] Shared trial assistant call with no businessId in metadata')
+        return NextResponse.json({ error: 'Business ID required for trial calls' }, { status: 400 })
+      }
+
+      console.log(`[PhoneEmployeeWebhook] Shared trial assistant call for business ${trialBusinessId}`)
+
+      const trialEmployee = await getOrCreateTrialEmployee(trialBusinessId)
+      if (!trialEmployee) {
+        console.error('[PhoneEmployeeWebhook] Failed to get/create trial employee for', trialBusinessId)
+        return NextResponse.json({ error: 'Failed to initialize trial employee' }, { status: 500 })
+      }
+
+      const businessId = trialBusinessId
+
+      console.log(`[PhoneEmployeeWebhook] Received ${message?.type} for trial employee ${trialEmployee.name}`)
+
+      // Handle message types using existing handlers
+      switch (message?.type) {
+        case 'function-call':
+          return handleFunctionCall(message, trialEmployee, businessId)
+        case 'tool-calls':
+          return handleToolCalls(message, trialEmployee, businessId)
+        case 'status-update':
+          return handleStatusUpdate(message, trialEmployee, businessId)
+        case 'transcript':
+          return handleTranscript(message, trialEmployee, businessId)
+        case 'end-of-call-report':
+        case 'hang':
+          return handleCallEnd(message, trialEmployee, businessId)
+        case 'conversation-update':
+          return NextResponse.json({ received: true })
+        case 'assistant-request':
+          return handleAssistantRequest(trialEmployee)
+        default:
+          console.log(`[PhoneEmployeeWebhook] Unhandled message type: ${message?.type}`)
+          return NextResponse.json({ received: true })
+      }
+    }
 
     if (!lookupId && !metadataBusinessId) {
       console.warn('[PhoneEmployeeWebhook] No employee or business ID found')
@@ -118,7 +272,7 @@ export async function POST(request: NextRequest) {
     if (lookupId) {
       const { data } = await supabase
         .from('phone_employees')
-        .select('*, businesses(name, phone, email, settings)')
+        .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
         .eq('id', lookupId)
         .single()
       employee = data
@@ -127,7 +281,7 @@ export async function POST(request: NextRequest) {
       if (!employee) {
         const { data: byBusiness } = await supabase
           .from('phone_employees')
-          .select('*, businesses(name, phone, email, settings)')
+          .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
           .eq('business_id', lookupId)
           .eq('is_active', true)
           .order('created_at', { ascending: false })
@@ -140,7 +294,7 @@ export async function POST(request: NextRequest) {
     if (!employee && metadataBusinessId) {
       const { data: byBusiness } = await supabase
         .from('phone_employees')
-        .select('*, businesses(name, phone, email, settings)')
+        .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
         .eq('business_id', metadataBusinessId)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
@@ -204,6 +358,7 @@ async function handleFunctionCall(
 ): Promise<NextResponse> {
   const functionCall = message.functionCall
   const callId = message.call?.id
+  const callerNumber = message.call?.customer?.number
 
   console.log(`[PhoneEmployeeWebhook] Function call: ${functionCall?.name}`)
 
@@ -213,9 +368,16 @@ async function handleFunctionCall(
     switch (functionCall?.name) {
       // === RECEPTIONIST FUNCTIONS ===
       case 'scheduleAppointment':
-      case 'bookAppointment':
-        result = await handleScheduleAppointment(functionCall.parameters, businessId, employee.id)
+      case 'bookAppointment': {
+        // Inject caller phone if AI didn't collect it
+        const apptParams = { ...functionCall.parameters }
+        if (!apptParams.customerPhone && !apptParams.phone && callerNumber) {
+          apptParams.customerPhone = callerNumber
+        }
+        const isTrialEmp = await isTrialBusiness(businessId)
+        result = await handleScheduleAppointment(apptParams, businessId, employee.id, { isTrial: isTrialEmp })
         break
+      }
 
       case 'checkAvailability':
         result = await handleCheckAvailability(functionCall.parameters, businessId, employee)
@@ -454,6 +616,7 @@ async function handleToolCalls(
   businessId: string
 ): Promise<NextResponse> {
   const callId = message.call?.id
+  const callerNumber = message.call?.customer?.number
 
   // Log raw structure to debug VAPI payload format
   console.log(`[PhoneEmployeeWebhook] tool-calls raw keys:`, {
@@ -496,9 +659,16 @@ async function handleToolCalls(
 
       switch (functionName) {
         case 'scheduleAppointment':
-        case 'bookAppointment':
-          result = await handleScheduleAppointment(parameters, businessId, employee.id)
+        case 'bookAppointment': {
+          // Inject caller phone if AI didn't collect it
+          const apptParams = { ...parameters }
+          if (!apptParams.customerPhone && !apptParams.phone && callerNumber) {
+            apptParams.customerPhone = callerNumber
+          }
+          const isTrialToolCall = await isTrialBusiness(businessId)
+          result = await handleScheduleAppointment(apptParams, businessId, employee.id, { isTrial: isTrialToolCall })
           break
+        }
 
         case 'checkAvailability':
           result = await handleCheckAvailability(parameters, businessId, employee)
@@ -760,14 +930,33 @@ async function handleTakeMessage(params: any, businessId: string, employeeId: st
     callbackRequested: params.callbackRequested,
   }).catch(err => console.error('[Automation] message_received error:', err))
 
-  // Notify business owner
-  const urgencyLabel = params.urgency === 'urgent' || params.urgency === 'high' ? ' [URGENT]' : ''
-  const forLabel = params.forPerson ? ` for ${params.forPerson}` : ''
-  notifyBusinessOwner(
-    businessId,
-    employeeId,
-    `${urgencyLabel}New message${forLabel} from ${params.callerName} (${params.callerPhone}): "${params.message}"${params.callbackRequested ? ' — callback requested.' : ''}`
-  ).catch(err => console.error('[TakeMessage] owner notify error:', err))
+  // Notify business owner — email for trial, SMS for paid
+  const isTrial = await isTrialBusiness(businessId)
+  if (isTrial) {
+    const ownerEmail = await getOwnerEmail(businessId)
+    const { data: biz } = await supabase.from('businesses').select('name').eq('id', businessId).single()
+    if (ownerEmail) {
+      sendMessageNotification({
+        businessId,
+        ownerEmail,
+        businessName: biz?.name || 'Your Business',
+        callerName: params.callerName || 'Unknown',
+        callerPhone: params.callerPhone || '',
+        message: params.message || '',
+        urgency: params.urgency || 'normal',
+        forPerson: params.forPerson,
+        callbackRequested: params.callbackRequested,
+      }).catch(err => console.error('[TakeMessage] email notify error:', err))
+    }
+  } else {
+    const urgencyLabel = params.urgency === 'urgent' || params.urgency === 'high' ? ' [URGENT]' : ''
+    const forLabel = params.forPerson ? ` for ${params.forPerson}` : ''
+    notifyBusinessOwner(
+      businessId,
+      employeeId,
+      `${urgencyLabel}New message${forLabel} from ${params.callerName} (${params.callerPhone}): "${params.message}"${params.callbackRequested ? ' — callback requested.' : ''}`
+    ).catch(err => console.error('[TakeMessage] owner notify error:', err))
+  }
 
   return {
     success: true,
@@ -2501,10 +2690,28 @@ async function notifyBusinessOwner(businessId: string, employeeId: string, messa
   try {
     const { data: business } = await supabase
       .from('businesses')
-      .select('phone, settings')
+      .select('name, phone, settings, subscription_status')
       .eq('id', businessId)
       .single()
 
+    // Trial businesses get email notifications (SMS is a paid feature)
+    if (business?.subscription_status === 'trial') {
+      const ownerEmail = await getOwnerEmail(businessId)
+      if (ownerEmail) {
+        sendMessageNotification({
+          businessId,
+          ownerEmail,
+          businessName: business.name || 'Your Business',
+          callerName: 'Caller',
+          callerPhone: '',
+          message,
+          urgency: 'normal',
+        }).catch(err => console.error('[notifyBusinessOwner] email error:', err))
+      }
+      return
+    }
+
+    // Paid businesses get SMS notifications
     const ownerPhone = business?.settings?.owner_phone || business?.phone
     if (!ownerPhone) return
 
@@ -2773,33 +2980,54 @@ async function handleCallEnd(message: any, employee: any, businessId: string) {
   // Update employee metrics
   await updateEmployeeMetrics(employee.id, businessId)
 
-  // --- Deduct credits based on call duration ---
+  // Check subscription to determine trial vs paid (Starter/Pro)
+  const isTrialCall = await isTrialBusiness(businessId)
   const durationSeconds = calculatedDuration || 0
-  if (durationSeconds > 0) {
-    const durationMinutes = Math.ceil(durationSeconds / 60) // Round up to nearest minute
-    const isOutbound = message.call?.type === 'outboundPhoneCall' ||
-      message.type === 'outboundPhoneCall'
-    const costPerMinute = isOutbound ? CreditCost.VOICE_CALL_OUTBOUND : CreditCost.VOICE_CALL_INBOUND
-    const totalCredits = durationMinutes * costPerMinute
 
-    CreditSystem.deductCredits(
-      businessId,
-      totalCredits,
-      isOutbound ? 'voice_call_outbound' : 'voice_call_inbound',
-      {
-        callId,
-        durationSeconds,
-        durationMinutes,
-        employeeId: employee.id,
-        costPerMinute,
-      }
-    ).then(result => {
-      if (!result.success) {
-        console.warn(`[Credits] Deduction failed for call ${callId}: ${result.error}`)
-      } else {
-        console.log(`[Credits] Deducted ${totalCredits} credits (${durationMinutes} min) for business ${businessId}. Remaining: ${result.balance?.total_credits}`)
-      }
-    }).catch(err => console.error('[Credits] Deduction error:', err))
+  if (durationSeconds > 0) {
+    // Send call summary email for all tiers
+    const ownerEmail = await getOwnerEmail(businessId)
+    const { data: biz } = await supabase.from('businesses').select('name').eq('id', businessId).single()
+    if (ownerEmail) {
+      sendCallSummaryNotification({
+        businessId,
+        ownerEmail,
+        businessName: biz?.name || 'Your Business',
+        callerPhone: message.customer?.number || message.call?.customer?.number,
+        duration: durationSeconds,
+        summary: summary || undefined,
+        employeeName: employee.name || 'AI Assistant',
+        jobType: employee.job_type || 'receptionist',
+      }).catch(err => console.error('[CallSummaryEmail] error:', err))
+    }
+
+    // Paid tiers (Starter + Pro): deduct credits
+    if (!isTrialCall) {
+      const durationMinutes = Math.ceil(durationSeconds / 60)
+      const isOutbound = message.call?.type === 'outboundPhoneCall' ||
+        message.type === 'outboundPhoneCall'
+      const costPerMinute = isOutbound ? CreditCost.VOICE_CALL_OUTBOUND : CreditCost.VOICE_CALL_INBOUND
+      const totalCredits = durationMinutes * costPerMinute
+
+      CreditSystem.deductCredits(
+        businessId,
+        totalCredits,
+        isOutbound ? 'voice_call_outbound' : 'voice_call_inbound',
+        {
+          callId,
+          durationSeconds,
+          durationMinutes,
+          employeeId: employee.id,
+          costPerMinute,
+        }
+      ).then(result => {
+        if (!result.success) {
+          console.warn(`[Credits] Deduction failed for call ${callId}: ${result.error}`)
+        } else {
+          console.log(`[Credits] Deducted ${totalCredits} credits (${durationMinutes} min) for business ${businessId}. Remaining: ${result.balance?.total_credits}`)
+        }
+      }).catch(err => console.error('[Credits] Deduction error:', err))
+    }
   }
 
   // --- Integration hooks (fire-and-forget) ---
@@ -3121,11 +3349,189 @@ async function handleLookupCaller(params: any, businessId: string, employee: any
 // ASSISTANT REQUEST HANDLER
 // ============================================
 
-function handleAssistantRequest(employee: any) {
-  // Return the VAPI assistant ID if available
+async function getBusinessHoursContext(businessId: string, timezone: string): Promise<string> {
+  const { data: hours } = await supabase
+    .from('business_hours')
+    .select('day_of_week, open_time, close_time, is_closed')
+    .eq('business_id', businessId)
+
+  if (!hours || hours.length === 0) return ''
+
+  const tz = timezone || 'America/Los_Angeles'
+  const now = new Date()
+  // Get local time in the business timezone
+  const localStr = now.toLocaleString('en-US', { timeZone: tz, hour12: false })
+  const localDate = new Date(localStr)
+  const dayOfWeek = localDate.getDay() // 0=Sunday
+  const currentHour = localDate.getHours()
+  const currentMinute = localDate.getMinutes()
+  const currentTime = `${currentHour.toString().padStart(2, '0')}:${currentMinute.toString().padStart(2, '0')}`
+
+  const todayHours = hours.find(h => h.day_of_week === dayOfWeek)
+
+  let isOpen = false
+  if (todayHours && !todayHours.is_closed && todayHours.open_time && todayHours.close_time) {
+    const openTime = todayHours.open_time.slice(0, 5)
+    const closeTime = todayHours.close_time.slice(0, 5)
+    isOpen = currentTime >= openTime && currentTime < closeTime
+  }
+
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+  const dayName = dayNames[dayOfWeek]
+  const formatTime12 = (t: string) => {
+    const [h, m] = t.slice(0, 5).split(':').map(Number)
+    const suffix = h >= 12 ? 'PM' : 'AM'
+    const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h
+    return m === 0 ? `${hour12} ${suffix}` : `${hour12}:${m.toString().padStart(2, '0')} ${suffix}`
+  }
+
+  let nextOpenInfo = ''
+  if (!isOpen) {
+    // Find the next opening time
+    for (let offset = 0; offset <= 7; offset++) {
+      const checkDay = (dayOfWeek + (offset === 0 ? 1 : offset)) % 7
+      if (offset === 0) {
+        // Check if business opens later today
+        if (todayHours && !todayHours.is_closed && todayHours.open_time) {
+          const openTime = todayHours.open_time.slice(0, 5)
+          if (currentTime < openTime) {
+            nextOpenInfo = `The business opens today at ${formatTime12(todayHours.open_time)}.`
+            break
+          }
+        }
+        continue
+      }
+      const nextDayHours = hours.find(h => h.day_of_week === checkDay)
+      if (nextDayHours && !nextDayHours.is_closed && nextDayHours.open_time) {
+        const nextDayName = dayNames[checkDay]
+        nextOpenInfo = `The business next opens on ${nextDayName} at ${formatTime12(nextDayHours.open_time)}.`
+        break
+      }
+    }
+  }
+
+  const timeStr = formatTime12(currentTime + ':00')
+
+  let context = `\n\n## Current Status\nIt is currently ${timeStr} on ${dayName} (${tz.replace('_', ' ')}).`
+  if (isOpen) {
+    context += ` The business is currently OPEN.`
+    if (todayHours?.close_time) {
+      context += ` Closing time today is ${formatTime12(todayHours.close_time)}.`
+    }
+  } else {
+    context += ` The business is currently CLOSED.`
+    if (nextOpenInfo) context += ` ${nextOpenInfo}`
+    context += `\nWhen the business is closed, adjust your behavior:\n- Mention that the business is currently closed and when it reopens\n- Proactively offer to take a message or schedule a callback\n- Still answer general questions about the business (hours, location, services)`
+  }
+
+  return context
+}
+
+async function handleAssistantRequest(employee: any) {
+  const businessName = employee.businesses?.name || 'the business'
+  const sharedAssistantId = process.env.VAPI_SHARED_ASSISTANT_ID
+  const isSharedAssistant = !employee.vapi_assistant_id
+    || employee.vapi_assistant_id === sharedAssistantId
+
+  if (isSharedAssistant) {
+    // Shared assistant — could be Trial or Starter. Check subscription.
+    const { data: business } = await supabase
+      .from('businesses')
+      .select('subscription_status, subscription_tier')
+      .eq('id', employee.business_id)
+      .single()
+
+    const isTrial = business?.subscription_status === 'trial'
+
+    if (isTrial) {
+      // Trial: enforce call count limits
+      const { count } = await supabase
+        .from('employee_calls')
+        .select('*', { count: 'exact', head: true })
+        .eq('business_id', employee.business_id)
+
+      const callCount = count || 0
+
+      if (callCount >= TRIAL_LIMITS.maxCalls) {
+        console.log(`[handleAssistantRequest] Trial limit reached for business ${employee.business_id} (${callCount}/${TRIAL_LIMITS.maxCalls})`)
+        return NextResponse.json({
+          assistant: {
+            model: {
+              provider: 'openai',
+              model: 'gpt-4o-mini',
+              messages: [{
+                role: 'system',
+                content: `You are an automated message system. The business "${businessName}" has reached their free trial limit. Politely tell the caller: "Thank you for calling ${businessName}. Our AI assistant is currently unavailable. Please call the business directly or visit their website." Then end the call. Do not engage in conversation.`,
+              }],
+            },
+            voice: {
+              provider: '11labs',
+              voiceId: 'EXAVITQu4vr4xnSDxMaL',
+              model: 'eleven_flash_v2_5',
+              stability: 0.5,
+              similarityBoost: 0.75,
+            },
+            firstMessage: `Thank you for calling ${businessName}. Our AI assistant is currently unavailable. Please call the business directly or visit their website. Goodbye.`,
+            maxDurationSeconds: 30,
+            metadata: {
+              businessId: employee.business_id,
+              trialLimitReached: true,
+            },
+          },
+        })
+      }
+
+      const config = employeeProvisioning.buildAssistantConfig(employee, businessName)
+      // Inject business hours awareness
+      const hoursContext = await getBusinessHoursContext(employee.business_id, employee.businesses?.timezone)
+      if (hoursContext && config.model?.messages?.[0]?.content) {
+        config.model.messages[0].content += hoursContext
+      }
+      console.log(`[handleAssistantRequest] Trial config for ${employee.id} (${employee.job_type}) - ${businessName} [call ${callCount + 1}/${TRIAL_LIMITS.maxCalls}]`)
+      return NextResponse.json({
+        assistant: {
+          ...config,
+          name: `${businessName} Trial Assistant`,
+          maxDurationSeconds: TRIAL_LIMITS.maxCallDurationSeconds,
+          serverUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.voiceflyai.com'}/api/webhooks/phone-employee`,
+          metadata: {
+            employeeId: employee.id,
+            businessId: employee.business_id,
+            jobType: employee.job_type,
+            isTrial: true,
+          },
+        },
+      })
+    }
+
+    // Starter: shared assistant with no call count limit, standard duration
+    const config = employeeProvisioning.buildAssistantConfig(employee, businessName)
+    // Inject business hours awareness
+    const hoursContext = await getBusinessHoursContext(employee.business_id, employee.businesses?.timezone)
+    if (hoursContext && config.model?.messages?.[0]?.content) {
+      config.model.messages[0].content += hoursContext
+    }
+    console.log(`[handleAssistantRequest] Starter config for ${employee.id} (${employee.job_type}) - ${businessName}`)
+    return NextResponse.json({
+      assistant: {
+        ...config,
+        name: `${businessName} AI Assistant`,
+        serverUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.voiceflyai.com'}/api/webhooks/phone-employee`,
+        metadata: {
+          employeeId: employee.id,
+          businessId: employee.business_id,
+          jobType: employee.job_type,
+          isStarter: true,
+        },
+      },
+    })
+  }
+
+  // Pro: return dedicated VAPI assistant reference
   if (employee.vapi_assistant_id) {
     return NextResponse.json({ assistantId: employee.vapi_assistant_id })
   }
+
   return NextResponse.json({ received: true })
 }
 

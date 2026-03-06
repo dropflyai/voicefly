@@ -15,10 +15,10 @@ import { EmployeeConfig, AppointmentSchedulerConfig, DEFAULT_CAPABILITIES_BY_JOB
 // SYSTEM PROMPT GENERATOR
 // ============================================
 
-export function generateAppointmentSchedulerPrompt(config: EmployeeConfig, jobConfig: AppointmentSchedulerConfig): string {
-  const businessName = jobConfig.businessDescription?.split('.')[0] || 'the business'
+export function generateAppointmentSchedulerPrompt(config: EmployeeConfig, jobConfig: AppointmentSchedulerConfig, businessName?: string): string {
+  const name = businessName || jobConfig.businessDescription?.split('.')[0] || 'the business'
 
-  return `You are ${config.name}, a professional and friendly appointment scheduler for ${businessName}.
+  return `You are ${config.name}, a professional and friendly appointment scheduler for ${name}.
 
 ## Your Role
 You are the dedicated booking specialist. Your job is to:
@@ -76,7 +76,7 @@ You can use these functions:
 - captureLeadInfo: Record contact information for a caller not ready to book
 - transferCall: Transfer to a staff member when the caller needs personal help
 
-Remember: You represent ${businessName}. Make every caller feel confident their appointment is in good hands.`
+Remember: You represent ${name}. Make every caller feel confident their appointment is in good hands.`
 }
 
 function generateCapabilitiesSection(config: EmployeeConfig, jobConfig: AppointmentSchedulerConfig): string {

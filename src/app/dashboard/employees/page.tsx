@@ -32,6 +32,7 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
 import VoiceInterview from '../../../components/VoiceInterview'
+import VoicePicker from '../../../components/VoicePicker'
 import { formatDistanceToNow } from 'date-fns'
 
 interface PhoneEmployee {
@@ -40,6 +41,9 @@ interface PhoneEmployee {
   jobType: string
   isActive: boolean
   phoneNumber?: string
+  phoneProvider?: string
+  provisioningStatus?: 'pending' | 'provisioning' | 'active' | 'failed' | 'no_phone'
+  provisioningError?: string | null
   personality: {
     tone: string
     enthusiasm: string
@@ -114,6 +118,12 @@ const JOB_TYPE_INFO: Record<string, { label: string; icon: any; color: string; d
     color: 'rose',
     description: 'Outbound payment collection with FDCPA-compliant scripts',
   },
+  'trial-receptionist': {
+    label: 'Trial Receptionist',
+    icon: PhoneIcon,
+    color: 'yellow',
+    description: 'Shared AI receptionist that takes messages during your trial',
+  },
 }
 
 const TONE_OPTIONS = [
@@ -140,230 +150,16 @@ const TIMEZONE_OPTIONS = [
   'Australia/Perth', 'Pacific/Auckland', 'Pacific/Fiji',
 ]
 
-// ============================================
-// VOICE PICKER COMPONENT
-// ============================================
-
-interface VoiceItem {
-  voiceId: string
-  name: string
-  gender: string | null
-  age: string | null
-  accent: string | null
-  description: string | null
-  previewUrl: string | null
-}
-
-function VoicePicker({
-  voiceId,
-  voiceName,
-  voicePreviewUrl,
-  onSelect,
-}: {
-  voiceId: string
-  voiceName: string
-  voicePreviewUrl: string | null
-  onSelect: (v: { voiceId: string; voiceName: string; voicePreviewUrl: string | null }) => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [voices, setVoices] = useState<VoiceItem[]>([])
-  const [search, setSearch] = useState('')
-  const [gender, setGender] = useState<'all' | 'male' | 'female'>('all')
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [playingId, setPlayingId] = useState<string | null>(null)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  const fetchVoices = useCallback(async (searchTerm: string, genderFilter: string, pg: number, append = false) => {
-    setLoading(true)
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token ?? ''
-      const params = new URLSearchParams({ page: String(pg), limit: '16' })
-      if (searchTerm) params.set('search', searchTerm)
-      if (genderFilter !== 'all') params.set('gender', genderFilter)
-
-      const res = await fetch(`/api/voices?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) return
-      const data = await res.json()
-      setVoices(prev => append ? [...prev, ...data.voices] : data.voices)
-      setHasMore(data.hasMore ?? false)
-    } catch {}
-    finally { setLoading(false) }
-  }, [])
-
-  useEffect(() => {
-    if (!open) return
-    if (voices.length === 0) fetchVoices('', 'all', 1)
-  }, [open, fetchVoices, voices.length])
-
-  const handleSearch = (val: string) => {
-    setSearch(val)
-    if (searchTimer.current) clearTimeout(searchTimer.current)
-    searchTimer.current = setTimeout(() => {
-      setPage(1)
-      fetchVoices(val, gender, 1)
-    }, 300)
-  }
-
-  const handleGender = (g: 'all' | 'male' | 'female') => {
-    setGender(g)
-    setPage(1)
-    fetchVoices(search, g, 1)
-  }
-
-  const handleLoadMore = () => {
-    const next = page + 1
-    setPage(next)
-    fetchVoices(search, gender, next, true)
-  }
-
-  const playPreview = (v: VoiceItem, e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (!v.previewUrl) return
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null }
-    if (playingId === v.voiceId) { setPlayingId(null); return }
-    const audio = new Audio(v.previewUrl)
-    audioRef.current = audio
-    setPlayingId(v.voiceId)
-    audio.play()
-    audio.onended = () => setPlayingId(null)
-  }
-
-  const selectVoice = (v: VoiceItem) => {
-    onSelect({ voiceId: v.voiceId, voiceName: v.name, voicePreviewUrl: v.previewUrl })
-    setOpen(false)
-    if (audioRef.current) { audioRef.current.pause(); setPlayingId(null) }
-  }
-
-  return (
-    <div>
-      {/* Selected voice chip */}
-      <div className="flex items-center gap-3 mb-2">
-        <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg flex-1 min-w-0">
-          <span className="text-sm font-medium text-blue-900 truncate">{voiceName || 'No voice selected'}</span>
-          {voicePreviewUrl && (
-            <button
-              type="button"
-              onClick={() => {
-                if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; setPlayingId(null); return }
-                const audio = new Audio(voicePreviewUrl)
-                audioRef.current = audio
-                setPlayingId('selected')
-                audio.play()
-                audio.onended = () => setPlayingId(null)
-              }}
-              className="text-blue-600 hover:text-blue-800 flex-shrink-0 text-xs"
-            >
-              {playingId === 'selected' ? '⏹' : '▶ Preview'}
-            </button>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => setOpen(!open)}
-          className="px-3 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex-shrink-0"
-        >
-          {open ? 'Close' : 'Browse voices'}
-        </button>
-      </div>
-
-      {/* Browser panel */}
-      {open && (
-        <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
-          {/* Filters */}
-          <div className="p-3 border-b border-gray-100 space-y-2">
-            <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                value={search}
-                onChange={e => handleSearch(e.target.value)}
-                placeholder="Search voices..."
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <div className="flex gap-2">
-              {(['all', 'female', 'male'] as const).map(g => (
-                <button
-                  key={g}
-                  type="button"
-                  onClick={() => handleGender(g)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium capitalize transition-colors ${
-                    gender === g ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {g}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Voice grid */}
-          <div className="max-h-72 overflow-y-auto p-2">
-            {loading && voices.length === 0 ? (
-              <div className="text-center py-8 text-sm text-gray-500">Loading voices...</div>
-            ) : voices.length === 0 ? (
-              <div className="text-center py-8 text-sm text-gray-500">No voices found</div>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {voices.map(v => (
-                  <button
-                    key={v.voiceId}
-                    type="button"
-                    onClick={() => selectVoice(v)}
-                    className={`text-left p-2 rounded-lg border transition-all ${
-                      voiceId === v.voiceId
-                        ? 'border-blue-400 bg-blue-50'
-                        : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-1">
-                      <span className="text-sm font-medium text-gray-900 truncate">{v.name}</span>
-                      {v.previewUrl && (
-                        <button
-                          type="button"
-                          onClick={e => playPreview(v, e)}
-                          className="text-blue-500 hover:text-blue-700 flex-shrink-0 text-xs mt-0.5"
-                        >
-                          {playingId === v.voiceId ? '⏹' : '▶'}
-                        </button>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {v.gender && (
-                        <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded capitalize">{v.gender}</span>
-                      )}
-                      {v.accent && (
-                        <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded capitalize">{v.accent}</span>
-                      )}
-                      {v.age && (
-                        <span className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded capitalize">{v.age}</span>
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-            {hasMore && (
-              <button
-                type="button"
-                onClick={handleLoadMore}
-                disabled={loading}
-                className="w-full mt-2 py-2 text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50"
-              >
-                {loading ? 'Loading...' : 'Load more voices'}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  )
+function friendlyProvisioningError(error: string | null | undefined): string {
+  if (!error) return 'Phone setup failed'
+  if (error.includes('No available Twilio phone numbers')) return 'No numbers available in that area code'
+  if (error.includes('VAPI import failed')) return 'Voice setup failed — retry to try again'
+  if (error.includes('Twilio credentials not configured')) return 'SMS requires platform setup — contact support'
+  if (error.includes('VAPI API key not configured')) return 'Voice platform not configured — contact support'
+  if (error.includes('already has a phone number')) return 'Phone already assigned'
+  if (error.includes('no VAPI assistant')) return 'Voice assistant missing — recreate employee'
+  if (error.length > 60) return error.slice(0, 57) + '...'
+  return error
 }
 
 const DAYS_OF_WEEK = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
@@ -402,6 +198,7 @@ const INTEGRATIONS_BY_JOB: Record<string, string[]> = {
   'survey-caller':          [],
   'collections':            ['stripe'],
   'after-hours-emergency':  [],
+  'trial-receptionist':     [],
 }
 
 const VOICEFLY_BUILTIN: Record<string, { name: string; description: string }> = {
@@ -416,6 +213,7 @@ const VOICEFLY_BUILTIN: Record<string, { name: string; description: string }> = 
   'survey-caller':          { name: 'VoiceFly Built-in',     description: 'Uses your VoiceFly appointment history — no setup needed' },
   'collections':            { name: 'VoiceFly Receivables',  description: 'Manage accounts receivable directly in VoiceFly' },
   'after-hours-emergency':  { name: 'VoiceFly Built-in',     description: 'No external integrations needed for this employee type' },
+  'trial-receptionist':     { name: 'VoiceFly Trial',        description: 'Shared trial receptionist -- upgrade for full features' },
 }
 
 interface IntegrationFieldDef {
@@ -2559,6 +2357,8 @@ function WizardStep4({
   setPhoneStep,
   onProvisionPhone,
   isTrial,
+  createdEmployeeId,
+  onTrainEmployee,
 }: {
   wizardData: WizardData
   isCreating: boolean
@@ -2576,6 +2376,8 @@ function WizardStep4({
   isTrial: boolean
   setPhoneStep: React.Dispatch<React.SetStateAction<any>>
   onProvisionPhone: () => void
+  createdEmployeeId?: string | null
+  onTrainEmployee?: () => void
 }) {
   const jobInfo = JOB_TYPE_INFO[wizardData.jobType] || JOB_TYPE_INFO['receptionist']
   const Icon = jobInfo.icon
@@ -2601,8 +2403,8 @@ function WizardStep4({
           </p>
         </div>
 
-        {/* Phone provisioning section */}
-        {phoneStep.status === 'done' ? (
+        {/* Phone result */}
+        {phoneStep.provisionedNumber ? (
           <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
             <CheckIcon className="h-5 w-5 text-green-600 flex-shrink-0" />
             <div>
@@ -2610,99 +2412,29 @@ function WizardStep4({
               <p className="text-sm text-green-700">{phoneStep.provisionedNumber}</p>
             </div>
           </div>
-        ) : phoneStep.status === 'choosing' ? (
-          <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-            <div className="flex items-center justify-between">
+        ) : phoneStep.error ? (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="flex items-start gap-2">
+              <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Add a dedicated phone number?</p>
-                <p className="text-xs text-gray-500 mt-0.5">Customers can call this employee directly</p>
+                <p className="text-sm font-medium text-amber-800">Phone setup needs attention</p>
+                <p className="text-xs text-amber-700 mt-1">{friendlyProvisioningError(phoneStep.error)}</p>
+                <p className="text-xs text-gray-500 mt-1">You can retry from the employee card on the main page.</p>
               </div>
-              <button
-                type="button"
-                onClick={() => setPhoneStep((prev: any) => ({ ...prev, wantsPhone: !prev.wantsPhone }))}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  phoneStep.wantsPhone ? 'bg-blue-600' : 'bg-gray-200'
-                }`}
-              >
-                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  phoneStep.wantsPhone ? 'translate-x-6' : 'translate-x-1'
-                }`} />
-              </button>
             </div>
-
-            {phoneStep.wantsPhone && (
-              <div className="space-y-3">
-                {isTrial ? (
-                  <div>
-                    <div className="p-3 rounded-lg border border-blue-400 bg-blue-50">
-                      <p className="text-sm font-medium text-gray-900">Calls only (Trial)</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Voice calls included during trial. Upgrade to add SMS conversations.</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-xs font-medium text-gray-700 mb-2">Phone type</p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'twilio-vapi' }))}
-                        className={`p-3 rounded-lg border text-left transition-all ${
-                          phoneStep.phoneMode === 'twilio-vapi'
-                            ? 'border-blue-400 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <p className="text-sm font-medium text-gray-900">Calls + SMS (Recommended)</p>
-                        <p className="text-xs text-gray-500 mt-0.5">AI answers calls and texts customers</p>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'vapi-only' }))}
-                        className={`p-3 rounded-lg border text-left transition-all ${
-                          phoneStep.phoneMode === 'vapi-only'
-                            ? 'border-blue-400 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <p className="text-sm font-medium text-gray-900">Calls only</p>
-                        <p className="text-xs text-gray-500 mt-0.5">Voice calls only, no SMS</p>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-xs font-medium text-gray-700">Area code (optional)</label>
-                  <input
-                    type="text"
-                    value={phoneStep.areaCode}
-                    onChange={e => setPhoneStep((prev: any) => ({ ...prev, areaCode: e.target.value.replace(/\D/g, '').slice(0, 3) }))}
-                    placeholder="e.g. 415"
-                    className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    maxLength={3}
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={onProvisionPhone}
-                  disabled={(phoneStep.status as string) === 'provisioning'}
-                  className="w-full py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {(phoneStep.status as string) === 'provisioning' ? (
-                    <><div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Purchasing number...</>
-                  ) : (
-                    <><PhoneIcon className="h-4 w-4" /> Provision Number</>
-                  )}
-                </button>
-
-                {phoneStep.error && (
-                  <p className="text-xs text-red-600">{phoneStep.error}</p>
-                )}
-              </div>
-            )}
           </div>
         ) : null}
+
+        {/* Train button */}
+        {onTrainEmployee && (
+          <button
+            onClick={onTrainEmployee}
+            className="w-full py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <SparklesIcon className="h-4 w-4" />
+            Train Your Employee
+          </button>
+        )}
       </div>
     )
   }
@@ -2766,6 +2498,80 @@ function WizardStep4({
         </div>
       </div>
 
+      {/* Phone provisioning options (before creation) */}
+      <div className="border border-gray-200 rounded-lg p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-900">Add a dedicated phone number?</p>
+            <p className="text-xs text-gray-500 mt-0.5">Customers can call this employee directly</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPhoneStep((prev: any) => ({ ...prev, wantsPhone: !prev.wantsPhone }))}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              phoneStep.wantsPhone ? 'bg-blue-600' : 'bg-gray-200'
+            }`}
+          >
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              phoneStep.wantsPhone ? 'translate-x-6' : 'translate-x-1'
+            }`} />
+          </button>
+        </div>
+
+        {phoneStep.wantsPhone && (
+          <div className="space-y-3">
+            {isTrial ? (
+              <div className="p-3 rounded-lg border border-blue-400 bg-blue-50">
+                <p className="text-sm font-medium text-gray-900">Calls only (Trial)</p>
+                <p className="text-xs text-gray-500 mt-0.5">Voice calls included during trial. Upgrade to add SMS conversations.</p>
+              </div>
+            ) : (
+              <div>
+                <p className="text-xs font-medium text-gray-700 mb-2">Phone type</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'twilio-vapi' }))}
+                    className={`p-3 rounded-lg border text-left transition-all ${
+                      phoneStep.phoneMode === 'twilio-vapi'
+                        ? 'border-blue-400 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <p className="text-sm font-medium text-gray-900">Calls + SMS (Recommended)</p>
+                    <p className="text-xs text-gray-500 mt-0.5">AI answers calls and texts customers</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'vapi-only' }))}
+                    className={`p-3 rounded-lg border text-left transition-all ${
+                      phoneStep.phoneMode === 'vapi-only'
+                        ? 'border-blue-400 bg-blue-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <p className="text-sm font-medium text-gray-900">Calls only</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Voice calls only, no SMS</p>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs font-medium text-gray-700">Area code (optional)</label>
+              <input
+                type="text"
+                value={phoneStep.areaCode}
+                onChange={e => setPhoneStep((prev: any) => ({ ...prev, areaCode: e.target.value.replace(/\D/g, '').slice(0, 3) }))}
+                placeholder="e.g. 415"
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                maxLength={3}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
       {createError && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-sm text-red-700">{createError}</p>
@@ -2781,221 +2587,15 @@ function WizardStep4({
         {isCreating ? (
           <>
             <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-            Creating Employee...
+            {phoneStep.wantsPhone ? 'Creating Employee & Setting Up Phone...' : 'Creating Employee...'}
           </>
         ) : (
           <>
             <PlusIcon className="h-5 w-5 mr-2" />
-            Create Employee
+            {phoneStep.wantsPhone ? 'Create Employee & Provision Phone' : 'Create Employee'}
           </>
         )}
       </button>
-    </div>
-  )
-}
-
-// ============================================
-// EDIT EMPLOYEE MODAL
-// ============================================
-
-function EditEmployeeModal({
-  employee,
-  onClose,
-  onSaved,
-}: {
-  employee: any
-  onClose: () => void
-  onSaved: (updated: any) => void
-}) {
-  const [name, setName] = useState(employee.name || '')
-  const [voiceId, setVoiceId] = useState(employee.voice?.voiceId || '')
-  const [voiceName, setVoiceName] = useState(employee.voice?.voiceId || '')
-  const [voicePreviewUrl, setVoicePreviewUrl] = useState<string | null>(null)
-  const [greeting, setGreeting] = useState(employee.jobConfig?.greeting || '')
-  const [timezone, setTimezone] = useState(employee.schedule?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone)
-  const [sendPostCallSms, setSendPostCallSms] = useState(employee.jobConfig?.sendPostCallSms || false)
-  const [smsAutoReply, setSmsAutoReply] = useState(employee.jobConfig?.smsAutoReply || '')
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
-
-  const hasSmsCapability = employee.phoneProvider === 'twilio-vapi'
-
-  const handleSave = async () => {
-    const businessId = getSecureBusinessId()
-    if (!businessId) return
-    setSaving(true)
-    setSaveError(null)
-
-    try {
-      const headers = await getAuthHeaders()
-      const updatedJobConfig = { ...(employee.jobConfig || {}), greeting, sendPostCallSms, smsAutoReply: smsAutoReply || undefined }
-      const updatedSchedule = { ...(employee.schedule || {}), timezone }
-
-      const res = await fetch(`/api/phone-employees/${employee.id}`, {
-        method: 'PATCH',
-        headers,
-        body: JSON.stringify({
-          businessId,
-          name: name !== employee.name ? name : undefined,
-          jobConfig: updatedJobConfig,
-          schedule: updatedSchedule,
-          voice: voiceId !== (employee.voice?.voiceId) ? {
-            provider: '11labs',
-            voiceId,
-            speed: employee.voice?.speed ?? 1.0,
-            stability: employee.voice?.stability ?? 0.8,
-          } : undefined,
-        }),
-      })
-
-      const data = await res.json()
-      if (data.success || data.employee) {
-        setSaved(true)
-        onSaved({ ...employee, name, jobConfig: updatedJobConfig, schedule: updatedSchedule })
-      } else {
-        setSaveError(data.error || 'Failed to save')
-      }
-    } catch (err: any) {
-      setSaveError(err.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-bold text-gray-900">Edit {employee.name}</h2>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-gray-600">
-            <XMarkIcon className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="space-y-5">
-          {/* Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-
-          {/* Greeting */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Greeting</label>
-            <textarea
-              value={greeting}
-              onChange={e => setGreeting(e.target.value)}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-            />
-          </div>
-
-          {/* Voice */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Voice</label>
-            <VoicePicker
-              voiceId={voiceId}
-              voiceName={voiceName}
-              voicePreviewUrl={voicePreviewUrl}
-              onSelect={({ voiceId: vId, voiceName: vName, voicePreviewUrl: vUrl }) => {
-                setVoiceId(vId)
-                setVoiceName(vName)
-                setVoicePreviewUrl(vUrl ?? null)
-              }}
-            />
-          </div>
-
-          {/* Timezone */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
-            <select
-              value={timezone}
-              onChange={e => setTimezone(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {TIMEZONE_OPTIONS.map(tz => (
-                <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* SMS Settings */}
-          <div className="border-t border-gray-200 pt-5">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">SMS Settings</h3>
-            {!hasSmsCapability ? (
-              <p className="text-xs text-gray-500">
-                SMS features require a Twilio number (Calls + SMS mode). This employee uses a VAPI-only number.
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {/* Post-call follow-up SMS toggle */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-700">Post-call follow-up SMS</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Send a follow-up text after calls over 30 seconds</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSendPostCallSms(!sendPostCallSms)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      sendPostCallSms ? 'bg-blue-600' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      sendPostCallSms ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
-                </div>
-
-                {/* SMS auto-reply fallback */}
-                <div>
-                  <label className="block text-sm text-gray-700 mb-1">Fallback auto-reply</label>
-                  <p className="text-xs text-gray-500 mb-1.5">Used when AI is unavailable or credits run out</p>
-                  <textarea
-                    value={smsAutoReply}
-                    onChange={e => setSmsAutoReply(e.target.value)}
-                    rows={2}
-                    placeholder={`Hi! You've reached ${name || 'us'}. We received your message and will get back to you shortly.`}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {saveError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{saveError}</div>
-          )}
-
-          {saved && (
-            <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center gap-2">
-              <CheckIcon className="h-4 w-4" /> Changes saved!
-            </div>
-          )}
-        </div>
-
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm font-medium flex items-center gap-2"
-          >
-            {saving ? <><div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</> : 'Save Changes'}
-          </button>
-        </div>
-      </div>
     </div>
   )
 }
@@ -3584,6 +3184,26 @@ function EmployeesDashboard() {
     connectedIntegrations: [],
     dataSource: null,
   })
+  const [trialAssigning, setTrialAssigning] = useState(false)
+  const [trialPhoneNumber, setTrialPhoneNumber] = useState<string | null>(null)
+  const [trialJobType, setTrialJobType] = useState('receptionist')
+  const [trialUsage, setTrialUsage] = useState<{
+    callsUsed: number
+    callsRemaining: number
+    limitReached: boolean
+    totalMinutes: number
+    completedCalls: number
+    appointmentsBooked: number
+    messagesTaken: number
+    daysRemaining: number
+    isExpired: boolean
+  } | null>(null)
+  const [starterUsage, setStarterUsage] = useState<{
+    creditsUsed: number
+    creditsTotal: number
+    minutesUsed: number
+    minutesTotal: number
+  } | null>(null)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [createSuccess, setCreateSuccess] = useState(false)
@@ -3596,7 +3216,7 @@ function EmployeesDashboard() {
     provisionedNumber: string | null
     error: string | null
   }>({ status: 'idle', wantsPhone: false, phoneMode: 'twilio-vapi', areaCode: '', provisionedNumber: null, error: null })
-  const [editingEmployee, setEditingEmployee] = useState<any | null>(null)
+
 
   useEffect(() => {
     loadData()
@@ -3694,11 +3314,89 @@ function EmployeesDashboard() {
           setEmployeeStats(stats)
         }
       }
+
+      // Fetch Starter credit usage
+      if (businessData?.subscription_status === 'active' && businessData?.subscription_tier === 'starter') {
+        try {
+          const { data: creditData } = await supabase
+            .from('businesses')
+            .select('monthly_credits, credits_used_this_month')
+            .eq('id', businessId)
+            .single()
+          if (creditData) {
+            const creditsTotal = creditData.monthly_credits || 500
+            const creditsUsed = creditData.credits_used_this_month || 0
+            setStarterUsage({
+              creditsUsed,
+              creditsTotal,
+              minutesUsed: Math.floor(creditsUsed / 5),
+              minutesTotal: Math.floor(creditsTotal / 5),
+            })
+          }
+        } catch (e) {
+          console.error('Failed to fetch starter usage:', e)
+        }
+      }
+
+      // Check for trial phone number and fetch usage
+      if (businessData?.subscription_status === 'trial') {
+        if (data?.employees) {
+          const trialEmp = data.employees.find((e: PhoneEmployee) => e.phoneNumber)
+          if (trialEmp?.phoneNumber) {
+            setTrialPhoneNumber(trialEmp.phoneNumber)
+          }
+        }
+
+        // Fetch trial usage stats
+        try {
+          const usageHeaders = await getAuthHeaders()
+          const usageRes = await fetch(`/api/trial/usage?businessId=${businessId}`, { headers: usageHeaders })
+          const usageData = await usageRes.json()
+          if (usageData.isTrial && usageData.usage) {
+            setTrialUsage({
+              ...usageData.usage,
+              daysRemaining: usageData.trial.daysRemaining,
+              isExpired: usageData.trial.isExpired,
+            })
+          }
+        } catch (e) {
+          console.error('Failed to fetch trial usage:', e)
+        }
+      }
     } catch (err: any) {
       console.error('Failed to load data:', err)
       setError(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const assignTrialPhone = async () => {
+    const businessId = getSecureBusinessId()
+    if (!businessId) return
+
+    setTrialAssigning(true)
+    try {
+      const headers = await getAuthHeaders()
+      const response = await fetch('/api/trial/assign-phone', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ businessId, jobType: trialJobType }),
+      })
+      const data = await response.json()
+      if (response.ok && data.phoneNumber) {
+        setTrialPhoneNumber(data.phoneNumber)
+        // Reload to show the trial employee in the list
+        await loadData()
+      } else {
+        console.error('Failed to assign trial phone:', data.error)
+        setError(data.error || 'Failed to assign trial phone number')
+      }
+    } catch (err: any) {
+      console.error('Trial phone assignment error:', err)
+      setError(err.message)
+    } finally {
+      setTrialAssigning(false)
     }
   }
 
@@ -3793,6 +3491,9 @@ function EmployeesDashboard() {
             businessHours,
             afterHoursMessage: afterHoursMessage || undefined,
           } : undefined,
+          provisionPhone: phoneStep.wantsPhone,
+          phoneMode: phoneStep.wantsPhone ? phoneStep.phoneMode : undefined,
+          areaCode: phoneStep.wantsPhone && phoneStep.areaCode ? phoneStep.areaCode : undefined,
         }),
       })
 
@@ -3814,8 +3515,14 @@ function EmployeesDashboard() {
           }).catch(err => console.error('[wizard] Failed to save data source:', err))
         }
 
+        // Update phone step with result
+        if (data.employee.phoneNumber) {
+          setPhoneStep(prev => ({ ...prev, status: 'done', provisionedNumber: data.employee.phoneNumber }))
+        } else if (data.phoneError) {
+          setPhoneStep(prev => ({ ...prev, status: 'error', error: data.phoneError }))
+        }
+
         setCreateSuccess(true)
-        setPhoneStep(prev => ({ ...prev, status: 'choosing' }))
       } else {
         setCreateError(data.error || 'Failed to create employee')
       }
@@ -3855,6 +3562,48 @@ function EmployeesDashboard() {
       }
     } catch (err: any) {
       setPhoneStep(prev => ({ ...prev, status: 'error', error: err.message }))
+    }
+  }
+
+  const retryPhoneProvisioning = async (employee: PhoneEmployee) => {
+    const businessId = getSecureBusinessId()
+    if (!businessId) return
+
+    // Optimistically update to provisioning state
+    setEmployees(prev => prev.map(e =>
+      e.id === employee.id ? { ...e, provisioningStatus: 'provisioning', provisioningError: null } : e
+    ))
+
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch(`/api/phone-employees/${employee.id}/provision-phone`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          businessId,
+          phoneMode: employee.phoneProvider || 'twilio-vapi',
+        }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setEmployees(prev => prev.map(e =>
+          e.id === employee.id
+            ? { ...e, phoneNumber: data.phoneNumber, phoneProvider: data.phoneProvider, provisioningStatus: 'active', provisioningError: null }
+            : e
+        ))
+      } else {
+        setEmployees(prev => prev.map(e =>
+          e.id === employee.id
+            ? { ...e, provisioningStatus: 'failed', provisioningError: data.error || 'Failed to provision phone number' }
+            : e
+        ))
+      }
+    } catch (err: any) {
+      setEmployees(prev => prev.map(e =>
+        e.id === employee.id
+          ? { ...e, provisioningStatus: 'failed', provisioningError: err.message }
+          : e
+      ))
     }
   }
 
@@ -3977,6 +3726,196 @@ function EmployeesDashboard() {
           </button>
         </div>
 
+        {/* Trial Banner */}
+        {business?.subscription_status === 'trial' && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-5">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center mb-2">
+                  <SparklesIcon className="h-5 w-5 text-yellow-600 mr-2" />
+                  <h3 className="text-lg font-semibold text-yellow-900">Trial Mode</h3>
+                  {trialUsage && (
+                    <span className="ml-2 text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full">
+                      {trialUsage.daysRemaining} day{trialUsage.daysRemaining !== 1 ? 's' : ''} left
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-yellow-800 mb-3">
+                  Try your AI employee for free. Pick a role, activate, and start receiving calls.
+                  Your AI can book appointments, take orders, and answer questions — all stored in your VoiceFly dashboard.
+                </p>
+
+                {/* Usage Meter */}
+                {trialUsage && (
+                  <div className="mb-4 p-3 bg-white border border-yellow-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Calls Used</span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {trialUsage.callsUsed} / 10
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          trialUsage.limitReached ? 'bg-red-500' : trialUsage.callsUsed >= 7 ? 'bg-yellow-500' : 'bg-blue-500'
+                        }`}
+                        style={{ width: `${Math.min(100, (trialUsage.callsUsed / 10) * 100)}%` }}
+                      />
+                    </div>
+                    {trialUsage.limitReached && (
+                      <p className="mt-2 text-xs text-red-600 font-medium">
+                        You&apos;ve used all 10 trial calls. Upgrade to continue receiving calls.
+                      </p>
+                    )}
+                    {!trialUsage.limitReached && trialUsage.callsUsed >= 7 && (
+                      <p className="mt-2 text-xs text-yellow-700">
+                        {trialUsage.callsRemaining} call{trialUsage.callsRemaining !== 1 ? 's' : ''} remaining — upgrade anytime for unlimited calls.
+                      </p>
+                    )}
+
+                    {/* Value highlights */}
+                    {(trialUsage.completedCalls > 0 || trialUsage.appointmentsBooked > 0 || trialUsage.messagesTaken > 0) && (
+                      <div className="mt-3 pt-3 border-t border-yellow-100 grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <p className="text-lg font-bold text-gray-900">{trialUsage.completedCalls}</p>
+                          <p className="text-xs text-gray-500">Calls Handled</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-gray-900">{trialUsage.appointmentsBooked}</p>
+                          <p className="text-xs text-gray-500">Appointments</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-gray-900">{trialUsage.messagesTaken}</p>
+                          <p className="text-xs text-gray-500">Messages</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Upgrade hooks based on value */}
+                    {trialUsage.appointmentsBooked > 0 && (
+                      <p className="mt-2 text-xs text-blue-700 bg-blue-50 px-2 py-1.5 rounded">
+                        {trialUsage.appointmentsBooked} appointment{trialUsage.appointmentsBooked !== 1 ? 's' : ''} booked — connect Google Calendar to auto-sync with your schedule.
+                      </p>
+                    )}
+                    {trialUsage.messagesTaken >= 3 && (
+                      <p className="mt-2 text-xs text-blue-700 bg-blue-50 px-2 py-1.5 rounded">
+                        {trialUsage.messagesTaken} messages taken — upgrade to get SMS notifications and custom training.
+                      </p>
+                    )}
+                    {trialUsage.totalMinutes >= 5 && !trialUsage.appointmentsBooked && !trialUsage.messagesTaken && (
+                      <p className="mt-2 text-xs text-blue-700 bg-blue-50 px-2 py-1.5 rounded">
+                        {trialUsage.totalMinutes} minutes of calls handled — upgrade for a custom voice, dedicated number, and unlimited calls.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {trialPhoneNumber ? (
+                  <div className="flex items-center text-sm text-yellow-900 bg-yellow-100 px-3 py-2 rounded-lg inline-block mb-3">
+                    <PhoneIcon className="h-4 w-4 mr-2 text-yellow-700" />
+                    <span className="font-medium">Trial Number:</span>
+                    <span className="ml-1 font-mono">{trialPhoneNumber}</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 mb-3">
+                    <select
+                      value={trialJobType}
+                      onChange={(e) => setTrialJobType(e.target.value)}
+                      className="px-3 py-2 text-sm border border-yellow-300 bg-white text-yellow-900 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                    >
+                      <option value="receptionist">Receptionist</option>
+                      <option value="appointment-scheduler">Appointment Scheduler</option>
+                      <option value="order-taker">Order Taker</option>
+                      <option value="customer-service">Customer Service</option>
+                      <option value="restaurant-host">Restaurant Host</option>
+                      <option value="after-hours-emergency">After Hours</option>
+                    </select>
+                    <button
+                      onClick={assignTrialPhone}
+                      disabled={trialAssigning}
+                      className="inline-flex items-center px-3 py-2 text-sm font-medium bg-yellow-200 text-yellow-900 rounded-lg hover:bg-yellow-300 transition-colors disabled:opacity-50"
+                    >
+                      {trialAssigning ? (
+                        <>
+                          <div className="h-4 w-4 mr-2 border-2 border-yellow-700 border-t-transparent rounded-full animate-spin" />
+                          Activating...
+                        </>
+                      ) : (
+                        <>
+                          <PhoneIcon className="h-4 w-4 mr-2" />
+                          Activate Trial
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+                <p className="text-xs text-yellow-700">
+                  Upgrade to Starter ($49/mo) for a dedicated phone number, call transfers, and SMS notifications.
+                </p>
+              </div>
+              <button
+                onClick={() => router.push('/dashboard/billing')}
+                className="ml-4 inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium flex-shrink-0"
+              >
+                Upgrade Now
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Starter Banner */}
+        {business?.subscription_status === 'active' && business?.subscription_tier === 'starter' && (
+          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-5">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center mb-2">
+                  <SparklesIcon className="h-5 w-5 text-blue-600 mr-2" />
+                  <h3 className="text-lg font-semibold text-blue-900">Starter Plan</h3>
+                  <span className="ml-2 text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">Maya AI</span>
+                </div>
+                <p className="text-sm text-blue-800 mb-3">
+                  Your AI receptionist Maya is answering calls with a standard script. Upgrade to Pro for custom training, voice, and FAQs.
+                </p>
+
+                {starterUsage && (
+                  <div className="mb-3 p-3 bg-white border border-blue-200 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Minutes Used</span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {starterUsage.minutesUsed} / {starterUsage.minutesTotal}
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          starterUsage.minutesUsed >= starterUsage.minutesTotal ? 'bg-red-500' :
+                          starterUsage.minutesUsed >= starterUsage.minutesTotal * 0.8 ? 'bg-yellow-500' : 'bg-blue-500'
+                        }`}
+                        style={{ width: `${Math.min(100, (starterUsage.minutesUsed / starterUsage.minutesTotal) * 100)}%` }}
+                      />
+                    </div>
+                    {starterUsage.minutesUsed >= starterUsage.minutesTotal && (
+                      <p className="mt-2 text-xs text-red-600 font-medium">
+                        You&apos;ve used all included minutes. Overage at $0.15/min or upgrade to Pro for 1,000 min/mo.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <p className="text-xs text-blue-700">
+                  Upgrade to Pro ($199/mo) for custom AI training, voice customization, calendar integrations, and 1,000 minutes/month.
+                </p>
+              </div>
+              <button
+                onClick={() => router.push('/dashboard/billing')}
+                className="ml-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex-shrink-0"
+              >
+                Upgrade to Pro
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Employee Grid */}
         {employees.length === 0 ? (
           <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
@@ -4005,7 +3944,10 @@ function EmployeesDashboard() {
                   className={`bg-white rounded-xl border ${employee.isActive ? 'border-green-200' : 'border-gray-200'} overflow-hidden`}
                 >
                   {/* Header */}
-                  <div className={`p-4 bg-${jobInfo.color}-50 border-b border-${jobInfo.color}-100`}>
+                  <div
+                    className={`p-4 bg-${jobInfo.color}-50 border-b border-${jobInfo.color}-100 cursor-pointer hover:brightness-95 transition-all`}
+                    onClick={() => router.push(`/dashboard/employees/${employee.id}`)}
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         <div className={`h-10 w-10 bg-${jobInfo.color}-100 rounded-lg flex items-center justify-center`}>
@@ -4030,12 +3972,43 @@ function EmployeesDashboard() {
                   <div className="p-4">
                     <p className="text-sm text-gray-600 mb-3">{jobInfo.description}</p>
 
-                    {employee.phoneNumber && (
+                    {/* Phone status badge */}
+                    {employee.provisioningStatus === 'active' && employee.phoneNumber ? (
+                      <div className="flex items-center text-sm text-green-700 mb-3 bg-green-50 px-2 py-1.5 rounded-lg">
+                        <PhoneIcon className="h-4 w-4 mr-2 text-green-500" />
+                        {employee.phoneNumber}
+                      </div>
+                    ) : employee.provisioningStatus === 'provisioning' ? (
+                      <div className="flex items-center text-sm text-blue-700 mb-3 bg-blue-50 px-2 py-1.5 rounded-lg">
+                        <div className="h-4 w-4 mr-2 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        Setting up phone...
+                      </div>
+                    ) : employee.provisioningStatus === 'failed' ? (
+                      <div className="mb-3">
+                        <div className="flex items-center justify-between text-sm text-red-700 bg-red-50 px-2 py-1.5 rounded-lg">
+                          <div className="flex items-center min-w-0">
+                            <ExclamationTriangleIcon className="h-4 w-4 mr-2 text-red-500 flex-shrink-0" />
+                            <span className="truncate">{friendlyProvisioningError(employee.provisioningError)}</span>
+                          </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); retryPhoneProvisioning(employee) }}
+                            className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 hover:bg-red-200 text-red-800 rounded transition-colors flex-shrink-0"
+                          >
+                            Retry
+                          </button>
+                        </div>
+                      </div>
+                    ) : employee.phoneNumber ? (
                       <div className="flex items-center text-sm text-gray-700 mb-3">
                         <PhoneIcon className="h-4 w-4 mr-2 text-gray-400" />
                         {employee.phoneNumber}
                       </div>
-                    )}
+                    ) : employee.provisioningStatus === 'no_phone' ? (
+                      <div className="flex items-center text-sm text-gray-400 mb-3">
+                        <PhoneIcon className="h-4 w-4 mr-2" />
+                        No phone number
+                      </div>
+                    ) : null}
 
                     {/* Stats */}
                     <div className="flex items-center gap-4 text-sm text-gray-500 mt-3 pt-3 border-t border-gray-100">
@@ -4074,7 +4047,7 @@ function EmployeesDashboard() {
 
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => setEditingEmployee(employee)}
+                        onClick={() => router.push(`/dashboard/employees/${employee.id}`)}
                         className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
                         title="Edit employee"
                       >
@@ -4092,18 +4065,6 @@ function EmployeesDashboard() {
               )
             })}
           </div>
-        )}
-
-        {/* Edit Employee Modal */}
-        {editingEmployee && (
-          <EditEmployeeModal
-            employee={editingEmployee}
-            onClose={() => setEditingEmployee(null)}
-            onSaved={(updated) => {
-              setEmployees(prev => prev.map(e => e.id === updated.id ? { ...e, ...updated } : e))
-              setEditingEmployee(null)
-            }}
-          />
         )}
 
         {/* Create Employee Wizard Modal */}
@@ -4167,6 +4128,11 @@ function EmployeesDashboard() {
                   setPhoneStep={setPhoneStep}
                   onProvisionPhone={provisionPhone}
                   isTrial={business?.subscription_status === 'trial'}
+                  createdEmployeeId={createdEmployeeId}
+                  onTrainEmployee={createdEmployeeId ? () => {
+                    closeWizard()
+                    router.push(`/dashboard/employees/${createdEmployeeId}`)
+                  } : undefined}
                 />
               )}
 

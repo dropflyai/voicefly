@@ -242,12 +242,20 @@ export async function POST(request: NextRequest) {
 
           console.log(`✅ Business ${businessId} upgraded to ${targetPlan} plan`)
 
-          // Upgrade trial employees from vapi-only to twilio-vapi (adds SMS capability)
-          employeeProvisioning.upgradeAllPhonesToTwilioVapi(businessId)
-            .then(count => {
-              if (count > 0) console.log(`✅ Upgraded ${count} employee phone(s) to Twilio-VAPI for business ${businessId}`)
-            })
-            .catch(err => console.error(`❌ Failed to upgrade employee phones for business ${businessId}:`, err))
+          // Provision phone based on plan tier
+          if (targetPlan === 'starter') {
+            // Starter: dedicated Twilio number, shared VAPI assistant (Maya)
+            employeeProvisioning.provisionStarterForBusiness(businessId)
+              .then(() => console.log(`✅ Starter provisioning complete for business ${businessId}`))
+              .catch(err => console.error(`❌ Starter provisioning failed for business ${businessId}:`, err))
+          } else {
+            // Pro: full upgrade — dedicated VAPI assistant + dedicated Twilio number
+            employeeProvisioning.upgradeAllPhonesToTwilioVapi(businessId)
+              .then(count => {
+                if (count > 0) console.log(`✅ Upgraded ${count} employee phone(s) to Twilio-VAPI for business ${businessId}`)
+              })
+              .catch(err => console.error(`❌ Failed to upgrade employee phones for business ${businessId}:`, err))
+          }
 
           // Audit log
           await AuditLogger.log({
