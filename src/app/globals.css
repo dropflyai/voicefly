@@ -50,12 +50,7 @@
   --animate-slide-up: slide-up 0.3s ease-out;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Dark mode disabled — app is light-mode only */
 
 body {
   background: var(--background);
@@ -82,6 +77,22 @@ body {
 
 .nav-item-inactive {
   @apply text-gray-700 hover:bg-gray-50 hover:text-gray-900;
+}
+
+.label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+.input-field {
+  @apply block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 placeholder-gray-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-500;
+}
+
+textarea.input-field {
+  @apply resize-vertical;
+}
+
+select.input-field {
+  @apply appearance-auto;
 }
 
 .btn-primary {
