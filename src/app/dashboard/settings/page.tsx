@@ -15,6 +15,9 @@ import {
   PencilIcon,
   CheckIcon,
   ChatBubbleLeftRightIcon,
+  SparklesIcon,
+  GlobeAltIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline'
 import { clsx } from 'clsx'
 
@@ -81,6 +84,11 @@ export default function SettingsPage() {
   }>({})
   const [contextSaving, setContextSaving] = useState(false)
   const [contextSaved, setContextSaved] = useState(false)
+  const [quickFillMode, setQuickFillMode] = useState<'text' | 'url' | null>(null)
+  const [quickFillInput, setQuickFillInput] = useState('')
+  const [quickFillParsing, setQuickFillParsing] = useState(false)
+  const [quickFillError, setQuickFillError] = useState('')
+  const [quickFillResult, setQuickFillResult] = useState<Record<string, string> | null>(null)
 
   const tabs = [
     { id: 'business', name: 'Business Profile', icon: BuildingOfficeIcon },
@@ -184,6 +192,60 @@ export default function SettingsPage() {
   }
 
   const updateContext = (key: string, value: string) => {
+    setBusinessContext(prev => ({ ...prev, [key]: value }))
+  }
+
+  const handleQuickFill = async () => {
+    if (!quickFillInput.trim()) return
+    setQuickFillParsing(true)
+    setQuickFillError('')
+    setQuickFillResult(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setQuickFillError('Not authenticated')
+        setQuickFillParsing(false)
+        return
+      }
+      const payload = quickFillMode === 'url'
+        ? { url: quickFillInput.trim() }
+        : { text: quickFillInput.trim() }
+      const res = await fetch('/api/ai/parse-business-context', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setQuickFillError(data.error || 'Failed to parse')
+        setQuickFillParsing(false)
+        return
+      }
+      if (data.context && Object.keys(data.context).length > 0) {
+        setQuickFillResult(data.context)
+        // Merge into form — only fill empty fields
+        setBusinessContext(prev => {
+          const merged = { ...prev }
+          for (const [key, value] of Object.entries(data.context)) {
+            if (!merged[key as keyof typeof merged] || !merged[key as keyof typeof merged]?.trim()) {
+              (merged as Record<string, string>)[key] = value as string
+            }
+          }
+          return merged
+        })
+      } else {
+        setQuickFillError('No business information found in the content. Try adding more details.')
+      }
+    } catch {
+      setQuickFillError('Something went wrong. Please try again.')
+    }
+    setQuickFillParsing(false)
+  }
+
+  const applyQuickFillField = (key: string, value: string) => {
     setBusinessContext(prev => ({ ...prev, [key]: value }))
   }
 
@@ -500,6 +562,100 @@ export default function SettingsPage() {
                     <p className="text-sm text-gray-500 mt-1">
                       This information is automatically shared with Maya on every call so she can answer caller questions accurately.
                     </p>
+                  </div>
+
+                  {/* Quick Fill Section */}
+                  <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <SparklesIcon className="h-5 w-5 text-blue-600" />
+                      <h3 className="text-sm font-semibold text-blue-900">Quick Fill with AI</h3>
+                    </div>
+                    <p className="text-xs text-blue-700 mb-3">
+                      Paste any text about your business (website copy, Google listing, Yelp description) or enter your website URL. AI will extract the relevant details and fill in the fields below.
+                    </p>
+
+                    {!quickFillMode ? (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setQuickFillMode('text')}
+                          className="flex items-center gap-2 px-3 py-2 bg-white border border-blue-300 rounded-md text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors"
+                        >
+                          <DocumentTextIcon className="h-4 w-4" />
+                          Paste Text
+                        </button>
+                        <button
+                          onClick={() => setQuickFillMode('url')}
+                          className="flex items-center gap-2 px-3 py-2 bg-white border border-blue-300 rounded-md text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors"
+                        >
+                          <GlobeAltIcon className="h-4 w-4" />
+                          Import from Website
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        {quickFillMode === 'text' ? (
+                          <textarea
+                            className="input-field mb-2"
+                            rows={5}
+                            placeholder="Paste anything about your business here — website text, Google listing info, a description you've written, even just bullet points..."
+                            value={quickFillInput}
+                            onChange={e => setQuickFillInput(e.target.value)}
+                            disabled={quickFillParsing}
+                          />
+                        ) : (
+                          <input
+                            type="url"
+                            className="input-field mb-2"
+                            placeholder="https://yourbusiness.com"
+                            value={quickFillInput}
+                            onChange={e => setQuickFillInput(e.target.value)}
+                            disabled={quickFillParsing}
+                          />
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={handleQuickFill}
+                            disabled={quickFillParsing || !quickFillInput.trim()}
+                            className="btn-primary"
+                          >
+                            {quickFillParsing ? (
+                              <>
+                                <span className="animate-spin inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                                Analyzing...
+                              </>
+                            ) : (
+                              <>
+                                <SparklesIcon className="h-4 w-4 mr-1" />
+                                Extract & Fill
+                              </>
+                            )}
+                          </button>
+                          <button
+                            onClick={() => { setQuickFillMode(null); setQuickFillInput(''); setQuickFillError(''); setQuickFillResult(null) }}
+                            className="btn-secondary"
+                            disabled={quickFillParsing}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+
+                        {quickFillError && (
+                          <p className="text-sm text-red-600 mt-2">{quickFillError}</p>
+                        )}
+
+                        {quickFillResult && (
+                          <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                            <p className="text-sm font-medium text-green-800 mb-1">
+                              Found {Object.keys(quickFillResult).length} field{Object.keys(quickFillResult).length !== 1 ? 's' : ''}! Empty fields have been filled in below.
+                            </p>
+                            <p className="text-xs text-green-600">
+                              Fields that already had values were kept. You can review and edit everything below, then click &quot;Save AI Knowledge&quot;.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-5">
