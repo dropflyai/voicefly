@@ -209,7 +209,8 @@ function buildDashboardSystemPrompt(
   employees: any[],
   onboarding: OnboardingState,
   connectedPlatforms: string[],
-  currentPage?: string
+  currentPage?: string,
+  stats?: { messages: number; orders: number }
 ): string {
   const employeeList = employees.length > 0
     ? employees.map(e => `- ${e.name} (${e.job_type})${e.is_active ? ' — active' : ' — inactive'}${e.phone_number ? `, phone: ${e.phone_number}` : ' — no phone yet'}`).join('\n')
@@ -278,6 +279,10 @@ Step 3: Make a test call ${onboarding.step === 3 ? '← CURRENT STEP' : onboardi
 - Type: ${business.business_type || 'Not specified'}
 - Phone: ${business.phone || 'Not set'}
 - Timezone: ${business.timezone || 'Not set'}
+- Plan: ${business.subscription_tier || 'trial'} (${business.subscription_status || 'trial'})
+- Credits: ${business.credits_remaining != null ? `${business.credits_remaining} remaining (${business.credits_used || 0} used)` : 'N/A'}
+- Messages: ${stats?.messages ?? 0} total
+- Orders: ${stats?.orders ?? 0} total
 - Current page: ${currentPage || 'unknown'}
 - Connected integrations: ${connectedPlatforms.length > 0 ? connectedPlatforms.join(', ') : 'none'}
 ${profileWarning}
@@ -299,13 +304,30 @@ VoiceFly creates AI voice employees that answer and make phone calls 24/7. There
 10. Appointment Reminder — outbound reminder calls before appointments
 11. Collections — outbound payment collection (FDCPA-compliant)
 
-## Dashboard Navigation
-- /dashboard/employees — create, edit, view employees. Wizard: pick type → business info → review config → confirm & create
-- /dashboard/integrations — connect Square, Shopify, Clover, Toast, Calendly, HubSpot
-- /dashboard/settings — business profile, hours, timezone
+## Dashboard Navigation — Guide Users to the Right Page
+- /dashboard — overview with stats: calls today, messages, orders, credits remaining
+- /dashboard/employees — create, edit, view employees. Wizard: pick type → business info → review config → confirm & create. Edit via pencil icon on employee card.
+- /dashboard/employees/messages — view all messages and voicemails left by callers
+- /dashboard/integrations — connect Google Calendar, Calendly, Square, Shopify, Clover, Toast, HubSpot
+- /dashboard/settings — 6 tabs:
+  - Business Profile — name, type, phone, email, address, website, timezone
+  - Business Hours — set open/close times per day (auto-generates hours summary for AI employees)
+  - AI Knowledge — business context fields (hours summary, address, parking, policies, payment methods). Has "Quick Fill with AI" to auto-extract from pasted text or website URL.
+  - Notifications — email/SMS/push notification preferences
+  - Security — change password, 2FA (coming soon)
+  - Team Access — view team members with roles
+- /dashboard/billing — upgrade plan, view usage, manage subscription
 
 ## Your Role
-Help this user get the most out of VoiceFly. If they are in onboarding (steps 1–3), proactively guide them to the next step — don't wait for them to ask. If onboarding is done, proactively suggest integrations and additional employees that would help their specific business. Be helpful and concise. Use bullet points for steps. If you're not sure about something, be honest.`
+Help this user get the most out of VoiceFly. You can help with:
+- **Managing employees** — creating, editing, activating/deactivating, adding phone numbers
+- **Checking activity** — calls, messages, orders, call duration, employee performance
+- **Settings guidance** — updating business profile, hours, AI knowledge, notifications
+- **Integrations** — connecting calendars, POS systems, CRM
+- **Billing** — explaining plans, credits, upgrades
+- **Troubleshooting** — calls not working, employees not answering, config issues
+
+If they are in onboarding (steps 1–3), proactively guide them to the next step. If onboarding is done, help with whatever they need and suggest relevant features. Be helpful and concise. Use bullet points for steps. Always point them to the right dashboard page. If you're not sure about something, be honest.`
 }
 
 // ============================================
@@ -522,13 +544,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: authResult.error }, { status: 403 })
       }
 
-      // Fetch business, employees, test call status, and integrations in parallel
+      // Fetch business, employees, test call status, integrations, messages, and orders in parallel
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
-      const [{ data: business }, { data: employees }, { count: callCount }, { data: integrations }] = await Promise.all([
-        supabase.from('businesses').select('name, phone, business_type, timezone').eq('id', businessId).single(),
+      const [{ data: business }, { data: employees }, { count: callCount }, { data: integrations }, { count: messageCount }, { count: orderCount }] = await Promise.all([
+        supabase.from('businesses').select('name, phone, business_type, timezone, subscription_tier, subscription_status, credits_remaining, credits_used').eq('id', businessId).single(),
         supabase.from('phone_employees').select('name, job_type, is_active, phone_number').eq('business_id', businessId).order('created_at', { ascending: false }),
         supabase.from('employee_calls').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
         supabase.from('business_integrations').select('platform').eq('business_id', businessId).eq('is_active', true),
+        supabase.from('phone_messages').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
+        supabase.from('phone_orders').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
       ])
 
       if (!business) {
@@ -538,7 +562,10 @@ export async function POST(request: NextRequest) {
       const connectedPlatforms = (integrations || []).map((i: any) => i.platform)
       const onboarding = getOnboardingStep(employees || [], (callCount ?? 0) > 0)
       onboardingStep = onboarding.step
-      systemPrompt = buildDashboardSystemPrompt(business, employees || [], onboarding, connectedPlatforms, currentPage)
+      systemPrompt = buildDashboardSystemPrompt(business, employees || [], onboarding, connectedPlatforms, currentPage, {
+        messages: messageCount ?? 0,
+        orders: orderCount ?? 0,
+      })
     } else if (context === 'support') {
       // Support context — troubleshooting agent with ticket escalation
       if (!businessId) {

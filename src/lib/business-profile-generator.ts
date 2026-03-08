@@ -68,10 +68,10 @@ const BRAND_VOICE_TEMPLATES = {
  * Voice Settings based on brand personality
  */
 const VOICE_SETTINGS_MAP = {
-  professional: { provider: '11labs', voiceId: 'sarah', speed: 1.0, stability: 0.8 },
-  warm: { provider: '11labs', voiceId: 'sarah', speed: 0.95, stability: 0.75 },
-  luxury: { provider: '11labs', voiceId: 'sarah', speed: 0.9, stability: 0.85 },
-  casual: { provider: '11labs', voiceId: 'sarah', speed: 1.05, stability: 0.7 }
+  professional: { provider: '11labs', voiceId: 'aVR2rUXJY4MTezzJjPyQ', speed: 1.0, stability: 0.8 },
+  warm: { provider: '11labs', voiceId: 'aVR2rUXJY4MTezzJjPyQ', speed: 0.95, stability: 0.75 },
+  luxury: { provider: '11labs', voiceId: 'aVR2rUXJY4MTezzJjPyQ', speed: 0.9, stability: 0.85 },
+  casual: { provider: '11labs', voiceId: 'aVR2rUXJY4MTezzJjPyQ', speed: 1.05, stability: 0.7 }
 }
 
 /**

@@ -10,7 +10,6 @@ import {
   CreditCardIcon,
   CogIcon,
   PuzzlePieceIcon,
-  QuestionMarkCircleIcon,
   ArrowRightOnRectangleIcon,
   ChatBubbleLeftRightIcon,
   CalendarIcon,
@@ -34,7 +33,6 @@ const navigation = [
   { name: 'Integrations', href: '/dashboard/integrations', icon: PuzzlePieceIcon },
   { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
   { name: 'Billing', href: '/dashboard/billing', icon: CreditCardIcon },
-  { name: 'Help', href: '/dashboard/help', icon: QuestionMarkCircleIcon },
 ]
 
 interface LayoutProps {

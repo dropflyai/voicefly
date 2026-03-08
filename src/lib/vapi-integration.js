@@ -91,7 +91,7 @@ export async function createCustomAssistant(businessData) {
         },
         voice: {
           provider: '11labs',
-          voiceId: 'sarah', // Or let salon choose voice
+          voiceId: 'aVR2rUXJY4MTezzJjPyQ', // Angie — default voice
           stability: 0.5,
           similarityBoost: 0.75
         },

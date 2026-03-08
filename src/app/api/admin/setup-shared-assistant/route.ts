@@ -182,7 +182,7 @@ function buildAssistantPayload() {
     },
     voice: {
       provider: '11labs',
-      voiceId: 'EXAVITQu4vr4xnSDxMaL', // Sarah — warm, professional
+      voiceId: 'aVR2rUXJY4MTezzJjPyQ', // Angie — reassuring, calm, professional
       model: 'eleven_flash_v2_5',
       stability: 0.5,
       similarityBoost: 0.75,

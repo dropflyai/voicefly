@@ -5,22 +5,19 @@ import { useSearchParams } from 'next/navigation'
 import Layout from '@/components/Layout'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import CreditMeter from '@/components/CreditMeter'
-import PurchaseCreditsModal from '@/components/PurchaseCreditsModal'
 import { getCurrentBusinessId } from '@/lib/auth-utils'
-import { CheckCircle, ArrowLeft } from 'lucide-react'
+import { CheckCircle, ArrowLeft, Phone, PhoneOutgoing, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 
 function CreditsPageContent() {
   const searchParams = useSearchParams()
   const [businessId, setBusinessId] = useState<string | null>(null)
-  const [showPurchaseModal, setShowPurchaseModal] = useState(false)
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
 
   useEffect(() => {
     const id = getCurrentBusinessId()
     setBusinessId(id)
 
-    // Check for success message from Stripe redirect
     if (searchParams.get('credits_purchased') === 'true' || searchParams.get('minutes_purchased') === 'true') {
       setShowSuccessMessage(true)
       setTimeout(() => setShowSuccessMessage(false), 5000)
@@ -42,7 +39,7 @@ function CreditsPageContent() {
   return (
     <ProtectedRoute>
       <Layout business={null}>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Header */}
           <div className="mb-8">
             <Link
@@ -52,9 +49,9 @@ function CreditsPageContent() {
               <ArrowLeft className="h-4 w-4 mr-1" />
               Back to Billing
             </Link>
-            <h1 className="text-3xl font-bold text-gray-900">Purchase Voice Minutes</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Voice Minutes</h1>
             <p className="text-gray-600 mt-2">
-              Additional voice minutes for your VoiceFly account. Minutes never expire and roll over forever.
+              Track your voice minute usage across your VoiceFly account.
             </p>
           </div>
 
@@ -65,10 +62,10 @@ function CreditsPageContent() {
                 <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
                 <div>
                   <h3 className="font-semibold text-green-900 mb-1">
-                    Minutes Purchased Successfully!
+                    Minutes Added Successfully!
                   </h3>
                   <p className="text-sm text-green-700">
-                    Your minutes have been added to your account. They'll appear in your balance within a few seconds.
+                    Your minutes have been added to your account.
                   </p>
                 </div>
               </div>
@@ -84,84 +81,53 @@ function CreditsPageContent() {
             />
           </div>
 
-          {/* Purchase Button */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Ready to Purchase More Minutes?
-            </h2>
-            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Choose from our flexible minute packs below. All minutes never expire and can be used for VoiceFly voice AI.
-            </p>
-            <button
-              onClick={() => setShowPurchaseModal(true)}
-              className="inline-flex items-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold text-lg shadow-lg hover:shadow-xl transition-all"
-            >
-              View Minute Packs
-            </button>
-          </div>
-
-          {/* How Minutes Work */}
-          <div className="mt-12">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">How Voice Minutes Work</h3>
+          {/* How Minutes Are Used */}
+          <div>
+            <h3 className="text-xl font-bold text-gray-900 mb-6">How Minutes Are Used</h3>
             <div className="grid md:grid-cols-3 gap-6">
               <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">1 min</div>
-                <div className="text-sm text-gray-500 mb-3">= 1 voice minute</div>
-                <h4 className="font-semibold text-gray-900 mb-2">Inbound Calls</h4>
+                <div className="flex items-center mb-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                    <Phone className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">1 min</div>
+                    <div className="text-xs text-gray-500">= 1 voice minute</div>
+                  </div>
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-1">Inbound Calls</h4>
                 <p className="text-sm text-gray-600">
                   Receive and handle customer calls with Maya AI
                 </p>
               </div>
 
               <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">1.6 min</div>
-                <div className="text-sm text-gray-500 mb-3">= 1 voice minute</div>
-                <h4 className="font-semibold text-gray-900 mb-2">Outbound Calls</h4>
+                <div className="flex items-center mb-3">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                    <PhoneOutgoing className="h-5 w-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">1.6 min</div>
+                    <div className="text-xs text-gray-500">= 1 voice minute</div>
+                  </div>
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-1">Outbound Calls</h4>
                 <p className="text-sm text-gray-600">
                   Proactive calling campaigns to leads and customers
                 </p>
               </div>
 
               <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">5 min</div>
-                <div className="text-sm text-gray-500 mb-3">equivalent</div>
-                <h4 className="font-semibold text-gray-900 mb-2">Deep Research</h4>
-                <p className="text-sm text-gray-600">
-                  Comprehensive market analysis and competitive research
-                </p>
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">2 min</div>
-                <div className="text-sm text-gray-500 mb-3">equivalent</div>
-                <h4 className="font-semibold text-gray-900 mb-2">Quick Research</h4>
-                <p className="text-sm text-gray-600">
-                  Fast market insights and data analysis
-                </p>
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">3 min</div>
-                <div className="text-sm text-gray-500 mb-3">per 100 contacts</div>
-                <h4 className="font-semibold text-gray-900 mb-2">Email Campaign</h4>
-                <p className="text-sm text-gray-600">
-                  Send bulk email campaigns to your customer base
-                </p>
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">~0.5 min</div>
-                <div className="text-sm text-gray-500 mb-3">equivalent</div>
-                <h4 className="font-semibold text-gray-900 mb-2">Appointment Booking</h4>
-                <p className="text-sm text-gray-600">
-                  Schedule appointments with customers
-                </p>
-              </div>
-
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="text-3xl font-bold text-blue-600 mb-2">~0.1 min</div>
-                <div className="text-sm text-gray-500 mb-3">per message</div>
-                <h4 className="font-semibold text-gray-900 mb-2">SMS Messages</h4>
+                <div className="flex items-center mb-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                    <MessageSquare className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-gray-900">~0.1 min</div>
+                    <div className="text-xs text-gray-500">per message</div>
+                  </div>
+                </div>
+                <h4 className="font-semibold text-gray-900 mb-1">SMS Messages</h4>
                 <p className="text-sm text-gray-600">
                   AI-powered text conversations and appointment confirmations
                 </p>
@@ -169,53 +135,20 @@ function CreditsPageContent() {
             </div>
           </div>
 
-          {/* Purchase History */}
-          <div className="mt-12">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Purchase History</h3>
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Pack
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Minutes
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  <tr>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500" colSpan={5}>
-                      No purchases yet. Click "View Minute Packs" above to get started.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          {/* Need More Minutes */}
+          <div className="mt-8 bg-gray-50 border border-gray-200 rounded-lg p-6 text-center">
+            <p className="text-sm text-gray-600 mb-3">
+              Minutes are included with your plan and reset monthly.
+              Need more? Upgrade your plan for additional minutes.
+            </p>
+            <Link
+              href="/dashboard/billing"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
+            >
+              View Plans
+            </Link>
           </div>
         </div>
-
-        {/* Purchase Modal */}
-        <PurchaseCreditsModal
-          isOpen={showPurchaseModal}
-          onClose={() => setShowPurchaseModal(false)}
-          businessId={businessId}
-          onPurchaseComplete={() => {
-            setShowPurchaseModal(false)
-            // Refresh page to show updated balance
-            window.location.reload()
-          }}
-        />
       </Layout>
     </ProtectedRoute>
   )

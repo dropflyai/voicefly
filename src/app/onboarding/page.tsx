@@ -73,7 +73,7 @@ const EMPLOYEE_TYPES = [
 ]
 
 const VOICES = [
-  { id: 'EXAVITQu4vr4xnSDxMaL', name: 'Sarah', description: 'Confident & reassuring', gender: 'female' },
+  { id: 'aVR2rUXJY4MTezzJjPyQ', name: 'Angie', description: 'Reassuring, calm & clear', gender: 'female' },
   { id: 'hpp4J3VqNfWAUOO0d1Us', name: 'Bella', description: 'Professional & warm', gender: 'female' },
   { id: 'Xb7hH8MSUJpSbSDYk0k2', name: 'Alice', description: 'Clear & engaging', gender: 'female' },
   { id: 'XrExE9yKIg1WjnnlVkGX', name: 'Matilda', description: 'Knowledgeable & poised', gender: 'female' },

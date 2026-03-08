@@ -54,7 +54,7 @@ Always ask about the client's nail goals, any special occasions, and their prefe
     ],
     voiceSettings: {
       provider: '11labs',
-      voiceId: 'sarah',
+      voiceId: 'aVR2rUXJY4MTezzJjPyQ',
       speed: 1.0,
       stability: 0.75
     },
@@ -104,7 +104,7 @@ Always inquire about hair history, desired outcomes, and lifestyle to recommend 
     ],
     voiceSettings: {
       provider: '11labs',
-      voiceId: 'sarah',
+      voiceId: 'aVR2rUXJY4MTezzJjPyQ',
       speed: 1.05,
       stability: 0.75
     },
@@ -154,7 +154,7 @@ Always create a peaceful, welcoming atmosphere and focus on the client's wellnes
     ],
     voiceSettings: {
       provider: '11labs',
-      voiceId: 'sarah',
+      voiceId: 'aVR2rUXJY4MTezzJjPyQ',
       speed: 0.95,
       stability: 0.8
     },
@@ -204,7 +204,7 @@ Always inquire about specific areas of concern, pain levels, and treatment goals
     ],
     voiceSettings: {
       provider: '11labs',
-      voiceId: 'sarah',
+      voiceId: 'aVR2rUXJY4MTezzJjPyQ',
       speed: 0.9,
       stability: 0.8
     },
@@ -254,7 +254,7 @@ Always focus on enhancing natural beauty and helping clients feel confident and 
     ],
     voiceSettings: {
       provider: '11labs',
-      voiceId: 'sarah',
+      voiceId: 'aVR2rUXJY4MTezzJjPyQ',
       speed: 1.0,
       stability: 0.75
     },
@@ -304,7 +304,7 @@ Always emphasize the quality of craftsmanship and the relaxing, traditional barb
     ],
     voiceSettings: {
       provider: '11labs',
-      voiceId: 'sarah',
+      voiceId: 'aVR2rUXJY4MTezzJjPyQ',
       speed: 1.0,
       stability: 0.75
     },
@@ -354,7 +354,7 @@ Always maintain the highest level of professionalism and patient confidentiality
     ],
     voiceSettings: {
       provider: '11labs',
-      voiceId: 'sarah',
+      voiceId: 'aVR2rUXJY4MTezzJjPyQ',
       speed: 0.95,
       stability: 0.8
     },
@@ -404,7 +404,7 @@ Always provide clear information about procedures and help patients feel comfort
     ],
     voiceSettings: {
       provider: '11labs',
-      voiceId: 'sarah',
+      voiceId: 'aVR2rUXJY4MTezzJjPyQ',
       speed: 0.95,
       stability: 0.8
     },
@@ -454,7 +454,7 @@ Always focus on helping clients achieve their fitness goals while maintaining a 
     ],
     voiceSettings: {
       provider: '11labs',
-      voiceId: 'sarah',
+      voiceId: 'aVR2rUXJY4MTezzJjPyQ',
       speed: 1.05,
       stability: 0.75
     },
@@ -541,7 +541,7 @@ Remember: You represent the business professionally. Every interaction should le
     
     voiceSettings: {
       provider: '11labs',
-      voiceId: 'sarah',
+      voiceId: 'aVR2rUXJY4MTezzJjPyQ',
       speed: 1.0,
       stability: 0.8
     },

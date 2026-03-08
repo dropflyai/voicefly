@@ -474,7 +474,7 @@ export class EmployeeProvisioningService {
         },
         voice: {
           provider: '11labs',
-          voiceId: employee.voice?.voiceId || 'sarah',
+          voiceId: employee.voice?.voiceId || 'aVR2rUXJY4MTezzJjPyQ',
           speed: employee.voice?.speed || 1.0,
           stability: employee.voice?.stability || 0.8,
         },
@@ -728,7 +728,7 @@ export class EmployeeProvisioningService {
       },
       voice: {
         provider: '11labs',
-        voiceId: 'EXAVITQu4vr4xnSDxMaL', // Sarah — warm, professional, low latency
+        voiceId: 'aVR2rUXJY4MTezzJjPyQ', // Angie — reassuring, calm, professional
         model: 'eleven_flash_v2_5',
         stability: 0.5,
         similarityBoost: 0.75,

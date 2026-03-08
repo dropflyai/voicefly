@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import OmnipresentResearchProvider from '@/components/OmnipresentResearch'
 import DashboardAssistant from '@/components/DashboardAssistant'
 import { usePathname } from 'next/navigation'
 
@@ -26,9 +25,9 @@ export default function DashboardLayout({
   }, [pathname])
 
   return (
-    <OmnipresentResearchProvider>
+    <>
       {children}
       <DashboardAssistant autoOpenForNewUser={shouldAutoOpen} />
-    </OmnipresentResearchProvider>
+    </>
   )
 }

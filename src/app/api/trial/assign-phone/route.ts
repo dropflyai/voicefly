@@ -160,7 +160,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           provisioning_status: 'active',
           job_config: jobConfig,
           personality: { tone: 'warm', enthusiasm: 'medium', formality: 'semi-formal' },
-          voice: { provider: '11labs', voiceId: 'EXAVITQu4vr4xnSDxMaL', speed: 1.0, stability: 0.5 },
+          voice: { provider: '11labs', voiceId: 'aVR2rUXJY4MTezzJjPyQ', speed: 1.0, stability: 0.5 },
           schedule: {
             timezone: 'America/New_York',
             businessHours: {

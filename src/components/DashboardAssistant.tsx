@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
-import { X, Send, Bot, CheckCircle, Circle } from 'lucide-react'
+import { X, Send, Bot, CheckCircle, Circle, Mic, MicOff, Volume2, VolumeX } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
 
 interface Message {
@@ -34,7 +34,7 @@ function getGreeting(onboardingStep: OnboardingStep): string {
     case 3:
       return "Almost there — your employee has a phone number! Now let's make a test call to hear them in action.\n\nReady to dial in?"
     default:
-      return "Hi! I'm Maya, your VoiceFly assistant. I can see your account and help with anything — employees, integrations, troubleshooting, or adding new team members.\n\nWhat can I help you with?"
+      return "Hi! I'm Maya, your VoiceFly assistant. I can help you manage employees, check calls and messages, update settings, or troubleshoot anything.\n\nWhat can I help you with?"
   }
 }
 
@@ -47,7 +47,7 @@ function getQuickActions(onboardingStep: OnboardingStep): string[] {
     case 3:
       return ["What should I test on the call?", "How do I fix the greeting?", "What happens after the test?"]
     default:
-      return ["What employees do I have?", "How do I add another employee?", "What integrations are available?", "How do I edit an employee?"]
+      return ["View my call log", "Check my messages", "Update business hours", "Manage employees"]
   }
 }
 
@@ -64,6 +64,11 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [isListening, setIsListening] = useState(false)
+  const [isSpeakerOn, setIsSpeakerOn] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const recognitionRef = useRef<any>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const hasAutoOpened = useRef(false)
 
@@ -155,6 +160,82 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  const toggleListening = () => {
+    if (isListening) {
+      recognitionRef.current?.stop()
+      setIsListening(false)
+      return
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) return
+
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'en-US'
+    recognition.interimResults = true
+    recognition.continuous = false
+    recognitionRef.current = recognition
+
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((r: any) => r[0].transcript)
+        .join('')
+      setInput(transcript)
+
+      // Auto-send on final result
+      if (event.results[event.results.length - 1].isFinal) {
+        setIsListening(false)
+        if (transcript.trim()) {
+          sendMessage(transcript.trim())
+        }
+      }
+    }
+
+    recognition.onerror = () => setIsListening(false)
+    recognition.onend = () => setIsListening(false)
+
+    recognition.start()
+    setIsListening(true)
+  }
+
+  const speakResponse = async (text: string) => {
+    // Stop any currently playing audio
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+
+    try {
+      setIsSpeaking(true)
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      if (!res.ok) {
+        setIsSpeaking(false)
+        return
+      }
+      const audioBlob = await res.blob()
+      const audioUrl = URL.createObjectURL(audioBlob)
+      const audio = new Audio(audioUrl)
+      audioRef.current = audio
+      audio.onended = () => {
+        setIsSpeaking(false)
+        URL.revokeObjectURL(audioUrl)
+        audioRef.current = null
+      }
+      audio.onerror = () => {
+        setIsSpeaking(false)
+        URL.revokeObjectURL(audioUrl)
+        audioRef.current = null
+      }
+      await audio.play()
+    } catch {
+      setIsSpeaking(false)
+    }
+  }
+
   const sendMessage = async (text: string) => {
     if (!text.trim() || isTyping) return
 
@@ -194,15 +275,21 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
         setOnboardingStep(data.onboardingStep as OnboardingStep)
       }
 
+      const responseText = data.response || "Sorry, I ran into an issue. Please try again."
       setMessages(prev => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: data.response || "Sorry, I ran into an issue. Please try again.",
+          content: responseText,
           timestamp: new Date(),
         },
       ])
+
+      // Speak the response if speaker is on
+      if (isSpeakerOn && responseText) {
+        speakResponse(responseText)
+      }
     } catch {
       setMessages(prev => [
         ...prev,
@@ -256,10 +343,26 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
                 <p className="text-xs text-gray-400">{isOnboarding ? 'Setup Guide' : 'Your VoiceFly Assistant'}</p>
               </div>
             </div>
-            <span className="flex items-center space-x-1.5 text-xs text-gray-400">
-              <span className={`h-2 w-2 rounded-full ${isOnboarding ? 'bg-blue-400 animate-pulse' : 'bg-green-400'}`} />
-              <span>{isOnboarding ? 'Onboarding' : 'Online'}</span>
-            </span>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => {
+                  setIsSpeakerOn(!isSpeakerOn)
+                  if (isSpeakerOn && audioRef.current) {
+                    audioRef.current.pause()
+                    audioRef.current = null
+                    setIsSpeaking(false)
+                  }
+                }}
+                className={`p-1.5 rounded-lg transition-colors ${isSpeakerOn ? 'bg-white/20 text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                title={isSpeakerOn ? 'Mute Maya' : 'Enable voice responses'}
+              >
+                {isSpeakerOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+              </button>
+              <span className="flex items-center space-x-1.5 text-xs text-gray-400">
+                <span className={`h-2 w-2 rounded-full ${isSpeaking ? 'bg-blue-400 animate-pulse' : isOnboarding ? 'bg-blue-400 animate-pulse' : 'bg-green-400'}`} />
+                <span>{isSpeaking ? 'Speaking' : isOnboarding ? 'Onboarding' : 'Online'}</span>
+              </span>
+            </div>
           </div>
 
           {/* Onboarding Progress Bar */}
@@ -362,11 +465,23 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
                     sendMessage(input)
                   }
                 }}
-                placeholder={isOnboarding ? "Ask Maya anything about setup..." : "Ask me anything..."}
+                placeholder={isListening ? "Listening..." : isOnboarding ? "Ask Maya anything about setup..." : "Ask me anything..."}
                 rows={1}
-                disabled={isTyping}
-                className="flex-1 resize-none border border-gray-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm disabled:opacity-50"
+                disabled={isTyping || isListening}
+                className={`flex-1 resize-none border rounded-xl px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm disabled:opacity-50 ${isListening ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}
               />
+              <button
+                onClick={toggleListening}
+                disabled={isTyping}
+                className={`p-2 rounded-xl transition-colors flex-shrink-0 ${
+                  isListening
+                    ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                } disabled:opacity-40 disabled:cursor-not-allowed`}
+                title={isListening ? 'Stop listening' : 'Voice input'}
+              >
+                {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </button>
               <button
                 onClick={() => sendMessage(input)}
                 disabled={!input.trim() || isTyping}

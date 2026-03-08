@@ -174,7 +174,7 @@ async function getOrCreateTrialEmployee(businessId: string): Promise<any | null>
         services: [],
       },
       personality: { tone: 'warm', enthusiasm: 'medium', formality: 'semi-formal' },
-      voice: { provider: '11labs', voiceId: 'EXAVITQu4vr4xnSDxMaL', speed: 1.0, stability: 0.5 },
+      voice: { provider: '11labs', voiceId: 'aVR2rUXJY4MTezzJjPyQ', speed: 1.0, stability: 0.5 },
       schedule: {
         timezone: 'America/New_York',
         businessHours: {
@@ -3466,7 +3466,7 @@ async function handleAssistantRequest(employee: any) {
             },
             voice: {
               provider: '11labs',
-              voiceId: 'EXAVITQu4vr4xnSDxMaL',
+              voiceId: 'aVR2rUXJY4MTezzJjPyQ',
               model: 'eleven_flash_v2_5',
               stability: 0.5,
               similarityBoost: 0.75,

@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Layout from '../../../components/Layout'
 import ProtectedRoute from '../../../components/ProtectedRoute'
+import CreditMeter from '../../../components/CreditMeter'
 import { BusinessAPI, type Business } from '../../../lib/supabase'
 import { SUBSCRIPTION_PRODUCTS } from '../../../lib/stripe-products'
 import {
@@ -13,6 +15,8 @@ import {
   SparklesIcon,
   ArrowRightIcon,
   ShieldCheckIcon,
+  ArrowDownTrayIcon,
+  CalendarDaysIcon,
 } from '@heroicons/react/24/outline'
 import { loadStripe } from '@stripe/stripe-js'
 import { getCurrentBusinessId } from '../../../lib/auth-utils'
@@ -25,36 +29,98 @@ const PLAN_PRICES: Record<string, number> = {
   pro: 199,
 }
 
-function BillingPage() {
+interface BillingInfo {
+  currentPlan: string
+  billingCycle: string
+  nextBillingDate: string
+  amount: number
+  paymentMethod: {
+    type: string
+    last4: string
+    brand: string
+    expiryMonth: number
+    expiryYear: number
+  } | null
+  subscriptionStatus: string
+}
+
+interface Invoice {
+  id: string
+  date: string
+  amount: number
+  status: string
+  description: string
+  downloadUrl?: string
+}
+
+function BillingPageContent() {
+  const searchParams = useSearchParams()
   const [business, setBusiness] = useState<Business | null>(null)
   const [loading, setLoading] = useState(true)
   const [upgrading, setUpgrading] = useState<string | null>(null)
   const [cancelling, setCancelling] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [billingInfo, setBillingInfo] = useState<BillingInfo | null>(null)
+  const [invoices, setInvoices] = useState<Invoice[]>([])
+  const [businessId, setBusinessId] = useState<string | null>(null)
 
   const isTestMode = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.includes('pk_test_') ?? true
 
   useEffect(() => {
+    // Check for post-checkout success
+    const subscribed = searchParams.get('subscribed')
+    const plan = searchParams.get('plan')
+    if (subscribed === 'true' && plan) {
+      setSuccess(`Welcome to VoiceFly ${plan === 'pro' ? 'Pro' : 'Starter'}! Your subscription is now active.`)
+      setTimeout(() => setSuccess(null), 8000)
+    }
+
     loadBillingData()
-  }, [])
+  }, [searchParams])
+
+  const getAuthHeaders = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session?.access_token) return null
+    return {
+      Authorization: `Bearer ${session.access_token}`,
+      'Content-Type': 'application/json',
+    }
+  }
 
   const loadBillingData = async () => {
     try {
       setLoading(true)
       setError(null)
 
-      const businessId = getCurrentBusinessId()
-      if (!businessId) {
+      const bizId = getCurrentBusinessId()
+      if (!bizId) {
         setError('Authentication required. Please log in.')
         return
       }
+      setBusinessId(bizId)
 
-      const businessData = await BusinessAPI.getBusiness(businessId)
+      const headers = await getAuthHeaders()
+
+      // Fetch business, billing info, and invoices in parallel
+      const [businessData, billingRes, invoicesRes] = await Promise.all([
+        BusinessAPI.getBusiness(bizId),
+        headers ? fetch('/api/billing/info', { headers }).then(r => r.ok ? r.json() : null).catch(() => null) : null,
+        headers ? fetch('/api/billing/invoices', { headers }).then(r => r.ok ? r.json() : null).catch(() => null) : null,
+      ])
+
       if (businessData) {
         setBusiness(businessData)
       } else {
         setError('Business not found')
+      }
+
+      if (billingRes) {
+        setBillingInfo(billingRes)
+      }
+
+      if (invoicesRes?.invoices) {
+        setInvoices(invoicesRes.invoices)
       }
     } catch (err) {
       console.error('Error loading billing data:', err)
@@ -200,15 +266,18 @@ function BillingPage() {
           </div>
         )}
 
-        {/* Feedback */}
+        {/* Success Banner */}
+        {success && (
+          <div className="mb-4 px-4 py-3 rounded-lg text-sm font-medium bg-green-50 text-green-700 border border-green-200 flex items-center">
+            <CheckCircleIcon className="h-5 w-5 mr-2 flex-shrink-0" />
+            {success}
+          </div>
+        )}
+
+        {/* Error Banner */}
         {error && (
           <div className="mb-4 px-4 py-3 rounded-lg text-sm font-medium bg-red-50 text-red-700 border border-red-200">
             {error}
-          </div>
-        )}
-        {success && (
-          <div className="mb-4 px-4 py-3 rounded-lg text-sm font-medium bg-green-50 text-green-700 border border-green-200">
-            {success}
           </div>
         )}
 
@@ -270,9 +339,31 @@ function BillingPage() {
               ))}
             </div>
 
+            {/* Next billing date & Payment method */}
+            {(billingInfo?.nextBillingDate || billingInfo?.paymentMethod) && (
+              <div className="border-t border-gray-200 pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                {billingInfo.nextBillingDate && !isOnTrial && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <CalendarDaysIcon className="h-4 w-4 mr-2 text-gray-400" />
+                    <span>Next billing: {new Date(billingInfo.nextBillingDate).toLocaleDateString()}</span>
+                  </div>
+                )}
+                {billingInfo.paymentMethod && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <CreditCardIcon className="h-4 w-4 mr-2 text-gray-400" />
+                    <span className="capitalize">{billingInfo.paymentMethod.brand}</span>
+                    <span className="ml-1">&bull;&bull;&bull;&bull; {billingInfo.paymentMethod.last4}</span>
+                    <span className="ml-2 text-gray-400">
+                      {billingInfo.paymentMethod.expiryMonth}/{billingInfo.paymentMethod.expiryYear}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Trial info */}
             {isOnTrial && business?.trial_ends_at && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
                 <div className="flex items-center">
                   <ExclamationTriangleIcon className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
                   <div>
@@ -288,6 +379,13 @@ function BillingPage() {
             )}
           </div>
         </div>
+
+        {/* Voice Minutes */}
+        {businessId && (
+          <div className="mb-8">
+            <CreditMeter businessId={businessId} showPurchaseButton={false} />
+          </div>
+        )}
 
         {/* Upgrade Options */}
         {canUpgrade && (
@@ -364,7 +462,9 @@ function BillingPage() {
                 </div>
 
                 {/* Pro Plan */}
-                <div className="border-2 border-indigo-200 rounded-xl p-6 hover:border-indigo-300 transition-colors relative">
+                <div className={`border-2 rounded-xl p-6 transition-colors relative ${
+                  isPro ? 'border-indigo-300 bg-indigo-50' : 'border-indigo-200 hover:border-indigo-300'
+                }`}>
                   <div className="absolute -top-3 left-6">
                     <span className="bg-indigo-600 text-white px-3 py-0.5 rounded-full text-xs font-medium">
                       Recommended
@@ -382,40 +482,100 @@ function BillingPage() {
                       </li>
                     ))}
                   </ul>
-                  <button
-                    onClick={() => handleUpgrade('pro')}
-                    disabled={upgrading === 'pro'}
-                    className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                  >
-                    {upgrading === 'pro' ? (
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    ) : (
-                      <>
-                        Upgrade to Pro
-                        <ArrowRightIcon className="h-4 w-4 ml-2" />
-                      </>
-                    )}
-                  </button>
+                  {isPro ? (
+                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium bg-indigo-100 text-indigo-700">
+                      Current Plan
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleUpgrade('pro')}
+                      disabled={upgrading === 'pro'}
+                      className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                      {upgrading === 'pro' ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      ) : (
+                        <>
+                          Upgrade to Pro
+                          <ArrowRightIcon className="h-4 w-4 ml-2" />
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Billing History placeholder */}
+        {/* Billing History */}
         <div className="bg-white rounded-xl border border-gray-200 mb-8">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-semibold text-gray-900">Billing History</h2>
           </div>
           <div className="p-6">
-            <div className="text-center py-6">
-              <DocumentTextIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-              <p className="text-sm text-gray-500">
-                {isPaidPlan
-                  ? 'Your invoices will appear here after your first billing cycle.'
-                  : 'Billing history will appear here once you subscribe to a plan.'}
-              </p>
-            </div>
+            {invoices.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead>
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {invoices.map((invoice) => (
+                      <tr key={invoice.id}>
+                        <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                          {new Date(invoice.date).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700">
+                          {invoice.description}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
+                          ${invoice.amount.toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                            invoice.status === 'paid' ? 'bg-green-100 text-green-700' :
+                            invoice.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
+                          }`}>
+                            {invoice.status === 'paid' ? 'Paid' :
+                             invoice.status === 'pending' ? 'Pending' : 'Failed'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          {invoice.downloadUrl && (
+                            <a
+                              href={invoice.downloadUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-700 text-sm font-medium inline-flex items-center"
+                            >
+                              <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
+                              PDF
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <DocumentTextIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                <p className="text-sm text-gray-500">
+                  {isPaidPlan
+                    ? 'Your invoices will appear here after your first billing cycle.'
+                    : 'Billing history will appear here once you subscribe to a plan.'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -452,7 +612,19 @@ function BillingPage() {
 function ProtectedBillingPage() {
   return (
     <ProtectedRoute>
-      <BillingPage />
+      <Suspense fallback={
+        <Layout business={null}>
+          <div className="p-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-1/3 mb-8"></div>
+              <div className="h-64 bg-gray-200 rounded mb-6"></div>
+              <div className="h-96 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </Layout>
+      }>
+        <BillingPageContent />
+      </Suspense>
     </ProtectedRoute>
   )
 }

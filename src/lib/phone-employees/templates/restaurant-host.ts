@@ -308,7 +308,7 @@ export function createRestaurantHostEmployee(params: {
 
     voice: params.voice || {
       provider: '11labs',
-      voiceId: 'sarah',
+      voiceId: 'aVR2rUXJY4MTezzJjPyQ',
       speed: 1.0,
       stability: 0.8,
     },

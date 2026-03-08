@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY
-const ELEVENLABS_VOICE_ID = 'EXAVITQu4vr4xnSDxMaL' // Sarah - warm, professional female voice
+const ELEVENLABS_VOICE_ID = 'aVR2rUXJY4MTezzJjPyQ' // Angie - Reassuring, Calm and Clear
 
 interface TTSRequest {
   text: string
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({
           text: cleanText,
-          model_id: 'eleven_monolingual_v1',
+          model_id: 'eleven_flash_v2_5',
           voice_settings: {
             stability: 0.5,
             similarity_boost: 0.75,
