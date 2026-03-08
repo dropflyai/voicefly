@@ -89,6 +89,16 @@ export default function SettingsPage() {
   const [quickFillParsing, setQuickFillParsing] = useState(false)
   const [quickFillError, setQuickFillError] = useState('')
   const [quickFillResult, setQuickFillResult] = useState<Record<string, string> | null>(null)
+  const [notifSaving, setNotifSaving] = useState(false)
+  const [notifSaved, setNotifSaved] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
+  const [teamMembers, setTeamMembers] = useState<{ id: string; email: string; role: string; user_id: string }[]>([])
+  const [teamLoading, setTeamLoading] = useState(false)
 
   const tabs = [
     { id: 'business', name: 'Business Profile', icon: BuildingOfficeIcon },
@@ -147,9 +157,28 @@ export default function SettingsPage() {
         if (bizData.settings?.owner_phone) {
           setOwnerPhone(bizData.settings.owner_phone)
         }
+        if (bizData.settings?.notifications) {
+          setNotifications(prev => ({ ...prev, ...bizData.settings.notifications }))
+        }
         if (bizData.business_context) {
           setBusinessContext(bizData.business_context)
         }
+      }
+
+      // Load team members
+      const { data: members } = await supabase
+        .from('business_users')
+        .select('id, user_id, role')
+        .eq('business_id', membership.business_id)
+      if (members) {
+        // Get emails from auth — we can't query auth.users directly,
+        // so we store what we have (user_id + role)
+        setTeamMembers(members.map(m => ({
+          id: m.id,
+          user_id: m.user_id,
+          role: m.role,
+          email: m.user_id === session.user.id ? session.user.email || '' : '',
+        })))
       }
 
       // Load business hours
@@ -361,6 +390,52 @@ export default function SettingsPage() {
     setOwnerPhoneSaving(false)
     setOwnerPhoneSaved(true)
     setTimeout(() => setOwnerPhoneSaved(false), 3000)
+  }
+
+  const saveNotifications = async () => {
+    if (!businessId) return
+    setNotifSaving(true)
+    const { data: bizSettings } = await supabase
+      .from('businesses')
+      .select('settings')
+      .eq('id', businessId)
+      .single()
+    await supabase
+      .from('businesses')
+      .update({ settings: { ...(bizSettings?.settings || {}), notifications } })
+      .eq('id', businessId)
+    setNotifSaving(false)
+    setNotifSaved(true)
+    setTimeout(() => setNotifSaved(false), 3000)
+  }
+
+  const changePassword = async () => {
+    setPasswordError('')
+    setPasswordSuccess(false)
+    if (!newPassword || !confirmPassword) {
+      setPasswordError('Please fill in all password fields')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match')
+      return
+    }
+    if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters')
+      return
+    }
+    setPasswordSaving(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setPasswordSaving(false)
+    if (error) {
+      setPasswordError(error.message)
+    } else {
+      setPasswordSuccess(true)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setTimeout(() => setPasswordSuccess(false), 5000)
+    }
   }
 
   return (
@@ -956,9 +1031,18 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="flex justify-end mt-6">
-                    <button className="btn-primary">
-                      Save Notification Settings
+                  <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t">
+                    {notifSaved && (
+                      <span className="flex items-center gap-1 text-sm text-green-600">
+                        <CheckIcon className="h-4 w-4" /> Saved
+                      </span>
+                    )}
+                    <button
+                      onClick={saveNotifications}
+                      disabled={notifSaving}
+                      className="btn-primary"
+                    >
+                      {notifSaving ? 'Saving...' : 'Save Notification Settings'}
                     </button>
                   </div>
                 </div>
@@ -969,28 +1053,46 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div className="card">
                   <div className="p-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-6">Password & Security</h2>
-                    
+                    <h2 className="text-xl font-semibold text-gray-900 mb-6">Change Password</h2>
+
                     <div className="space-y-4">
                       <div>
-                        <label className="label">Current Password</label>
-                        <input type="password" className="input-field" />
-                      </div>
-                      
-                      <div>
                         <label className="label">New Password</label>
-                        <input type="password" className="input-field" />
+                        <input
+                          type="password"
+                          className="input-field"
+                          placeholder="At least 8 characters"
+                          value={newPassword}
+                          onChange={e => setNewPassword(e.target.value)}
+                        />
                       </div>
-                      
+
                       <div>
                         <label className="label">Confirm New Password</label>
-                        <input type="password" className="input-field" />
+                        <input
+                          type="password"
+                          className="input-field"
+                          placeholder="Re-enter new password"
+                          value={confirmPassword}
+                          onChange={e => setConfirmPassword(e.target.value)}
+                        />
                       </div>
                     </div>
 
-                    <div className="flex justify-end mt-6">
-                      <button className="btn-primary">
-                        Update Password
+                    {passwordError && (
+                      <p className="text-sm text-red-600 mt-3">{passwordError}</p>
+                    )}
+                    {passwordSuccess && (
+                      <p className="text-sm text-green-600 mt-3">Password updated successfully.</p>
+                    )}
+
+                    <div className="flex justify-end mt-6 pt-6 border-t">
+                      <button
+                        onClick={changePassword}
+                        disabled={passwordSaving}
+                        className="btn-primary"
+                      >
+                        {passwordSaving ? 'Updating...' : 'Update Password'}
                       </button>
                     </div>
                   </div>
@@ -1000,17 +1102,15 @@ export default function SettingsPage() {
                   <div className="p-6">
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Two-Factor Authentication</h3>
                     <p className="text-gray-600 mb-4">
-                      Add an extra layer of security to your account with two-factor authentication.
+                      Two-factor authentication adds an extra layer of security. This feature is coming soon.
                     </p>
-                    
+
                     <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                       <div>
                         <div className="font-medium text-gray-900">SMS Authentication</div>
                         <div className="text-sm text-gray-500">Receive codes via text message</div>
                       </div>
-                      <button className="btn-secondary">
-                        Enable
-                      </button>
+                      <span className="text-sm text-gray-400 font-medium">Coming Soon</span>
                     </div>
                   </div>
                 </div>
@@ -1018,163 +1118,53 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'team' && (
-              <div className="space-y-6">
-                {/* Team Pricing Overview */}
-                <div className="card">
-                  <div className="p-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-4">Team Seat Pricing</h2>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm font-medium text-gray-700">Current Plan: Professional</div>
-                          <div className="text-2xl font-bold text-gray-900 mt-1">$446/month</div>
-                          <div className="text-sm text-gray-600 mt-1">
-                            $397 base + $49 for 1 additional seat
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-medium text-gray-700">Seat Usage</div>
-                          <div className="text-2xl font-bold text-gray-900 mt-1">4 / 10</div>
-                          <div className="text-sm text-gray-600 mt-1">seats used</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <div className="text-gray-600">Included Seats</div>
-                        <div className="font-semibold text-gray-900 mt-1">3 seats</div>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <div className="text-gray-600">Additional Seats</div>
-                        <div className="font-semibold text-gray-900 mt-1">$49/seat/month</div>
-                      </div>
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <div className="text-gray-600">Max Seats</div>
-                        <div className="font-semibold text-gray-900 mt-1">10 seats</div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0">
-                          <svg className="h-5 w-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <div className="ml-3 text-sm">
-                          <p className="font-medium text-yellow-800">Approaching seat limit</p>
-                          <p className="text-yellow-700 mt-1">You're using 4 of 10 seats. Upgrade to Business plan for up to 25 seats at $59/seat.</p>
-                        </div>
-                      </div>
-                    </div>
+              <div className="card">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold text-gray-900">Team Members</h2>
                   </div>
-                </div>
 
-                {/* Team Members */}
-                <div className="card">
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-xl font-semibold text-gray-900">Team Members</h2>
-                      <button
-                        className="btn-primary"
-                        onClick={() => alert('Team invite modal would open here')}
-                      >
-                        <UserGroupIcon className="h-4 w-4 mr-2" />
-                        Invite Team Member
-                      </button>
+                  {teamMembers.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No team members found.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {teamMembers.map(member => {
+                        const initials = member.email
+                          ? member.email.slice(0, 2).toUpperCase()
+                          : member.user_id.slice(0, 2).toUpperCase()
+                        const colors = ['bg-blue-600', 'bg-purple-600', 'bg-green-600', 'bg-orange-600', 'bg-pink-600']
+                        const colorIndex = member.user_id.charCodeAt(0) % colors.length
+                        return (
+                          <div key={member.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                              <div className={`h-10 w-10 ${colors[colorIndex]} rounded-full flex items-center justify-center`}>
+                                <span className="text-white font-medium text-sm">{initials}</span>
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900">
+                                  {member.email || `User ${member.user_id.slice(0, 8)}...`}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  {member.role}
+                                </div>
+                              </div>
+                            </div>
+                            <span className={clsx(
+                              'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+                              member.role === 'owner' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                            )}>
+                              {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+                            </span>
+                          </div>
+                        )
+                      })}
                     </div>
+                  )}
 
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-medium">JS</span>
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">John Smith</div>
-                            <div className="text-sm text-gray-500">john@voicefly.ai</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            Owner
-                          </span>
-                          <span className="text-xs text-gray-500">Included</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 bg-purple-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-medium">MR</span>
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">Maya Rodriguez</div>
-                            <div className="text-sm text-gray-500">maya@voicefly.ai</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            Manager
-                          </span>
-                          <span className="text-xs text-gray-500">Included</span>
-                          <button className="text-gray-400 hover:text-red-600">
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 bg-green-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-medium">SK</span>
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">Sarah Kim</div>
-                            <div className="text-sm text-gray-500">sarah@voicefly.ai</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            Member
-                          </span>
-                          <span className="text-xs text-gray-500">Included</span>
-                          <button className="text-gray-400 hover:text-red-600">
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 bg-blue-50 border-2 border-blue-200 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-10 w-10 bg-orange-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-medium">TC</span>
-                          </div>
-                          <div>
-                            <div className="font-medium text-gray-900">Tom Chen</div>
-                            <div className="text-sm text-gray-500">tom@voicefly.ai</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            Member
-                          </span>
-                          <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                            +$49/mo
-                          </span>
-                          <button className="text-gray-400 hover:text-red-600">
-                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                  <div className="mt-6 pt-6 border-t">
+                    <p className="text-sm text-gray-500">
+                      Team invitations and role management are coming soon.
+                    </p>
                   </div>
                 </div>
               </div>
