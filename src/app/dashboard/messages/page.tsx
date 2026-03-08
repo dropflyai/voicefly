@@ -101,7 +101,9 @@ function MessagesPage() {
   }, [smsMessages])
 
   async function loadData() {
-    const { data: { session } } = await supabase.auth.getSession()
+    // Force token refresh to ensure we have a valid JWT
+    const { data: { session: refreshed } } = await supabase.auth.refreshSession()
+    const session = refreshed || (await supabase.auth.getSession()).data.session
     if (!session) {
       redirectToLoginIfUnauthenticated()
       return
