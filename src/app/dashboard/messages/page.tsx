@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef, Fragment } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Layout from '../../../components/Layout'
 import ProtectedRoute from '../../../components/ProtectedRoute'
 import { type Business } from '../../../lib/supabase'
+import { supabase } from '../../../lib/supabase-client'
 import { getSecureBusinessId, redirectToLoginIfUnauthenticated } from '../../../lib/multi-tenant-auth'
 import {
   ChatBubbleLeftRightIcon,
@@ -69,7 +69,6 @@ interface Employee {
 // ============================================
 
 function MessagesPage() {
-  const supabase = createClientComponentClient()
   const [business, setBusiness] = useState<Business | null>(null)
   const [activeTab, setActiveTab] = useState<'calls' | 'sms'>('calls')
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -102,6 +101,14 @@ function MessagesPage() {
   }, [smsMessages])
 
   async function loadData() {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      redirectToLoginIfUnauthenticated()
+      return
+    }
+    const t = session.access_token
+    setToken(t)
+
     const bId = getSecureBusinessId()
     if (!bId) {
       redirectToLoginIfUnauthenticated()
@@ -109,33 +116,32 @@ function MessagesPage() {
     }
     setBusinessId(bId)
 
-    const { data: b } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('id', bId)
-      .single()
-    if (b) setBusiness(b as Business)
+    const headers = { 'Authorization': `Bearer ${t}` }
 
-    const { data: { session } } = await supabase.auth.getSession()
-    const t = session?.access_token || ''
-    setToken(t)
+    // Fetch all data in parallel via server-side API routes
+    const [bizRes, empRes, msgRes, convRes] = await Promise.all([
+      fetch(`/api/businesses/${bId}`, { headers }).catch(() => null),
+      fetch(`/api/phone-employees?businessId=${bId}`, { headers }).catch(() => null),
+      fetch(`/api/phone-messages?businessId=${bId}`, { headers }).catch(() => null),
+      fetch(`/api/conversations?businessId=${bId}`, { headers }).catch(() => null),
+    ])
 
-    // Fetch employees
-    if (t) {
-      const empRes = await fetch(`/api/phone-employees?businessId=${bId}`, {
-        headers: { 'Authorization': `Bearer ${t}` },
-      })
-      if (empRes.ok) {
-        const empData = await empRes.json()
-        setEmployees(empData.employees || [])
-      }
+    if (bizRes?.ok) {
+      const data = await bizRes.json()
+      if (data.business) setBusiness(data.business)
     }
-
-    // Load phone messages directly from Supabase
-    await loadPhoneMessages(bId)
-
-    // Load SMS conversations
-    await loadConversations(bId, t)
+    if (empRes?.ok) {
+      const data = await empRes.json()
+      setEmployees(data.employees || [])
+    }
+    if (msgRes?.ok) {
+      const data = await msgRes.json()
+      setPhoneMessages(data.messages || [])
+    }
+    if (convRes?.ok) {
+      const data = await convRes.json()
+      setConversations(data.conversations || [])
+    }
 
     setLoading(false)
   }
@@ -144,27 +150,31 @@ function MessagesPage() {
   // PHONE MESSAGES (from calls)
   // ============================================
 
-  async function loadPhoneMessages(bId?: string) {
+  async function loadPhoneMessages(bId?: string, t?: string) {
     const id = bId || businessId
     if (!id) return
+    const authToken = t || token
 
-    const { data, error } = await supabase
-      .from('phone_messages')
-      .select('*')
-      .eq('business_id', id)
-      .order('created_at', { ascending: false })
-      .limit(50)
+    const res = await fetch(`/api/phone-messages?businessId=${id}`, {
+      headers: { 'Authorization': `Bearer ${authToken}` },
+    }).catch(() => null)
 
-    if (!error && data) {
-      setPhoneMessages(data)
+    if (res?.ok) {
+      const data = await res.json()
+      setPhoneMessages(data.messages || [])
     }
   }
 
   async function updateMessageStatus(msgId: string, newStatus: string) {
-    await supabase
-      .from('phone_messages')
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
-      .eq('id', msgId)
+    const { data: { session } } = await supabase.auth.getSession()
+    await fetch('/api/phone-messages', {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${session?.access_token || token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messageId: msgId, businessId, status: newStatus }),
+    })
 
     setPhoneMessages(prev =>
       prev.map(m => m.id === msgId ? { ...m, status: newStatus } : m)
@@ -172,10 +182,15 @@ function MessagesPage() {
   }
 
   async function markCallbackCompleted(msgId: string) {
-    await supabase
-      .from('phone_messages')
-      .update({ callback_completed: true, status: 'resolved', updated_at: new Date().toISOString() })
-      .eq('id', msgId)
+    const { data: { session } } = await supabase.auth.getSession()
+    await fetch('/api/phone-messages', {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${session?.access_token || token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ messageId: msgId, businessId, status: 'resolved', callback_completed: true }),
+    })
 
     setPhoneMessages(prev =>
       prev.map(m => m.id === msgId ? { ...m, callback_completed: true, status: 'resolved' } : m)
