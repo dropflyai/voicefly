@@ -205,48 +205,64 @@ function getNextEmployeeSuggestion(employees: any[], businessType: string | null
 }
 
 function summarizeEmployeeConfig(e: any): string {
-  const parts = [`- **${e.name}** (${e.job_type})${e.is_active ? ' — active' : ' — inactive'}${e.phone_number ? `, phone: ${e.phone_number}` : ' — no phone yet'}`]
-  const config = e.job_config || {}
-  const greeting = config.greeting || config.firstMessage
-  if (greeting) parts.push(`  Greeting: "${greeting.slice(0, 150)}${greeting.length > 150 ? '...' : ''}"`)
-  if (config.businessHours) parts.push(`  Has business hours configured`)
-  if (config.specialInstructions) parts.push(`  Special instructions: "${String(config.specialInstructions).slice(0, 100)}"`)
-  if (e.voice?.voiceId) parts.push(`  Voice: ${e.voice.voiceId}`)
-  return parts.join('\n')
+  try {
+    const parts = [`- **${e.name}** (${e.job_type})${e.is_active ? ' — active' : ' — inactive'}${e.phone_number ? `, phone: ${e.phone_number}` : ' — no phone yet'}`]
+    const config = typeof e.job_config === 'object' && e.job_config ? e.job_config : {}
+    const greeting = config.greeting || config.firstMessage
+    if (greeting && typeof greeting === 'string') parts.push(`  Greeting: "${greeting.slice(0, 150)}${greeting.length > 150 ? '...' : ''}"`)
+    if (config.businessHours) parts.push(`  Has business hours configured`)
+    if (config.specialInstructions) parts.push(`  Special instructions: "${String(config.specialInstructions).slice(0, 100)}"`)
+    if (e.voice?.voiceId) parts.push(`  Voice: ${e.voice.voiceId}`)
+    return parts.join('\n')
+  } catch {
+    return `- ${e.name || 'Unknown'} (${e.job_type || 'unknown'})`
+  }
 }
 
 function formatRecentCalls(calls: any[], employees: any[]): string {
-  if (!calls.length) return '(no calls yet)'
-  const empMap = new Map(employees.map(e => [e.id, e.name]))
-  return calls.map(c => {
-    const date = new Date(c.started_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    const time = new Date(c.started_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-    const dur = c.duration ? `${Math.floor(c.duration / 60)}m ${c.duration % 60}s` : 'n/a'
-    const emp = c.employee_id ? empMap.get(c.employee_id) || '' : ''
-    const summary = c.summary ? ` — "${c.summary.slice(0, 120)}"` : ''
-    return `- ${date} ${time} | ${c.direction || 'inbound'} ${c.customer_phone || 'unknown'} | ${dur}${emp ? ` | ${emp}` : ''}${summary}`
-  }).join('\n')
+  if (!calls?.length) return '(no calls yet)'
+  try {
+    const empMap = new Map(employees.filter(e => e.id).map(e => [e.id, e.name]))
+    return calls.map(c => {
+      const date = c.started_at ? new Date(c.started_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '?'
+      const time = c.started_at ? new Date(c.started_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''
+      const dur = c.duration ? `${Math.floor(c.duration / 60)}m ${c.duration % 60}s` : 'n/a'
+      const emp = c.employee_id ? empMap.get(c.employee_id) || '' : ''
+      const summary = c.summary ? ` — "${String(c.summary).slice(0, 120)}"` : ''
+      return `- ${date} ${time} | ${c.direction || 'inbound'} ${c.customer_phone || 'unknown'} | ${dur}${emp ? ` | ${emp}` : ''}${summary}`
+    }).join('\n')
+  } catch {
+    return '(error loading calls)'
+  }
 }
 
 function formatRecentMessages(messages: any[]): string {
-  if (!messages.length) return '(no messages yet)'
-  return messages.map(m => {
-    const date = new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    const caller = m.caller_name || m.caller_phone || 'unknown'
-    const urgencyTag = m.urgency && m.urgency !== 'normal' ? ` [${m.urgency}]` : ''
-    const statusTag = m.status ? ` (${m.status})` : ''
-    return `- ${date} from ${caller}${urgencyTag}${statusTag}: "${(m.reason || m.full_message || '').slice(0, 120)}"`
-  }).join('\n')
+  if (!messages?.length) return '(no messages yet)'
+  try {
+    return messages.map(m => {
+      const date = m.created_at ? new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '?'
+      const caller = m.caller_name || m.caller_phone || 'unknown'
+      const urgencyTag = m.urgency && m.urgency !== 'normal' ? ` [${m.urgency}]` : ''
+      const statusTag = m.status ? ` (${m.status})` : ''
+      return `- ${date} from ${caller}${urgencyTag}${statusTag}: "${String(m.reason || m.full_message || '').slice(0, 120)}"`
+    }).join('\n')
+  } catch {
+    return '(error loading messages)'
+  }
 }
 
 function formatBusinessHours(hours: any[]): string {
-  if (!hours.length) return '(not configured)'
-  const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
-  const sorted = [...hours].sort((a, b) => dayOrder.indexOf(a.day_of_week) - dayOrder.indexOf(b.day_of_week))
-  return sorted.map(h => {
-    const day = h.day_of_week.charAt(0).toUpperCase() + h.day_of_week.slice(1)
-    return h.is_open ? `- ${day}: ${h.open_time} – ${h.close_time}` : `- ${day}: Closed`
-  }).join('\n')
+  if (!hours?.length) return '(not configured)'
+  try {
+    const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    const sorted = [...hours].sort((a, b) => dayOrder.indexOf(a.day_of_week) - dayOrder.indexOf(b.day_of_week))
+    return sorted.map(h => {
+      const day = (h.day_of_week || '').charAt(0).toUpperCase() + (h.day_of_week || '').slice(1)
+      return h.is_open ? `- ${day}: ${h.open_time} – ${h.close_time}` : `- ${day}: Closed`
+    }).join('\n')
+  } catch {
+    return '(error loading hours)'
+  }
 }
 
 function buildDashboardSystemPrompt(
@@ -734,10 +750,11 @@ export async function POST(request: NextRequest) {
       ...(createTicket ? { createTicket: true, ticketSummary } : {}),
     })
   } catch (error: any) {
-    console.error('[API] Chat error:', error)
+    console.error('[API] Chat error:', error?.message || error)
     if (error?.status === 429) {
       return NextResponse.json({ error: 'AI service rate limited. Please try again.' }, { status: 429 })
     }
-    return NextResponse.json({ error: 'Failed to get response' }, { status: 500 })
+    const errMsg = error?.message || String(error)
+    return NextResponse.json({ error: `Failed to get response: ${errMsg}` }, { status: 500 })
   }
 }
