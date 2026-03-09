@@ -1,4 +1,4 @@
-export type IntegrationPlatform = 'square' | 'toast' | 'calendly' | 'shopify'
+export type IntegrationPlatform = 'square' | 'toast' | 'calendly' | 'shopify' | 'hubspot' | 'google-calendar' | 'clover'
 
 export type IntegrationStatus = 'connected' | 'disconnected' | 'error' | 'syncing'
 

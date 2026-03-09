@@ -46,11 +46,19 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = getSupabase()
-    const { data, error } = await supabase
-      .from('business_integrations')
-      .select('id, business_id, platform, status, config, last_synced_at, sync_error, created_at, updated_at')
-      .eq('business_id', businessId)
-      .order('created_at', { ascending: true })
+    const [{ data, error }, { data: hubspotConn }] = await Promise.all([
+      supabase
+        .from('business_integrations')
+        .select('id, business_id, platform, status, config, last_synced_at, sync_error, created_at, updated_at')
+        .eq('business_id', businessId)
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('hubspot_connections')
+        .select('id, business_id, is_connected, portal_id, updated_at')
+        .eq('business_id', businessId)
+        .eq('is_connected', true)
+        .maybeSingle(),
+    ])
 
     if (error) {
       console.error('[API] Failed to fetch integrations:', error)
@@ -58,6 +66,21 @@ export async function GET(request: NextRequest) {
     }
 
     const integrations: BusinessIntegration[] = (data ?? []).map(rowToIntegration)
+
+    // Merge HubSpot connection status from its dedicated table
+    if (hubspotConn) {
+      integrations.push({
+        id: hubspotConn.id,
+        businessId: hubspotConn.business_id,
+        platform: 'hubspot',
+        status: 'connected',
+        config: { portalId: hubspotConn.portal_id },
+        lastSyncedAt: null,
+        syncError: null,
+        createdAt: hubspotConn.updated_at,
+        updatedAt: hubspotConn.updated_at,
+      })
+    }
 
     return NextResponse.json({ integrations })
   } catch (error: any) {

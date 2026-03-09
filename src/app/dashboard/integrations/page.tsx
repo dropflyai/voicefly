@@ -66,8 +66,8 @@ const AVAILABLE_INTEGRATIONS: IntegrationDef[] = [
     category: 'CRM',
     employeeTypes: ['receptionist', 'customer-service'],
     color: 'purple',
-    comingSoon: true,
-    connectType: 'oauth',
+    comingSoon: false,
+    connectType: 'apikey',
   },
   {
     id: 'toast',
@@ -86,8 +86,8 @@ const AVAILABLE_INTEGRATIONS: IntegrationDef[] = [
     category: 'E-commerce',
     employeeTypes: ['customer-service'],
     color: 'purple',
-    comingSoon: true,
-    connectType: 'none',
+    comingSoon: false,
+    connectType: 'apikey',
   },
   {
     id: 'clover',
@@ -96,8 +96,8 @@ const AVAILABLE_INTEGRATIONS: IntegrationDef[] = [
     category: 'Restaurant & Retail',
     employeeTypes: ['order-taker'],
     color: 'green',
-    comingSoon: true,
-    connectType: 'oauth',
+    comingSoon: false,
+    connectType: 'apikey',
   },
 ]
 
@@ -138,6 +138,20 @@ function IntegrationsPage() {
   // Google Calendar state
   const [calendarId, setCalendarId] = useState('')
   const [calendarConnecting, setCalendarConnecting] = useState(false)
+
+  // HubSpot state
+  const [hubspotToken, setHubspotToken] = useState('')
+  const [hubspotConnecting, setHubspotConnecting] = useState(false)
+
+  // Shopify state
+  const [shopifyDomain, setShopifyDomain] = useState('')
+  const [shopifyToken, setShopifyToken] = useState('')
+  const [shopifyConnecting, setShopifyConnecting] = useState(false)
+
+  // Clover state
+  const [cloverMerchantId, setCloverMerchantId] = useState('')
+  const [cloverToken, setCloverToken] = useState('')
+  const [cloverConnecting, setCloverConnecting] = useState(false)
 
   // Feedback
   const [feedback, setFeedback] = useState<{ type: 'error' | 'success'; message: string } | null>(null)
@@ -287,16 +301,127 @@ function IntegrationsPage() {
     setSquareSyncing(false)
   }
 
+  // --- HubSpot ---
+  const handleHubSpotConnect = async () => {
+    if (!hubspotToken.trim()) {
+      showFeedback('error', 'Please enter your HubSpot Private App token.')
+      return
+    }
+    setHubspotConnecting(true)
+    const businessId = getSecureBusinessId()
+    const headers = await getAuthHeaders()
+
+    try {
+      const res = await fetch('/api/integrations/hubspot/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ businessId, token: hubspotToken.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        showFeedback('error', data.error ?? 'Failed to connect HubSpot.')
+      } else {
+        showFeedback('success', `HubSpot connected successfully${data.portalId ? ` (Portal ${data.portalId})` : ''}.`)
+        setHubspotToken('')
+        setExpandedCard(null)
+        loadData()
+      }
+    } catch {
+      showFeedback('error', 'Network error. Please try again.')
+    }
+    setHubspotConnecting(false)
+  }
+
+  // --- Shopify ---
+  const handleShopifyConnect = async () => {
+    if (!shopifyDomain.trim()) {
+      showFeedback('error', 'Please enter your Shopify store domain.')
+      return
+    }
+    if (!shopifyToken.trim()) {
+      showFeedback('error', 'Please enter your Shopify access token.')
+      return
+    }
+    setShopifyConnecting(true)
+    const businessId = getSecureBusinessId()
+    const headers = await getAuthHeaders()
+
+    try {
+      const res = await fetch('/api/integrations/shopify/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ businessId, shopDomain: shopifyDomain.trim(), accessToken: shopifyToken.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        showFeedback('error', data.error ?? 'Failed to connect Shopify.')
+      } else {
+        showFeedback('success', `Shopify connected${data.shopName ? ` (${data.shopName})` : ''}.`)
+        setShopifyDomain('')
+        setShopifyToken('')
+        setExpandedCard(null)
+        loadData()
+      }
+    } catch {
+      showFeedback('error', 'Network error. Please try again.')
+    }
+    setShopifyConnecting(false)
+  }
+
+  // --- Clover ---
+  const handleCloverConnect = async () => {
+    if (!cloverMerchantId.trim()) {
+      showFeedback('error', 'Please enter your Clover Merchant ID.')
+      return
+    }
+    if (!cloverToken.trim()) {
+      showFeedback('error', 'Please enter your Clover API token.')
+      return
+    }
+    setCloverConnecting(true)
+    const businessId = getSecureBusinessId()
+    const headers = await getAuthHeaders()
+
+    try {
+      const res = await fetch('/api/integrations/clover/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ businessId, merchantId: cloverMerchantId.trim(), accessToken: cloverToken.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        showFeedback('error', data.error ?? 'Failed to connect Clover.')
+      } else {
+        showFeedback('success', `Clover connected${data.merchantName ? ` (${data.merchantName})` : ''}.`)
+        setCloverMerchantId('')
+        setCloverToken('')
+        setExpandedCard(null)
+        loadData()
+      }
+    } catch {
+      showFeedback('error', 'Network error. Please try again.')
+    }
+    setCloverConnecting(false)
+  }
+
   // --- Disconnect any ---
   const handleDisconnect = async (platform: string) => {
     if (!confirm(`Disconnect ${platform}?`)) return
     const businessId = getSecureBusinessId()
     const headers = await getAuthHeaders()
 
-    await fetch(`/api/integrations/${platform}?businessId=${businessId}`, {
-      method: 'DELETE',
-      headers,
-    })
+    if (platform === 'hubspot') {
+      await fetch('/api/integrations/hubspot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ businessId, action: 'disconnect' }),
+      })
+    } else {
+      await fetch(`/api/integrations/${platform}?businessId=${businessId}`, {
+        method: 'DELETE',
+        headers,
+      })
+    }
     loadData()
   }
 
@@ -524,6 +649,113 @@ function IntegrationsPage() {
                         >
                           {squareConnecting ? 'Redirecting...' : 'Authorize with Square'}
                         </button>
+                      </>
+                    )}
+
+                    {/* HubSpot connect */}
+                    {integration.id === 'hubspot' && !isConnected && (
+                      <>
+                        <p className="text-[13px] font-semibold text-gray-900 mb-1">Connect HubSpot</p>
+                        <p className="text-xs text-gray-500 mb-2">
+                          Create a <a href="https://knowledge.hubspot.com/integrations/how-do-i-get-my-hubspot-api-key#create-a-private-app" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-700 underline">Private App</a> in your HubSpot account with these scopes:
+                        </p>
+                        <ul className="text-xs text-gray-500 mb-3 list-disc list-inside space-y-0.5">
+                          <li><span className="font-mono bg-gray-100 px-1 py-0.5 rounded text-[11px]">crm.objects.contacts.read/write</span></li>
+                          <li><span className="font-mono bg-gray-100 px-1 py-0.5 rounded text-[11px]">crm.objects.deals.read/write</span></li>
+                        </ul>
+                        <p className="text-xs text-gray-500 mb-3">Then paste your Private App token below.</p>
+                        <div className="flex gap-2">
+                          <input
+                            type="password"
+                            value={hubspotToken}
+                            onChange={e => setHubspotToken(e.target.value)}
+                            placeholder="pat-na1-xxxxxxxx-xxxx-xxxx..."
+                            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          />
+                          <button
+                            onClick={handleHubSpotConnect}
+                            disabled={hubspotConnecting}
+                            className={`px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors ${
+                              hubspotConnecting ? 'bg-indigo-300 cursor-default' : 'bg-indigo-600 hover:bg-indigo-700'
+                            }`}
+                          >
+                            {hubspotConnecting ? 'Connecting...' : 'Connect'}
+                          </button>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Shopify connect */}
+                    {integration.id === 'shopify' && !isConnected && (
+                      <>
+                        <p className="text-[13px] font-semibold text-gray-900 mb-1">Connect Shopify</p>
+                        <p className="text-xs text-gray-500 mb-3">
+                          In your Shopify admin, go to <span className="font-medium">Settings &gt; Apps and sales channels &gt; Develop apps</span>. Create a custom app with <span className="font-mono bg-gray-100 px-1 py-0.5 rounded text-[11px]">read_products</span>, <span className="font-mono bg-gray-100 px-1 py-0.5 rounded text-[11px]">read_orders</span> scopes, then paste the details below.
+                        </p>
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={shopifyDomain}
+                            onChange={e => setShopifyDomain(e.target.value)}
+                            placeholder="your-store.myshopify.com"
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          />
+                          <div className="flex gap-2">
+                            <input
+                              type="password"
+                              value={shopifyToken}
+                              onChange={e => setShopifyToken(e.target.value)}
+                              placeholder="Admin API access token (shpat_...)"
+                              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            />
+                            <button
+                              onClick={handleShopifyConnect}
+                              disabled={shopifyConnecting}
+                              className={`px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors ${
+                                shopifyConnecting ? 'bg-indigo-300 cursor-default' : 'bg-indigo-600 hover:bg-indigo-700'
+                              }`}
+                            >
+                              {shopifyConnecting ? 'Connecting...' : 'Connect'}
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Clover connect */}
+                    {integration.id === 'clover' && !isConnected && (
+                      <>
+                        <p className="text-[13px] font-semibold text-gray-900 mb-1">Connect Clover</p>
+                        <p className="text-xs text-gray-500 mb-3">
+                          In your Clover dashboard, go to <span className="font-medium">Account &amp; Setup &gt; API Tokens</span> to create a token with <span className="font-mono bg-gray-100 px-1 py-0.5 rounded text-[11px]">Inventory</span> and <span className="font-mono bg-gray-100 px-1 py-0.5 rounded text-[11px]">Orders</span> read permissions. Your Merchant ID is in the URL when logged into Clover.
+                        </p>
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={cloverMerchantId}
+                            onChange={e => setCloverMerchantId(e.target.value)}
+                            placeholder="Merchant ID"
+                            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          />
+                          <div className="flex gap-2">
+                            <input
+                              type="password"
+                              value={cloverToken}
+                              onChange={e => setCloverToken(e.target.value)}
+                              placeholder="API token"
+                              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            />
+                            <button
+                              onClick={handleCloverConnect}
+                              disabled={cloverConnecting}
+                              className={`px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors ${
+                                cloverConnecting ? 'bg-indigo-300 cursor-default' : 'bg-indigo-600 hover:bg-indigo-700'
+                              }`}
+                            >
+                              {cloverConnecting ? 'Connecting...' : 'Connect'}
+                            </button>
+                          </div>
+                        </div>
                       </>
                     )}
 
