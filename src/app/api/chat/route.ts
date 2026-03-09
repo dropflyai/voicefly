@@ -204,16 +204,61 @@ function getNextEmployeeSuggestion(employees: any[], businessType: string | null
   return null
 }
 
+function summarizeEmployeeConfig(e: any): string {
+  const parts = [`- **${e.name}** (${e.job_type})${e.is_active ? ' — active' : ' — inactive'}${e.phone_number ? `, phone: ${e.phone_number}` : ' — no phone yet'}`]
+  const config = e.job_config || {}
+  const greeting = config.greeting || config.firstMessage
+  if (greeting) parts.push(`  Greeting: "${greeting.slice(0, 150)}${greeting.length > 150 ? '...' : ''}"`)
+  if (config.businessHours) parts.push(`  Has business hours configured`)
+  if (config.specialInstructions) parts.push(`  Special instructions: "${String(config.specialInstructions).slice(0, 100)}"`)
+  if (e.voice?.voiceId) parts.push(`  Voice: ${e.voice.voiceId}`)
+  return parts.join('\n')
+}
+
+function formatRecentCalls(calls: any[], employees: any[]): string {
+  if (!calls.length) return '(no calls yet)'
+  const empMap = new Map(employees.map(e => [e.id, e.name]))
+  return calls.map(c => {
+    const date = new Date(c.started_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const time = new Date(c.started_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    const dur = c.duration ? `${Math.floor(c.duration / 60)}m ${c.duration % 60}s` : 'n/a'
+    const emp = c.employee_id ? empMap.get(c.employee_id) || '' : ''
+    const summary = c.summary ? ` — "${c.summary.slice(0, 120)}"` : ''
+    return `- ${date} ${time} | ${c.direction || 'inbound'} ${c.customer_phone || 'unknown'} | ${dur}${emp ? ` | ${emp}` : ''}${summary}`
+  }).join('\n')
+}
+
+function formatRecentMessages(messages: any[]): string {
+  if (!messages.length) return '(no messages yet)'
+  return messages.map(m => {
+    const date = new Date(m.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const caller = m.caller_name || m.caller_phone || 'unknown'
+    const urgencyTag = m.urgency && m.urgency !== 'normal' ? ` [${m.urgency}]` : ''
+    const statusTag = m.status ? ` (${m.status})` : ''
+    return `- ${date} from ${caller}${urgencyTag}${statusTag}: "${(m.reason || m.full_message || '').slice(0, 120)}"`
+  }).join('\n')
+}
+
+function formatBusinessHours(hours: any[]): string {
+  if (!hours.length) return '(not configured)'
+  const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+  const sorted = [...hours].sort((a, b) => dayOrder.indexOf(a.day_of_week) - dayOrder.indexOf(b.day_of_week))
+  return sorted.map(h => {
+    const day = h.day_of_week.charAt(0).toUpperCase() + h.day_of_week.slice(1)
+    return h.is_open ? `- ${day}: ${h.open_time} – ${h.close_time}` : `- ${day}: Closed`
+  }).join('\n')
+}
+
 function buildDashboardSystemPrompt(
   business: any,
   employees: any[],
   onboarding: OnboardingState,
   connectedPlatforms: string[],
   currentPage?: string,
-  stats?: { messages: number; orders: number }
+  stats?: { messages: number; orders: number; recentCalls?: any[]; recentMessages?: any[]; businessHours?: any[] }
 ): string {
   const employeeList = employees.length > 0
-    ? employees.map(e => `- ${e.name} (${e.job_type})${e.is_active ? ' — active' : ' — inactive'}${e.phone_number ? `, phone: ${e.phone_number}` : ' — no phone yet'}`).join('\n')
+    ? employees.map(e => summarizeEmployeeConfig(e)).join('\n')
     : '(no employees created yet)'
 
   const profileIssues: string[] = []
@@ -288,6 +333,24 @@ Step 3: Make a test call ${onboarding.step === 3 ? '← CURRENT STEP' : onboardi
 ${profileWarning}
 ## Their Current Phone Employees (${employees.length} total)
 ${employeeList}
+
+## Recent Call Activity (${stats?.recentCalls?.length ?? 0} most recent)
+${formatRecentCalls(stats?.recentCalls || [], employees)}
+
+## Recent Messages (${stats?.recentMessages?.length ?? 0} most recent)
+${formatRecentMessages(stats?.recentMessages || [])}
+
+## Business Hours
+${formatBusinessHours(stats?.businessHours || [])}
+${business.business_context ? `
+## Business Knowledge (from AI Knowledge settings)
+${business.business_context.hours_summary ? `- Hours summary: ${business.business_context.hours_summary}` : ''}
+${business.business_context.address_display ? `- Address: ${business.business_context.address_display}` : ''}
+${business.business_context.parking_info ? `- Parking: ${business.business_context.parking_info}` : ''}
+${business.business_context.payment_methods ? `- Payment methods: ${business.business_context.payment_methods}` : ''}
+${business.business_context.policies ? `- Policies: ${business.business_context.policies}` : ''}
+${business.business_context.special_notes ? `- Notes: ${business.business_context.special_notes}` : ''}
+`.trim() : ''}
 ${onboardingSection}
 
 ## VoiceFly Product Knowledge
@@ -318,16 +381,20 @@ VoiceFly creates AI voice employees that answer and make phone calls 24/7. There
   - Team Access — view team members with roles
 - /dashboard/billing — upgrade plan, view usage, manage subscription
 
-## Your Role
-Help this user get the most out of VoiceFly. You can help with:
-- **Managing employees** — creating, editing, activating/deactivating, adding phone numbers
-- **Checking activity** — calls, messages, orders, call duration, employee performance
-- **Settings guidance** — updating business profile, hours, AI knowledge, notifications
-- **Integrations** — connecting calendars, POS systems, CRM
-- **Billing** — explaining plans, credits, upgrades
-- **Troubleshooting** — calls not working, employees not answering, config issues
+## Your Role & Capabilities
+Help this user get the most out of VoiceFly. You have access to their live data and can:
+- **Answer questions about calls** — you can see recent calls with summaries, durations, and caller info. Summarize activity, identify trends, or answer "did anyone call today?"
+- **Read messages** — you can see recent messages with caller names, reasons, and urgency. Summarize new messages or find specific ones.
+- **Explain employee configs** — you can see each employee's greeting, voice, and settings. Help users understand how their employees are configured and suggest improvements.
+- **Report on business settings** — you know their business hours, address, policies, and AI knowledge fields. Answer "what are my hours?" or "what's my parking info?" directly.
+- **Guide employee management** — creating, editing, activating/deactivating, adding phone numbers. Direct them to /dashboard/employees for actions.
+- **Help with integrations** — connecting calendars, POS systems, CRM
+- **Explain billing** — plans, credits, usage, upgrades
+- **Troubleshoot** — calls not working, employees not answering, config issues
 
-If they are in onboarding (steps 1–3), proactively guide them to the next step. If onboarding is done, help with whatever they need and suggest relevant features. Be helpful and concise. Use bullet points for steps. Always point them to the right dashboard page. If you're not sure about something, be honest.`
+When you have the data to answer a question directly, do so — don't just redirect to a page. If the data isn't in your context (e.g., full call transcripts, older history), then point them to the right page.
+
+If they are in onboarding (steps 1–3), proactively guide them to the next step. If onboarding is done, help with whatever they need and suggest relevant features. Be helpful and concise. Use bullet points for steps. If you're not sure about something, be honest.`
 }
 
 // ============================================
@@ -544,15 +611,18 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: authResult.error }, { status: 403 })
       }
 
-      // Fetch business, employees, test call status, integrations, messages, and orders in parallel
+      // Fetch business, employees, calls, messages, orders, integrations, and hours in parallel
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
-      const [{ data: business }, { data: employees }, { count: callCount }, { data: integrations }, { count: messageCount }, { count: orderCount }] = await Promise.all([
-        supabase.from('businesses').select('name, phone, business_type, timezone, subscription_tier, subscription_status, monthly_credits, purchased_credits, credits_used_this_month').eq('id', businessId).single(),
-        supabase.from('phone_employees').select('name, job_type, is_active, phone_number').eq('business_id', businessId).order('created_at', { ascending: false }),
+      const [{ data: business }, { data: employees }, { count: callCount }, { data: recentCalls }, { data: integrations }, { count: messageCount }, { data: recentMessages }, { count: orderCount }, { data: businessHours }] = await Promise.all([
+        supabase.from('businesses').select('name, phone, business_type, timezone, subscription_tier, subscription_status, monthly_credits, purchased_credits, credits_used_this_month, business_context').eq('id', businessId).single(),
+        supabase.from('phone_employees').select('name, job_type, is_active, phone_number, job_config, voice, personality').eq('business_id', businessId).order('created_at', { ascending: false }),
         supabase.from('employee_calls').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
+        supabase.from('employee_calls').select('customer_phone, status, direction, duration, summary, started_at, employee_id').eq('business_id', businessId).order('started_at', { ascending: false }).limit(10),
         supabase.from('business_integrations').select('platform').eq('business_id', businessId).eq('is_active', true),
         supabase.from('phone_messages').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
+        supabase.from('phone_messages').select('caller_name, caller_phone, reason, full_message, urgency, status, created_at').eq('business_id', businessId).order('created_at', { ascending: false }).limit(10),
         supabase.from('phone_orders').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
+        supabase.from('business_hours').select('day_of_week, open_time, close_time, is_open').eq('business_id', businessId),
       ])
 
       if (!business) {
@@ -565,6 +635,9 @@ export async function POST(request: NextRequest) {
       systemPrompt = buildDashboardSystemPrompt(business, employees || [], onboarding, connectedPlatforms, currentPage, {
         messages: messageCount ?? 0,
         orders: orderCount ?? 0,
+        recentCalls: recentCalls || [],
+        recentMessages: recentMessages || [],
+        businessHours: businessHours || [],
       })
     } else if (context === 'support') {
       // Support context — troubleshooting agent with ticket escalation
