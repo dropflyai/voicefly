@@ -14,6 +14,7 @@ const EMPLOYEE_TYPE_LABELS: Record<string, string> = {
   'appointment-scheduler': 'Appointment Scheduler',
   'personal-assistant': 'Personal Assistant',
   'customer-service': 'Customer Service',
+  'lead-qualifier': 'Lead Qualifier',
 }
 
 interface IntegrationDef {
@@ -59,6 +60,16 @@ const AVAILABLE_INTEGRATIONS: IntegrationDef[] = [
     connectType: 'oauth',
   },
   {
+    id: 'hubspot',
+    name: 'HubSpot',
+    description: 'Auto-log calls, create contacts, and push qualified leads into your HubSpot CRM.',
+    category: 'CRM',
+    employeeTypes: ['receptionist', 'customer-service'],
+    color: 'purple',
+    comingSoon: true,
+    connectType: 'oauth',
+  },
+  {
     id: 'toast',
     name: 'Toast',
     description: 'Pull your full menu, modifiers, and 86 list from Toast POS.',
@@ -77,6 +88,16 @@ const AVAILABLE_INTEGRATIONS: IntegrationDef[] = [
     color: 'purple',
     comingSoon: true,
     connectType: 'none',
+  },
+  {
+    id: 'clover',
+    name: 'Clover',
+    description: 'Sync your Clover menu and process phone orders through your POS.',
+    category: 'Restaurant & Retail',
+    employeeTypes: ['order-taker'],
+    color: 'green',
+    comingSoon: true,
+    connectType: 'oauth',
   },
 ]
 
