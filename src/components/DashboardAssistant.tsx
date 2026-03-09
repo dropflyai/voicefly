@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { X, Send, Bot, CheckCircle, Circle, Mic, MicOff, Volume2, VolumeX } from 'lucide-react'
 import { createClient } from '@supabase/supabase-js'
+import ReactMarkdown from 'react-markdown'
 
 interface Message {
   id: string
@@ -412,7 +413,13 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
                       : 'bg-white text-gray-900 shadow-sm border border-gray-200'
                   }`}
                 >
-                  <div className="whitespace-pre-line leading-relaxed">{msg.content}</div>
+                  {msg.role === 'assistant' ? (
+                    <div className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-strong:text-gray-900 leading-relaxed">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <div className="whitespace-pre-line leading-relaxed">{msg.content}</div>
+                  )}
                   <div className="text-[10px] mt-1 text-gray-400">
                     {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
