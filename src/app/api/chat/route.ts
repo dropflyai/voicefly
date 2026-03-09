@@ -280,7 +280,7 @@ Step 3: Make a test call ${onboarding.step === 3 ? '← CURRENT STEP' : onboardi
 - Phone: ${business.phone || 'Not set'}
 - Timezone: ${business.timezone || 'Not set'}
 - Plan: ${business.subscription_tier || 'trial'} (${business.subscription_status || 'trial'})
-- Credits: ${business.credits_remaining != null ? `${business.credits_remaining} remaining (${business.credits_used || 0} used)` : 'N/A'}
+- Credits: ${business.monthly_credits != null ? `${(business.monthly_credits + (business.purchased_credits || 0)) - (business.credits_used_this_month || 0)} remaining of ${business.monthly_credits + (business.purchased_credits || 0)} (${business.credits_used_this_month || 0} used)` : 'N/A'}
 - Messages: ${stats?.messages ?? 0} total
 - Orders: ${stats?.orders ?? 0} total
 - Current page: ${currentPage || 'unknown'}
@@ -547,7 +547,7 @@ export async function POST(request: NextRequest) {
       // Fetch business, employees, test call status, integrations, messages, and orders in parallel
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
       const [{ data: business }, { data: employees }, { count: callCount }, { data: integrations }, { count: messageCount }, { count: orderCount }] = await Promise.all([
-        supabase.from('businesses').select('name, phone, business_type, timezone, subscription_tier, subscription_status, credits_remaining, credits_used').eq('id', businessId).single(),
+        supabase.from('businesses').select('name, phone, business_type, timezone, subscription_tier, subscription_status, monthly_credits, purchased_credits, credits_used_this_month').eq('id', businessId).single(),
         supabase.from('phone_employees').select('name, job_type, is_active, phone_number').eq('business_id', businessId).order('created_at', { ascending: false }),
         supabase.from('employee_calls').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
         supabase.from('business_integrations').select('platform').eq('business_id', businessId).eq('is_active', true),
