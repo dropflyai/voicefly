@@ -270,12 +270,16 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
       })
       const data = await res.json()
 
+      if (!res.ok) {
+        console.error('[Maya] API error:', res.status, data.error)
+      }
+
       // Update onboarding step if API returned a fresher value
       if (data.onboardingStep !== undefined && data.onboardingStep !== onboardingStep) {
         setOnboardingStep(data.onboardingStep as OnboardingStep)
       }
 
-      const responseText = data.response || "Sorry, I ran into an issue. Please try again."
+      const responseText = data.response || data.error || "Sorry, I ran into an issue. Please try again."
       setMessages(prev => [
         ...prev,
         {
