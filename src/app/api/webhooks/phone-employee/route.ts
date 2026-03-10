@@ -221,21 +221,53 @@ export async function POST(request: NextRequest) {
     if (sharedAssistantId && assistantId === sharedAssistantId) {
       const trialBusinessId = message?.call?.assistant?.metadata?.businessId || metadataBusinessId
       if (!trialBusinessId) {
-        console.warn('[PhoneEmployeeWebhook] Shared trial assistant call with no businessId in metadata')
-        return NextResponse.json({ error: 'Business ID required for trial calls' }, { status: 400 })
+        console.warn('[PhoneEmployeeWebhook] Shared assistant call with no businessId in metadata')
+        return NextResponse.json({ error: 'Business ID required for shared assistant calls' }, { status: 400 })
       }
 
-      console.log(`[PhoneEmployeeWebhook] Shared trial assistant call for business ${trialBusinessId}`)
+      console.log(`[PhoneEmployeeWebhook] Shared assistant call for business ${trialBusinessId}`)
 
-      const trialEmployee = await getOrCreateTrialEmployee(trialBusinessId)
+      // Resolve the correct employee for this call:
+      // 1. Try by VAPI phone number ID (matches when each employee has its own number)
+      // 2. Fall back to getOrCreateTrialEmployee (single-employee businesses / trials)
+      const vapiPhoneNumberId = message?.call?.phoneNumberId
+      let trialEmployee: any = null
+
+      if (vapiPhoneNumberId) {
+        const { data: byPhone } = await supabase
+          .from('phone_employees')
+          .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
+          .eq('business_id', trialBusinessId)
+          .eq('vapi_phone_id', vapiPhoneNumberId)
+          .eq('is_active', true)
+          .single()
+        trialEmployee = byPhone
+      }
+
+      // Fallback: find by metadata employeeId if provided
+      if (!trialEmployee && metadataEmployeeId) {
+        const { data: byId } = await supabase
+          .from('phone_employees')
+          .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
+          .eq('id', metadataEmployeeId)
+          .eq('business_id', trialBusinessId)
+          .single()
+        trialEmployee = byId
+      }
+
+      // Final fallback: get or create a default trial employee
       if (!trialEmployee) {
-        console.error('[PhoneEmployeeWebhook] Failed to get/create trial employee for', trialBusinessId)
-        return NextResponse.json({ error: 'Failed to initialize trial employee' }, { status: 500 })
+        trialEmployee = await getOrCreateTrialEmployee(trialBusinessId)
+      }
+
+      if (!trialEmployee) {
+        console.error('[PhoneEmployeeWebhook] Failed to resolve employee for', trialBusinessId)
+        return NextResponse.json({ error: 'Failed to resolve employee' }, { status: 500 })
       }
 
       const businessId = trialBusinessId
 
-      console.log(`[PhoneEmployeeWebhook] Received ${message?.type} for trial employee ${trialEmployee.name}`)
+      console.log(`[PhoneEmployeeWebhook] Received ${message?.type} for shared-assistant employee ${trialEmployee.name} (${trialEmployee.job_type})`)
 
       // Handle message types using existing handlers
       switch (message?.type) {

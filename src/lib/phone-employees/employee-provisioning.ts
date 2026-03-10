@@ -101,6 +101,10 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 const VAPI_API_KEY = process.env.VAPI_API_KEY
+const VAPI_SHARED_ASSISTANT_ID = process.env.VAPI_SHARED_ASSISTANT_ID
+
+// Tiers that use the shared VAPI assistant (no dedicated assistant created)
+const SHARED_ASSISTANT_TIERS = ['trial', 'starter']
 
 // Twilio master credentials — used only to create/manage subaccounts
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID
@@ -314,24 +318,56 @@ export class EmployeeProvisioningService {
       throw saveError
     }
 
-    // Provision VAPI agent
-    const vapiResult = await this.provisionVAPIAgent(savedEmployee, business.name)
+    // Determine if this tier uses the shared assistant or gets a dedicated one
+    const tier = business.subscription_tier || 'trial'
+    const useSharedAssistant = SHARED_ASSISTANT_TIERS.includes(tier)
 
-    // Update with VAPI info
-    const { data: updatedEmployee, error: updateError } = await supabase
-      .from('phone_employees')
-      .update({
-        vapi_assistant_id: vapiResult.assistantId,
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', savedEmployee.id)
-      .select()
-      .single()
+    let vapiAssistantId: string | null = null
+    let updatedEmployee: any
 
-    if (updateError) {
-      console.error('[EmployeeProvisioning] Failed to update employee with VAPI:', updateError)
-      throw updateError
+    if (useSharedAssistant) {
+      // Trial/Starter: No dedicated VAPI assistant. The webhook dynamically
+      // builds the config via handleAssistantRequest + buildAssistantConfig.
+      vapiAssistantId = VAPI_SHARED_ASSISTANT_ID || null
+      console.log(`[EmployeeProvisioning] ${tier} tier — using shared assistant (no dedicated VAPI assistant created)`)
+
+      const { data, error: updateError } = await supabase
+        .from('phone_employees')
+        .update({
+          vapi_assistant_id: vapiAssistantId,
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', savedEmployee.id)
+        .select()
+        .single()
+
+      if (updateError) {
+        console.error('[EmployeeProvisioning] Failed to activate employee:', updateError)
+        throw updateError
+      }
+      updatedEmployee = data
+    } else {
+      // Pro/Business/Enterprise: Create a dedicated VAPI assistant with personalized config
+      const vapiResult = await this.provisionVAPIAgent(savedEmployee, business.name)
+      vapiAssistantId = vapiResult.assistantId
+
+      const { data, error: updateError } = await supabase
+        .from('phone_employees')
+        .update({
+          vapi_assistant_id: vapiAssistantId,
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', savedEmployee.id)
+        .select()
+        .single()
+
+      if (updateError) {
+        console.error('[EmployeeProvisioning] Failed to update employee with VAPI:', updateError)
+        throw updateError
+      }
+      updatedEmployee = data
     }
 
     // Optionally provision phone number
@@ -355,9 +391,13 @@ export class EmployeeProvisioningService {
       try {
         if (phoneMode === 'twilio-vapi') {
           // Twilio purchases + owns the number; VAPI imports it for calls; SMS stays with Twilio
+          // For shared tiers, bind to the shared assistant; for pro, bind to the dedicated one
+          const assistantForPhone = useSharedAssistant
+            ? (VAPI_SHARED_ASSISTANT_ID || vapiAssistantId!)
+            : vapiAssistantId!
           const phoneResult = await this.provisionTwilioVAPINumber(
             savedEmployee.id,
-            vapiResult.assistantId,
+            assistantForPhone,
             params.businessId,
             business.name,
             params.areaCode,
@@ -411,14 +451,15 @@ export class EmployeeProvisioningService {
     }
 
     console.log(`[EmployeeProvisioning] Employee created: ${savedEmployee.id}`, {
-      vapiAssistantId: vapiResult.assistantId,
+      vapiAssistantId,
+      useSharedAssistant,
       phoneNumber,
       phoneError,
     })
 
     const employeeConfig = this.mapToEmployeeConfig({
       ...updatedEmployee,
-      vapi_assistant_id: vapiResult.assistantId,
+      vapi_assistant_id: vapiAssistantId,
       vapi_phone_id: vapiPhoneId,
       phone_number: phoneNumber,
     })
@@ -616,6 +657,37 @@ export class EmployeeProvisioningService {
         basePrompt += `\n\n## Business Contact & Details\nUse this information when callers ask about the business:\n${contextLines.join('\n')}`
       }
     }
+
+    // Universal safety & edge case rules (appended to ALL employee types)
+    basePrompt += `\n\n## Universal Call Handling Rules
+
+### Silence Handling
+- If the caller goes silent for more than 5 seconds, gently prompt them: "Are you still there?" or "I'm still here if you have any questions."
+- If they remain silent after your prompt, say: "It seems like we may have lost the connection. Feel free to call back anytime. Goodbye!" and end the call.
+
+### One Thing at a Time
+- If the caller asks multiple questions at once, address them one at a time in order. Say: "Great questions! Let me go through those one by one." Then answer each before moving to the next.
+
+### Language
+- Always respond in the same language the caller is speaking. If they switch languages mid-call, switch with them naturally.
+- If you cannot understand the caller's language, politely say: "I'm sorry, I'm having trouble understanding. Could you please repeat that?" If the issue persists, offer to take a message or suggest they call back.
+
+### Transfer & "Real Person" Requests
+- If the caller asks to speak to a real person, a manager, or a human, acknowledge their request politely: "I understand you'd like to speak with someone directly." Then take a message with their name, number, and reason so the team can call them back. Do NOT argue or try to convince them to stay on the line.
+
+### Wrong Number
+- If the caller says they have the wrong number or asks for a business/person you don't represent, politely let them know: "It sounds like you may have reached the wrong number. This is [business name]. Is there anything I can help you with here?" If not, wish them well and end the call.
+
+### Sensitive Information Protection
+- NEVER ask for or accept credit card numbers, Social Security numbers, passwords, or other sensitive financial/personal data over the phone.
+- If a caller tries to give you sensitive information, immediately stop them: "For your security, I'm not able to take that information over the phone. Please provide that through our secure online system or in person."
+
+### Abusive or Inappropriate Callers
+- If a caller becomes verbally abusive, remain calm and professional. Say: "I want to help you, but I need our conversation to remain respectful." If they continue, say: "I'm going to end this call now. Please feel free to call back when you're ready. Goodbye." and end the call.
+
+### Information Accuracy
+- NEVER make up information. If you don't know the answer to something, say so honestly and offer to take a message or have someone follow up.
+- Always confirm important details (names, phone numbers, times, orders) by repeating them back to the caller before finalizing.`
 
     return basePrompt
   }
@@ -1028,8 +1100,12 @@ export class EmployeeProvisioningService {
       return null
     }
 
-    // If job config, name, or voice changed, update VAPI assistant
-    if ((updates.jobConfig || updates.name || updates.voice) && data.vapi_assistant_id) {
+    // If job config, name, or voice changed, update the dedicated VAPI assistant (pro tier only).
+    // Shared assistant employees (trial/starter) don't have a dedicated assistant to update —
+    // their config is built dynamically by the webhook on each call.
+    const isSharedEmployee = !data.vapi_assistant_id
+      || data.vapi_assistant_id === VAPI_SHARED_ASSISTANT_ID
+    if ((updates.jobConfig || updates.name || updates.voice) && data.vapi_assistant_id && !isSharedEmployee) {
       await this.updateVAPIAssistant(data, updates.voice)
     }
 
@@ -1055,8 +1131,16 @@ export class EmployeeProvisioningService {
       .single()
 
     if (!employee) throw new Error('Employee not found')
-    if (!employee.vapi_assistant_id) throw new Error('Employee has no VAPI assistant — cannot provision phone')
     if (employee.phone_number) throw new Error('Employee already has a phone number')
+
+    // For shared-assistant employees (trial/starter), use the shared assistant ID for phone binding.
+    // For dedicated-assistant employees (pro), use their own assistant ID.
+    const assistantIdForPhone = employee.vapi_assistant_id
+      && employee.vapi_assistant_id !== VAPI_SHARED_ASSISTANT_ID
+      ? employee.vapi_assistant_id
+      : VAPI_SHARED_ASSISTANT_ID
+
+    if (!assistantIdForPhone) throw new Error('No VAPI assistant available — set VAPI_SHARED_ASSISTANT_ID or provision a dedicated assistant')
 
     // Mark provisioning as started
     await supabase
@@ -1088,7 +1172,7 @@ export class EmployeeProvisioningService {
       if (phoneMode === 'twilio-vapi') {
         const result = await this.provisionTwilioVAPINumber(
           employeeId,
-          employee.vapi_assistant_id,
+          assistantIdForPhone,
           businessId,
           businessName,
           areaCode
@@ -1424,6 +1508,219 @@ export class EmployeeProvisioningService {
     }
   }
 
+  // ============================================
+  // TIER MIGRATION
+  // ============================================
+
+  /**
+   * Migrate a business between tiers.
+   * Handles VAPI assistant creation/deletion and phone number rebinding.
+   *
+   * Trial/Starter: shared VAPI assistant, config built dynamically per call
+   * Pro: dedicated VAPI assistant per employee, config baked in
+   */
+  async migrateBusinessTier(
+    businessId: string,
+    toTier: 'trial' | 'starter' | 'pro'
+  ): Promise<{ migrated: number; errors: string[] }> {
+    const errors: string[] = []
+    let migrated = 0
+
+    // Get current business state
+    const { data: business, error: bizError } = await supabase
+      .from('businesses')
+      .select('name, subscription_tier, subscription_status')
+      .eq('id', businessId)
+      .single()
+
+    if (bizError || !business) {
+      return { migrated: 0, errors: ['Business not found'] }
+    }
+
+    const fromTier = business.subscription_tier || 'trial'
+    const businessName = business.name || 'Business'
+
+    if (fromTier === toTier) {
+      return { migrated: 0, errors: [`Business is already on ${toTier} tier`] }
+    }
+
+    console.log(`[TierMigration] Migrating business ${businessId} from ${fromTier} → ${toTier}`)
+
+    // Get all active employees
+    const { data: employees } = await supabase
+      .from('phone_employees')
+      .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
+      .eq('business_id', businessId)
+      .eq('is_active', true)
+
+    if (!employees || employees.length === 0) {
+      // No employees — just update the tier
+      await supabase
+        .from('businesses')
+        .update({
+          subscription_tier: toTier,
+          subscription_status: toTier === 'trial' ? 'trial' : 'active',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', businessId)
+
+      console.log(`[TierMigration] No employees found. Tier updated to ${toTier}.`)
+      return { migrated: 0, errors: [] }
+    }
+
+    const sharedAssistantId = VAPI_SHARED_ASSISTANT_ID || ''
+
+    if (toTier === 'pro') {
+      // ---- UPGRADE TO PRO: Create dedicated VAPI assistants ----
+      for (const employee of employees) {
+        const isShared = !employee.vapi_assistant_id
+          || employee.vapi_assistant_id === sharedAssistantId
+
+        if (!isShared) {
+          // Already has a dedicated assistant — skip
+          console.log(`[TierMigration] ${employee.name} already has dedicated assistant, skipping`)
+          migrated++
+          continue
+        }
+
+        try {
+          // Create dedicated VAPI assistant
+          const vapiResult = await this.provisionVAPIAgent(employee, businessName)
+
+          // Update employee record
+          await supabase
+            .from('phone_employees')
+            .update({
+              vapi_assistant_id: vapiResult.assistantId,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', employee.id)
+
+          // Rebind phone number to dedicated assistant if one exists
+          if (employee.vapi_phone_id) {
+            await this.rebindVapiPhoneToAssistant(
+              employee.vapi_phone_id,
+              vapiResult.assistantId,
+            )
+          }
+
+          console.log(`[TierMigration] ${employee.name} → dedicated assistant ${vapiResult.assistantId}`)
+          migrated++
+        } catch (err: any) {
+          const msg = `Failed to upgrade ${employee.name}: ${err.message}`
+          console.error(`[TierMigration] ${msg}`)
+          errors.push(msg)
+        }
+      }
+    } else if (toTier === 'starter' || toTier === 'trial') {
+      // ---- DOWNGRADE TO STARTER/TRIAL: Delete dedicated assistants, revert to shared ----
+      for (const employee of employees) {
+        const isShared = !employee.vapi_assistant_id
+          || employee.vapi_assistant_id === sharedAssistantId
+
+        if (isShared) {
+          // Already on shared — skip
+          migrated++
+          continue
+        }
+
+        try {
+          const oldAssistantId = employee.vapi_assistant_id
+
+          // Rebind phone number to shared assistant (webhook-based routing)
+          if (employee.vapi_phone_id) {
+            await this.rebindVapiPhoneToAssistant(
+              employee.vapi_phone_id,
+              null, // null = shared mode (serverUrl routing)
+              employee.id,
+            )
+          }
+
+          // Update employee to shared assistant
+          await supabase
+            .from('phone_employees')
+            .update({
+              vapi_assistant_id: sharedAssistantId || null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', employee.id)
+
+          // Delete the dedicated VAPI assistant
+          if (oldAssistantId && VAPI_API_KEY) {
+            await fetch(`https://api.vapi.ai/assistant/${oldAssistantId}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${VAPI_API_KEY}` },
+            }).catch(err => {
+              console.warn(`[TierMigration] Failed to delete VAPI assistant ${oldAssistantId}:`, err)
+            })
+          }
+
+          console.log(`[TierMigration] ${employee.name} → shared assistant (deleted ${oldAssistantId})`)
+          migrated++
+        } catch (err: any) {
+          const msg = `Failed to downgrade ${employee.name}: ${err.message}`
+          console.error(`[TierMigration] ${msg}`)
+          errors.push(msg)
+        }
+      }
+    }
+
+    // Update business tier
+    await supabase
+      .from('businesses')
+      .update({
+        subscription_tier: toTier,
+        subscription_status: toTier === 'trial' ? 'trial' : 'active',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', businessId)
+
+    console.log(`[TierMigration] Complete: ${migrated}/${employees.length} employees migrated, ${errors.length} errors`)
+    return { migrated, errors }
+  }
+
+  /**
+   * Rebind a VAPI phone number to a different assistant.
+   * - assistantId provided: binds directly to that assistant (pro mode)
+   * - assistantId null: uses serverUrl + serverUrlSecret for webhook routing (shared mode)
+   */
+  private async rebindVapiPhoneToAssistant(
+    vapiPhoneId: string,
+    assistantId: string | null,
+    employeeId?: string,
+  ): Promise<boolean> {
+    if (!VAPI_API_KEY) {
+      console.warn('[TierMigration] No VAPI API key — cannot rebind phone')
+      return false
+    }
+
+    const body: Record<string, any> = assistantId
+      ? { assistantId }
+      : {
+          assistantId: null,
+          serverUrl: `${APP_URL}/api/webhooks/phone-employee`,
+          serverUrlSecret: employeeId || '',
+        }
+
+    const response = await fetch(`https://api.vapi.ai/phone-number/${vapiPhoneId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${VAPI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      console.error(`[TierMigration] Failed to rebind phone ${vapiPhoneId}:`, errorData)
+      return false
+    }
+
+    console.log(`[TierMigration] Phone ${vapiPhoneId} rebound to ${assistantId || 'shared (webhook)'}`)
+    return true
+  }
+
   /**
    * Deactivate an employee
    */
@@ -1487,8 +1784,10 @@ export class EmployeeProvisioningService {
       }
     }
 
-    // Delete VAPI assistant
-    if (employee.vapiAssistantId && VAPI_API_KEY) {
+    // Delete VAPI assistant (only if it's a dedicated one, never the shared assistant)
+    const isDedicatedAssistant = employee.vapiAssistantId
+      && employee.vapiAssistantId !== VAPI_SHARED_ASSISTANT_ID
+    if (isDedicatedAssistant && VAPI_API_KEY) {
       try {
         await fetch(`https://api.vapi.ai/assistant/${employee.vapiAssistantId}`, {
           method: 'DELETE',
@@ -1528,11 +1827,15 @@ export class EmployeeProvisioningService {
       .single()
 
     if (!employee?.vapi_assistant_id) return
+    // Don't update the shared assistant — it's managed centrally
+    if (employee.vapi_assistant_id === VAPI_SHARED_ASSISTANT_ID) return
     await this.updateVAPIAssistant(employee)
   }
 
   private async updateVAPIAssistant(employee: any, voiceOverride?: EmployeeConfig['voice']): Promise<void> {
     if (!VAPI_API_KEY || !employee.vapi_assistant_id) return
+    // Never patch the shared assistant from individual employee updates
+    if (employee.vapi_assistant_id === VAPI_SHARED_ASSISTANT_ID) return
 
     // Get business name
     const { data: business } = await supabase
