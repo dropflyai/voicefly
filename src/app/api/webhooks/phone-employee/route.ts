@@ -3513,7 +3513,7 @@ async function handleAssistantRequest(employee: any) {
         })
       }
 
-      const config = employeeProvisioning.buildAssistantConfig(employee, businessName)
+      const config = await employeeProvisioning.buildAssistantConfig(employee, businessName)
       // Inject business hours awareness
       const hoursContext = await getBusinessHoursContext(employee.business_id, employee.businesses?.timezone)
       if (hoursContext && config.model?.messages?.[0]?.content) {
@@ -3523,7 +3523,7 @@ async function handleAssistantRequest(employee: any) {
       return NextResponse.json({
         assistant: {
           ...config,
-          name: `${businessName} Trial Assistant`,
+          name: `${employee.name} - ${businessName}`.substring(0, 40),
           maxDurationSeconds: TRIAL_LIMITS.maxCallDurationSeconds,
           serverUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.voiceflyai.com'}/api/webhooks/phone-employee`,
           metadata: {
@@ -3547,7 +3547,7 @@ async function handleAssistantRequest(employee: any) {
     return NextResponse.json({
       assistant: {
         ...config,
-        name: `${businessName} AI Assistant`,
+        name: `${employee.name} - ${businessName}`.substring(0, 40),
         serverUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://www.voiceflyai.com'}/api/webhooks/phone-employee`,
         metadata: {
           employeeId: employee.id,

@@ -778,7 +778,7 @@ export class EmployeeProvisioningService {
    * Used by the webhook's assistant-request handler to dynamically
    * configure the shared trial assistant per-call.
    */
-  buildAssistantConfig(employee: any, businessName: string): {
+  async buildAssistantConfig(employee: any, businessName: string): Promise<{
     model: any
     voice: any
     firstMessage: string
@@ -787,9 +787,24 @@ export class EmployeeProvisioningService {
     voicemailDetection?: any
     maxDurationSeconds?: number
     backgroundSound?: string
-  } {
-    const systemPrompt = this.generateSystemPrompt(employee, businessName)
+  }> {
+    let systemPrompt = this.generateSystemPrompt(employee, businessName)
     const functions = this.getFunctionsForJobType(employee.job_type, employee.capabilities)
+
+    // Check if business has Google Calendar connected (same as dedicated path)
+    const calendarConfig = await GoogleCalendarService.getBusinessCalendarConfig(employee.business_id)
+    if (calendarConfig.calendarId && calendarConfig.provider === 'google') {
+      systemPrompt += `\n\n## Calendar Integration\nThis business has a live Google Calendar connected. When checking availability or booking appointments, you have access to real-time calendar data. You can confidently tell callers about available time slots and book appointments that will automatically appear on the business calendar.`
+    }
+
+    // Inject lookupCaller if a data source is configured (same as dedicated path)
+    if (employee.data_source) {
+      functions.push(LOOKUP_CALLER_FUNCTION)
+      systemPrompt += `\n\n## Live Caller Lookup\nAt the very start of every call, use the lookupCaller function with the caller's phone number to retrieve their account information. Use this data to personalize the conversation from the first word.`
+    }
+
+    // Use the employee's configured voice, falling back to defaults
+    const employeeVoice = employee.voice || {}
 
     return {
       model: {
@@ -800,13 +815,13 @@ export class EmployeeProvisioningService {
       },
       voice: {
         provider: '11labs',
-        voiceId: 'aVR2rUXJY4MTezzJjPyQ', // Angie — reassuring, calm, professional
+        voiceId: employeeVoice.voiceId || 'aVR2rUXJY4MTezzJjPyQ',
         model: 'eleven_flash_v2_5',
-        stability: 0.5,
+        stability: employeeVoice.stability ?? 0.5,
         similarityBoost: 0.75,
         style: 0,
         useSpeakerBoost: true,
-        speed: 1.0,
+        speed: employeeVoice.speed ?? 1.0,
       },
       firstMessage: employee.job_config?.greeting
         || `Thank you for calling ${businessName}! How can I help you today?`,
