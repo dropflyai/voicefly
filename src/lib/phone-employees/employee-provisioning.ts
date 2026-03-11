@@ -955,8 +955,8 @@ export class EmployeeProvisioningService {
       provider: 'twilio',
       twilioAccountSid: TWILIO_ACCOUNT_SID,
       twilioAuthToken: TWILIO_AUTH_TOKEN,
-      twilioPhoneNumber: purchased.phoneNumber,
-      name: `Phone Employee - ${employeeId}`,
+      number: purchased.phoneNumber,
+      name: `VF-${employeeId.slice(0, 34)}`,
     }
 
     if (isSharedAssistant) {
@@ -1342,10 +1342,10 @@ export class EmployeeProvisioningService {
         provider: 'twilio',
         twilioAccountSid: TWILIO_ACCOUNT_SID,
         twilioAuthToken: TWILIO_AUTH_TOKEN,
-        twilioPhoneNumber: purchased.phoneNumber,
+        number: purchased.phoneNumber,
         serverUrl: `${APP_URL}/api/webhooks/phone-employee`,
         serverUrlSecret: employeeId,
-        name: `Starter Employee - ${employeeId}`,
+        name: `VF-${employeeId.slice(0, 34)}`,
       }),
     })
 
