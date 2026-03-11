@@ -1478,6 +1478,29 @@ async function handleConfirmOrder(callId: string, businessId: string, employeeId
     })
   }
 
+  // Email the business owner — fires alongside SMS so orders are visible
+  // during testing even when A2P SMS is pending approval
+  Promise.all([
+    getOwnerEmail(businessId),
+    supabase.from('businesses').select('name').eq('id', businessId).single(),
+  ]).then(([ownerEmail, bizResult]) => {
+    if (!ownerEmail) return
+    sendOrderNotification({
+      businessId,
+      ownerEmail,
+      businessName: bizResult.data?.name || 'Your Business',
+      customerName: order.customer_name,
+      customerPhone: order.customer_phone,
+      orderType: order.order_type,
+      items: (order.items || []).map((item: any) => ({
+        name: item.name || item.itemName,
+        quantity: item.quantity || 1,
+        price: item.price,
+      })),
+      total,
+    })
+  }).catch(err => console.error('[Order Email] notification error:', err))
+
   // --- Integration hooks (all fire-and-forget, never block order flow) ---
 
   // Fire webhook event
