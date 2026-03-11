@@ -952,20 +952,34 @@ export class EmployeeProvisioningService {
     console.log(`[EmployeeProvisioning] Twilio number purchased: ${purchased.phoneNumber} (subaccount: ${subaccount.sid})`)
 
     // 4. Import the number into VAPI using subaccount credentials (not master token)
+    // For shared-assistant employees (trial/starter), use serverUrl mode so our webhook
+    // receives assistant-request events and can dynamically build per-employee config.
+    // For dedicated-assistant employees (pro), bind directly to their VAPI assistant.
+    const isSharedAssistant = vapiAssistantId === VAPI_SHARED_ASSISTANT_ID
+    const vapiImportBody: Record<string, any> = {
+      provider: 'twilio',
+      twilioAccountSid: subaccount.sid,
+      twilioAuthToken: subaccount.authToken,
+      twilioPhoneNumber: purchased.phoneNumber,
+      name: `Phone Employee - ${employeeId}`,
+    }
+
+    if (isSharedAssistant) {
+      // Webhook mode: VAPI sends assistant-request → our webhook builds config dynamically
+      vapiImportBody.serverUrl = `${APP_URL}/api/webhooks/phone-employee`
+      vapiImportBody.serverUrlSecret = employeeId
+    } else {
+      // Direct mode: VAPI uses the dedicated assistant
+      vapiImportBody.assistantId = vapiAssistantId
+    }
+
     const vapiResponse = await fetch('https://api.vapi.ai/phone-number', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${VAPI_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        provider: 'twilio',
-        twilioAccountSid: subaccount.sid,
-        twilioAuthToken: subaccount.authToken,
-        twilioPhoneNumber: purchased.phoneNumber,
-        assistantId: vapiAssistantId,
-        name: `Phone Employee - ${employeeId}`,
-      }),
+      body: JSON.stringify(vapiImportBody),
     })
 
     if (!vapiResponse.ok) {
