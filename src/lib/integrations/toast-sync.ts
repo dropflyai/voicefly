@@ -9,8 +9,15 @@
  * Production: https://ws-api.toasttab.com
  */
 
+import { createClient } from '@supabase/supabase-js'
+
 const TOAST_SANDBOX_BASE = 'https://ws-sandbox-api.eng.toasttab.com'
 const TOAST_PROD_BASE = 'https://ws-api.toasttab.com'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 // ---------------------------------------------------------------------------
 // Result types
@@ -23,10 +30,12 @@ export interface ToastSyncResult {
       items: {
         name: string
         price: number
+        posItemId?: string   // Toast item GUID — used for order creation
         description?: string
         modifiers?: {
           name: string
-          options: { name: string; price: number }[]
+          posGroupId?: string  // Toast modifier group GUID
+          options: { name: string; price: number; posOptionId?: string }[]
           required: boolean
         }[]
         outOfStock?: boolean
@@ -37,6 +46,12 @@ export interface ToastSyncResult {
   categoryCount: number
   restaurantName?: string
   outOfStockItems: string[]
+}
+
+export interface ToastOrderResult {
+  success: boolean
+  toastOrderId?: string
+  error?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -96,6 +111,13 @@ interface ToastModifierGroupFull {
   }[]
 }
 
+interface ToastOrderType {
+  guid: string
+  name: string
+  // "TAKE_OUT", "DELIVERY", "DINE_IN", etc.
+  behavior?: string
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -107,6 +129,10 @@ function getBaseUrl(useSandbox: boolean): string {
 function centsToDollars(amount: number | undefined): number {
   if (!amount) return 0
   return amount / 100
+}
+
+function dollarsToCents(amount: number): number {
+  return Math.round(amount * 100)
 }
 
 // ---------------------------------------------------------------------------
@@ -165,6 +191,43 @@ export async function validateToastCredentials(
 }
 
 // ---------------------------------------------------------------------------
+// Connection lookup (for order creation at webhook time)
+// ---------------------------------------------------------------------------
+
+export interface ToastConnection {
+  clientId: string
+  clientSecret: string
+  restaurantGuid: string
+  useSandbox: boolean
+}
+
+export async function getToastConnection(businessId: string): Promise<ToastConnection | null> {
+  try {
+    const { data, error } = await supabase
+      .from('business_integrations')
+      .select('credentials, status')
+      .eq('business_id', businessId)
+      .eq('platform', 'toast')
+      .eq('status', 'connected')
+      .single()
+
+    if (error || !data?.credentials) return null
+
+    const creds = data.credentials as any
+    if (!creds.clientId || !creds.clientSecret || !creds.restaurantGuid) return null
+
+    return {
+      clientId: creds.clientId,
+      clientSecret: creds.clientSecret,
+      restaurantGuid: creds.restaurantGuid,
+      useSandbox: creds.useSandbox ?? true,
+    }
+  } catch {
+    return null
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main menu sync
 // ---------------------------------------------------------------------------
 
@@ -199,7 +262,8 @@ export async function syncToastMenu(
     string,
     {
       name: string
-      options: { name: string; price: number }[]
+      posGroupId: string
+      options: { name: string; price: number; posOptionId: string }[]
       required: boolean
     }
   >()
@@ -224,9 +288,11 @@ export async function syncToastMenu(
         for (const group of modGroups) {
           modifierGroupMap.set(group.guid, {
             name: group.name || '',
+            posGroupId: group.guid,
             options: (group.modifiers || []).map((opt) => ({
               name: opt.name || '',
               price: centsToDollars(opt.price),
+              posOptionId: opt.guid,
             })),
             required: (group.minSelections || 0) > 0,
           })
@@ -253,11 +319,10 @@ export async function syncToastMenu(
         const modifiers = (menuItem.modifierGroupReferences || [])
           .map((ref) => modifierGroupMap.get(ref.guid))
           .filter(
-            (
-              m
-            ): m is {
+            (m): m is {
               name: string
-              options: { name: string; price: number }[]
+              posGroupId: string
+              options: { name: string; price: number; posOptionId: string }[]
               required: boolean
             } => m !== undefined
           )
@@ -265,6 +330,7 @@ export async function syncToastMenu(
         categoryItems.push({
           name: menuItem.name,
           price: centsToDollars(menuItem.price),
+          posItemId: menuItem.guid,
           ...(menuItem.description ? { description: menuItem.description } : {}),
           ...(modifiers.length > 0 ? { modifiers } : {}),
           ...(menuItem.outOfStock ? { outOfStock: true } : {}),
@@ -285,5 +351,124 @@ export async function syncToastMenu(
     itemCount,
     categoryCount,
     outOfStockItems,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Order creation
+// ---------------------------------------------------------------------------
+
+export async function createToastOrder(
+  conn: ToastConnection,
+  order: {
+    items: Array<{
+      name: string
+      quantity: number
+      unitPrice: number
+      posItemId?: string
+      modifiers?: Array<{ name: string; option: string; posOptionId?: string; price?: number }>
+      specialInstructions?: string
+    }>
+    orderType: 'pickup' | 'delivery'
+    customerName?: string
+    customerPhone?: string
+    total: number
+  }
+): Promise<ToastOrderResult> {
+  try {
+    const { clientId, clientSecret, restaurantGuid, useSandbox } = conn
+    const baseUrl = getBaseUrl(useSandbox)
+    const accessToken = await getToastAccessToken(clientId, clientSecret, useSandbox)
+
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${accessToken}`,
+      'Toast-Restaurant-External-ID': restaurantGuid,
+      'Content-Type': 'application/json',
+    }
+
+    // 1. Get order types to find the right one for pickup/delivery
+    const orderTypesResponse = await fetch(`${baseUrl}/orders/v2/orderTypes`, { headers })
+    let orderTypeGuid: string | null = null
+
+    if (orderTypesResponse.ok) {
+      const orderTypes: ToastOrderType[] = await orderTypesResponse.json()
+      // Match by behavior: TAKE_OUT for pickup, DELIVERY for delivery
+      const targetBehavior = order.orderType === 'delivery' ? 'DELIVERY' : 'TAKE_OUT'
+      const match = orderTypes.find(
+        (ot) => ot.behavior === targetBehavior
+      ) || orderTypes.find(
+        (ot) => ot.name.toLowerCase().includes(order.orderType)
+      ) || orderTypes[0]
+
+      if (match) orderTypeGuid = match.guid
+    }
+
+    if (!orderTypeGuid) {
+      return { success: false, error: 'Could not determine Toast order type GUID' }
+    }
+
+    // 2. Build selections — only items with posItemId can be mapped to Toast catalog
+    const selectionsWithGuid = order.items.filter((item) => item.posItemId)
+    if (selectionsWithGuid.length === 0) {
+      return {
+        success: false,
+        error: 'No Toast item GUIDs available — re-sync menu to enable Toast order creation',
+      }
+    }
+
+    const selections = selectionsWithGuid.map((item) => {
+      const selection: Record<string, any> = {
+        item: { guid: item.posItemId },
+        quantity: item.quantity,
+      }
+
+      // Add modifiers that have posOptionId
+      const modifiersWithId = (item.modifiers || []).filter((m) => m.posOptionId)
+      if (modifiersWithId.length > 0) {
+        selection.modifiers = modifiersWithId.map((m) => ({
+          modifier: { guid: m.posOptionId },
+        }))
+      }
+
+      if (item.specialInstructions) {
+        selection.specialInstructions = item.specialInstructions
+      }
+
+      return selection
+    })
+
+    // 3. Create the order
+    const orderBody: Record<string, any> = {
+      orderType: { guid: orderTypeGuid },
+      selections,
+    }
+
+    if (order.customerName || order.customerPhone) {
+      orderBody.customer = {
+        ...(order.customerName ? { firstName: order.customerName.split(' ')[0], lastName: order.customerName.split(' ').slice(1).join(' ') } : {}),
+        ...(order.customerPhone ? { phone: order.customerPhone } : {}),
+      }
+    }
+
+    const createResponse = await fetch(`${baseUrl}/orders/v2/orders`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(orderBody),
+    })
+
+    if (!createResponse.ok) {
+      const errorText = await createResponse.text()
+      console.error(`[Toast] Order creation failed (${createResponse.status}):`, errorText)
+      return { success: false, error: `Toast order creation failed: ${createResponse.status}` }
+    }
+
+    const created = await createResponse.json()
+    const toastOrderId = created?.guid || created?.order?.guid
+
+    console.log(`[Toast] Order created: ${toastOrderId}`)
+    return { success: true, toastOrderId }
+  } catch (error: any) {
+    console.error('[Toast] createOrder error:', error)
+    return { success: false, error: error.message || 'Toast order creation failed' }
   }
 }

@@ -23,6 +23,8 @@ import { GoogleReviewsManager } from '@/lib/google-reviews-manager'
 import { HubSpotService } from '@/lib/hubspot-service'
 import { CalendlyService } from '@/lib/calendly-service'
 import { SquareService } from '@/lib/square-service'
+import { getToastConnection, createToastOrder } from '@/lib/integrations/toast-sync'
+import { getCloverConnection, createCloverOrder } from '@/lib/integrations/clover-sync'
 import { customerMemoryAgent } from '@/lib/agents/customer-memory'
 import { automationEngine } from '@/lib/automation/automation-engine'
 import { routingAgent } from '@/lib/agents/routing-agent'
@@ -1283,6 +1285,7 @@ async function handleAddToOrder(params: any, callId: string, employee: any) {
     totalPrice: itemTotal,
     modifiers,
     specialInstructions: params.specialInstructions,
+    ...(item.posItemId ? { posItemId: item.posItemId } : {}),
   })
 
   subtotal += itemTotal
@@ -1555,13 +1558,63 @@ async function handleConfirmOrder(callId: string, businessId: string, employeeId
     }).catch(err => console.error('[HubSpot] contact upsert error:', err))
   }
 
-  // Square POS: sync order
-  SquareService.getConnection(businessId).then(conn => {
-    if (conn) {
-      SquareService.createOrder(businessId, savedOrder, conn.location_id)
-        .catch(err => console.error('[Square] order sync error:', err))
-    }
-  }).catch(err => console.error('[Square] connection check error:', err))
+  // Toast POS: submit order
+  getToastConnection(businessId).then(conn => {
+    if (!conn) return
+    createToastOrder(conn, {
+      items: (savedOrder.items || []).map((i: any) => ({
+        name: i.name,
+        quantity: i.quantity || 1,
+        unitPrice: i.unitPrice || 0,
+        posItemId: i.posItemId,
+        modifiers: i.modifiers,
+        specialInstructions: i.specialInstructions,
+      })),
+      orderType: savedOrder.order_type || 'pickup',
+      customerName: savedOrder.customer_name,
+      customerPhone: savedOrder.customer_phone,
+      total,
+    }).then(result => {
+      if (result.success && result.toastOrderId) {
+        supabase
+          .from('phone_orders')
+          .update({ external_order_id: result.toastOrderId, external_provider: 'toast' })
+          .eq('id', savedOrder.id)
+          .then(() => {})
+      } else if (!result.success) {
+        console.warn('[Toast] POS submission failed:', result.error)
+      }
+    })
+  }).catch(err => console.error('[Toast] connection check error:', err))
+
+  // Clover POS: submit order
+  getCloverConnection(businessId).then(conn => {
+    if (!conn) return
+    createCloverOrder(conn, {
+      items: (savedOrder.items || []).map((i: any) => ({
+        name: i.name,
+        quantity: i.quantity || 1,
+        unitPrice: i.unitPrice || 0,
+        posItemId: i.posItemId,
+        modifiers: i.modifiers,
+        specialInstructions: i.specialInstructions,
+      })),
+      orderType: savedOrder.order_type || 'pickup',
+      customerName: savedOrder.customer_name,
+      customerPhone: savedOrder.customer_phone,
+      total,
+    }).then(result => {
+      if (result.success && result.cloverOrderId) {
+        supabase
+          .from('phone_orders')
+          .update({ external_order_id: result.cloverOrderId, external_provider: 'clover' })
+          .eq('id', savedOrder.id)
+          .then(() => {})
+      } else if (!result.success) {
+        console.warn('[Clover] POS submission failed:', result.error)
+      }
+    })
+  }).catch(err => console.error('[Clover] connection check error:', err))
 
   const timeMsg = order.order_type === 'delivery'
     ? `It should arrive in about ${deliveryTime} minutes.`
@@ -3560,7 +3613,7 @@ async function handleAssistantRequest(employee: any) {
     }
 
     // Starter: shared assistant with no call count limit, standard duration
-    const config = employeeProvisioning.buildAssistantConfig(employee, businessName)
+    const config = await employeeProvisioning.buildAssistantConfig(employee, businessName)
     // Inject business hours awareness
     const hoursContext = await getBusinessHoursContext(employee.business_id, employee.businesses?.timezone)
     if (hoursContext && config.model?.messages?.[0]?.content) {
