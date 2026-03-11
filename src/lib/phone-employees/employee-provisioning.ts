@@ -106,8 +106,9 @@ const VAPI_SHARED_ASSISTANT_ID = process.env.VAPI_SHARED_ASSISTANT_ID
 // Tiers that use the shared VAPI assistant (no dedicated assistant created)
 const SHARED_ASSISTANT_TIERS = ['trial', 'starter']
 
-// Twilio master credentials — used only to create/manage subaccounts
+// Twilio master credentials
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID
+const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN
 const TWILIO_API_KEY = process.env.TWILIO_API_KEY
 const TWILIO_API_SECRET = process.env.TWILIO_API_SECRET
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://voicefly.app'
@@ -912,25 +913,21 @@ export class EmployeeProvisioningService {
     businessName: string,
     areaCode?: string | number,
   ): Promise<{ phoneNumber: string; vapiPhoneId: string; twilioPhoneSid: string }> {
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_API_KEY || !TWILIO_API_SECRET) {
-      throw new Error('Twilio credentials not configured — set TWILIO_ACCOUNT_SID, TWILIO_API_KEY, TWILIO_API_SECRET')
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_API_KEY || !TWILIO_API_SECRET) {
+      throw new Error('Twilio credentials not configured — set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_API_KEY, TWILIO_API_SECRET')
     }
     if (!VAPI_API_KEY) {
       throw new Error('VAPI API key not configured')
     }
 
-    // Master client — uses API key (not auth token) for our own operations
+    // Master client — uses API key + secret for all operations on our master account
     const masterClient = twilio(TWILIO_API_KEY, TWILIO_API_SECRET, { accountSid: TWILIO_ACCOUNT_SID })
 
-    // 1. Get or create a Twilio subaccount for this business
-    const subaccount = await this.getOrCreateTwilioSubaccount(masterClient, businessId, businessName)
-    const subClient = twilio(subaccount.sid, subaccount.authToken)
-
-    // 2. Search for an available US local number (optionally filter by area code)
+    // 1. Search for an available US local number on the master account
     const searchParams: { limit: number; areaCode?: number } = { limit: 1 }
     if (areaCode) searchParams.areaCode = Number(areaCode)
 
-    const available = await subClient
+    const available = await masterClient
       .availablePhoneNumbers('US')
       .local.list(searchParams)
 
@@ -941,15 +938,15 @@ export class EmployeeProvisioningService {
 
     const numberToPurchase = available[0].phoneNumber
 
-    // 3. Purchase the number under the subaccount with SMS webhook set
-    const purchased = await subClient.incomingPhoneNumbers.create({
+    // 2. Purchase the number with SMS webhook set
+    const purchased = await masterClient.incomingPhoneNumbers.create({
       phoneNumber: numberToPurchase,
       smsUrl: `${APP_URL}/api/webhooks/sms`,
       smsMethod: 'POST',
       friendlyName: `VoiceFly Employee - ${employeeId}`,
     })
 
-    console.log(`[EmployeeProvisioning] Twilio number purchased: ${purchased.phoneNumber} (subaccount: ${subaccount.sid})`)
+    console.log(`[EmployeeProvisioning] Twilio number purchased: ${purchased.phoneNumber} (master account)`)
 
     // 4. Import the number into VAPI using subaccount credentials (not master token)
     // For shared-assistant employees (trial/starter), use serverUrl mode so our webhook
@@ -958,8 +955,8 @@ export class EmployeeProvisioningService {
     const isSharedAssistant = vapiAssistantId === VAPI_SHARED_ASSISTANT_ID
     const vapiImportBody: Record<string, any> = {
       provider: 'twilio',
-      twilioAccountSid: subaccount.sid,
-      twilioAuthToken: subaccount.authToken,
+      twilioAccountSid: TWILIO_ACCOUNT_SID,
+      twilioAuthToken: TWILIO_AUTH_TOKEN,
       twilioPhoneNumber: purchased.phoneNumber,
       name: `Phone Employee - ${employeeId}`,
     }
@@ -984,7 +981,7 @@ export class EmployeeProvisioningService {
 
     if (!vapiResponse.ok) {
       // VAPI import failed — release the number so we don't leak it
-      await subClient.incomingPhoneNumbers(purchased.sid).remove().catch(() => {})
+      await masterClient.incomingPhoneNumbers(purchased.sid).remove().catch(() => {})
       const errorData = await vapiResponse.json()
       throw new Error(`VAPI import failed: ${errorData.message || vapiResponse.statusText}`)
     }
