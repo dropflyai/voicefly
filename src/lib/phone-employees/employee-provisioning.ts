@@ -109,8 +109,6 @@ const SHARED_ASSISTANT_TIERS = ['trial', 'starter']
 // Twilio master credentials
 const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN
-const TWILIO_API_KEY = process.env.TWILIO_API_KEY
-const TWILIO_API_SECRET = process.env.TWILIO_API_SECRET
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://voicefly.app'
 
 // ============================================
@@ -913,15 +911,15 @@ export class EmployeeProvisioningService {
     businessName: string,
     areaCode?: string | number,
   ): Promise<{ phoneNumber: string; vapiPhoneId: string; twilioPhoneSid: string }> {
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_API_KEY || !TWILIO_API_SECRET) {
-      throw new Error('Twilio credentials not configured — set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_API_KEY, TWILIO_API_SECRET')
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
+      throw new Error('Twilio credentials not configured — set TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN')
     }
     if (!VAPI_API_KEY) {
       throw new Error('VAPI API key not configured')
     }
 
-    // Master client — uses API key + secret for all operations on our master account
-    const masterClient = twilio(TWILIO_API_KEY, TWILIO_API_SECRET, { accountSid: TWILIO_ACCOUNT_SID })
+    // Master client — uses account SID + auth token
+    const masterClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
     // 1. Search for an available US local number on the master account
     const searchParams: { limit: number; areaCode?: number } = { limit: 1 }
@@ -1006,45 +1004,6 @@ export class EmployeeProvisioningService {
       vapiPhoneId: vapiPhoneData.id,
       twilioPhoneSid: purchased.sid,
     }
-  }
-
-  /**
-   * Get or create a Twilio subaccount for a business.
-   * Subaccount SID + auth token are cached in the businesses table.
-   */
-  private async getOrCreateTwilioSubaccount(
-    masterClient: ReturnType<typeof twilio>,
-    businessId: string,
-    businessName: string,
-  ): Promise<{ sid: string; authToken: string }> {
-    // Check if business already has a subaccount
-    const { data: biz } = await supabase
-      .from('businesses')
-      .select('twilio_subaccount_sid, twilio_subaccount_token')
-      .eq('id', businessId)
-      .single()
-
-    if (biz?.twilio_subaccount_sid && biz?.twilio_subaccount_token) {
-      return { sid: biz.twilio_subaccount_sid, authToken: biz.twilio_subaccount_token }
-    }
-
-    // Create a new subaccount — visible in Twilio console under master account
-    const subaccount = await masterClient.api.accounts.create({
-      friendlyName: `VoiceFly - ${businessName}`,
-    })
-
-    // Store it on the business row
-    await supabase
-      .from('businesses')
-      .update({
-        twilio_subaccount_sid: subaccount.sid,
-        twilio_subaccount_token: subaccount.authToken,
-      })
-      .eq('id', businessId)
-
-    console.log(`[EmployeeProvisioning] Twilio subaccount created for "${businessName}": ${subaccount.sid}`)
-
-    return { sid: subaccount.sid, authToken: subaccount.authToken }
   }
 
   // ============================================
@@ -1335,27 +1294,22 @@ export class EmployeeProvisioningService {
   private async provisionStarterTwilioNumber(
     employeeId: string,
     businessId: string,
-    businessName: string,
     areaCode?: string | number,
   ): Promise<{ phoneNumber: string; vapiPhoneId: string; twilioPhoneSid: string }> {
-    if (!TWILIO_ACCOUNT_SID || !TWILIO_API_KEY || !TWILIO_API_SECRET) {
+    if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN) {
       throw new Error('Twilio credentials not configured')
     }
     if (!VAPI_API_KEY) {
       throw new Error('VAPI API key not configured')
     }
 
-    const masterClient = twilio(TWILIO_API_KEY, TWILIO_API_SECRET, { accountSid: TWILIO_ACCOUNT_SID })
+    const masterClient = twilio(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
-    // 1. Get or create Twilio subaccount for the business
-    const subaccount = await this.getOrCreateTwilioSubaccount(masterClient, businessId, businessName)
-    const subClient = twilio(subaccount.sid, subaccount.authToken)
-
-    // 2. Search for an available number
+    // 1. Search for an available number
     const searchParams: { limit: number; areaCode?: number } = { limit: 1 }
     if (areaCode) searchParams.areaCode = Number(areaCode)
 
-    const available = await subClient
+    const available = await masterClient
       .availablePhoneNumbers('US')
       .local.list(searchParams)
 
@@ -1366,17 +1320,17 @@ export class EmployeeProvisioningService {
 
     const numberToPurchase = available[0].phoneNumber
 
-    // 3. Purchase the number with SMS webhook
-    const purchased = await subClient.incomingPhoneNumbers.create({
+    // 2. Purchase the number with SMS webhook
+    const purchased = await masterClient.incomingPhoneNumbers.create({
       phoneNumber: numberToPurchase,
       smsUrl: `${APP_URL}/api/webhooks/sms`,
       smsMethod: 'POST',
       friendlyName: `VoiceFly Starter - ${employeeId}`,
     })
 
-    console.log(`[EmployeeProvisioning] Starter number purchased: ${purchased.phoneNumber} (subaccount: ${subaccount.sid})`)
+    console.log(`[EmployeeProvisioning] Starter number purchased: ${purchased.phoneNumber} (master account)`)
 
-    // 4. Import into VAPI with serverUrl + serverUrlSecret (NOT assistantId)
+    // 3. Import into VAPI with serverUrl + serverUrlSecret (NOT assistantId)
     //    This makes VAPI send webhook requests with x-vapi-secret header
     const vapiResponse = await fetch('https://api.vapi.ai/phone-number', {
       method: 'POST',
@@ -1386,8 +1340,8 @@ export class EmployeeProvisioningService {
       },
       body: JSON.stringify({
         provider: 'twilio',
-        twilioAccountSid: subaccount.sid,
-        twilioAuthToken: subaccount.authToken,
+        twilioAccountSid: TWILIO_ACCOUNT_SID,
+        twilioAuthToken: TWILIO_AUTH_TOKEN,
         twilioPhoneNumber: purchased.phoneNumber,
         serverUrl: `${APP_URL}/api/webhooks/phone-employee`,
         serverUrlSecret: employeeId,
@@ -1396,7 +1350,7 @@ export class EmployeeProvisioningService {
     })
 
     if (!vapiResponse.ok) {
-      await subClient.incomingPhoneNumbers(purchased.sid).remove().catch(() => {})
+      await masterClient.incomingPhoneNumbers(purchased.sid).remove().catch(() => {})
       const errorData = await vapiResponse.json()
       throw new Error(`VAPI import failed: ${errorData.message || vapiResponse.statusText}`)
     }
@@ -1446,15 +1400,6 @@ export class EmployeeProvisioningService {
       return
     }
 
-    // Get business name
-    const { data: business } = await supabase
-      .from('businesses')
-      .select('name')
-      .eq('id', businessId)
-      .single()
-
-    const businessName = business?.name ?? 'Business'
-
     // Release old phone if it was the shared trial number
     if (employee.vapi_phone_id && employee.phone_provider === 'vapi-only' && VAPI_API_KEY) {
       await fetch(`https://api.vapi.ai/phone-number/${employee.vapi_phone_id}`, {
@@ -1483,7 +1428,6 @@ export class EmployeeProvisioningService {
       const result = await this.provisionStarterTwilioNumber(
         employee.id,
         businessId,
-        businessName,
       )
 
       // Upgrade capabilities: add transfer and SMS
