@@ -138,7 +138,7 @@ async function getOrCreateTrialEmployee(businessId: string): Promise<any | null>
   // Find existing employee using the shared assistant
   const { data: existing } = await supabase
     .from('phone_employees')
-    .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
+    .select('*, businesses(name, phone, email, address_line1, website, timezone, settings, business_context)')
     .eq('business_id', businessId)
     .eq('vapi_assistant_id', sharedAssistantId)
     .limit(1)
@@ -193,7 +193,7 @@ async function getOrCreateTrialEmployee(businessId: string): Promise<any | null>
       capabilities: ['answer_calls', 'take_messages', 'provide_business_info', 'answer_faqs', 'book_appointments', 'check_availability', 'capture_lead_info', 'log_interactions'],
       provisioning_status: 'active',
     })
-    .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
+    .select('*, businesses(name, phone, email, address_line1, website, timezone, settings, business_context)')
     .single()
 
   if (error) {
@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
       if (vapiPhoneNumberId) {
         const { data: byPhone } = await supabase
           .from('phone_employees')
-          .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
+          .select('*, businesses(name, phone, email, address_line1, website, timezone, settings, business_context)')
           .eq('business_id', trialBusinessId)
           .eq('vapi_phone_id', vapiPhoneNumberId)
           .eq('is_active', true)
@@ -250,7 +250,7 @@ export async function POST(request: NextRequest) {
       if (!trialEmployee && metadataEmployeeId) {
         const { data: byId } = await supabase
           .from('phone_employees')
-          .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
+          .select('*, businesses(name, phone, email, address_line1, website, timezone, settings, business_context)')
           .eq('id', metadataEmployeeId)
           .eq('business_id', trialBusinessId)
           .single()
@@ -306,7 +306,7 @@ export async function POST(request: NextRequest) {
     if (lookupId) {
       const { data } = await supabase
         .from('phone_employees')
-        .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
+        .select('*, businesses(name, phone, email, address_line1, website, timezone, settings, business_context)')
         .eq('id', lookupId)
         .single()
       employee = data
@@ -315,7 +315,7 @@ export async function POST(request: NextRequest) {
       if (!employee) {
         const { data: byBusiness } = await supabase
           .from('phone_employees')
-          .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
+          .select('*, businesses(name, phone, email, address_line1, website, timezone, settings, business_context)')
           .eq('business_id', lookupId)
           .eq('is_active', true)
           .order('created_at', { ascending: false })
@@ -328,7 +328,7 @@ export async function POST(request: NextRequest) {
     if (!employee && metadataBusinessId) {
       const { data: byBusiness } = await supabase
         .from('phone_employees')
-        .select('*, businesses(name, phone, email, address, website, timezone, settings, business_context)')
+        .select('*, businesses(name, phone, email, address_line1, website, timezone, settings, business_context)')
         .eq('business_id', metadataBusinessId)
         .eq('is_active', true)
         .order('created_at', { ascending: false })
