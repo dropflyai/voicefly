@@ -1872,9 +1872,9 @@ async function handleLookupContact(params: any, businessId: string, employee: an
   // Check call history in employee_calls
   const { data: pastCalls } = await supabase
     .from('employee_calls')
-    .select('id, started_at, duration_seconds')
+    .select('id, started_at, duration')
     .eq('business_id', businessId)
-    .eq('caller_phone', params.phone)
+    .eq('customer_phone', params.phone)
     .order('started_at', { ascending: false })
     .limit(5)
 
@@ -2210,12 +2210,11 @@ async function handleBookReservation(params: any, businessId: string, employeeId
       customer_name: params.guestName,
       customer_phone: params.guestPhone,
       customer_email: params.guestEmail,
-      service: 'Reservation',
       appointment_date: params.date,
       start_time: params.time,
-      notes: `Party of ${params.partySize}${params.specialOccasion ? '. Special occasion: ' + params.specialOccasion : ''}${params.specialRequests ? '. Requests: ' + params.specialRequests : ''}`,
+      notes: `Reservation. Party of ${params.partySize}${params.specialOccasion ? '. Special occasion: ' + params.specialOccasion : ''}${params.specialRequests ? '. Requests: ' + params.specialRequests : ''}`,
       status: 'confirmed',
-      source: 'phone_employee',
+      booking_source: 'phone_employee',
       created_at: new Date().toISOString(),
     })
     .select()
@@ -2512,12 +2511,11 @@ async function handleBookDiscoveryCall(params: any, businessId: string, employee
     customer_name: params.callerName,
     customer_phone: params.callerPhone,
     customer_email: params.callerEmail,
-    service: 'Discovery Call',
     appointment_date: params.date,
     start_time: params.time,
-    notes: `Lead qualification notes: ${params.notes || 'N/A'}`,
+    notes: `Discovery Call. Lead qualification notes: ${params.notes || 'N/A'}`,
     status: 'confirmed',
-    source: 'phone_employee',
+    booking_source: 'phone_employee',
     created_at: new Date().toISOString(),
   }).select().single()
 
@@ -2914,7 +2912,7 @@ async function handleGetCalendarInfo(params: any, businessId: string) {
   // Fallback: check local Supabase appointments
   const { data: appointments } = await supabase
     .from('appointments')
-    .select('customer_name, service, appointment_date, start_time, status')
+    .select('customer_name, notes, appointment_date, start_time, status')
     .eq('business_id', businessId)
     .gte('appointment_date', lookAhead)
     .neq('status', 'cancelled')
@@ -2930,7 +2928,7 @@ async function handleGetCalendarInfo(params: any, businessId: string) {
   }
 
   const list = appointments.map(a =>
-    `${a.appointment_date} at ${a.start_time} - ${a.customer_name} (${a.service})`
+    `${a.appointment_date} at ${a.start_time} - ${a.customer_name}`
   ).join('; ')
 
   return {
