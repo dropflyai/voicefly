@@ -60,7 +60,7 @@ const EMPLOYEE_TYPES = [
     icon: <ShoppingBag className="h-7 w-7" />,
     description: 'Takes orders over the phone, confirms details, sends confirmations',
     popular: false,
-    comingSoon: true,
+    comingSoon: false,
   },
   {
     id: 'customer-service',
@@ -623,7 +623,8 @@ export default function OnboardingPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to provision employee')
 
       set('provisionedPhone', data.phoneNumber || '')
-      setStep(4) // calendar connection step
+      // Only show calendar step for appointment schedulers — others go straight to success
+      setStep(form.employeeType === 'appointment-scheduler' ? 4 : 5)
     } catch (err: any) {
       setError(err.message || 'Something went wrong. Please try again.')
     } finally {

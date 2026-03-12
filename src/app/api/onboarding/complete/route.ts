@@ -211,7 +211,6 @@ export async function POST(request: NextRequest) {
       .from('businesses')
       .update({
         onboarding_completed: true,
-        onboarding_completed_at: new Date().toISOString(),
         business_type: industry,
         updated_at: new Date().toISOString(),
       })
