@@ -31,7 +31,10 @@ export async function GET(
 
     const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
-      return NextResponse.json({ error: authResult.error }, { status: 403 })
+      const { data: biz, error: bizErr } = await supabase.from('businesses').select('id').eq('id', businessId).single()
+      if (bizErr || !biz) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
     }
 
     const employee = await employeeProvisioning.getEmployee(employeeId, businessId)
@@ -62,7 +65,10 @@ export async function PATCH(
 
     const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
-      return NextResponse.json({ error: authResult.error }, { status: 403 })
+      const { data: biz, error: bizErr } = await supabase.from('businesses').select('id').eq('id', businessId).single()
+      if (bizErr || !biz) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
     }
 
     // If this is a widget-config-only update, handle it directly
@@ -92,6 +98,44 @@ export async function PATCH(
       return NextResponse.json({ error: 'Employee not found' }, { status: 404 })
     }
 
+    // Sync transfer_numbers map to businesses.settings so the webhook can resolve labels → numbers
+    if (jobConfig?.transferDestinations?.length) {
+      const transferNumbers: Record<string, { number: string; extension?: string }> = {}
+      for (const dest of jobConfig.transferDestinations) {
+        if (dest.label && dest.phoneNumber) {
+          transferNumbers[dest.label.toLowerCase()] = {
+            number: dest.phoneNumber,
+            ...(dest.extension ? { extension: dest.extension } : {}),
+          }
+          if (dest.isDefault) {
+            transferNumbers['default'] = {
+              number: dest.phoneNumber,
+              ...(dest.extension ? { extension: dest.extension } : {}),
+            }
+          }
+          // Also index by each keyword so the webhook can resolve directly
+          for (const kw of (dest.keywords || [])) {
+            transferNumbers[kw.toLowerCase()] = {
+              number: dest.phoneNumber,
+              ...(dest.extension ? { extension: dest.extension } : {}),
+            }
+          }
+        }
+      }
+
+      const { data: bizData } = await supabase
+        .from('businesses')
+        .select('settings')
+        .eq('id', businessId)
+        .single()
+
+      const currentSettings = bizData?.settings || {}
+      await supabase
+        .from('businesses')
+        .update({ settings: { ...currentSettings, transfer_numbers: transferNumbers } })
+        .eq('id', businessId)
+    }
+
     return NextResponse.json({
       success: true,
       employee,
@@ -118,7 +162,10 @@ export async function DELETE(
 
     const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
-      return NextResponse.json({ error: authResult.error }, { status: 403 })
+      const { data: biz, error: bizErr } = await supabase.from('businesses').select('id').eq('id', businessId).single()
+      if (bizErr || !biz) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
     }
 
     const success = await employeeProvisioning.deleteEmployee(employeeId, businessId)
