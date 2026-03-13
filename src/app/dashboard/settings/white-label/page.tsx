@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '../../../../lib/supabase-client'
 import { 
   GlobeAltIcon, 
   ShieldCheckIcon, 
@@ -39,11 +39,6 @@ interface DomainSetupStep {
   instructions?: string[]
 }
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 export default function WhiteLabelSettingsPage() {
   const [business, setBusiness] = useState<any>(null)
   const [domains, setDomains] = useState<WhiteLabelDomain[]>([])
@@ -72,16 +67,14 @@ export default function WhiteLabelSettingsPage() {
 
   const loadData = async () => {
     try {
-      const businessId = localStorage.getItem('authenticated_business_id') || '00000000-0000-0000-0000-000000000000'
-      
-      // Load business info
-      const { data: businessData, error: businessError } = await supabase
-        .from('businesses')
-        .select('*')
-        .eq('id', businessId)
-        .single()
-
-      if (businessError) throw businessError
+      const businessId = localStorage.getItem('authenticated_business_id')
+      if (!businessId) return
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`/api/business?businessId=${businessId}`, {
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      })
+      if (!res.ok) throw new Error('Failed to fetch business')
+      const { business: businessData } = await res.json()
       setBusiness(businessData)
 
       // Only load domains if Business+ tier

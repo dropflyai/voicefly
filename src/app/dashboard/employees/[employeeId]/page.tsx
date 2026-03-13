@@ -18,6 +18,9 @@ import {
   TrashIcon,
   SparklesIcon,
   MagnifyingGlassIcon,
+  MicrophoneIcon,
+  SpeakerWaveIcon,
+  SpeakerXMarkIcon,
 } from '@heroicons/react/24/outline'
 
 // ============================================
@@ -148,7 +151,30 @@ export default function EmployeeEditPage() {
   })
   const [faqs, setFaqs] = useState<{ question: string; answer: string; keywords: string[] }[]>([])
   const [services, setServices] = useState<{ name: string; duration: number; description?: string }[]>([])
-  const [transferRules, setTransferRules] = useState<{ keywords: string[]; destination: string; personName?: string; phoneNumber?: string }[]>([])
+  const [transferDestinations, setTransferDestinations] = useState<{
+    id: string
+    label: string
+    phoneNumber: string
+    extension: string
+    keywords: string[]
+    isDefault: boolean
+  }[]>([])
+
+  // Lead qualifier specific state
+  const [qualifyingQuestions, setQualifyingQuestions] = useState<{ id: string; question: string; field: string; required: boolean }[]>([])
+  const [hotLeadCriteria, setHotLeadCriteria] = useState<string[]>([])
+  const [hotLeadAction, setHotLeadAction] = useState<'transfer' | 'book' | 'callback'>('book')
+  const [hotLeadTransferNumber, setHotLeadTransferNumber] = useState('')
+  const [discoveryCallLabel, setDiscoveryCallLabel] = useState('')
+  const [warmLeadResponse, setWarmLeadResponse] = useState('')
+  const [coldLeadResponse, setColdLeadResponse] = useState('')
+  const [disqualifyingAnswers, setDisqualifyingAnswers] = useState<{ questionId: string; answer: string }[]>([])
+
+  // Appointment scheduler specific state
+  const [apptTypes, setApptTypes] = useState<{ id: string; name: string; duration: number; price?: number; description?: string }[]>([])
+  const [bookingRules, setBookingRules] = useState({ minNoticeHours: 2, maxAdvanceDays: 60, bufferMinutes: 0, sameDayBooking: true })
+  const [staffMembers, setStaffMembers] = useState<{ id: string; name: string; specialties: string[] }[]>([])
+  const [cancellationPolicy, setCancellationPolicy] = useState('')
 
   // Business / subscription state
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('')
@@ -168,6 +194,11 @@ export default function EmployeeEditPage() {
   const [chatLoading, setChatLoading] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const [chatListening, setChatListening] = useState(false)
+  const [chatSpeakerOn, setChatSpeakerOn] = useState(false)
+  const [chatSpeaking, setChatSpeaking] = useState(false)
+  const chatRecognitionRef = useRef<any>(null)
+  const chatAudioRef = useRef<HTMLAudioElement | null>(null)
 
   // Dirty tracking
   const isDirty = useCallback(() => {
@@ -188,9 +219,21 @@ export default function EmployeeEditPage() {
       JSON.stringify(businessHours) !== JSON.stringify(original.schedule?.businessHours || {}) ||
       JSON.stringify(faqs) !== JSON.stringify(jc.faqs || []) ||
       JSON.stringify(services) !== JSON.stringify(jc.services || []) ||
-      JSON.stringify(transferRules) !== JSON.stringify(jc.transferRules || [])
+      JSON.stringify(transferDestinations) !== JSON.stringify(jc.transferDestinations || []) ||
+      JSON.stringify(qualifyingQuestions) !== JSON.stringify(jc.qualifyingQuestions || []) ||
+      JSON.stringify(hotLeadCriteria) !== JSON.stringify(jc.hotLeadCriteria || []) ||
+      hotLeadAction !== (jc.hotLeadAction || 'book') ||
+      hotLeadTransferNumber !== (jc.transferNumber || '') ||
+      discoveryCallLabel !== (jc.discoveryCallLabel || '') ||
+      warmLeadResponse !== (jc.warmLeadResponse || '') ||
+      coldLeadResponse !== (jc.coldLeadResponse || '') ||
+      JSON.stringify(disqualifyingAnswers) !== JSON.stringify(jc.disqualifyingAnswers || []) ||
+      JSON.stringify(apptTypes) !== JSON.stringify(jc.apptTypes || []) ||
+      JSON.stringify(bookingRules) !== JSON.stringify(jc.bookingRules || { minNoticeHours: 2, maxAdvanceDays: 60, bufferMinutes: 0, sameDayBooking: true }) ||
+      JSON.stringify(staffMembers) !== JSON.stringify(jc.staffMembers || []) ||
+      cancellationPolicy !== (jc.cancellationPolicy || '')
     )
-  }, [original, name, greeting, voiceId, tone, enthusiasm, formality, customInstructions, callHandlingRules, restrictions, businessDescription, timezone, businessHours, faqs, services, transferRules])
+  }, [original, name, greeting, voiceId, tone, enthusiasm, formality, customInstructions, callHandlingRules, restrictions, businessDescription, timezone, businessHours, faqs, services, transferDestinations, qualifyingQuestions, hotLeadCriteria, hotLeadAction, hotLeadTransferNumber, discoveryCallLabel, warmLeadResponse, coldLeadResponse, disqualifyingAnswers, apptTypes, bookingRules, staffMembers, cancellationPolicy])
 
   // ============================================
   // LOAD EMPLOYEE
@@ -220,14 +263,16 @@ export default function EmployeeEditPage() {
         populateForm(emp)
 
         // Fetch subscription status for feature gating
-        const { data: bizData } = await supabase
-          .from('businesses')
-          .select('subscription_status, subscription_tier')
-          .eq('id', businessId)
-          .single()
-        if (bizData) {
-          setSubscriptionStatus(bizData.subscription_status || '')
-          setSubscriptionTier(bizData.subscription_tier || '')
+        const { data: { session } } = await supabase.auth.getSession()
+        const bizRes = await fetch(`/api/business?businessId=${businessId}`, {
+          headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+        })
+        if (bizRes.ok) {
+          const { business: bizData } = await bizRes.json()
+          if (bizData) {
+            setSubscriptionStatus(bizData.subscription_status || '')
+            setSubscriptionTier(bizData.subscription_tier || '')
+          }
         }
       } catch {
         setError('Failed to load employee')
@@ -266,7 +311,47 @@ export default function EmployeeEditPage() {
     })
     setFaqs(jc.faqs || [])
     setServices(jc.services || [])
-    setTransferRules(jc.transferRules || [])
+
+    // Lead qualifier fields
+    if (emp.jobType === 'lead-qualifier') {
+      setQualifyingQuestions(jc.qualifyingQuestions || [
+        { id: 'interest', question: 'What brings you to us today — what are you looking to accomplish?', field: 'interest', required: true },
+        { id: 'timeline', question: 'What does your timeline look like?', field: 'timeline', required: true },
+        { id: 'budget', question: 'Do you have a rough budget in mind?', field: 'budget', required: false },
+      ])
+      setHotLeadCriteria(jc.hotLeadCriteria || ['Ready to move forward within 30 days', 'Has a defined budget', 'Is the decision maker'])
+      setHotLeadAction(jc.hotLeadAction || 'book')
+      setHotLeadTransferNumber(jc.transferNumber || '')
+      setDiscoveryCallLabel(jc.discoveryCallLabel || '')
+      setWarmLeadResponse(jc.warmLeadResponse || '')
+      setColdLeadResponse(jc.coldLeadResponse || '')
+      setDisqualifyingAnswers(jc.disqualifyingAnswers || [])
+    }
+
+    // Appointment scheduler fields
+    if (emp.jobType === 'appointment-scheduler') {
+      setApptTypes(jc.apptTypes || [])
+      setBookingRules(jc.bookingRules || { minNoticeHours: 2, maxAdvanceDays: 60, bufferMinutes: 0, sameDayBooking: true })
+      setStaffMembers(jc.staffMembers || [])
+      setCancellationPolicy(jc.cancellationPolicy || '')
+    }
+
+    // Load new transferDestinations format, or migrate old transferRules format
+    if (jc.transferDestinations?.length) {
+      setTransferDestinations(jc.transferDestinations)
+    } else if (jc.transferRules?.length) {
+      // Migrate old format
+      setTransferDestinations(jc.transferRules.map((r: any, i: number) => ({
+        id: `migrated-${i}`,
+        label: r.destination === 'specific_person' ? (r.personName || 'Contact') : r.destination,
+        phoneNumber: r.phoneNumber || '',
+        extension: '',
+        keywords: r.keywords || [],
+        isDefault: false,
+      })))
+    } else {
+      setTransferDestinations([])
+    }
   }
 
   // ============================================
@@ -284,6 +369,8 @@ export default function EmployeeEditPage() {
       const headers = await getAuthHeaders()
       const jc = original?.jobConfig || {}
 
+      const isLeadQualifier = original?.jobType === 'lead-qualifier'
+      const isApptScheduler = original?.jobType === 'appointment-scheduler'
       const updatedJobConfig = {
         ...jc,
         greeting,
@@ -293,7 +380,25 @@ export default function EmployeeEditPage() {
         businessDescription: businessDescription || undefined,
         faqs,
         services,
-        transferRules,
+        transferDestinations,
+        // Lead qualifier fields
+        ...(isLeadQualifier && {
+          qualifyingQuestions,
+          hotLeadCriteria,
+          hotLeadAction,
+          transferNumber: hotLeadTransferNumber || undefined,
+          discoveryCallLabel: discoveryCallLabel || undefined,
+          warmLeadResponse: warmLeadResponse || undefined,
+          coldLeadResponse: coldLeadResponse || undefined,
+          disqualifyingAnswers,
+        }),
+        // Appointment scheduler fields
+        ...(isApptScheduler && {
+          apptTypes,
+          bookingRules,
+          staffMembers,
+          cancellationPolicy: cancellationPolicy || undefined,
+        }),
       }
 
       const updatedSchedule = {
@@ -353,9 +458,56 @@ export default function EmployeeEditPage() {
   // TRAINING CHAT
   // ============================================
 
-  const sendTrainingMessage = async () => {
-    if (!chatInput.trim() || chatLoading) return
-    const message = chatInput.trim()
+  const toggleChatListening = () => {
+    if (chatListening) {
+      chatRecognitionRef.current?.stop()
+      setChatListening(false)
+      return
+    }
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) return
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'en-US'
+    recognition.interimResults = true
+    recognition.continuous = false
+    chatRecognitionRef.current = recognition
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results).map((r: any) => r[0].transcript).join('')
+      setChatInput(transcript)
+      if (event.results[event.results.length - 1].isFinal) {
+        setChatListening(false)
+        if (transcript.trim()) sendTrainingMessage(transcript.trim())
+      }
+    }
+    recognition.onerror = () => setChatListening(false)
+    recognition.onend = () => setChatListening(false)
+    recognition.start()
+    setChatListening(true)
+  }
+
+  const speakChatResponse = async (text: string) => {
+    if (chatAudioRef.current) { chatAudioRef.current.pause(); chatAudioRef.current = null }
+    try {
+      setChatSpeaking(true)
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      if (!res.ok) { setChatSpeaking(false); return }
+      const audioBlob = await res.blob()
+      const audioUrl = URL.createObjectURL(audioBlob)
+      const audio = new Audio(audioUrl)
+      chatAudioRef.current = audio
+      audio.onended = () => { setChatSpeaking(false); URL.revokeObjectURL(audioUrl); chatAudioRef.current = null }
+      audio.onerror = () => { setChatSpeaking(false); URL.revokeObjectURL(audioUrl); chatAudioRef.current = null }
+      await audio.play()
+    } catch { setChatSpeaking(false) }
+  }
+
+  const sendTrainingMessage = async (overrideMessage?: string) => {
+    const message = (overrideMessage || chatInput).trim()
+    if (!message || chatLoading) return
     setChatInput('')
     setChatMessages(prev => [...prev, { role: 'user', content: message }])
     setChatLoading(true)
@@ -375,9 +527,14 @@ export default function EmployeeEditPage() {
             restrictions,
             faqs,
             services,
-            transferRules,
+            transferDestinations,
           },
           jobType: original?.jobType || 'receptionist',
+          context: {
+            employeeName: name,
+            industry: businessDescription || undefined,
+            services: Array.isArray(services) ? services.map((s: any) => s.name).join(', ') : undefined,
+          },
         }),
       })
 
@@ -398,11 +555,9 @@ export default function EmployeeEditPage() {
         accepted: true,
       }))
 
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        content: data.summary || 'Here are the changes I suggest:',
-        changes,
-      }])
+      const reply = data.summary || 'Here are the changes I suggest:'
+      setChatMessages(prev => [...prev, { role: 'assistant', content: reply, changes }])
+      if (chatSpeakerOn) speakChatResponse(reply)
     } catch {
       setChatMessages(prev => [...prev, {
         role: 'assistant',
@@ -429,7 +584,14 @@ export default function EmployeeEditPage() {
           break
         case 'transferRule':
           if (change.action === 'add' && change.data) {
-            setTransferRules(prev => [...prev, { keywords: change.data.keywords || [], destination: change.data.destination || 'specific_person', personName: change.data.personName, phoneNumber: change.data.phoneNumber }])
+            setTransferDestinations(prev => [...prev, {
+              id: `dest-${Date.now()}`,
+              label: change.data.personName || change.data.destination || 'Contact',
+              phoneNumber: change.data.phoneNumber || '',
+              extension: '',
+              keywords: change.data.keywords || [],
+              isDefault: false,
+            }])
           }
           break
         case 'customInstructions':
@@ -616,33 +778,32 @@ export default function EmployeeEditPage() {
           </div>
 
           {/* Training Chat */}
-          {isStarterOrTrial ? (
-            <div className="mb-6 border border-yellow-200 bg-yellow-50 rounded-lg p-5">
-              <div className="flex items-center gap-2 mb-2">
-                <SparklesIcon className="h-5 w-5 text-yellow-600" />
-                <h2 className="text-base font-semibold text-yellow-900">Train Your {jobLabel}</h2>
-                <span className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full">{isTrial ? 'Upgrade to unlock' : 'Pro feature'}</span>
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <SparklesIcon className="h-5 w-5 text-blue-600" />
+                <h2 className="text-base font-semibold text-gray-900">
+                  {isStarterOrTrial
+                    ? `What do you need to train ${name} today?`
+                    : `How can Maya help you train ${name} today?`}
+                </h2>
               </div>
-              <p className="text-sm text-yellow-800 mb-3">
-                {isTrial
-                  ? "Customize your AI's responses, add FAQs, set business rules, and more with conversational training."
-                  : "Upgrade to Pro to train your AI with custom FAQs, business rules, and personalized responses."}
-              </p>
               <button
-                onClick={() => router.push('/dashboard/billing')}
-                className="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium"
+                type="button"
+                onClick={() => {
+                  if (chatSpeaking) { chatAudioRef.current?.pause(); chatAudioRef.current = null; setChatSpeaking(false) }
+                  setChatSpeakerOn(v => !v)
+                }}
+                title={chatSpeakerOn ? 'Mute Maya' : 'Hear Maya speak'}
+                className={`p-1.5 rounded-lg transition-colors ${chatSpeakerOn ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
               >
-                {isTrial ? 'Upgrade Now' : 'Upgrade to Pro'}
+                {chatSpeakerOn ? <SpeakerWaveIcon className="h-4 w-4" /> : <SpeakerXMarkIcon className="h-4 w-4" />}
               </button>
             </div>
-          ) : (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <SparklesIcon className="h-5 w-5 text-blue-600" />
-              <h2 className="text-base font-semibold text-gray-900">Train Your {jobLabel}</h2>
-            </div>
             <p className="text-sm text-gray-500 mb-3">
-              Describe how you want your {jobLabel.toLowerCase()} to behave — I&apos;ll turn it into configuration.
+              {isStarterOrTrial
+                ? "Tell me about your business and I'll configure your employee for you."
+                : "Describe what you want your employee to handle and I'll update their configuration."}
             </p>
 
             <div className="border border-gray-200 rounded-lg bg-gray-50">
@@ -668,8 +829,12 @@ export default function EmployeeEditPage() {
                   </div>
                 )}
                 {chatMessages.map((msg, i) => (
-                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'}`}>
+                    {msg.role === 'assistant' && (
+                      <img src="/maya-avatars/holo-d1.png" alt="Maya" className="h-7 w-7 rounded-full border border-blue-300/50 flex-shrink-0 object-cover object-top mt-0.5" />
+                    )}
                     <div className={`max-w-[85%] ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-900'} rounded-lg px-3 py-2`}>
+                      {msg.role === 'assistant' && <p className="text-xs font-medium text-blue-600 mb-1">Maya</p>}
                       <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                       {/* Change confirmation cards */}
                       {msg.changes && msg.changes.length > 0 && (
@@ -723,15 +888,19 @@ export default function EmployeeEditPage() {
                   </div>
                 ))}
                 {chatLoading && (
-                  <div className="flex justify-start">
+                  <div className="flex justify-start gap-2">
+                    <img src="/maya-avatars/holo-d1.png" alt="Maya" className="h-7 w-7 rounded-full border border-blue-300/50 flex-shrink-0 object-cover object-top mt-0.5" />
                     <div className="bg-white border border-gray-200 rounded-lg px-3 py-2">
+                      <p className="text-xs font-medium text-blue-600 mb-1">Maya</p>
                       <p className="text-sm text-gray-400">Thinking...</p>
                     </div>
                   </div>
                 )}
                 {analyzing && (
-                  <div className="flex justify-start">
+                  <div className="flex justify-start gap-2">
+                    <img src="/maya-avatars/holo-d1.png" alt="Maya" className="h-7 w-7 rounded-full border border-blue-300/50 flex-shrink-0 object-cover object-top mt-0.5" />
                     <div className="bg-white border border-gray-200 rounded-lg px-3 py-2">
+                      <p className="text-xs font-medium text-blue-600 mb-1">Maya</p>
                       <p className="text-sm text-gray-400">Analyzing call transcripts... This may take a moment.</p>
                     </div>
                   </div>
@@ -747,13 +916,22 @@ export default function EmployeeEditPage() {
                     value={chatInput}
                     onChange={e => setChatInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTrainingMessage() } }}
-                    placeholder={`Tell me about your business...`}
+                    placeholder={chatListening ? 'Listening...' : isStarterOrTrial ? `Tell me about your business...` : `Tell me how you want ${name} to behave...`}
                     className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
                     disabled={chatLoading || analyzing}
                   />
                   <button
                     type="button"
-                    onClick={sendTrainingMessage}
+                    onClick={toggleChatListening}
+                    disabled={chatLoading || analyzing}
+                    title={chatListening ? 'Stop listening' : 'Speak to Maya'}
+                    className={`px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${chatListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                  >
+                    <MicrophoneIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => sendTrainingMessage()}
                     disabled={chatLoading || analyzing || !chatInput.trim()}
                     className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
@@ -772,7 +950,6 @@ export default function EmployeeEditPage() {
               </div>
             </div>
           </div>
-          )}
 
           {/* Configuration Sections */}
           <div className="space-y-3 mb-8">
@@ -1026,84 +1203,637 @@ export default function EmployeeEditPage() {
               </div>
             </Section>
 
-            {/* Transfer Rules */}
-            {(original?.jobType === 'receptionist' || original?.jobType === 'customer-service') && (
-              <Section title="Transfer Rules" badge={transferRules.length > 0 ? `${transferRules.length}` : undefined} locked={isTrial} lockedMessage="Upgrade to set up call transfers to your team.">
-                <div className="pt-3 space-y-3">
-                  {transferRules.map((rule, i) => (
-                    <div key={i} className="p-2 bg-gray-50 rounded-lg space-y-2">
-                      <div className="flex items-start gap-2">
-                        <div className="flex-1 space-y-2">
-                          <input
-                            type="text"
-                            value={rule.keywords.join(', ')}
+            {/* ===== LEAD QUALIFIER SECTIONS ===== */}
+            {original?.jobType === 'lead-qualifier' && (<>
+
+            {/* Qualifying Questions */}
+            <Section title="Qualifying Questions" badge={qualifyingQuestions.length > 0 ? `${qualifyingQuestions.length}` : undefined}>
+              <div className="pt-3 space-y-3">
+                <p className="text-xs text-gray-500">These are the questions your AI weaves into the conversation to score each lead. Ask them in order of importance — the AI won't fire them mechanically but will gather the answers naturally.</p>
+                {qualifyingQuestions.map((q, i) => (
+                  <div key={q.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium flex items-center justify-center mt-1">{i + 1}</span>
+                      <div className="flex-1 space-y-2">
+                        <textarea
+                          value={q.question}
+                          onChange={e => {
+                            const updated = [...qualifyingQuestions]
+                            updated[i] = { ...updated[i], question: e.target.value }
+                            setQualifyingQuestions(updated)
+                          }}
+                          rows={2}
+                          placeholder="e.g. What brings you to us today?"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                        />
+                        <div className="flex items-center gap-3">
+                          <select
+                            value={q.field}
                             onChange={e => {
-                              const updated = [...transferRules]
-                              updated[i] = { ...updated[i], keywords: e.target.value.split(',').map(k => k.trim()).filter(Boolean) }
-                              setTransferRules(updated)
+                              const updated = [...qualifyingQuestions]
+                              updated[i] = { ...updated[i], field: e.target.value }
+                              setQualifyingQuestions(updated)
                             }}
-                            placeholder="Keywords (comma-separated)"
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                          <div className="flex gap-2">
-                            <select
-                              value={rule.destination}
+                            className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="interest">Interest / Need</option>
+                            <option value="timeline">Timeline</option>
+                            <option value="budget">Budget</option>
+                            <option value="authority">Decision Maker</option>
+                            <option value="pain_point">Pain Point</option>
+                            <option value="company">Company / Industry</option>
+                            <option value="location">Location</option>
+                            <option value="custom">Custom</option>
+                          </select>
+                          <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={q.required}
                               onChange={e => {
-                                const updated = [...transferRules]
-                                updated[i] = { ...updated[i], destination: e.target.value }
-                                setTransferRules(updated)
+                                const updated = [...qualifyingQuestions]
+                                updated[i] = { ...updated[i], required: e.target.checked }
+                                setQualifyingQuestions(updated)
                               }}
-                              className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                              <option value="manager">Manager</option>
-                              <option value="sales">Sales</option>
-                              <option value="support">Support</option>
-                              <option value="specific_person">Specific Person</option>
-                            </select>
-                            {rule.destination === 'specific_person' && (
-                              <>
-                                <input
-                                  type="text"
-                                  value={rule.personName || ''}
-                                  onChange={e => {
-                                    const updated = [...transferRules]
-                                    updated[i] = { ...updated[i], personName: e.target.value }
-                                    setTransferRules(updated)
-                                  }}
-                                  placeholder="Name"
-                                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                                <input
-                                  type="text"
-                                  value={rule.phoneNumber || ''}
-                                  onChange={e => {
-                                    const updated = [...transferRules]
-                                    updated[i] = { ...updated[i], phoneNumber: e.target.value }
-                                    setTransferRules(updated)
-                                  }}
-                                  placeholder="Phone"
-                                  className="w-32 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                              </>
-                            )}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            Required
+                          </label>
+                          <div className="flex gap-1 ml-auto">
+                            <button
+                              type="button"
+                              disabled={i === 0}
+                              onClick={() => {
+                                const updated = [...qualifyingQuestions]
+                                ;[updated[i - 1], updated[i]] = [updated[i], updated[i - 1]]
+                                setQualifyingQuestions(updated)
+                              }}
+                              className="px-1.5 py-0.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                            >↑</button>
+                            <button
+                              type="button"
+                              disabled={i === qualifyingQuestions.length - 1}
+                              onClick={() => {
+                                const updated = [...qualifyingQuestions]
+                                ;[updated[i], updated[i + 1]] = [updated[i + 1], updated[i]]
+                                setQualifyingQuestions(updated)
+                              }}
+                              className="px-1.5 py-0.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                            >↓</button>
                           </div>
                         </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setQualifyingQuestions(qualifyingQuestions.filter((_, j) => j !== i))}
+                        className="p-1 text-gray-400 hover:text-red-500 flex-shrink-0"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setQualifyingQuestions([...qualifyingQuestions, { id: `q-${Date.now()}`, question: '', field: 'custom', required: false }])}
+                  className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  <PlusIcon className="h-4 w-4" /> Add Question
+                </button>
+              </div>
+            </Section>
+
+            {/* Hot Lead Settings */}
+            <Section title="Hot Lead Settings" badge={hotLeadCriteria.length > 0 ? 'Configured' : undefined}>
+              <div className="pt-3 space-y-5">
+
+                {/* Criteria */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Hot Lead Criteria</label>
+                  <p className="text-xs text-gray-500 mb-2">A lead is "hot" if ANY of these apply. The AI scores the lead against these after the conversation.</p>
+                  <div className="space-y-2">
+                    {hotLeadCriteria.map((criterion, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="text-xs text-green-600 flex-shrink-0">✓</span>
+                        <input
+                          type="text"
+                          value={criterion}
+                          onChange={e => {
+                            const updated = [...hotLeadCriteria]
+                            updated[i] = e.target.value
+                            setHotLeadCriteria(updated)
+                          }}
+                          placeholder="e.g. Ready to move forward within 30 days"
+                          className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        />
                         <button
                           type="button"
-                          onClick={() => setTransferRules(transferRules.filter((_, j) => j !== i))}
-                          className="p-1 text-gray-400 hover:text-red-500"
+                          onClick={() => setHotLeadCriteria(hotLeadCriteria.filter((_, j) => j !== i))}
+                          className="p-1 text-gray-400 hover:text-red-500 flex-shrink-0"
                         >
                           <TrashIcon className="h-4 w-4" />
                         </button>
                       </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setHotLeadCriteria([...hotLeadCriteria, ''])}
+                      className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      <PlusIcon className="h-4 w-4" /> Add Criterion
+                    </button>
+                  </div>
+                </div>
+
+                {/* Hot lead action */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">When a Hot Lead is Identified</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {([
+                      { value: 'book', label: 'Book a Call', desc: 'Schedule a discovery call on the spot' },
+                      { value: 'transfer', label: 'Transfer Now', desc: 'Live transfer to your sales team' },
+                      { value: 'callback', label: 'Schedule Callback', desc: 'Pick a time for your team to call them' },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setHotLeadAction(opt.value)}
+                        className={`p-3 rounded-lg border text-left transition-colors ${
+                          hotLeadAction === opt.value
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <div className={`text-sm font-medium mb-0.5 ${hotLeadAction === opt.value ? 'text-blue-700' : 'text-gray-800'}`}>{opt.label}</div>
+                        <div className="text-xs text-gray-500">{opt.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Transfer number — shown only when action = transfer */}
+                {hotLeadAction === 'transfer' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Sales Transfer Number</label>
+                    <p className="text-xs text-gray-500 mb-1">Hot leads will be live-transferred to this number.</p>
+                    <input
+                      type="tel"
+                      value={hotLeadTransferNumber}
+                      onChange={e => setHotLeadTransferNumber(e.target.value)}
+                      placeholder="+15551234567"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                )}
+
+                {/* Discovery call label — shown when action = book */}
+                {hotLeadAction === 'book' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">What to Call the Next Step</label>
+                    <input
+                      type="text"
+                      value={discoveryCallLabel}
+                      onChange={e => setDiscoveryCallLabel(e.target.value)}
+                      placeholder="e.g. Free consultation, 15-min intro call, Strategy session"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">The AI will invite hot leads to book a &quot;{discoveryCallLabel || 'discovery call'}&quot;.</p>
+                  </div>
+                )}
+              </div>
+            </Section>
+
+            {/* Lead Responses */}
+            <Section title="Lead Response Scripts" badge={warmLeadResponse || coldLeadResponse ? 'Customized' : undefined}>
+              <div className="pt-3 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Warm Lead Response</label>
+                  <p className="text-xs text-gray-500 mb-1">What the AI says when a lead is interested but not quite ready. Should acknowledge their interest and set up a follow-up.</p>
+                  <textarea
+                    value={warmLeadResponse}
+                    onChange={e => setWarmLeadResponse(e.target.value)}
+                    rows={3}
+                    placeholder="That sounds like a great fit for what we offer! I'll make sure someone from our team follows up with you soon..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Cold Lead Response</label>
+                  <p className="text-xs text-gray-500 mb-1">What the AI says when a lead isn't a fit right now. Should be kind, not dismissive — they may become a fit later.</p>
+                  <textarea
+                    value={coldLeadResponse}
+                    onChange={e => setColdLeadResponse(e.target.value)}
+                    rows={3}
+                    placeholder="I appreciate you reaching out! Based on what you've shared, the timing might not be quite right yet. Feel free to reach back out when things change..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  />
+                </div>
+              </div>
+            </Section>
+
+            {/* Disqualifying Answers */}
+            <Section title="Instant Disqualifiers" badge={disqualifyingAnswers.length > 0 ? `${disqualifyingAnswers.length}` : undefined}>
+              <div className="pt-3 space-y-3">
+                <p className="text-xs text-gray-500">If a caller says something that immediately rules them out, the AI will score them cold and exit gracefully — without continuing to probe. Useful for budget floors, geography, or product fit issues.</p>
+                {disqualifyingAnswers.map((dq, i) => (
+                  <div key={i} className="flex items-start gap-2 p-2 bg-red-50 rounded-lg border border-red-100">
+                    <div className="flex-1 space-y-1">
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="block text-xs text-gray-500 mb-1">Question topic</label>
+                          <select
+                            value={dq.questionId}
+                            onChange={e => {
+                              const updated = [...disqualifyingAnswers]
+                              updated[i] = { ...updated[i], questionId: e.target.value }
+                              setDisqualifyingAnswers(updated)
+                            }}
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          >
+                            <option value="">Select a question</option>
+                            {qualifyingQuestions.map(q => (
+                              <option key={q.id} value={q.id}>{q.question.slice(0, 50)}{q.question.length > 50 ? '…' : ''}</option>
+                            ))}
+                            <option value="budget">Budget</option>
+                            <option value="timeline">Timeline</option>
+                            <option value="location">Location</option>
+                            <option value="any">Any point in conversation</option>
+                          </select>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setDisqualifyingAnswers(disqualifyingAnswers.filter((_, j) => j !== i))}
+                          className="p-1 text-gray-400 hover:text-red-500 mt-4 flex-shrink-0"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">If caller indicates...</label>
+                        <input
+                          type="text"
+                          value={dq.answer}
+                          onChange={e => {
+                            const updated = [...disqualifyingAnswers]
+                            updated[i] = { ...updated[i], answer: e.target.value }
+                            setDisqualifyingAnswers(updated)
+                          }}
+                          placeholder="e.g. budget under $500, outside the US, just browsing"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setDisqualifyingAnswers([...disqualifyingAnswers, { questionId: '', answer: '' }])}
+                  className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  <PlusIcon className="h-4 w-4" /> Add Disqualifier
+                </button>
+              </div>
+            </Section>
+
+            </>)}
+
+            {/* ===== APPOINTMENT SCHEDULER SECTIONS ===== */}
+            {original?.jobType === 'appointment-scheduler' && (<>
+
+            {/* Appointment Types */}
+            <Section title="Appointment Types" badge={apptTypes.length > 0 ? `${apptTypes.length}` : undefined}>
+              <div className="pt-3 space-y-3">
+                <p className="text-xs text-gray-500">Define the types of appointments your AI can book. The AI will present these as options during the call.</p>
+                {apptTypes.map((apt, i) => (
+                  <div key={apt.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 space-y-2">
+                        <input
+                          type="text"
+                          value={apt.name}
+                          onChange={e => {
+                            const updated = [...apptTypes]
+                            updated[i] = { ...updated[i], name: e.target.value }
+                            setApptTypes(updated)
+                          }}
+                          placeholder="e.g. Initial Consultation, Follow-up, Deep Clean"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <label className="block text-xs text-gray-500 mb-1">Duration (min)</label>
+                            <input
+                              type="number"
+                              min={5}
+                              step={5}
+                              value={apt.duration}
+                              onChange={e => {
+                                const updated = [...apptTypes]
+                                updated[i] = { ...updated[i], duration: parseInt(e.target.value) || 30 }
+                                setApptTypes(updated)
+                              }}
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className="block text-xs text-gray-500 mb-1">Price (optional)</label>
+                            <input
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={apt.price ?? ''}
+                              onChange={e => {
+                                const updated = [...apptTypes]
+                                updated[i] = { ...updated[i], price: e.target.value ? parseFloat(e.target.value) : undefined }
+                                setApptTypes(updated)
+                              }}
+                              placeholder="$"
+                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+                        </div>
+                        <input
+                          type="text"
+                          value={apt.description || ''}
+                          onChange={e => {
+                            const updated = [...apptTypes]
+                            updated[i] = { ...updated[i], description: e.target.value || undefined }
+                            setApptTypes(updated)
+                          }}
+                          placeholder="Short description (optional)"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setApptTypes(apptTypes.filter((_, j) => j !== i))}
+                        className="p-1 text-gray-400 hover:text-red-500 flex-shrink-0"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setApptTypes([...apptTypes, { id: `apt-${Date.now()}`, name: '', duration: 60 }])}
+                  className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  <PlusIcon className="h-4 w-4" /> Add Appointment Type
+                </button>
+              </div>
+            </Section>
+
+            {/* Booking Rules */}
+            <Section title="Booking Rules" badge="Configured">
+              <div className="pt-3 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Min Notice (hours)</label>
+                    <p className="text-xs text-gray-500 mb-1">How far in advance must appointments be booked?</p>
+                    <input
+                      type="number"
+                      min={0}
+                      value={bookingRules.minNoticeHours}
+                      onChange={e => setBookingRules(prev => ({ ...prev, minNoticeHours: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Max Advance (days)</label>
+                    <p className="text-xs text-gray-500 mb-1">How far ahead can appointments be scheduled?</p>
+                    <input
+                      type="number"
+                      min={1}
+                      value={bookingRules.maxAdvanceDays}
+                      onChange={e => setBookingRules(prev => ({ ...prev, maxAdvanceDays: parseInt(e.target.value) || 30 }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Buffer Time (minutes)</label>
+                    <p className="text-xs text-gray-500 mb-1">Gap between consecutive appointments.</p>
+                    <input
+                      type="number"
+                      min={0}
+                      step={5}
+                      value={bookingRules.bufferMinutes}
+                      onChange={e => setBookingRules(prev => ({ ...prev, bufferMinutes: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div className="flex items-start pt-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={bookingRules.sameDayBooking}
+                        onChange={e => setBookingRules(prev => ({ ...prev, sameDayBooking: e.target.checked }))}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <div>
+                        <span className="text-sm font-medium text-gray-700">Allow same-day booking</span>
+                        <p className="text-xs text-gray-500">Callers can book for today</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </Section>
+
+            {/* Staff Members */}
+            <Section title="Staff Members" badge={staffMembers.length > 0 ? `${staffMembers.length}` : undefined}>
+              <div className="pt-3 space-y-3">
+                <p className="text-xs text-gray-500">If callers can request a specific staff member, add them here. The AI will ask about preferences and note them in the booking.</p>
+                {staffMembers.map((staff, i) => (
+                  <div key={staff.id} className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex-1 space-y-2">
+                      <input
+                        type="text"
+                        value={staff.name}
+                        onChange={e => {
+                          const updated = [...staffMembers]
+                          updated[i] = { ...updated[i], name: e.target.value }
+                          setStaffMembers(updated)
+                        }}
+                        placeholder="Staff member name"
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <input
+                        type="text"
+                        value={staff.specialties.join(', ')}
+                        onChange={e => {
+                          const updated = [...staffMembers]
+                          updated[i] = { ...updated[i], specialties: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }
+                          setStaffMembers(updated)
+                        }}
+                        placeholder="Specialties (comma-separated, optional)"
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setStaffMembers(staffMembers.filter((_, j) => j !== i))}
+                      className="p-1 text-gray-400 hover:text-red-500 flex-shrink-0"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setStaffMembers([...staffMembers, { id: `staff-${Date.now()}`, name: '', specialties: [] }])}
+                  className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                >
+                  <PlusIcon className="h-4 w-4" /> Add Staff Member
+                </button>
+              </div>
+            </Section>
+
+            {/* Cancellation Policy */}
+            <Section title="Cancellation Policy" badge={cancellationPolicy ? 'Set' : undefined}>
+              <div className="pt-3">
+                <p className="text-xs text-gray-500 mb-2">The AI will relay this to callers who ask about cancellations or reschedules.</p>
+                <textarea
+                  value={cancellationPolicy}
+                  onChange={e => setCancellationPolicy(e.target.value)}
+                  rows={3}
+                  placeholder="e.g. Cancellations must be made at least 24 hours in advance. Late cancellations may be subject to a $25 fee."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                />
+              </div>
+            </Section>
+
+            </>)}
+
+            {/* Call Routing */}
+            {(original?.jobType === 'receptionist' || original?.jobType === 'customer-service' || original?.jobType === 'appointment-scheduler') && (
+              <Section title="Call Routing" badge={transferDestinations.length > 0 ? `${transferDestinations.length} destination${transferDestinations.length !== 1 ? 's' : ''}` : undefined} locked={isTrial} lockedMessage="Upgrade to configure call routing and live transfers.">
+                <div className="pt-3 space-y-4">
+                  <p className="text-xs text-gray-500">
+                    Set up where calls get transferred. Each destination has a label your AI uses (e.g. "Sales", "Dr. Smith"), a phone number, and optional extension. Keywords tell the AI when to route there — or mark one as Default to catch all transfer requests.
+                  </p>
+
+                  {transferDestinations.length === 0 && (
+                    <div className="text-center py-4 border border-dashed border-gray-200 rounded-lg">
+                      <p className="text-sm text-gray-400">No transfer destinations yet.</p>
+                      <p className="text-xs text-gray-400 mt-0.5">Add one below so your receptionist can transfer callers to a real person.</p>
+                    </div>
+                  )}
+
+                  {transferDestinations.map((dest, i) => (
+                    <div key={dest.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+                      {/* Row 1: Label + Default toggle + Delete */}
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1">
+                          <label className="block text-xs text-gray-500 mb-1">Label <span className="text-gray-400">(what callers & AI call this destination)</span></label>
+                          <input
+                            type="text"
+                            value={dest.label}
+                            onChange={e => {
+                              const updated = [...transferDestinations]
+                              updated[i] = { ...updated[i], label: e.target.value }
+                              setTransferDestinations(updated)
+                            }}
+                            placeholder="e.g. Front Desk, Sales, Dr. Smith"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1 mt-4 flex-shrink-0">
+                          <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600">
+                            <input
+                              type="checkbox"
+                              checked={dest.isDefault}
+                              onChange={e => {
+                                const updated = transferDestinations.map((d, j) => ({
+                                  ...d,
+                                  isDefault: j === i ? e.target.checked : (e.target.checked ? false : d.isDefault),
+                                }))
+                                setTransferDestinations(updated)
+                              }}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            Default
+                          </label>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setTransferDestinations(transferDestinations.filter((_, j) => j !== i))}
+                          className="p-1 text-gray-400 hover:text-red-500 mt-4 flex-shrink-0"
+                        >
+                          <TrashIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      {/* Row 2: Phone + Extension */}
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="block text-xs text-gray-500 mb-1">Phone Number</label>
+                          <input
+                            type="tel"
+                            value={dest.phoneNumber}
+                            onChange={e => {
+                              const updated = [...transferDestinations]
+                              updated[i] = { ...updated[i], phoneNumber: e.target.value }
+                              setTransferDestinations(updated)
+                            }}
+                            placeholder="+15551234567"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                        <div className="w-28">
+                          <label className="block text-xs text-gray-500 mb-1">Extension <span className="text-gray-400">(optional)</span></label>
+                          <input
+                            type="text"
+                            value={dest.extension}
+                            onChange={e => {
+                              const updated = [...transferDestinations]
+                              updated[i] = { ...updated[i], extension: e.target.value }
+                              setTransferDestinations(updated)
+                            }}
+                            placeholder="e.g. 102"
+                            className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Row 3: Keywords */}
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">
+                          Trigger Keywords <span className="text-gray-400">(comma-separated — caller says these to reach this destination)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={dest.keywords.join(', ')}
+                          onChange={e => {
+                            const updated = [...transferDestinations]
+                            updated[i] = { ...updated[i], keywords: e.target.value.split(',').map(k => k.trim()).filter(Boolean) }
+                            setTransferDestinations(updated)
+                          }}
+                          placeholder="e.g. sales, pricing, buy, upgrade"
+                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+
+                      {dest.isDefault && (
+                        <p className="text-xs text-blue-600">This destination will be used for any transfer request that doesn&apos;t match a specific keyword.</p>
+                      )}
                     </div>
                   ))}
+
                   <button
                     type="button"
-                    onClick={() => setTransferRules([...transferRules, { keywords: [], destination: 'manager' }])}
+                    onClick={() => setTransferDestinations([...transferDestinations, {
+                      id: `dest-${Date.now()}`,
+                      label: '',
+                      phoneNumber: '',
+                      extension: '',
+                      keywords: [],
+                      isDefault: transferDestinations.length === 0,
+                    }])}
                     className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
                   >
-                    <PlusIcon className="h-4 w-4" /> Add Transfer Rule
+                    <PlusIcon className="h-4 w-4" /> Add Destination
                   </button>
                 </div>
               </Section>

@@ -42,3 +42,41 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({ business: data })
 }
+
+export async function PATCH(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const businessId = searchParams.get('businessId')
+
+  if (!businessId) {
+    return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
+  }
+
+  const authResult = await validateBusinessAccess(request, businessId)
+  if (!authResult.success) {
+    const { data: biz, error } = await serviceClient
+      .from('businesses')
+      .select('id')
+      .eq('id', businessId)
+      .single()
+    if (error || !biz) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+  }
+
+  const body = await request.json()
+  const { updates } = body
+  if (!updates || typeof updates !== 'object') {
+    return NextResponse.json({ error: 'updates object is required' }, { status: 400 })
+  }
+
+  const { error } = await serviceClient
+    .from('businesses')
+    .update(updates)
+    .eq('id', businessId)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ success: true })
+}

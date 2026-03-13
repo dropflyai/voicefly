@@ -3315,14 +3315,10 @@ function EmployeesDashboard() {
         }
       }
 
-      // Fetch Starter credit usage
+      // Fetch Starter credit usage (reuse already-fetched businessData)
       if (businessData?.subscription_status === 'active' && businessData?.subscription_tier === 'starter') {
         try {
-          const { data: creditData } = await supabase
-            .from('businesses')
-            .select('monthly_credits, credits_used_this_month')
-            .eq('id', businessId)
-            .single()
+          const creditData = businessData
           if (creditData) {
             const creditsTotal = creditData.monthly_credits || 500
             const creditsUsed = creditData.credits_used_this_month || 0

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Layout from '../../../components/Layout'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { supabase } from '../../../lib/supabase-client'
 import {
   BuildingOfficeIcon,
   ClockIcon,
@@ -35,8 +35,28 @@ const daysOfWeek = [
   { key: 'sunday', label: 'Sunday' }
 ]
 
+async function fetchBusiness(businessId: string) {
+  const { data: { session } } = await supabase.auth.getSession()
+  const res = await fetch(`/api/business?businessId=${businessId}`, {
+    headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+  })
+  if (!res.ok) return null
+  return (await res.json()).business
+}
+
+async function patchBusiness(businessId: string, updates: Record<string, any>) {
+  const { data: { session } } = await supabase.auth.getSession()
+  await fetch(`/api/business?businessId=${businessId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+    },
+    body: JSON.stringify({ updates }),
+  })
+}
+
 export default function SettingsPage() {
-  const supabase = createClientComponentClient()
   const [activeTab, setActiveTab] = useState('business')
   const [business, setBusiness] = useState<{ name: string; subscription_tier: string } | null>(null)
   const [profile, setProfile] = useState({
@@ -89,6 +109,7 @@ export default function SettingsPage() {
   const [quickFillParsing, setQuickFillParsing] = useState(false)
   const [quickFillError, setQuickFillError] = useState('')
   const [quickFillResult, setQuickFillResult] = useState<Record<string, string> | null>(null)
+  const [storedSettings, setStoredSettings] = useState<Record<string, any>>({})
   const [notifSaving, setNotifSaving] = useState(false)
   const [notifSaved, setNotifSaved] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
@@ -129,22 +150,13 @@ export default function SettingsPage() {
   // Load business data and owner phone from settings
   useEffect(() => {
     async function loadBusinessData() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-      const { data: membership } = await supabase
-        .from('business_users')
-        .select('business_id')
-        .eq('user_id', session.user.id)
-        .single()
-      if (!membership) return
-      setBusinessId(membership.business_id)
-      const { data: bizData } = await supabase
-        .from('businesses')
-        .select('name, subscription_tier, business_type, phone, email, address, website, timezone, settings, business_context')
-        .eq('id', membership.business_id)
-        .single()
+      const id = localStorage.getItem('authenticated_business_id')
+      if (!id) return
+      setBusinessId(id)
+      const bizData = await fetchBusiness(id)
       if (bizData) {
         setBusiness({ name: bizData.name, subscription_tier: bizData.subscription_tier })
+        setStoredSettings(bizData.settings || {})
         setProfile({
           name: bizData.name || '',
           business_type: bizData.business_type || '',
@@ -185,7 +197,7 @@ export default function SettingsPage() {
       const { data: hoursData } = await supabase
         .from('business_hours')
         .select('day_of_week, open_time, close_time, is_open')
-        .eq('business_id', membership.business_id)
+        .eq('business_id', id)
       if (hoursData && hoursData.length > 0) {
         const dayMap: Record<number, string> = {
           0: 'sunday', 1: 'monday', 2: 'tuesday', 3: 'wednesday',
@@ -206,15 +218,12 @@ export default function SettingsPage() {
       }
     }
     loadBusinessData()
-  }, [supabase])
+  }, [])
 
   const saveBusinessContext = async () => {
     if (!businessId) return
     setContextSaving(true)
-    await supabase
-      .from('businesses')
-      .update({ business_context: businessContext })
-      .eq('id', businessId)
+    await patchBusiness(businessId, { business_context: businessContext })
     setContextSaving(false)
     setContextSaved(true)
     setTimeout(() => setContextSaved(false), 3000)
@@ -281,18 +290,15 @@ export default function SettingsPage() {
   const saveProfile = async () => {
     if (!businessId) return
     setProfileSaving(true)
-    await supabase
-      .from('businesses')
-      .update({
-        name: profile.name,
-        business_type: profile.business_type,
-        phone: profile.phone,
-        email: profile.email,
-        address: profile.address,
-        website: profile.website,
-        timezone: profile.timezone,
-      })
-      .eq('id', businessId)
+    await patchBusiness(businessId, {
+      name: profile.name,
+      business_type: profile.business_type,
+      phone: profile.phone,
+      email: profile.email,
+      address: profile.address,
+      website: profile.website,
+      timezone: profile.timezone,
+    })
     setBusiness(prev => prev ? { ...prev, name: profile.name } : prev)
     setProfileSaving(false)
     setProfileSaved(true)
@@ -339,10 +345,7 @@ export default function SettingsPage() {
     // Auto-sync hours_summary to business_context
     const summary = generateHoursSummary(businessHours)
     const updatedContext = { ...businessContext, hours_summary: summary }
-    await supabase
-      .from('businesses')
-      .update({ business_context: updatedContext })
-      .eq('id', businessId)
+    await patchBusiness(businessId, { business_context: updatedContext })
     setBusinessContext(updatedContext)
     setHoursSaving(false)
     setHoursSaved(true)
@@ -369,24 +372,9 @@ export default function SettingsPage() {
   }
 
   const saveOwnerPhone = async () => {
+    if (!businessId) return
     setOwnerPhoneSaving(true)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { setOwnerPhoneSaving(false); return }
-    const { data: membership } = await supabase
-      .from('business_users')
-      .select('business_id')
-      .eq('user_id', session.user.id)
-      .single()
-    if (!membership) { setOwnerPhoneSaving(false); return }
-    const { data: bizSettings } = await supabase
-      .from('businesses')
-      .select('settings')
-      .eq('id', membership.business_id)
-      .single()
-    await supabase
-      .from('businesses')
-      .update({ settings: { ...(bizSettings?.settings || {}), owner_phone: ownerPhone } })
-      .eq('id', membership.business_id)
+    await patchBusiness(businessId, { settings: { ...storedSettings, owner_phone: ownerPhone } })
     setOwnerPhoneSaving(false)
     setOwnerPhoneSaved(true)
     setTimeout(() => setOwnerPhoneSaved(false), 3000)
@@ -395,15 +383,7 @@ export default function SettingsPage() {
   const saveNotifications = async () => {
     if (!businessId) return
     setNotifSaving(true)
-    const { data: bizSettings } = await supabase
-      .from('businesses')
-      .select('settings')
-      .eq('id', businessId)
-      .single()
-    await supabase
-      .from('businesses')
-      .update({ settings: { ...(bizSettings?.settings || {}), notifications } })
-      .eq('id', businessId)
+    await patchBusiness(businessId, { settings: { ...storedSettings, notifications } })
     setNotifSaving(false)
     setNotifSaved(true)
     setTimeout(() => setNotifSaved(false), 3000)

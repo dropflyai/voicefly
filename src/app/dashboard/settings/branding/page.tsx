@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '../../../../lib/supabase-client'
 import { PhotoIcon, SwatchIcon, EyeIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline'
 // import { RevenueChart, ServicePopularityChart } from '@/components/analytics/RevenueChart'
 // import { BookingWidget } from '@/components/BookingWidget'
@@ -17,11 +17,6 @@ interface BrandingConfig {
   custom_css?: string
   favicon_url?: string
 }
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 export default function BrandingSettingsPage() {
   const [business, setBusiness] = useState<any>(null)
@@ -59,20 +54,17 @@ export default function BrandingSettingsPage() {
 
   const loadBusinessData = async () => {
     try {
-      // Get current business from localStorage (in a real app, this would come from auth context)
-      const businessId = localStorage.getItem('authenticated_business_id') || '00000000-0000-0000-0000-000000000000'
-      
-      const { data, error } = await supabase
-        .from('businesses')
-        .select('*')
-        .eq('id', businessId)
-        .single()
-
-      if (error) throw error
-
+      const businessId = localStorage.getItem('authenticated_business_id')
+      if (!businessId) return
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`/api/business?businessId=${businessId}`, {
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      })
+      if (!res.ok) throw new Error('Failed to fetch business')
+      const { business: data } = await res.json()
       setBusiness(data)
       if (data.branding) {
-        setBranding({ ...branding, ...data.branding })
+        setBranding(prev => ({ ...prev, ...data.branding }))
       }
     } catch (error) {
       console.error('Error loading business data:', error)
@@ -112,12 +104,16 @@ export default function BrandingSettingsPage() {
 
     setSaving(true)
     try {
-      const { error } = await supabase
-        .from('businesses')
-        .update({ branding })
-        .eq('id', business.id)
-
-      if (error) throw error
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`/api/business?businessId=${business.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ updates: { branding } }),
+      })
+      if (!res.ok) throw new Error('Failed to save')
 
       setSuccessMessage('Branding settings saved successfully!')
       setTimeout(() => setSuccessMessage(''), 3000)

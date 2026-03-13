@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import { createBrowserClient } from '@supabase/ssr';
+import { supabase } from '@/lib/supabase-client';
 import { 
   CalendarIcon,
   ClockIcon,
@@ -63,11 +63,6 @@ export default function BookingWidget({
   const [error, setError] = useState<string | null>(null);
   const [bookingId, setBookingId] = useState<string | null>(null);
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
   // Load business and services
   useEffect(() => {
     loadBusinessData();
@@ -75,14 +70,12 @@ export default function BookingWidget({
 
   const loadBusinessData = async () => {
     try {
-      // Load business info
-      const { data: businessData, error: businessError } = await supabase
-        .from('businesses')
-        .select('id, name, phone, address')
-        .eq('id', businessId)
-        .single();
-      
-      if (businessError) throw businessError;
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`/api/business?businessId=${businessId}`, {
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      });
+      if (!res.ok) throw new Error('Failed to fetch business');
+      const { business: businessData } = await res.json();
       setBusiness(businessData);
 
       // Load services  
