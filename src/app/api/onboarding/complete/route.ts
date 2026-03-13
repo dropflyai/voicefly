@@ -16,6 +16,7 @@ const JOB_TYPE_MAP: Record<string, string> = {
 // We store the EL voice ID from onboarding and pass it through
 function buildVoiceConfig(voiceId: string) {
   return {
+    provider: '11labs' as const,
     voiceId,
     speed: 1.0,
     stability: 0.8,
@@ -179,7 +180,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Get business name
-    const { createClient } = await import('@supabase/supabase-js')
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
