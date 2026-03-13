@@ -26,7 +26,7 @@ const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = request.headers.get('authorization') || ''
-  if (CRON_SECRET && auth !== `Bearer ${CRON_SECRET}`) {
+  if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

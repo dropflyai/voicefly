@@ -1,0 +1,119 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+/**
+ * Next.js Middleware
+ *
+ * Protects dashboard routes by verifying Supabase auth tokens.
+ * Public routes (landing pages, signup, login, API webhooks) are allowed through.
+ */
+
+// Routes that do NOT require authentication
+const PUBLIC_ROUTES = [
+  '/',
+  '/login',
+  '/signup',
+  '/beauty',
+  '/demo',
+  '/features',
+  '/solutions',
+  '/terms',
+  '/privacy',
+  '/testimonials',
+  '/pricing',
+]
+
+// API routes that do NOT require auth (webhooks, public APIs)
+const PUBLIC_API_PREFIXES = [
+  '/api/webhook/',
+  '/api/webhooks/',
+  '/api/chatbot-lead',
+  '/api/chat',
+  '/api/widget/',
+  '/api/leads/capture',
+  '/api/voice-preview',
+  '/api/tts',
+  '/api/voices',
+]
+
+function isPublicRoute(pathname: string): boolean {
+  // Check exact matches
+  if (PUBLIC_ROUTES.includes(pathname)) return true
+
+  // Check API prefixes
+  for (const prefix of PUBLIC_API_PREFIXES) {
+    if (pathname.startsWith(prefix)) return true
+  }
+
+  // Static assets
+  if (pathname.startsWith('/_next/') || pathname.startsWith('/favicon') || pathname.includes('.')) {
+    return true
+  }
+
+  return false
+}
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  // Allow public routes
+  if (isPublicRoute(pathname)) {
+    return NextResponse.next()
+  }
+
+  // For dashboard routes, check for auth cookie/header
+  if (pathname.startsWith('/dashboard')) {
+    // Check for Supabase session cookie
+    const accessToken =
+      request.cookies.get('sb-access-token')?.value ||
+      request.cookies.get('supabase-auth-token')?.value
+
+    if (!accessToken) {
+      // No session cookie -- redirect to login
+      const loginUrl = new URL('/dashboard/login', request.url)
+      loginUrl.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+
+    // Validate the token with Supabase
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+      if (supabaseUrl && supabaseServiceKey) {
+        const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+        // Parse token if it's JSON array format
+        let token = accessToken
+        try {
+          const parsed = JSON.parse(accessToken)
+          if (Array.isArray(parsed) && parsed[0]) token = parsed[0]
+        } catch {
+          // Not JSON, use as-is
+        }
+
+        const { data: { user }, error } = await supabase.auth.getUser(token)
+
+        if (error || !user) {
+          const loginUrl = new URL('/dashboard/login', request.url)
+          loginUrl.searchParams.set('redirect', pathname)
+          return NextResponse.redirect(loginUrl)
+        }
+      }
+    } catch {
+      // If token validation fails, let the page-level auth handle it
+      // This prevents middleware from blocking during Supabase outages
+    }
+  }
+
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: [
+    /*
+     * Match all request paths except static files and images
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+}

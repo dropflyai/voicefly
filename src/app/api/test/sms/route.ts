@@ -1,21 +1,23 @@
 /**
- * SMS Test Endpoint (TEMPORARY - remove before production)
+ * SMS Test Endpoint — disabled in production
  *
  * POST /api/test/sms
- * Body: { to: "+1234567890", message: "Test message" }
- *
- * Sends a test SMS via Twilio to verify credentials are working.
+ * Only available in development. Returns 404 in production.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID
-const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN
-const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
-
 export async function POST(request: NextRequest) {
+  // Block in production
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   try {
-    // Check credentials
+    const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID
+    const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN
+    const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
+
     if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
       return NextResponse.json({
         success: false,
@@ -28,7 +30,6 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Check for placeholder values
     if (TWILIO_ACCOUNT_SID.includes('placeholder') || TWILIO_AUTH_TOKEN.includes('placeholder')) {
       return NextResponse.json({
         success: false,
@@ -43,7 +44,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'to and message are required' }, { status: 400 })
     }
 
-    // Send via Twilio
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`
 
     const response = await fetch(twilioUrl, {

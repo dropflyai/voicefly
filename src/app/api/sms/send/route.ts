@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { validateBusinessAccess } from '@/lib/api-auth'
+import { validateBusinessAccess, checkRateLimit, rateLimitedResponse } from '@/lib/api-auth'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
-
-const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID
-const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN
-const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
 
 /**
  * POST /api/sms/send
@@ -18,6 +14,12 @@ const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit
+    const rateLimit = await checkRateLimit(request, 'sensitive')
+    if (!rateLimit.allowed) {
+      return rateLimitedResponse(rateLimit.result)
+    }
+
     const body = await request.json()
     const { businessId, to, message, employeeId } = body
 
@@ -38,6 +40,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate Twilio config
+    const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID
+    const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN
+    const TWILIO_PHONE_NUMBER = process.env.TWILIO_PHONE_NUMBER
     if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
       return NextResponse.json(
         { error: 'SMS service not configured' },

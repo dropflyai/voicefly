@@ -5,48 +5,50 @@ import Stripe from 'stripe'
 import CreditSystem, { CREDITS_PER_MINUTE } from '@/lib/credit-system'
 import AuditLogger, { AuditEventType } from '@/lib/audit-logger'
 import { employeeProvisioning } from '@/lib/phone-employees'
+import { logger } from '@/lib/logger'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil'
-})
-
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured')
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-08-27.basil'
+  })
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.text()
   const headersList = await headers()
   const sig = headersList.get('stripe-signature')
 
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET
   if (!endpointSecret) {
-    console.error('STRIPE_WEBHOOK_SECRET is not set')
+    logger.error('STRIPE_WEBHOOK_SECRET is not set')
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
   }
 
   if (!sig) {
-    console.error('No stripe-signature header found')
     return NextResponse.json({ error: 'No signature header' }, { status: 400 })
   }
 
   let event: Stripe.Event
+  const stripe = getStripe()
 
   try {
-    // Verify webhook signature - SECURITY CRITICAL
     event = stripe.webhooks.constructEvent(body, sig, endpointSecret)
   } catch (err: any) {
-    console.error('Webhook signature verification failed:', err.message)
-    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 })
+    logger.error('Webhook signature verification failed', err)
+    return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 })
   }
 
   const supabase = createServerClient()
 
   try {
-    // Handle the event
     switch (event.type) {
-      case 'payment_intent.succeeded':
+      case 'payment_intent.succeeded': {
         const paymentIntent = event.data.object
-        console.log('PaymentIntent was successful!', paymentIntent.id)
+        logger.info('PaymentIntent succeeded', { id: paymentIntent.id })
 
-        // Update subscription status in database
         await supabase
           .from('subscriptions')
           .update({
@@ -57,12 +59,12 @@ export async function POST(request: NextRequest) {
           .eq('stripe_customer_id', paymentIntent.customer)
 
         break
+      }
 
-      case 'customer.subscription.created':
+      case 'customer.subscription.created': {
         const subscription = event.data.object as Stripe.Subscription
-        console.log('Subscription created:', subscription.id)
+        logger.info('Subscription created', { id: subscription.id })
 
-        // Create subscription record
         await supabase
           .from('subscriptions')
           .insert({
@@ -77,12 +79,12 @@ export async function POST(request: NextRequest) {
           })
 
         break
+      }
 
-      case 'customer.subscription.updated':
+      case 'customer.subscription.updated': {
         const updatedSubscription = event.data.object as Stripe.Subscription
-        console.log('Subscription updated:', updatedSubscription.id)
+        logger.info('Subscription updated', { id: updatedSubscription.id })
 
-        // Update subscription record
         await supabase
           .from('subscriptions')
           .update({
@@ -95,12 +97,12 @@ export async function POST(request: NextRequest) {
           .eq('stripe_subscription_id', updatedSubscription.id)
 
         break
+      }
 
-      case 'customer.subscription.deleted':
+      case 'customer.subscription.deleted': {
         const deletedSubscription = event.data.object
-        console.log('Subscription deleted:', deletedSubscription.id)
+        logger.info('Subscription deleted', { id: deletedSubscription.id })
 
-        // Update subscription status to cancelled
         await supabase
           .from('subscriptions')
           .update({
@@ -110,12 +112,12 @@ export async function POST(request: NextRequest) {
           .eq('stripe_subscription_id', deletedSubscription.id)
 
         break
+      }
 
-      case 'invoice.payment_succeeded':
+      case 'invoice.payment_succeeded': {
         const invoice = event.data.object
-        console.log('Invoice payment succeeded:', invoice.id)
+        logger.info('Invoice payment succeeded', { id: invoice.id })
 
-        // Log successful payment
         await supabase
           .from('payments')
           .insert({
@@ -128,12 +130,12 @@ export async function POST(request: NextRequest) {
           })
 
         break
+      }
 
-      case 'invoice.payment_failed':
+      case 'invoice.payment_failed': {
         const failedInvoice = event.data.object
-        console.log('Invoice payment failed:', failedInvoice.id)
+        logger.warn('Invoice payment failed', { id: failedInvoice.id })
 
-        // Log failed payment
         await supabase
           .from('payments')
           .insert({
@@ -146,12 +148,13 @@ export async function POST(request: NextRequest) {
           })
 
         break
+      }
 
-      case 'checkout.session.completed':
+      case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
-        console.log('Checkout session completed:', session.id)
+        logger.info('Checkout session completed', { id: session.id, type: session.metadata?.type })
 
-        // Check if this is a minute/credit pack purchase
+        // Handle minute/credit pack purchase
         if (session.metadata?.type === 'minute_pack_purchase' || session.metadata?.type === 'credit_pack_purchase') {
           const businessId = session.metadata.business_id
           const packId = session.metadata.pack_id
@@ -162,9 +165,6 @@ export async function POST(request: NextRequest) {
             : session.payment_intent?.id
 
           if (businessId && packId && credits) {
-            console.log(`💳 Processing minute pack purchase: ${minutes} minutes (${credits} credits) for business ${businessId}`)
-
-            // Add purchased credits to business
             const result = await CreditSystem.addPurchasedCredits(
               businessId,
               credits,
@@ -173,9 +173,8 @@ export async function POST(request: NextRequest) {
             )
 
             if (result.success) {
-              console.log(`✅ Added ${minutes} minutes (${credits} credits) to business ${businessId}. New balance: ${result.balance?.total_minutes} minutes`)
+              logger.info('Credits added', { businessId, minutes, credits })
 
-              // Log purchase to credit_purchases table
               await supabase
                 .from('credit_purchases')
                 .insert({
@@ -190,7 +189,6 @@ export async function POST(request: NextRequest) {
                   created_at: new Date().toISOString()
                 })
 
-              // Audit log
               await AuditLogger.log({
                 event_type: AuditEventType.CREDIT_PURCHASED,
                 business_id: businessId,
@@ -204,10 +202,10 @@ export async function POST(request: NextRequest) {
                 severity: 'low'
               })
             } else {
-              console.error('❌ Failed to add purchased credits:', result)
+              logger.error('Failed to add purchased credits', { businessId, result })
             }
           } else {
-            console.error('Missing metadata in minute pack purchase:', session.metadata)
+            logger.error('Missing metadata in minute pack purchase', { metadata: session.metadata })
           }
         }
 
@@ -219,14 +217,12 @@ export async function POST(request: NextRequest) {
             ? session.customer
             : session.customer?.toString()
 
-          console.log(`💳 Subscription checkout completed: ${targetPlan} plan for business ${businessId}`)
+          logger.info('Subscription checkout completed', { businessId, plan: targetPlan })
 
-          // Determine credits allocation based on plan
-          const monthlyCredits = targetPlan === 'pro' ? 5000 : 500 // Pro: 1000 min, Starter: 100 min
+          const monthlyCredits = targetPlan === 'pro' ? 5000 : 500
           const nextResetDate = new Date()
           nextResetDate.setMonth(nextResetDate.getMonth() + 1)
 
-          // Update business with subscription info
           await supabase
             .from('businesses')
             .update({
@@ -240,25 +236,22 @@ export async function POST(request: NextRequest) {
             })
             .eq('id', businessId)
 
-          console.log(`✅ Business ${businessId} upgraded to ${targetPlan} plan`)
-
           // Provision/migrate based on plan tier
           if (targetPlan === 'starter') {
-            // Starter: dedicated Twilio number, shared VAPI assistant (Maya)
             employeeProvisioning.provisionStarterForBusiness(businessId)
-              .then(() => console.log(`✅ Starter provisioning complete for business ${businessId}`))
-              .catch(err => console.error(`❌ Starter provisioning failed for business ${businessId}:`, err))
+              .then(() => logger.info('Starter provisioning complete', { businessId }))
+              .catch(err => logger.error('Starter provisioning failed', err))
           } else if (targetPlan === 'pro') {
-            // Pro: create dedicated VAPI assistants, rebind phone numbers
             employeeProvisioning.migrateBusinessTier(businessId, 'pro')
               .then(result => {
-                console.log(`✅ Pro migration complete for business ${businessId}: ${result.migrated} employees migrated`)
-                if (result.errors.length > 0) console.warn(`⚠️ Migration errors:`, result.errors)
+                logger.info('Pro migration complete', { businessId, migrated: result.migrated })
+                if (result.errors.length > 0) {
+                  logger.warn('Pro migration had errors', { errors: result.errors })
+                }
               })
-              .catch(err => console.error(`❌ Pro migration failed for business ${businessId}:`, err))
+              .catch(err => logger.error('Pro migration failed', err))
           }
 
-          // Audit log
           await AuditLogger.log({
             event_type: AuditEventType.CREDIT_PURCHASED,
             business_id: businessId,
@@ -273,15 +266,16 @@ export async function POST(request: NextRequest) {
         }
 
         break
+      }
 
       default:
-        console.log(`Unhandled event type ${event.type}`)
+        logger.debug('Unhandled event type', { type: event.type })
     }
 
     return NextResponse.json({ received: true })
 
   } catch (error) {
-    console.error('Error processing webhook:', error)
+    logger.error('Error processing webhook', error)
     return NextResponse.json(
       { error: 'Webhook processing failed' },
       { status: 500 }

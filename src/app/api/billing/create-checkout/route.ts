@@ -4,9 +4,14 @@ import { createServerClient } from '@/lib/supabase'
 import { getSubscriptionPriceId } from '@/lib/stripe-products'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-08-27.basil'
-})
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured')
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-08-27.basil'
+  })
+}
 
 /**
  * POST /api/billing/create-checkout
@@ -14,6 +19,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
  */
 export async function POST(req: NextRequest) {
   try {
+    const stripe = getStripe()
     // Authenticate
     const authResult = await validateAuth(req)
     if (!authResult.success || !authResult.user) {
@@ -98,9 +104,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ sessionId: session.id, url: session.url })
   } catch (error: any) {
-    console.error('Error creating checkout session:', error)
+    const { logger } = await import('@/lib/logger')
+    logger.error('Error creating checkout session', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to create checkout session' },
+      { error: 'Failed to create checkout session' },
       { status: 500 }
     )
   }

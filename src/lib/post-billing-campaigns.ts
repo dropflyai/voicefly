@@ -125,7 +125,7 @@ export const ACTIVATION_CAMPAIGNS: ActivationCampaign[] = [
     tier: 'professional',
     day: 1,
     subject: '🎯 Your Professional Features Are Unlocked!',
-    preheader: '$147/month of premium tools now active',
+    preheader: 'Your premium tools are now active',
     psychologyTrigger: 'You\'re investing in growth - these features will 3x your ROI',
     features: [
       'Advanced analytics dashboard ready',
@@ -286,7 +286,7 @@ export const CANCELLATION_PREVENTION: CancellationPreventionCampaign[] = [
     tier: 'professional',
     trigger: 'unused_features',
     subject: '💸 You\'re leaving money on the table',
-    psychologyTrigger: 'You invested $147/month but haven\'t activated key features',
+    psychologyTrigger: 'You\'re paying for premium features but haven\'t activated them yet',
     unusedFeatures: [
       'Payment processing (worth $200+/month)',
       'Loyalty program (35% retention boost)',

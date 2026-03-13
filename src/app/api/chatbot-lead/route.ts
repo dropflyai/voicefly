@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit as checkRateLimitUpstash, getClientIp } from '@/lib/rate-limit'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,6 +9,12 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit to prevent spam
+    const ip = getClientIp(request.headers)
+    const rateLimitResult = await checkRateLimitUpstash(ip, 'auth')
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+    }
     const body = await request.json()
     const { email, name, businessName, businessType, employeeInterest, sessionId } = body
 

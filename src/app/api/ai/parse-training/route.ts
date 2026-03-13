@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
+import { checkRateLimit as checkRateLimitUpstash, getClientIp } from '@/lib/rate-limit'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -17,6 +18,16 @@ const supabaseAdmin = createClient(
 )
 
 export async function POST(request: NextRequest) {
+  // Rate limit - AI endpoint
+  const ip = getClientIp(request.headers)
+  const rateLimitResult = await checkRateLimitUpstash(ip, 'strict')
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    )
+  }
+
   // Auth check
   const authHeader = request.headers.get('Authorization') ?? ''
   const token = authHeader.replace('Bearer ', '')

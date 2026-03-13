@@ -5,9 +5,25 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzeContentForGEO, quickGEOScan, type ContentMetadata } from '@/lib/geo-analyzer'
+import { validateAuth, checkRateLimit, rateLimitedResponse } from '@/lib/api-auth'
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit
+    const rateLimit = await checkRateLimit(request, 'strict')
+    if (!rateLimit.allowed) {
+      return rateLimitedResponse(rateLimit.result)
+    }
+
+    // Auth
+    const authResult = await validateAuth(request)
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
     const body = await request.json()
     const { content, metadata, mode = 'full' } = body
 
@@ -35,21 +51,17 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('GEO analysis API error:', error)
     return NextResponse.json(
-      { error: 'Failed to analyze content', details: error instanceof Error ? error.message : 'Unknown error' },
+      { error: 'Failed to analyze content' },
       { status: 500 }
     )
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   return NextResponse.json({
     message: 'GEO Analysis API',
     endpoints: {
       analyze: 'POST /api/geo/analyze - Analyze content for GEO optimization',
-      modes: {
-        quick: 'Fast scan with top issues (~$0.001)',
-        full: 'Complete analysis with detailed recommendations (~$0.01)'
-      }
     }
   })
 }

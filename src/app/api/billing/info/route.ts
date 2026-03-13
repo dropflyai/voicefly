@@ -4,9 +4,9 @@ import { createServerClient } from '@/lib/supabase'
 import { TIER_PRICING } from '@/lib/credit-system'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const getStripe = () => { if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not configured'); return new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2025-08-27.basil'
-})
+}) }
 
 /**
  * GET /api/billing/info
@@ -14,6 +14,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
  */
 export async function GET(req: NextRequest) {
   try {
+    const stripe = getStripe()
     const authResult = await validateAuth(req)
     if (!authResult.success || !authResult.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -90,7 +91,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('Error getting billing info:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to get billing info' },
+      { error: 'Failed to get billing info' },
       { status: 500 }
     )
   }

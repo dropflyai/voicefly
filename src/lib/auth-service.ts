@@ -87,17 +87,13 @@ export class AuthService {
 
     const business = businessResult as { id: string; name: string; email: string; business_type: string }
 
-    console.log('✅ Business created via secure function:', business.id)
+    // Business created via secure function
 
     // Initialize credits for new business (trial tier gets 50 credits)
     await CreditSystem.initializeCredits(business.id, 'trial')
-    console.log('✅ Credits initialized for trial: 50 credits')
+    // Credits initialized for trial
 
-    console.log('✅ Signup complete:', {
-      userId,
-      businessId: business.id,
-      email: data.email
-    })
+    // Signup complete
 
     // Audit log - signup success
     await AuditLogger.log({
@@ -185,11 +181,7 @@ export class AuthService {
     // Use first business as primary (or the one marked as 'owner')
     const primaryBusiness = businesses.find(b => b.role === 'owner') || businesses[0]
 
-    console.log('✅ Login successful:', {
-      userId,
-      email: data.email,
-      businessCount: businesses.length
-    })
+    // Login successful
 
     // Audit log - login success
     await AuditLogger.log({
@@ -329,7 +321,7 @@ export class AuthService {
       }
     } else {
       // Send email invitation (would need to implement email service)
-      console.log(`Send invitation email to ${email}`)
+      // TODO: Send invitation email
       // For now, just log - implement email service later
     }
   }
@@ -360,6 +352,6 @@ export class AuthService {
     localStorage.setItem('authenticated_business_name', businessData.name)
     localStorage.setItem('authenticated_business_type', businessData.business_type)
 
-    console.log('✅ Switched to business:', businessData.name)
+    // Business switched
   }
 }

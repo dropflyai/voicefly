@@ -6,15 +6,26 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit as checkRateLimitUpstash, getClientIp } from '@/lib/rate-limit'
 
 const ELEVENLABS_API_KEY = process.env.ELEVENLABS_API_KEY
-const ELEVENLABS_VOICE_ID = 'aVR2rUXJY4MTezzJjPyQ' // Angie - Reassuring, Calm and Clear
+const ELEVENLABS_VOICE_ID = process.env.ELEVENLABS_VOICE_ID || 'aVR2rUXJY4MTezzJjPyQ'
 
 interface TTSRequest {
   text: string
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit - strict since this is an expensive public endpoint
+  const ip = getClientIp(request.headers)
+  const rateLimitResult = await checkRateLimitUpstash(ip, 'strict')
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    )
+  }
+
   if (!ELEVENLABS_API_KEY) {
     return NextResponse.json(
       { error: 'ElevenLabs API key not configured' },

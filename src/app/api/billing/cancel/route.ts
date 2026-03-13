@@ -3,9 +3,9 @@ import { validateAuth } from '@/lib/api-auth'
 import { createServerClient } from '@/lib/supabase'
 import Stripe from 'stripe'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const getStripe = () => { if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not configured'); return new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2025-08-27.basil'
-})
+}) }
 
 /**
  * POST /api/billing/cancel
@@ -13,6 +13,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
  */
 export async function POST(req: NextRequest) {
   try {
+    const stripe = getStripe()
     const authResult = await validateAuth(req)
     if (!authResult.success || !authResult.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Error cancelling subscription:', error)
     return NextResponse.json(
-      { error: error.message || 'Failed to cancel subscription' },
+      { error: 'Failed to cancel subscription' },
       { status: 500 }
     )
   }

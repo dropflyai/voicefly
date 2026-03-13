@@ -9,6 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit as checkRateLimitUpstash, getClientIp } from '@/lib/rate-limit'
 
 const SAMPLE_TEXT =
   "Hi, thank you for calling! I'm here to help you with anything you need today. How can I assist you?"
@@ -17,6 +18,16 @@ const SAMPLE_TEXT =
 const audioCache = new Map<string, Buffer>()
 
 export async function GET(request: NextRequest) {
+  // Rate limit - expensive API call
+  const ip = getClientIp(request.headers)
+  const rateLimitResult = await checkRateLimitUpstash(ip, 'strict')
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': '60' } }
+    )
+  }
+
   const voiceId = request.nextUrl.searchParams.get('voiceId')
 
   if (!voiceId) {

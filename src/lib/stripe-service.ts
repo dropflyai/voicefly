@@ -76,7 +76,7 @@ export class StripeService {
         }
       }
       
-      console.log('🔄 Processing Stripe payment:', { ...data, amount: data.amount / 100 })
+      // Payment processing logged via audit system
 
       // Get business information for better payment descriptions
       const { data: business } = await supabase
@@ -112,7 +112,7 @@ export class StripeService {
         setup_future_usage: 'off_session' // Allow saving for future payments
       })
 
-      console.log('✅ Stripe payment intent created:', paymentIntent.id)
+      // paymentIntent created successfully
 
       return {
         success: true,
@@ -182,7 +182,7 @@ export class StripeService {
         }
       })
 
-      console.log('✅ Stripe refund created:', refund.id)
+      // refund created successfully
 
       return {
         success: true,
@@ -254,7 +254,7 @@ export class StripeService {
       const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!
       const event = stripe.webhooks.constructEvent(body, signature, endpointSecret)
       
-      console.log('🎣 Stripe webhook received:', event.type)
+      // webhook received
       
       return { success: true, event }
     } catch (error: any) {

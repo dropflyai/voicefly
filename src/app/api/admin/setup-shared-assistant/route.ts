@@ -16,7 +16,7 @@ import { NextRequest, NextResponse } from 'next/server'
 const VAPI_API_KEY = process.env.VAPI_API_KEY!
 const CRON_SECRET = process.env.CRON_SECRET
 const WEBHOOK_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://www.voiceflyai.com'
-const ADMIN_EMAIL = 'escott1188@gmail.com'
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || ''
 
 const SHARED_ASSISTANT_NAME = 'VoiceFly Trial Receptionist'
 

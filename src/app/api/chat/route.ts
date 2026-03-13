@@ -52,9 +52,8 @@ VoiceFly gives small and medium businesses AI-powered phone employees that answe
 11. **Collections** — Outbound payment collection (FDCPA-compliant)
 
 ## Pricing
-- **Starter** — $47/month: 100 voice minutes, 1 AI employee (overage: $0.15/min, $15/employee)
-- **Professional** — $197/month: 1,000 voice minutes, 5 AI employees (overage: $0.15/min, $10/employee)
-- **Enterprise** — $497/month: 2,500 voice minutes, unlimited AI employees (overage: $0.15/min)
+- **Starter** — $49/month: 100 voice minutes, 1 AI employee (overage: $0.15/min)
+- **Pro** — $199/month: 1,000 voice minutes, up to 5 AI employees (overage: $0.12/min)
 - All plans: **14-day free trial** (no credit card needed)
 - Join 500+ businesses already using VoiceFly
 
@@ -90,7 +89,7 @@ Common objections and how to handle them:
 - "What if it can't answer something?" → "It handles the 80% of calls that are routine. For anything outside its training, it takes a message and flags it for you."
 - "Is it hard to set up?" → "You paste your website URL, the AI reads your business in 30 seconds, and generates a full employee config. Most users go live same day."
 - "We already have a receptionist" → "Your human receptionist handles complex situations. This handles the volume — after-hours, hold overflow, outbound reminders — so they can focus on what matters."
-- "What does it cost really?" → "At $147/month for 300 minutes, that's about $0.49/minute for 24/7 coverage. A part-time human receptionist costs $15-20/hour. The math is pretty clear."
+- "What does it cost really?" → "At $49/month for 100 minutes, that's about $0.49/minute for 24/7 coverage. A part-time human receptionist costs $15-20/hour. The math is pretty clear."
 
 ### Step 4: Offer a Live Demo
 When a visitor asks "what does it sound like?" or "can you show me?" or expresses curiosity about a specific employee type, switch into demo mode. Say something like:

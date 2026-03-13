@@ -86,7 +86,7 @@ export const MAYA_JOBS: MayaJob[] = [
     icon: '🏥',
     description: 'Professional medical appointment coordination with insurance handling',
     businessTypes: ['Medical Practice', 'Clinic'],
-    pricing: '$197-497/mo',
+    pricing: '$49-199/mo',
     features: ['Medical scheduling', 'Insurance verification', 'Follow-up booking', 'Referral coordination'],
     premium: true,
     comingSoon: true
@@ -97,7 +97,7 @@ export const MAYA_JOBS: MayaJob[] = [
     icon: '🦷',
     description: 'Schedules cleanings, procedures, and dental care appointments',
     businessTypes: ['Dental Practice'],
-    pricing: '$197-397/mo',
+    pricing: '$49-199/mo',
     features: ['Cleaning booking', 'Procedure scheduling', 'Insurance handling', 'Reminder systems'],
     comingSoon: true
   },

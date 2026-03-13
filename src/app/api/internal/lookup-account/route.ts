@@ -20,7 +20,7 @@ const INTERNAL_API_SECRET = process.env.INTERNAL_API_SECRET
 
 export async function GET(request: NextRequest) {
   const auth = request.headers.get('authorization') || ''
-  if (INTERNAL_API_SECRET && auth !== `Bearer ${INTERNAL_API_SECRET}`) {
+  if (!INTERNAL_API_SECRET || auth !== `Bearer ${INTERNAL_API_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
