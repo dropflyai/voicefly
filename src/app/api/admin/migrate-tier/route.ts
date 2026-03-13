@@ -2,7 +2,7 @@
  * Admin Route -- Migrate Business Tier
  *
  * POST /api/admin/migrate-tier
- * Authorization: Bearer {CRON_SECRET}
+ * x-admin-key: {SUPABASE_SERVICE_ROLE_KEY}
  * Body: { businessId, toTier }
  *
  * Handles all tier transitions:
@@ -13,16 +13,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { employeeProvisioning } from '@/lib/phone-employees'
 
-const CRON_SECRET = process.env.CRON_SECRET
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // Auth: CRON_SECRET only (admin-level operation)
-  const auth = request.headers.get('authorization') || ''
-  const token = auth.replace('Bearer ', '')
+  // Auth: x-admin-key must match SUPABASE_SERVICE_ROLE_KEY
+  const adminKey = request.headers.get('x-admin-key') || ''
 
-  if (!CRON_SECRET || token !== CRON_SECRET) {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY || adminKey !== process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -41,11 +39,32 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       )
     }
 
+    // Fetch current tier using service role client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    const { data: business, error: bizError } = await supabase
+      .from('businesses')
+      .select('subscription_tier')
+      .eq('id', businessId)
+      .single()
+
+    if (bizError || !business) {
+      return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+    }
+
+    const currentTier = business.subscription_tier || 'trial'
+
     const result = await employeeProvisioning.migrateBusinessTier(businessId, toTier)
 
     return NextResponse.json({
       success: result.errors.length === 0,
-      ...result,
+      from: currentTier,
+      to: toTier,
+      migrated: result.migrated,
+      errors: result.errors,
     })
   } catch (error: any) {
     console.error('[Admin MigrateTier] Error:', error)
