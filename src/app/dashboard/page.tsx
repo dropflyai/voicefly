@@ -206,7 +206,8 @@ function DashboardPage() {
       todayStart.setHours(0, 0, 0, 0)
       const todayISO = todayStart.toISOString()
 
-      // Fetch recent calls, messages, orders, and credits in parallel
+      // Fetch recent calls, messages, and orders in parallel
+      // Credit/subscription data comes from businessData (already fetched via /api/business)
       const [
         { data: callsData, count: callsCount },
         { count: callsTodayCount },
@@ -214,7 +215,6 @@ function DashboardPage() {
         { count: messagesTodayCount },
         { count: ordersCount },
         { count: ordersTodayCount },
-        { data: creditData },
       ] = await Promise.all([
         supabase
           .from('employee_calls')
@@ -247,12 +247,8 @@ function DashboardPage() {
           .select('*', { count: 'exact', head: true })
           .eq('business_id', businessId)
           .gte('created_at', todayISO),
-        supabase
-          .from('businesses')
-          .select('monthly_credits, purchased_credits, credits_used_this_month, subscription_status')
-          .eq('id', businessId)
-          .single(),
       ])
+      const creditData = businessData
 
       // Calculate avg call duration from recent calls
       const completedCalls = (callsData || []).filter(c => c.status === 'completed' && c.duration)
