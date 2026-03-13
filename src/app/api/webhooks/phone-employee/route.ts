@@ -43,6 +43,7 @@ import {
   sendOrderNotification,
   sendLeadScoreOwnerNotification,
   sendLeadFollowUpEmail,
+  sendLowCreditWarningEmail,
   getOwnerEmail,
 } from '@/lib/notifications/email-notifications'
 
@@ -3297,6 +3298,34 @@ async function handleCallEnd(message: any, employee: any, businessId: string) {
           console.warn(`[Credits] Deduction failed for call ${callId}: ${result.error}`)
         } else {
           console.log(`[Credits] Deducted ${totalCredits} credits (${durationMinutes} min) for business ${businessId}. Remaining: ${result.balance?.total_credits}`)
+
+          // Low-credit warning: fire once when usage crosses the 80% threshold
+          if (result.balance) {
+            const bal = result.balance
+            const allotted = bal.monthly_credits + bal.credits_used_this_month
+            if (allotted > 0) {
+              const previousUsed = bal.credits_used_this_month - totalCredits
+              const threshold = allotted * 0.8
+              if (previousUsed < threshold && bal.credits_used_this_month >= threshold) {
+                ;(async () => {
+                  const ownerEmail = await getOwnerEmail(businessId)
+                  const { data: bizRow } = await supabase.from('businesses').select('name').eq('id', businessId).single()
+                  if (ownerEmail) {
+                    const minutesRemaining = bal.total_minutes
+                    const totalMinutes = Math.floor(allotted / CREDITS_PER_MINUTE)
+                    const percentRemaining = totalMinutes > 0 ? Math.round((minutesRemaining / totalMinutes) * 100) : 0
+                    sendLowCreditWarningEmail({
+                      ownerEmail,
+                      businessName: bizRow?.name || 'Your Business',
+                      minutesRemaining,
+                      totalMinutes,
+                      percentRemaining,
+                    }).catch(err => console.error('[Credits] Failed to send low-credit warning:', err))
+                  }
+                })().catch(err => console.error('[Credits] Low-credit check error:', err))
+              }
+            }
+          }
         }
       }).catch(err => console.error('[Credits] Deduction error:', err))
     }

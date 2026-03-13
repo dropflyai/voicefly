@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { validateBusinessAccess } from '@/lib/api-auth'
 import { employeeProvisioning } from '@/lib/phone-employees/employee-provisioning'
 import type { ReceptionistConfig, AppointmentSchedulerConfig, OrderTakerConfig, CustomerServiceConfig } from '@/lib/phone-employees/types'
+import { sendEmployeeReadyEmail, getOwnerEmail } from '@/lib/notifications/email-notifications'
 
 // Map onboarding employee type → job type + config builder
 const JOB_TYPE_MAP: Record<string, string> = {
@@ -267,6 +268,18 @@ export async function POST(request: NextRequest) {
       .eq('id', businessId)
 
     console.log(`[Onboarding] Complete — employee: ${employee.id}, phone: ${employee.phoneNumber}`)
+
+    // Send employee-ready email (non-blocking)
+    const ownerEmail = await getOwnerEmail(businessId)
+    if (ownerEmail && employee.phoneNumber) {
+      sendEmployeeReadyEmail({
+        ownerEmail,
+        businessName,
+        employeeName: employee.name,
+        phoneNumber: employee.phoneNumber,
+        jobType: jobType,
+      }).catch(err => console.error('[Onboarding] Failed to send ready email:', err))
+    }
 
     return NextResponse.json({
       success: true,

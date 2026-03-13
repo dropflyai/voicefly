@@ -4,6 +4,7 @@ import { BusinessAPI } from './supabase'
 import { getServicesForIndustry } from './industry-service-templates'
 import AuditLogger, { AuditEventType } from './audit-logger'
 import CreditSystem from './credit-system'
+import { sendWelcomeEmail } from '@/lib/notifications/email-notifications'
 
 export interface SignupData {
   email: string
@@ -109,6 +110,13 @@ export class AuthService {
       },
       severity: 'low'
     })
+
+    // Send welcome email (non-blocking)
+    const displayName = business.name || data.email.split('@')[0].charAt(0).toUpperCase() + data.email.split('@')[0].slice(1)
+    sendWelcomeEmail({
+      ownerEmail: data.email,
+      businessName: displayName,
+    }).catch(err => console.error('[Auth] Failed to send welcome email:', err))
 
     return {
       user: {

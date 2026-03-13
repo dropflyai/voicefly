@@ -306,6 +306,159 @@ export async function sendLeadFollowUpEmail(opts: {
 }
 
 // ============================================
+// WELCOME EMAIL
+// ============================================
+
+export async function sendWelcomeEmail(opts: {
+  ownerEmail: string
+  businessName: string
+}) {
+  return sendNotification(
+    opts.ownerEmail,
+    'Welcome to VoiceFly — your AI phone employee is almost ready',
+    `
+    <div style="font-family:Inter,system-ui,sans-serif;max-width:480px;margin:0 auto;">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:32px;">
+        <h1 style="margin:0 0 8px;color:#1e293b;font-size:24px;font-weight:700;">Welcome to VoiceFly</h1>
+        <p style="margin:0 0 20px;color:#64748b;font-size:15px;">Hi ${opts.businessName},</p>
+        <p style="margin:0 0 20px;color:#334155;font-size:15px;line-height:1.6;">
+          VoiceFly gives your business AI employees that answer your calls 24/7 — so you never miss a customer again.
+        </p>
+        <div style="text-align:center;margin:28px 0;">
+          <a href="https://www.voiceflyai.com/dashboard"
+             style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;letter-spacing:0.2px;">
+            Set Up Your First Employee
+          </a>
+        </div>
+        <div style="border-top:1px solid #e2e8f0;margin-top:28px;padding-top:20px;">
+          <p style="margin:0;font-size:13px;color:#94a3b8;">
+            Questions? Reply to this email anytime.
+          </p>
+        </div>
+      </div>
+    </div>
+  `
+  )
+}
+
+// ============================================
+// EMPLOYEE READY EMAIL
+// ============================================
+
+function formatJobType(jobType: string): string {
+  return jobType
+    .split('-')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+
+export async function sendEmployeeReadyEmail(opts: {
+  ownerEmail: string
+  businessName: string
+  employeeName: string
+  phoneNumber: string
+  jobType: string
+}) {
+  const formattedJobType = formatJobType(opts.jobType)
+
+  return sendNotification(
+    opts.ownerEmail,
+    `${opts.employeeName} is ready — your AI employee is live at ${opts.phoneNumber}`,
+    `
+    <div style="font-family:Inter,system-ui,sans-serif;max-width:480px;margin:0 auto;">
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:32px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+          <span style="background:#16a34a;color:#fff;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;letter-spacing:0.5px;">LIVE</span>
+          <span style="color:#166534;font-size:14px;font-weight:600;">${opts.businessName}</span>
+        </div>
+        <h2 style="margin:0 0 4px;color:#166534;font-size:22px;font-weight:700;">${opts.employeeName}</h2>
+        <p style="margin:0 0 4px;color:#4ade80;font-size:14px;">${formattedJobType}</p>
+        <div style="background:#fff;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin:20px 0;">
+          <p style="margin:0 0 4px;font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Phone Number</p>
+          <p style="margin:0;font-size:24px;font-weight:700;color:#166534;letter-spacing:1px;">${opts.phoneNumber}</p>
+        </div>
+        <p style="margin:0 0 20px;color:#334155;font-size:15px;line-height:1.6;">
+          You can call this number right now to test your AI employee.
+        </p>
+        <div style="text-align:center;margin:24px 0;">
+          <a href="https://www.voiceflyai.com/dashboard/employees"
+             style="display:inline-block;background:#16a34a;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
+            View Employee Dashboard
+          </a>
+        </div>
+        <p style="margin:20px 0 0;font-size:13px;color:#6b7280;text-align:center;">
+          Calls to this number will be answered 24/7 and use your monthly minutes.
+        </p>
+      </div>
+    </div>
+  `
+  )
+}
+
+// ============================================
+// LOW CREDIT WARNING EMAIL
+// ============================================
+
+export async function sendLowCreditWarningEmail(opts: {
+  ownerEmail: string
+  businessName: string
+  minutesRemaining: number
+  totalMinutes: number
+  percentRemaining: number
+}) {
+  const percentUsed = 100 - opts.percentRemaining
+  const barWidth = Math.round(Math.max(0, Math.min(100, percentUsed)))
+
+  return sendNotification(
+    opts.ownerEmail,
+    `⚠️ ${opts.businessName}: you're running low on call minutes`,
+    `
+    <div style="font-family:Inter,system-ui,sans-serif;max-width:480px;margin:0 auto;">
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:32px;">
+        <h2 style="margin:0 0 8px;color:#92400e;font-size:20px;font-weight:700;">
+          Running Low on Minutes
+        </h2>
+        <p style="margin:0 0 20px;color:#78350f;font-size:15px;">
+          ${opts.businessName} has used ${percentUsed}% of this month&rsquo;s call minutes.
+        </p>
+        <div style="margin:0 0 20px;">
+          <table style="width:100%;border-collapse:collapse;">
+            <tr>
+              <td style="padding:0 0 6px;font-size:13px;color:#92400e;font-weight:600;">
+                ${opts.minutesRemaining} min remaining of ${opts.totalMinutes} min
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0;">
+                <table style="width:100%;border-collapse:collapse;background:#fde68a;border-radius:4px;overflow:hidden;">
+                  <tr>
+                    <td style="padding:0;width:${barWidth}%;background:#f59e0b;height:12px;border-radius:4px 0 0 4px;"></td>
+                    <td style="padding:0;"></td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </div>
+        <p style="margin:0 0 24px;color:#334155;font-size:15px;line-height:1.6;">
+          When minutes run out, new calls cannot be answered. Add more minutes or upgrade your plan to stay covered.
+        </p>
+        <div style="text-align:center;margin:20px 0;">
+          <a href="https://www.voiceflyai.com/dashboard/billing"
+             style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
+            Add More Minutes
+          </a>
+        </div>
+        <p style="margin:20px 0 0;font-size:13px;color:#94a3b8;text-align:center;">
+          <a href="https://www.voiceflyai.com/dashboard/billing" style="color:#d97706;text-decoration:none;">View billing &amp; plans</a>
+        </p>
+      </div>
+    </div>
+  `
+  )
+}
+
+// ============================================
 // HELPERS
 // ============================================
 
