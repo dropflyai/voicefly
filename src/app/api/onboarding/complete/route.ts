@@ -79,45 +79,82 @@ function buildJobConfig(
     extraKnowledge?: Record<string, any>
   }
 ): ReceptionistConfig | AppointmentSchedulerConfig | OrderTakerConfig | CustomerServiceConfig {
+  const ek = params.extraKnowledge || {}
+
   const base: Record<string, any> = {
     greeting: params.greeting,
     businessHours: params.hoursNote || 'Please check our website for current hours',
     transferNumber: params.escalationPhone || undefined,
-    address: params.address || undefined,
+    address: params.address || ek.address || undefined,
   }
 
-  // Attach extra knowledge as a text block for the system prompt
-  if (params.extraKnowledge && Object.keys(params.extraKnowledge).length > 0) {
-    base.extraKnowledge = buildExtraKnowledgePrompt(params.extraKnowledge)
+  // Map extracted fields directly into visible config fields
+  if (ek.businessDescription) base.businessDescription = ek.businessDescription
+  if (ek.faqs?.length) base.faqs = ek.faqs
+  if (ek.staff?.length) base.staffMembers = ek.staff.map((s: any) => ({ id: s.name, name: s.name, specialties: s.role ? [s.role] : [] }))
+  if (ek.policies?.cancellation) base.cancellationPolicy = ek.policies.cancellation
+
+  // Also keep the compiled text block for the VAPI system prompt
+  if (Object.keys(ek).length > 0) {
+    base.extraKnowledge = buildExtraKnowledgePrompt(ek)
   }
 
   switch (jobType) {
-    case 'receptionist':
+    case 'receptionist': {
+      // Use scraped structured services if available, fall back to text list
+      const scrapedServices = ek.services?.length
+        ? ek.services.map((s: any) => ({ name: typeof s === 'string' ? s : s.name, duration: s.duration || 60, description: s.description || '' }))
+        : []
+      const textServices = params.services
+        ? params.services.split(',').map((s: string) => ({ name: s.trim(), duration: 60, description: '' }))
+        : []
       return {
         ...base,
         departments: [],
-        commonQuestions: params.services
+        services: scrapedServices.length ? scrapedServices : textServices,
+        commonQuestions: params.services && !scrapedServices.length
           ? [{ question: 'What services do you offer?', answer: `We offer: ${params.services}` }]
           : [],
       } as ReceptionistConfig
+    }
 
-    case 'appointment-scheduler':
+    case 'appointment-scheduler': {
+      const scrapedApptTypes = ek.appointmentTypes?.length
+        ? ek.appointmentTypes.map((a: any) => ({ id: a.name, name: a.name, duration: a.duration || 60, price: a.price, description: a.description || '' }))
+        : []
       return {
         ...base,
-        services: params.services ? params.services.split(',').map(s => s.trim()) : [],
+        apptTypes: scrapedApptTypes,
+        services: params.services ? params.services.split(',').map((s: string) => s.trim()) : [],
         confirmationMessage: `Your appointment has been confirmed. We look forward to seeing you!`,
       } as AppointmentSchedulerConfig
+    }
 
-    case 'order-taker':
+    case 'order-taker': {
+      // Use scraped menu (structured) if available, fall back to text services
+      let menuItems: { name: string; price: number; description?: string }[] = []
+      if (ek.menu?.categories?.length) {
+        for (const cat of ek.menu.categories) {
+          for (const item of (cat.items || [])) {
+            menuItems.push({ name: item.name, price: item.price || 0, description: item.description })
+          }
+        }
+      } else if (ek.services?.length) {
+        menuItems = ek.services.map((s: any) => ({ name: typeof s === 'string' ? s : s.name, price: (s as any).price || 0, description: (s as any).description }))
+      } else if (params.services) {
+        menuItems = params.services.split(',').map((s: string) => ({ name: s.trim(), price: 0 }))
+      }
       return {
         ...base,
-        menuItems: params.services ? params.services.split(',').map(s => ({ name: s.trim(), price: 0 })) : [],
+        menuItems,
+        menuCategories: ek.menu?.categories || [],
       } as OrderTakerConfig
+    }
 
     case 'customer-service':
       return {
         ...base,
-        commonIssues: [],
+        commonIssues: ek.commonIssues || [],
         escalationPolicy: params.escalationPhone ? 'transfer' : 'message',
       } as CustomerServiceConfig
 
