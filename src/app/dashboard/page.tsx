@@ -20,6 +20,7 @@ import {
   XMarkIcon,
   ShoppingBagIcon,
   BoltIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline'
 import { Dialog, Transition } from '@headlessui/react'
 import { formatDistanceToNow } from 'date-fns'
@@ -429,10 +430,25 @@ function DashboardPage() {
   // ============================================
 
   const activeEmployees = data.employees.filter((e) => e.isActive)
+  const totalCredits = data.creditsRemaining + data.creditsUsed
+  const creditWarning = totalCredits > 0 && data.creditsUsed >= totalCredits * 0.8
 
   return (
     <Layout business={business || undefined}>
       <div className="p-8">
+        {/* Low credit warning banner */}
+        {creditWarning && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0" />
+              <p className="text-sm text-amber-800">
+                <strong>Running low on minutes</strong> — {data.creditsRemaining} minutes remaining this month.
+              </p>
+            </div>
+            <a href="/dashboard/billing" className="text-xs font-medium text-amber-700 underline whitespace-nowrap ml-4">Add more</a>
+          </div>
+        )}
+
         {/* Welcome Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">
