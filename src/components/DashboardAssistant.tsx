@@ -167,11 +167,11 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
       return
     }
 
-    // Fetch employee count + phone status to determine onboarding step
-    Promise.all([
+    // Ensure session is restored before RLS-guarded queries
+    supabase.auth.getSession().then(() => Promise.all([
       supabase.from('phone_employees').select('id, name, phone_number, job_type, job_config').eq('business_id', id).eq('is_active', true),
       supabase.from('employee_calls').select('*', { count: 'exact', head: true }).eq('business_id', id),
-    ]).then(([{ data: employees }, { count: callCount }]) => {
+    ])).then(([{ data: employees }, { count: callCount }]) => {
       const emps = employees || []
       const hasPhone = emps.some((e: any) => e.phone_number)
       const hasCalls = (callCount ?? 0) > 0
