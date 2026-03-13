@@ -15,12 +15,85 @@ interface Message {
 
 type OnboardingStep = 1 | 2 | 3 | 'done'
 
+interface EmployeeInfo {
+  id: string
+  name: string
+  jobType: string
+  phoneNumber: string | null
+  jobConfig: Record<string, any>
+}
+
+interface ConfigGap {
+  field: string
+  label: string
+  description: string
+}
 
 const ONBOARDING_STEPS = [
   { step: 1, label: 'Create employee' },
   { step: 2, label: 'Get a number' },
   { step: 3, label: 'Test call' },
 ]
+
+function detectConfigGaps(employee: EmployeeInfo): ConfigGap[] {
+  const gaps: ConfigGap[] = []
+  const config = employee.jobConfig || {}
+
+  if (!config.greeting) {
+    gaps.push({ field: 'greeting', label: 'Custom greeting', description: 'Personalize how callers are welcomed' })
+  }
+  if (!config.businessHours && !config.hoursNote) {
+    gaps.push({ field: 'businessHours', label: 'Business hours', description: 'Let callers know when you\'re open' })
+  }
+  if (!config.address) {
+    gaps.push({ field: 'address', label: 'Business address', description: 'Help callers find your location' })
+  }
+  if (!config.transferNumber) {
+    gaps.push({ field: 'transferNumber', label: 'Escalation phone', description: 'Where to transfer calls needing a human' })
+  }
+
+  switch (employee.jobType) {
+    case 'receptionist':
+      if (!config.commonQuestions?.length) {
+        gaps.push({ field: 'commonQuestions', label: 'Common Q&A', description: 'Add FAQs so callers get instant answers' })
+      }
+      break
+    case 'order-taker':
+      if (!config.menuItems?.length) {
+        gaps.push({ field: 'menuItems', label: 'Menu items', description: 'Add your menu so callers can place orders' })
+      }
+      break
+    case 'appointment-scheduler':
+      if (!config.services?.length) {
+        gaps.push({ field: 'services', label: 'Services offered', description: 'List appointment types you offer' })
+      }
+      break
+    case 'customer-service':
+      if (!config.commonIssues?.length) {
+        gaps.push({ field: 'commonIssues', label: 'Common issues', description: 'Add known issues and resolutions' })
+      }
+      break
+  }
+
+  return gaps
+}
+
+function getPostOnboardingGreeting(employee: EmployeeInfo, gaps: ConfigGap[]): string {
+  const phonePart = employee.phoneNumber ? ` on **${employee.phoneNumber}**` : ''
+  let message = `**${employee.name} is live${phonePart}!**\n\n`
+
+  if (gaps.length > 0) {
+    message += `Here's what would make ${employee.name} even more effective:\n\n`
+    gaps.forEach(gap => {
+      message += `- **${gap.label}**: ${gap.description}\n`
+    })
+    message += `\nWant help adding any of these? Just ask!`
+  } else {
+    message += `${employee.name} is fully configured and ready to go. Try calling ${employee.phoneNumber || 'your number'} to hear them in action!`
+  }
+
+  return message
+}
 
 function getGreeting(onboardingStep: OnboardingStep): string {
   switch (onboardingStep) {
@@ -35,7 +108,11 @@ function getGreeting(onboardingStep: OnboardingStep): string {
   }
 }
 
-function getQuickActions(onboardingStep: OnboardingStep): string[] {
+function getQuickActions(onboardingStep: OnboardingStep, justOnboarded: boolean, gaps: ConfigGap[]): string[] {
+  if (justOnboarded && gaps.length > 0) {
+    const gapActions = gaps.slice(0, 3).map(g => `Help me add ${g.label.toLowerCase()}`)
+    return [...gapActions, 'How do I make a test call?']
+  }
   switch (onboardingStep) {
     case 1:
       return ["I run a restaurant", "I run a salon/spa", "I run a medical practice", "Other business type"]
@@ -58,6 +135,9 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
   const [businessId, setBusinessId] = useState<string | null>(null)
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep>('done')
   const [onboardingLoaded, setOnboardingLoaded] = useState(false)
+  const [justOnboarded, setJustOnboarded] = useState(false)
+  const [employeeInfo, setEmployeeInfo] = useState<EmployeeInfo | null>(null)
+  const [configGaps, setConfigGaps] = useState<ConfigGap[]>([])
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
@@ -69,10 +149,18 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const hasAutoOpened = useRef(false)
 
-  // Load businessId and fetch onboarding state on mount
+  // Load businessId, check just-onboarded flag, fetch onboarding state on mount
   useEffect(() => {
     const id = localStorage.getItem('authenticated_business_id')
     setBusinessId(id)
+
+    // Check if user just completed onboarding
+    const onboardedEmployeeId = localStorage.getItem('voicefly_just_onboarded')
+    if (onboardedEmployeeId) {
+      localStorage.removeItem('voicefly_just_onboarded')
+      setJustOnboarded(true)
+    }
+
     if (!id) {
       setOnboardingStep('done')
       setOnboardingLoaded(true)
@@ -81,7 +169,7 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
 
     // Fetch employee count + phone status to determine onboarding step
     Promise.all([
-      supabase.from('phone_employees').select('name, phone_number').eq('business_id', id),
+      supabase.from('phone_employees').select('id, name, phone_number, job_type, job_config').eq('business_id', id).eq('is_active', true),
       supabase.from('employee_calls').select('*', { count: 'exact', head: true }).eq('business_id', id),
     ]).then(([{ data: employees }, { count: callCount }]) => {
       const emps = employees || []
@@ -95,6 +183,21 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
       else step = 'done'
 
       setOnboardingStep(step)
+
+      // Load the first employee's details for Maya context
+      if (emps.length > 0) {
+        const emp = emps[0] as any
+        const info: EmployeeInfo = {
+          id: emp.id,
+          name: emp.name,
+          jobType: emp.job_type,
+          phoneNumber: emp.phone_number || null,
+          jobConfig: emp.job_config || {},
+        }
+        setEmployeeInfo(info)
+        setConfigGaps(detectConfigGaps(info))
+      }
+
       setOnboardingLoaded(true)
     }).catch(() => {
       setOnboardingStep('done')
@@ -105,50 +208,45 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
   // Set initial greeting once onboarding state is known
   useEffect(() => {
     if (!onboardingLoaded) return
+    let greeting: string
+    if (justOnboarded && employeeInfo) {
+      greeting = getPostOnboardingGreeting(employeeInfo, configGaps)
+    } else {
+      greeting = getGreeting(onboardingStep)
+    }
     setMessages([{
       id: '1',
       role: 'assistant',
-      content: getGreeting(onboardingStep),
+      content: greeting,
       timestamp: new Date(),
     }])
-  }, [onboardingLoaded, onboardingStep])
+  }, [onboardingLoaded, onboardingStep, justOnboarded, employeeInfo, configGaps])
 
-  // Auto-open for new users (onboarding step 1 only)
+  // Auto-open for new users
   useEffect(() => {
     if (!onboardingLoaded || hasAutoOpened.current) return
 
-    // Only auto-open if:
-    // 1. User is on step 1 (no employees)
-    // 2. autoOpenForNewUser prop is true OR hasn't seen welcome in last 24 hours
-    const shouldAutoOpen = onboardingStep === 1 && (
-      autoOpenForNewUser || !hasSeenWelcomeRecently()
-    )
+    const shouldAutoOpen =
+      justOnboarded ||
+      (onboardingStep === 1 && (autoOpenForNewUser || !hasSeenWelcomeRecently()))
 
     if (shouldAutoOpen) {
       hasAutoOpened.current = true
-      // Wait 3 seconds before auto-opening
       const timer = setTimeout(() => {
         setIsOpen(true)
         markWelcomeSeen()
-      }, 3000)
-
+      }, 2000)
       return () => clearTimeout(timer)
     }
-  }, [onboardingLoaded, onboardingStep, autoOpenForNewUser])
+  }, [onboardingLoaded, onboardingStep, justOnboarded, autoOpenForNewUser])
 
-  // Check if user has seen welcome in last 24 hours
   const hasSeenWelcomeRecently = (): boolean => {
     const lastSeen = localStorage.getItem('maya_welcome_seen')
     if (!lastSeen) return false
-
-    const lastSeenTime = new Date(lastSeen).getTime()
-    const now = new Date().getTime()
-    const hoursSince = (now - lastSeenTime) / (1000 * 60 * 60)
-
+    const hoursSince = (Date.now() - new Date(lastSeen).getTime()) / (1000 * 60 * 60)
     return hoursSince < 24
   }
 
-  // Mark welcome as seen
   const markWelcomeSeen = () => {
     localStorage.setItem('maya_welcome_seen', new Date().toISOString())
   }
@@ -179,7 +277,6 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
         .join('')
       setInput(transcript)
 
-      // Auto-send on final result
       if (event.results[event.results.length - 1].isFinal) {
         setIsListening(false)
         if (transcript.trim()) {
@@ -196,7 +293,6 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
   }
 
   const speakResponse = async (text: string) => {
-    // Stop any currently playing audio
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current = null
@@ -260,9 +356,15 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
         body: JSON.stringify({
           message: text,
           history,
-          context: 'dashboard',
+          context: justOnboarded ? 'post-onboarding' : 'dashboard',
           businessId,
           currentPage: pathname,
+          employeeContext: employeeInfo ? {
+            name: employeeInfo.name,
+            jobType: employeeInfo.jobType,
+            phoneNumber: employeeInfo.phoneNumber,
+            configGaps: configGaps.map(g => g.label),
+          } : undefined,
         }),
       })
       const data = await res.json()
@@ -271,7 +373,6 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
         console.error('[Maya] API error:', res.status, data.error)
       }
 
-      // Update onboarding step if API returned a fresher value
       if (data.onboardingStep !== undefined && data.onboardingStep !== onboardingStep) {
         setOnboardingStep(data.onboardingStep as OnboardingStep)
       }
@@ -287,7 +388,6 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
         },
       ])
 
-      // Speak the response if speaker is on
       if (isSpeakerOn && responseText) {
         speakResponse(responseText)
       }
@@ -306,8 +406,16 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
     }
   }
 
-  const isOnboarding = onboardingStep !== 'done'
-  const quickActions = getQuickActions(onboardingStep)
+  const isOnboarding = onboardingStep !== 'done' && !justOnboarded
+  const quickActions = getQuickActions(onboardingStep, justOnboarded, configGaps)
+
+  // Post-onboarding checklist items
+  const postOnboardingChecklist = justOnboarded && employeeInfo ? [
+    { label: 'Employee created', done: true },
+    { label: 'Phone number assigned', done: !!employeeInfo.phoneNumber },
+    { label: 'Test call made', done: false },
+    { label: 'Profile complete', done: configGaps.length === 0 },
+  ] : null
 
   return (
     <>
@@ -325,14 +433,19 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
         ) : (
           <div className="relative">
             <Bot className="h-6 w-6" />
-            <span className={`absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-gray-900 ${isOnboarding ? 'bg-blue-400 animate-pulse' : 'bg-green-400'}`} />
+            <span className={`absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-gray-900 ${
+              justOnboarded ? 'bg-blue-400 animate-pulse' : isOnboarding ? 'bg-blue-400 animate-pulse' : 'bg-green-400'
+            }`} />
           </div>
         )}
       </button>
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-40 w-96 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200" style={{ height: isOnboarding ? '620px' : '560px' }}>
+        <div
+          className="fixed bottom-24 right-6 z-40 w-96 bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-200"
+          style={{ height: (isOnboarding || postOnboardingChecklist) ? '620px' : '560px' }}
+        >
           {/* Header */}
           <div className="bg-gray-900 text-white p-4 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center space-x-3">
@@ -341,7 +454,9 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
               </div>
               <div>
                 <h3 className="font-semibold text-sm">Maya</h3>
-                <p className="text-xs text-gray-400">{isOnboarding ? 'Setup Guide' : 'Your VoiceFly Assistant'}</p>
+                <p className="text-xs text-gray-400">
+                  {justOnboarded ? 'Setup Complete' : isOnboarding ? 'Setup Guide' : 'Your VoiceFly Assistant'}
+                </p>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -360,14 +475,37 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
                 {isSpeakerOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
               </button>
               <span className="flex items-center space-x-1.5 text-xs text-gray-400">
-                <span className={`h-2 w-2 rounded-full ${isSpeaking ? 'bg-blue-400 animate-pulse' : isOnboarding ? 'bg-blue-400 animate-pulse' : 'bg-green-400'}`} />
-                <span>{isSpeaking ? 'Speaking' : isOnboarding ? 'Onboarding' : 'Online'}</span>
+                <span className={`h-2 w-2 rounded-full ${
+                  isSpeaking ? 'bg-blue-400 animate-pulse' : justOnboarded ? 'bg-green-400' : isOnboarding ? 'bg-blue-400 animate-pulse' : 'bg-green-400'
+                }`} />
+                <span>{isSpeaking ? 'Speaking' : justOnboarded ? 'Live' : isOnboarding ? 'Onboarding' : 'Online'}</span>
               </span>
             </div>
           </div>
 
-          {/* Onboarding Progress Bar */}
-          {isOnboarding && (
+          {/* Post-Onboarding Checklist */}
+          {postOnboardingChecklist && (
+            <div className="bg-gray-800 px-4 py-3 flex-shrink-0">
+              <p className="text-xs text-gray-400 mb-2">Your progress</p>
+              <div className="space-y-1">
+                {postOnboardingChecklist.map((item, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    {item.done ? (
+                      <CheckCircle className="h-3.5 w-3.5 text-green-400 flex-shrink-0" />
+                    ) : (
+                      <Circle className="h-3.5 w-3.5 text-gray-500 flex-shrink-0" />
+                    )}
+                    <span className={`text-[11px] ${item.done ? 'text-green-400' : 'text-gray-400'}`}>
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Onboarding Progress Bar (only for pre-live onboarding) */}
+          {isOnboarding && !postOnboardingChecklist && (
             <div className="bg-gray-800 px-4 py-3 flex-shrink-0">
               <p className="text-xs text-gray-400 mb-2">Getting started</p>
               <div className="flex items-center gap-2">
@@ -441,14 +579,16 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
           {/* Quick Actions */}
           {messages.length <= 1 && (
             <div className="px-4 pb-2 bg-gray-50 border-t border-gray-100 flex-shrink-0">
-              <p className="text-xs text-gray-400 mb-2 mt-2">{isOnboarding ? 'Quick actions:' : 'Quick help:'}</p>
+              <p className="text-xs text-gray-400 mb-2 mt-2">
+                {justOnboarded ? 'Next steps:' : isOnboarding ? 'Quick actions:' : 'Quick help:'}
+              </p>
               <div className="flex flex-wrap gap-1.5">
                 {quickActions.map((q, i) => (
                   <button
                     key={i}
                     onClick={() => sendMessage(q)}
                     className={`text-xs px-3 py-1.5 rounded-full transition-colors border ${
-                      isOnboarding
+                      justOnboarded || isOnboarding
                         ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
                         : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
                     }`}
@@ -472,7 +612,7 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
                     sendMessage(input)
                   }
                 }}
-                placeholder={isListening ? "Listening..." : isOnboarding ? "Ask Maya anything about setup..." : "Ask me anything..."}
+                placeholder={isListening ? "Listening..." : isOnboarding || justOnboarded ? "Ask Maya anything about setup..." : "Ask me anything..."}
                 rows={1}
                 disabled={isTyping || isListening}
                 className={`flex-1 resize-none border rounded-xl px-3 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm disabled:opacity-50 ${isListening ? 'border-red-300 bg-red-50' : 'border-gray-300'}`}

@@ -244,7 +244,7 @@ function getSmartDefaults(industry: string, employeeType: string, employeeName: 
   }
 }
 
-const TOTAL_STEPS = 6
+const TOTAL_STEPS = 7
 
 // ─── Step components ─────────────────────────────────────────────────────────
 
@@ -298,6 +298,21 @@ export default function OnboardingPage() {
 
   // Extra knowledge from website scrape (passed to VAPI system prompt)
   const [extraKnowledge, setExtraKnowledge] = useState<Record<string, any>>({})
+
+  // Provisioned employee ID (from provision() response)
+  const [provisionedEmployeeId, setProvisionedEmployeeId] = useState<string | null>(null)
+
+  // Training chat state
+  const [trainingMessages, setTrainingMessages] = useState<{role: 'user' | 'assistant', content: string}[]>([])
+  const [trainingInput, setTrainingInput] = useState('')
+  const [trainingLoading, setTrainingLoading] = useState(false)
+  const [trainingApplied, setTrainingApplied] = useState(false)
+  const trainingEndRef = useRef<HTMLDivElement | null>(null)
+  const [trainingListening, setTrainingListening] = useState(false)
+  const [trainingSpeakerOn, setTrainingSpeakerOn] = useState(false)
+  const [trainingSpeaking, setTrainingSpeaking] = useState(false)
+  const trainingRecognitionRef = useRef<any>(null)
+  const trainingAudioRef = useRef<HTMLAudioElement | null>(null)
 
   // Google Calendar inline setup state
   const [calendarId, setCalendarId] = useState('')
@@ -415,7 +430,8 @@ export default function OnboardingPage() {
       case 2: return !!form.employeeName && !!form.voiceId
       case 3: return true // area code optional
       case 4: return true // calendar step — optional, can skip
-      case 5: return true
+      case 5: return true // training step — always skippable
+      case 6: return true
       default: return false
     }
   }
@@ -429,7 +445,7 @@ export default function OnboardingPage() {
   }
 
   const skipCalendarStep = () => {
-    setStep(5) // go to success screen
+    setStep(5) // go to training step
   }
 
   // ── Voice preview ───────────────────────────────────────────────────────────
@@ -487,6 +503,11 @@ export default function OnboardingPage() {
       if (audioRef.current) audioRef.current.pause()
     }
   }, [])
+
+  // Auto-scroll training chat messages
+  useEffect(() => {
+    trainingEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [trainingMessages])
 
   // ── Google Calendar inline setup ────────────────────────────────────────────
   const copyServiceEmail = () => {
@@ -587,6 +608,122 @@ export default function OnboardingPage() {
     }
   }
 
+  const skipTrainingStep = () => setStep(6)
+
+  const toggleTrainingListening = () => {
+    if (trainingListening) {
+      trainingRecognitionRef.current?.stop()
+      setTrainingListening(false)
+      return
+    }
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SpeechRecognition) return
+    const recognition = new SpeechRecognition()
+    recognition.lang = 'en-US'
+    recognition.interimResults = true
+    recognition.continuous = false
+    trainingRecognitionRef.current = recognition
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results).map((r: any) => r[0].transcript).join('')
+      setTrainingInput(transcript)
+      if (event.results[event.results.length - 1].isFinal) {
+        setTrainingListening(false)
+        if (transcript.trim()) sendOnboardingTraining(transcript.trim())
+      }
+    }
+    recognition.onerror = () => setTrainingListening(false)
+    recognition.onend = () => setTrainingListening(false)
+    recognition.start()
+    setTrainingListening(true)
+  }
+
+  const speakTrainingResponse = async (text: string) => {
+    if (trainingAudioRef.current) { trainingAudioRef.current.pause(); trainingAudioRef.current = null }
+    try {
+      setTrainingSpeaking(true)
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      if (!res.ok) { setTrainingSpeaking(false); return }
+      const audioBlob = await res.blob()
+      const audioUrl = URL.createObjectURL(audioBlob)
+      const audio = new Audio(audioUrl)
+      trainingAudioRef.current = audio
+      audio.onended = () => { setTrainingSpeaking(false); URL.revokeObjectURL(audioUrl); trainingAudioRef.current = null }
+      audio.onerror = () => { setTrainingSpeaking(false); URL.revokeObjectURL(audioUrl); trainingAudioRef.current = null }
+      await audio.play()
+    } catch { setTrainingSpeaking(false) }
+  }
+
+  const sendOnboardingTraining = async (overrideMessage?: string) => {
+    const message = (overrideMessage || trainingInput).trim()
+    if (!message || trainingLoading) return
+    setTrainingInput('')
+    setTrainingMessages(prev => [...prev, { role: 'user', content: message }])
+    setTrainingLoading(true)
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/api/ai/parse-training', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || ''}`,
+        },
+        body: JSON.stringify({
+          message,
+          currentConfig: {
+            greeting: form.greeting,
+            businessDescription: '',
+            customInstructions: '',
+            callHandlingRules: '',
+            restrictions: '',
+            faqs: [],
+            services: form.services,
+            transferDestinations: [],
+          },
+          jobType: form.employeeType || 'receptionist',
+          context: {
+            industry: form.industry,
+            employeeName: form.employeeName,
+            services: form.services,
+          },
+        }),
+      })
+
+      if (!res.ok) {
+        setTrainingMessages(prev => [...prev, { role: 'assistant', content: "I had trouble processing that. You can always refine this from the dashboard after setup." }])
+        return
+      }
+
+      const data = await res.json()
+      setTrainingApplied(true)
+
+      // Apply changes directly to form
+      if (data.changes?.length) {
+        for (const change of data.changes) {
+          if (change.type === 'greeting' && change.action === 'set') {
+            set('greeting', change.data.text)
+          }
+          if ((change.type === 'customInstructions' || change.type === 'businessDescription') && (change.action === 'set' || change.action === 'append')) {
+            // store in escalationPhone field? No — just acknowledge, can't easily apply all in onboarding
+          }
+        }
+      }
+
+      const reply = data.summary || "Got it! I've noted that for your employee. Anything else you want to configure, or are you ready to finish setup?"
+      setTrainingMessages(prev => [...prev, { role: 'assistant', content: reply }])
+      if (trainingSpeakerOn) speakTrainingResponse(reply)
+    } catch {
+      setTrainingMessages(prev => [...prev, { role: 'assistant', content: "Something went wrong. You can always train your employee from the dashboard." }])
+    } finally {
+      setTrainingLoading(false)
+    }
+  }
+
   const provision = async () => {
     if (!businessId) { setError('Session expired. Please sign in again.'); return }
     setSubmitting(true)
@@ -623,7 +760,8 @@ export default function OnboardingPage() {
       if (!res.ok) throw new Error(data.error || 'Failed to provision employee')
 
       set('provisionedPhone', data.phoneNumber || '')
-      // Only show calendar step for appointment schedulers — others go straight to success
+      if (data.employee?.id) setProvisionedEmployeeId(data.employee.id)
+      // Only show calendar step for appointment schedulers — others go to training step
       setStep(form.employeeType === 'appointment-scheduler' ? 4 : 5)
     } catch (err: any) {
       setError(err.message || 'Something went wrong. Please try again.')
@@ -1264,8 +1402,123 @@ export default function OnboardingPage() {
         )
       }
 
-      // ── Step 5: Live! ───────────────────────────────────────────────────────
+      // ── Step 5: Train your employee ─────────────────────────────────────────
       case 5:
+        return (
+          <div className="space-y-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Train {form.employeeName || 'your employee'}</h2>
+                <p className="text-gray-500 mt-1 text-sm">
+                  Tell me about your business and I&apos;ll configure {form.employeeName || 'your employee'} for you. You can always refine this from the dashboard.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (trainingSpeaking) { trainingAudioRef.current?.pause(); trainingAudioRef.current = null; setTrainingSpeaking(false) }
+                  setTrainingSpeakerOn(v => !v)
+                }}
+                title={trainingSpeakerOn ? 'Mute Maya' : 'Hear Maya speak'}
+                className={`mt-1 p-2 rounded-lg transition-colors flex-shrink-0 ${trainingSpeakerOn ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                {trainingSpeakerOn
+                  ? <Volume2 className="h-5 w-5" />
+                  : <Volume2 className="h-5 w-5 opacity-40" />}
+              </button>
+            </div>
+
+            {/* Opening message from Maya */}
+            <div className="border border-gray-200 rounded-xl bg-gray-50 overflow-hidden">
+              <div className="max-h-72 overflow-y-auto p-4 space-y-3">
+                {/* Static welcome message */}
+                <div className="flex justify-start gap-2">
+                  <img src="/maya-avatars/holo-d1.png" alt="Maya" className="h-7 w-7 rounded-full border border-blue-300/50 flex-shrink-0 object-cover object-top mt-0.5" />
+                  <div className="max-w-[85%] bg-white border border-gray-200 rounded-xl px-4 py-3">
+                    <p className="text-xs font-medium text-blue-600 mb-1">Maya</p>
+                    <p className="text-sm text-gray-800">
+                      {form.industry
+                        ? `${form.employeeName || 'Your employee'} is all set! I can see you're in ${form.industry}${form.services ? ` and offer ${form.services}` : ''}. What do callers ask about most — things like pricing, hours, or booking?`
+                        : `${form.employeeName || 'Your employee'} is ready to go! Tell me about your business — what services you offer, your hours, anything callers typically ask — and I'll configure them for you.`}
+                    </p>
+                  </div>
+                </div>
+                {trainingMessages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start gap-2'}`}>
+                    {msg.role === 'assistant' && (
+                      <img src="/maya-avatars/holo-d1.png" alt="Maya" className="h-7 w-7 rounded-full border border-blue-300/50 flex-shrink-0 object-cover object-top mt-0.5" />
+                    )}
+                    <div className={`max-w-[85%] ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-900'} rounded-xl px-4 py-3`}>
+                      {msg.role === 'assistant' && <p className="text-xs font-medium text-blue-600 mb-1">Maya</p>}
+                      <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    </div>
+                  </div>
+                ))}
+                {trainingLoading && (
+                  <div className="flex justify-start gap-2">
+                    <img src="/maya-avatars/holo-d1.png" alt="Maya" className="h-7 w-7 rounded-full border border-blue-300/50 flex-shrink-0 object-cover object-top mt-0.5" />
+                    <div className="bg-white border border-gray-200 rounded-xl px-4 py-3">
+                      <p className="text-xs font-medium text-blue-600 mb-1">Maya</p>
+                      <p className="text-sm text-gray-400">Thinking...</p>
+                    </div>
+                  </div>
+                )}
+                <div ref={trainingEndRef} />
+              </div>
+
+              <div className="border-t border-gray-200 p-3 bg-white">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={trainingInput}
+                    onChange={e => setTrainingInput(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendOnboardingTraining() } }}
+                    placeholder={trainingListening ? 'Listening...' : `e.g. We're a dental office open Mon-Fri 8am-5pm...`}
+                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    disabled={trainingLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={toggleTrainingListening}
+                    disabled={trainingLoading}
+                    title={trainingListening ? 'Stop listening' : 'Speak to Maya'}
+                    className={`px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${trainingListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                  >
+                    <Mic className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => sendOnboardingTraining()}
+                    disabled={trainingLoading || !trainingInput.trim()}
+                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" /></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <button
+                type="button"
+                onClick={skipTrainingStep}
+                className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                Skip for now →
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep(6)}
+                className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl font-medium hover:bg-blue-700 transition-colors text-sm"
+              >
+                Finish Setup
+              </button>
+            </div>
+          </div>
+        )
+
+      // ── Step 6: Live! ───────────────────────────────────────────────────────
+      case 6:
         return (
           <div className="max-w-lg mx-auto text-center">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -1305,7 +1558,12 @@ export default function OnboardingPage() {
             )}
 
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => {
+                if (provisionedEmployeeId) {
+                  localStorage.setItem('voicefly_just_onboarded', provisionedEmployeeId)
+                }
+                router.push('/dashboard')
+              }}
               className="w-full bg-blue-600 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
             >
               Go to your dashboard <ArrowRight className="h-5 w-5" />
@@ -1329,7 +1587,7 @@ export default function OnboardingPage() {
             </div>
             <span className="font-bold text-gray-900">VoiceFly</span>
           </div>
-          {step < TOTAL_STEPS - 1 && step !== 4 && (
+          {step < TOTAL_STEPS - 1 && step !== 4 && step !== 5 && (
             <div className="flex items-center gap-4">
               <StepIndicator current={step} total={4} />
               <span className="text-sm text-gray-400">Step {step + 1} of 4</span>
@@ -1339,7 +1597,7 @@ export default function OnboardingPage() {
       </div>
 
       {/* Progress bar */}
-      {step < TOTAL_STEPS - 1 && step !== 4 && (
+      {step < TOTAL_STEPS - 1 && step !== 4 && step !== 5 && (
         <div className="h-1 bg-gray-200">
           <div
             className="h-1 bg-blue-600 transition-all duration-500"
@@ -1355,8 +1613,8 @@ export default function OnboardingPage() {
         </div>
       </div>
 
-      {/* Footer nav — hidden on calendar step (has own buttons) and success screen */}
-      {step < TOTAL_STEPS - 1 && step !== 4 && (
+      {/* Footer nav — hidden on calendar step (has own buttons), training step, and success screen */}
+      {step < TOTAL_STEPS - 1 && step !== 4 && step !== 5 && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-4">
           <div className="max-w-xl mx-auto flex justify-between items-center">
             <button
