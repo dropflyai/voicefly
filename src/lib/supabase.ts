@@ -216,6 +216,9 @@ export class BusinessAPI {
       return null
     }
 
+    // Ensure session is restored before querying (session restore is async)
+    await supabase.auth.getSession()
+
     const { data, error } = await supabase
       .from('businesses')
       .select('*')
