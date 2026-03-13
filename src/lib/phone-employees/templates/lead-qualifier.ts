@@ -23,12 +23,14 @@ export function generateLeadQualifierPrompt(config: EmployeeConfig, jobConfig: L
     `${i + 1}. ${q.question}${q.required ? '' : ' (optional)'}`
   ).join('\n')
 
+  const discoveryCallLabel = (jobConfig as any).discoveryCallLabel || 'discovery call'
+
   const hotLeadActionInstructions = (() => {
     if (jobConfig.hotLeadAction === 'transfer' && jobConfig.transferNumber) {
-      return `Call transferCall() to connect them with our sales team immediately. Give them a brief, enthusiastic handoff summary before transferring.`
+      return `Call transferCall() to connect them with our sales team immediately at ${jobConfig.transferNumber}. Give them a brief, enthusiastic handoff summary before transferring.`
     }
     if (jobConfig.hotLeadAction === 'book') {
-      return `Call bookDiscoveryCall() to schedule a discovery call. Offer them time slots and get the appointment on the books before ending the call.`
+      return `Call bookDiscoveryCall() to schedule a ${discoveryCallLabel}. Offer them time slots and get the appointment on the books before ending the call.`
     }
     return `Call scheduleCallback() to arrange a time for our team to call them back. Get the best time from the caller.`
   })()
@@ -76,12 +78,15 @@ A warm lead is interested but not quite ready — they may need more time, more 
 Say: "${jobConfig.warmLeadResponse}"
 Then call qualifyLead() to record their info, scoreLead() with tier="warm", and captureLeadInfo() so our team can follow up at the right time. Offer to answer any remaining questions they have.
 
-### COLD Lead — Respectful exit
+### COLD Lead — Respectful, personalized close
 A cold lead is not a fit right now — wrong budget, wrong timeline, not the decision maker, or simply not the right product for them.
 
 **When you identify a cold lead:**
-Say: "${jobConfig.coldLeadResponse}"
-Call scoreLead() with tier="cold". Be kind and genuine — don't waste their time or yours.
+1. Call scoreLead() with tier="cold" first to record the lead
+2. The function will return a closing_message — say it out loud, naturally. It will be personalized to their situation.
+3. Then ask: "Before I let you go, is there anything else you'd like to know about [what the business offers]?"
+4. If they have questions, answer them genuinely — they may become a fit later. If not, wish them well and end the call naturally.
+5. Do NOT abruptly hang up. Close the conversation warmly once they confirm they have nothing else.
 
 ## Available Functions
 - **qualifyLead** — Record qualifying information gathered during the call (name, phone, interest, timeline, budget, decision maker status)
@@ -91,13 +96,20 @@ Call scoreLead() with tier="cold". Be kind and genuine — don't waste their tim
 - **transferCall** — Transfer a hot lead directly to the sales team
 - **scheduleCallback** — Schedule a callback for a lead who isn't ready right now
 
+## Instant Disqualifiers
+${jobConfig.disqualifyingAnswers?.length
+  ? `If the caller indicates any of the following, immediately score them cold (scoreLead with tier="cold") and use the cold lead response — don't keep probing:\n${jobConfig.disqualifyingAnswers.map((d: any) => `- ${d.answer}`).join('\n')}`
+  : 'Use your judgment to identify when a lead is clearly not a fit and exit the conversation gracefully.'
+}
+
 ## Critical Rules
 1. ALWAYS get the caller's name and phone number before scoring the lead
-2. Never pressure or push — if someone isn't ready, capture their info and let them go gracefully
-3. Be genuine — if the product/service isn't right for them, say so. It saves everyone time.
-4. Keep the conversation moving — don't drag it out unnecessarily
-5. If they have questions you can't answer, tell them you'll make sure the right person follows up
-6. Never make commitments about pricing or deliverables — that's for the sales team
+2. For hot and warm leads, also ask for their email before calling scoreLead — say something like "What's the best email to send you a quick follow-up?" Keep it casual. If they decline, that's fine — proceed without it.
+3. Never pressure or push — if someone isn't ready, capture their info and let them go gracefully
+4. Be genuine — if the product/service isn't right for them, say so. It saves everyone time.
+5. Keep the conversation moving — don't drag it out unnecessarily
+6. If they have questions you can't answer, tell them you'll make sure the right person follows up
+7. Never make commitments about pricing or deliverables — that's for the sales team
 
 Remember: Your goal is to identify the best-fit prospects and get them to the right next step — not to pitch or sell.`
 }
@@ -268,7 +280,7 @@ export function createLeadQualifierEmployee(params: {
     voice: params.voice || {
       provider: '11labs',
       voiceId: 'aVR2rUXJY4MTezzJjPyQ',
-      speed: 1.0,
+      speed: 1.1,
       stability: 0.8,
     },
 

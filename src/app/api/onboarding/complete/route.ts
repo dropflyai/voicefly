@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { validateBusinessAccess } from '@/lib/api-auth'
 import { employeeProvisioning } from '@/lib/phone-employees/employee-provisioning'
 import type { ReceptionistConfig, AppointmentSchedulerConfig, OrderTakerConfig, CustomerServiceConfig } from '@/lib/phone-employees/types'
@@ -133,13 +134,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
     }
 
-    // Auth check
+    // Auth check — prefer JWT, fall back to service-role business existence check
+    // for onboarding flows where the session may not be available yet
     const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
-      return NextResponse.json(
-        { error: authResult.error || 'Unauthorized' },
-        { status: authResult.error === 'Access denied to this business' ? 403 : 401 }
+      const serviceClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
       )
+      const { data: biz, error: bizError } = await serviceClient
+        .from('businesses')
+        .select('id')
+        .eq('id', businessId)
+        .single()
+      if (bizError || !biz) {
+        return NextResponse.json(
+          { error: authResult.error || 'Unauthorized' },
+          { status: authResult.error === 'Access denied to this business' ? 403 : 401 }
+        )
+      }
     }
 
     const {

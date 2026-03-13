@@ -41,6 +41,8 @@ import {
   sendAppointmentNotification,
   sendCallSummaryNotification,
   sendOrderNotification,
+  sendLeadScoreOwnerNotification,
+  sendLeadFollowUpEmail,
   getOwnerEmail,
 } from '@/lib/notifications/email-notifications'
 
@@ -424,9 +426,19 @@ async function handleFunctionCall(
         break
 
       case 'transferCall':
-      case 'transferToHuman':
-        result = await handleTransferCall(functionCall.parameters, businessId, callId)
+      case 'transferToHuman': {
+        const transferResult = await handleTransferCall(functionCall.parameters, businessId, callId, employee) as any
+        // If we resolved a destination, return forwardingPhoneNumber at the top level
+        // so VAPI executes the actual SIP transfer (not just text back to the model)
+        if (transferResult.transfer && transferResult.destination) {
+          return NextResponse.json({
+            result: transferResult.message || 'Transferring you now. Please hold.',
+            forwardingPhoneNumber: transferResult.destination,
+          })
+        }
+        result = transferResult
         break
+      }
 
       case 'getBusinessInfo':
         result = await handleGetBusinessInfo(functionCall.parameters, businessId, employee)
@@ -715,9 +727,22 @@ async function handleToolCalls(
           break
 
         case 'transferCall':
-        case 'transferToHuman':
-          result = await handleTransferCall(parameters, businessId, callId)
+        case 'transferToHuman': {
+          const transferResult = await handleTransferCall(parameters, businessId, callId, employee) as any
+          // Return forwardingPhoneNumber at top level so VAPI executes the SIP transfer
+          if (transferResult.transfer && transferResult.destination) {
+            return NextResponse.json({
+              results: [{
+                toolCallId,
+                name: functionName,
+                result: transferResult.message || 'Transferring you now. Please hold.',
+              }],
+              forwardingPhoneNumber: transferResult.destination,
+            })
+          }
+          result = transferResult
           break
+        }
 
         case 'getBusinessInfo':
           result = await handleGetBusinessInfo(parameters, businessId, employee)
@@ -1001,76 +1026,109 @@ async function handleTakeMessage(params: any, businessId: string, employeeId: st
   }
 }
 
-async function handleTransferCall(params: any, businessId: string, callId?: string) {
-  const destination = params.destination // phone number or department name
+async function handleTransferCall(params: any, businessId: string, callId?: string, employee?: any) {
+  const destination = (params.destination as string) || ''
   const reason = params.reason
 
   console.log(`[Transfer Request] Call: ${callId}, Destination: ${destination}, Reason: ${reason}`)
 
-  // Look up transfer destination from business settings
-  const { data: business } = await supabase
-    .from('businesses')
-    .select('phone_number, settings')
-    .eq('id', businessId)
-    .single()
+  // Resolve destination → { number, extension }
+  // Priority: 1) employee job_config.transferDestinations, 2) businesses.settings.transfer_numbers, 3) raw number
+  let resolvedNumber = ''
+  let resolvedExtension = ''
+  let resolvedLabel = destination
 
-  // Resolve destination to a phone number
-  let transferNumber = destination
-  const transferMap = business?.settings?.transfer_numbers as Record<string, string> | undefined
-  if (transferMap && transferMap[destination.toLowerCase()]) {
-    transferNumber = transferMap[destination.toLowerCase()]
-  }
-
-  // Validate it looks like a phone number
-  const isPhoneNumber = /^\+?[\d\s\-()]{7,}$/.test(transferNumber)
-
-  if (!isPhoneNumber) {
-    // Can't resolve to a real number - fall back to taking a message
-    console.warn(`[Transfer] Could not resolve "${destination}" to a phone number`)
-    return {
-      transfer: false,
-      message: `I wasn't able to transfer you directly. Let me take a message and have ${destination} call you back as soon as possible. What would you like me to tell them?`,
+  // 1. Try employee's transferDestinations (new format)
+  const transferDests: any[] = employee?.job_config?.transferDestinations || []
+  if (transferDests.length > 0) {
+    const destLower = destination.toLowerCase()
+    // Match by label or keyword
+    let match = transferDests.find((d: any) =>
+      d.label?.toLowerCase() === destLower ||
+      (d.keywords || []).some((k: string) => k.toLowerCase() === destLower)
+    )
+    // Fall back to default destination
+    if (!match) {
+      match = transferDests.find((d: any) => d.isDefault)
+    }
+    if (match?.phoneNumber) {
+      resolvedNumber = match.phoneNumber
+      resolvedExtension = match.extension || ''
+      resolvedLabel = match.label || destination
     }
   }
 
-  // Use VAPI's transfer mechanism via the function call response
-  // VAPI supports transferCall by returning a destination in the response
-  // which triggers VAPI's built-in SIP/phone transfer
+  // 2. Fall back to businesses.settings.transfer_numbers (legacy flat map)
+  if (!resolvedNumber) {
+    const { data: business } = await supabase
+      .from('businesses')
+      .select('settings')
+      .eq('id', businessId)
+      .single()
+
+    const transferMap = business?.settings?.transfer_numbers as Record<string, any> | undefined
+    if (transferMap) {
+      const entry = transferMap[destination.toLowerCase()] || transferMap['default']
+      if (entry) {
+        if (typeof entry === 'string') {
+          resolvedNumber = entry
+        } else if (entry.number) {
+          resolvedNumber = entry.number
+          resolvedExtension = entry.extension || ''
+        }
+      }
+    }
+  }
+
+  // 3. Fall back: destination might already be a raw number
+  if (!resolvedNumber && /^\+?[\d\s\-()]{7,}$/.test(destination)) {
+    resolvedNumber = destination
+  }
+
+  if (!resolvedNumber) {
+    console.warn(`[Transfer] Could not resolve "${destination}" to a phone number`)
+    return {
+      transfer: false,
+      message: `I wasn't able to transfer you directly. Let me take a message and have someone from ${resolvedLabel} call you back as soon as possible. What would you like me to tell them?`,
+    }
+  }
+
+  const vapiDestination: any = {
+    type: 'number',
+    number: resolvedNumber,
+    message: `Transferring call. Reason: ${reason || 'Customer requested transfer'}`,
+  }
+  if (resolvedExtension) {
+    vapiDestination.extension = resolvedExtension
+  }
+
   if (callId && process.env.VAPI_API_KEY) {
     try {
-      // Use VAPI's transfer call API
       const response = await fetch(`https://api.vapi.ai/call/${callId}/transfer`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.VAPI_API_KEY}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          destination: {
-            type: 'number',
-            number: transferNumber,
-            message: `Transferring call. Reason: ${reason || 'Customer requested transfer'}`,
-          },
-        }),
+        body: JSON.stringify({ destination: vapiDestination }),
       })
 
       if (response.ok) {
-        // Log the transfer
         await supabase.from('communication_logs').insert({
           business_id: businessId,
           type: 'call',
           direction: 'outbound',
-          to_phone: transferNumber,
-          content: `Call transferred to ${destination}. Reason: ${reason}`,
+          to_phone: resolvedNumber,
+          content: `Call transferred to ${resolvedLabel}${resolvedExtension ? ` ext. ${resolvedExtension}` : ''}. Reason: ${reason}`,
           status: 'transferred',
-          metadata: { callId, destination, reason },
+          metadata: { callId, destination, resolvedNumber, resolvedExtension, reason },
           created_at: new Date().toISOString(),
         })
 
         return {
           transfer: true,
-          destination: transferNumber,
-          message: `I'm transferring you to ${destination} now. Please hold for just a moment.`,
+          destination: resolvedNumber,
+          message: `I'm transferring you to ${resolvedLabel} now. Please hold for just a moment.`,
         }
       }
 
@@ -1084,8 +1142,9 @@ async function handleTransferCall(params: any, businessId: string, callId?: stri
   // Fallback: return transfer intent for VAPI to handle via function response
   return {
     transfer: true,
-    destination: transferNumber,
-    message: `I'm transferring you to ${destination} now. Please hold for just a moment.`,
+    destination: resolvedNumber,
+    ...(resolvedExtension ? { extension: resolvedExtension } : {}),
+    message: `I'm transferring you to ${resolvedLabel} now. Please hold for just a moment.`,
   }
 }
 
@@ -1258,9 +1317,27 @@ async function handleAddToOrder(params: any, callId: string, employee: any) {
   const item = findMenuItem(menu, params.itemName)
 
   if (!item) {
+    // Accept unknown items (custom combos, special requests) rather than failing/looping.
+    // Store them as custom line items — the conversation captures all modifications.
+    const customPrice = params.unitPrice || 0
+    const customQty = params.quantity || 1
+    const customTotal = customPrice * customQty
+    items.push({
+      name: params.itemName,
+      quantity: customQty,
+      unitPrice: customPrice,
+      totalPrice: customTotal,
+      modifiers: [],
+      specialInstructions: params.specialInstructions || '',
+      isCustomItem: true,
+    })
+    subtotal += customTotal
+    await upsertActiveOrder(callId, employee.business_id, employee.id, { items, subtotal })
     return {
-      success: false,
-      message: `I couldn't find "${params.itemName}" on our menu. Could you try again?`,
+      success: true,
+      item: params.itemName,
+      quantity: customQty,
+      message: `Got it, added to your order. Anything else?`,
     }
   }
 
@@ -2490,13 +2567,100 @@ async function handleScoreLead(params: any, businessId: string, employeeId: stri
     created_at: new Date().toISOString(),
   })
 
-  // Hot leads get immediate owner notification
+  // Notify business owner for hot and warm leads
   if (params.tier === 'hot') {
     await notifyBusinessOwner(
       businessId,
       employeeId,
       `HOT LEAD: ${params.callerName} (${params.callerPhone}). Reason: ${params.reasoning}. Follow up immediately!`
     )
+  } else if (params.tier === 'warm') {
+    await notifyBusinessOwner(
+      businessId,
+      employeeId,
+      `WARM LEAD: ${params.callerName} (${params.callerPhone}). Interested but not ready yet — ${params.reasoning}. Good candidate for follow-up nurturing.`
+    )
+  }
+
+  // Rich email notifications for hot/warm leads
+  if (params.tier === 'hot' || params.tier === 'warm') {
+    const [ownerEmail, empData, bizData] = await Promise.all([
+      getOwnerEmail(businessId),
+      supabase.from('phone_employees').select('name').eq('id', employeeId).single(),
+      supabase.from('businesses').select('name').eq('id', businessId).single(),
+    ])
+
+    const employeeName = empData.data?.name || 'Your AI Employee'
+    const businessName = bizData.data?.name || 'Your Business'
+
+    if (ownerEmail) {
+      sendLeadScoreOwnerNotification({
+        ownerEmail,
+        businessName,
+        tier: params.tier as 'hot' | 'warm',
+        callerName: params.callerName,
+        callerPhone: params.callerPhone,
+        reasoning: params.reasoning,
+        employeeName,
+      }).catch(err => console.error('[handleScoreLead] owner email error:', err))
+    }
+
+    if (params.callerEmail) {
+      sendLeadFollowUpEmail({
+        toEmail: params.callerEmail,
+        leadName: params.callerName,
+        businessName,
+        employeeName,
+        tier: params.tier as 'hot' | 'warm',
+      }).catch(err => console.error('[handleScoreLead] lead follow-up email error:', err))
+    }
+  }
+
+  // Warm leads: graceful close + capture instruction
+  if (params.tier === 'warm') {
+    const { data: emp } = await supabase
+      .from('phone_employees')
+      .select('job_config')
+      .eq('id', employeeId)
+      .single()
+
+    const configuredWarmResponse = emp?.job_config?.warmLeadResponse || null
+    const firstName = params.callerName ? params.callerName.split(' ')[0] : null
+
+    const closingMessage = configuredWarmResponse
+      || `${firstName ? `${firstName}, ` : ''}I really appreciate you sharing that with me. It sounds like the timing isn't quite right today, but this could genuinely be a great fit for you down the road. I'll make sure our team has your info and reaches out when the moment is right — no pressure at all.`
+
+    return {
+      success: true,
+      tier: 'warm',
+      scored: true,
+      closing_message: closingMessage,
+      instruction: `Say the closing_message naturally. Then ask: "Before I let you go, is there anything else about what we offer that you'd like to know?" Answer any questions they have. Once they're done, wish them well and close the call warmly. Our team will follow up with them.`,
+    }
+  }
+
+  // Cold leads: fetch the configured cold response and return a personalized close
+  if (params.tier === 'cold') {
+    const { data: emp } = await supabase
+      .from('phone_employees')
+      .select('job_config')
+      .eq('id', employeeId)
+      .single()
+
+    const configuredColdResponse = emp?.job_config?.coldLeadResponse || null
+    const firstName = params.callerName ? params.callerName.split(' ')[0] : null
+    const reasoningContext = params.reasoning ? ` — ${params.reasoning}` : ''
+
+    const closingMessage = configuredColdResponse
+      || `I really appreciate you taking the time to chat with me today${firstName ? `, ${firstName}` : ''}. Based on what you've shared${reasoningContext}, it sounds like the timing isn't quite right for us right now, and I want to be upfront about that rather than waste your time. Things change, and we'd love to connect again when the situation is different.`
+
+    return {
+      success: true,
+      tier: 'cold',
+      scored: true,
+      closing_message: closingMessage,
+      instruction: `Say the closing_message naturally — you can adapt the wording slightly to fit the conversation, but keep the meaning intact. After delivering it, ask: "Before I let you go, is there anything about what we offer that you'd like to know more about?" If they have questions, answer them genuinely — they may become a good fit down the road. Once they're satisfied and ready to go, wish them well and close the call warmly. Do not abruptly hang up.`,
+    }
   }
 
   return {

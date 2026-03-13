@@ -497,6 +497,23 @@ export class EmployeeProvisioningService {
       systemPrompt += `\n\n## Live Caller Lookup\nAt the very start of every call, use the lookupCaller function with the caller's phone number to retrieve their account information. Use this data to personalize the conversation from the first word.`
     }
 
+    // Build native VAPI transferCall tool if destinations are configured
+    const transferDests: any[] = employee.job_config?.transferDestinations || []
+    const nativeTools: any[] = []
+    if (transferDests.length > 0) {
+      const vapiDestinations = transferDests
+        .filter((d: any) => d.phoneNumber)
+        .map((d: any) => ({
+          type: 'number',
+          number: d.phoneNumber,
+          message: `Please hold while I connect you to ${d.label || 'the team'}.`,
+          description: d.label || 'Transfer destination',
+        }))
+      if (vapiDestinations.length > 0) {
+        nativeTools.push({ type: 'transferCall', destinations: vapiDestinations })
+      }
+    }
+
     // Create VAPI assistant
     const response = await fetch('https://api.vapi.ai/assistant', {
       method: 'POST',
@@ -512,6 +529,7 @@ export class EmployeeProvisioningService {
           messages: [{ role: 'system', content: systemPrompt }],
           functions: functions,
         },
+        ...(nativeTools.length > 0 ? { tools: nativeTools } : {}),
         voice: {
           provider: '11labs',
           voiceId: employee.voice?.voiceId || 'aVR2rUXJY4MTezzJjPyQ',
@@ -786,6 +804,7 @@ export class EmployeeProvisioningService {
     voicemailDetection?: any
     maxDurationSeconds?: number
     backgroundSound?: string
+    tools?: any[]
   }> {
     let systemPrompt = this.generateSystemPrompt(employee, businessName)
     const functions = this.getFunctionsForJobType(employee.job_type, employee.capabilities)
@@ -800,6 +819,25 @@ export class EmployeeProvisioningService {
     if (employee.data_source) {
       functions.push(LOOKUP_CALLER_FUNCTION)
       systemPrompt += `\n\n## Live Caller Lookup\nAt the very start of every call, use the lookupCaller function with the caller's phone number to retrieve their account information. Use this data to personalize the conversation from the first word.`
+    }
+
+    // Build VAPI native transferCall tool from job_config.transferDestinations
+    // This replaces the custom server function — VAPI executes transfers natively
+    const tools: any[] = []
+    const transferDests: any[] = employee.job_config?.transferDestinations || []
+    if (transferDests.length > 0) {
+      const vapiDestinations = transferDests
+        .filter((d: any) => d.phoneNumber)
+        .map((d: any) => ({
+          type: 'number',
+          number: d.phoneNumber,
+          message: `Please hold while I connect you to ${d.label || 'the team'}.`,
+          description: d.label || 'Transfer destination',
+        }))
+
+      if (vapiDestinations.length > 0) {
+        tools.push({ type: 'transferCall', destinations: vapiDestinations })
+      }
     }
 
     // Use the employee's configured voice, falling back to defaults
@@ -830,8 +868,11 @@ export class EmployeeProvisioningService {
         provider: 'twilio',
         enabled: true,
       },
+      // Order takers need longer silence tolerance — callers frequently pause or say "hold on"
+      silenceTimeoutSeconds: employee.job_type === 'order-taker' ? 60 : 30,
       maxDurationSeconds: 1800,
       backgroundSound: 'off',
+      ...(tools.length > 0 ? { tools } : {}),
     }
   }
 

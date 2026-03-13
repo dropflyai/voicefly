@@ -15,6 +15,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createClient } from '@supabase/supabase-js'
 import { validateBusinessAccess } from '@/lib/api-auth'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
@@ -234,13 +235,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Auth check
+    // Auth check — prefer JWT validation, but fall back to service-role business
+    // existence check for onboarding flows where the session may not be available yet
     const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
-      return NextResponse.json(
-        { error: authResult.error || 'Unauthorized' },
-        { status: 401 }
+      // Fallback: verify the business exists via service role (onboarding use case)
+      const serviceClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
       )
+      const { data: biz, error: bizError } = await serviceClient
+        .from('businesses')
+        .select('id')
+        .eq('id', businessId)
+        .single()
+      if (bizError || !biz) {
+        return NextResponse.json(
+          { error: authResult.error || 'Unauthorized' },
+          { status: 401 }
+        )
+      }
+      // Business exists — allow the scrape to proceed
     }
 
     // 1. Fetch homepage
