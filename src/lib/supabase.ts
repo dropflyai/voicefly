@@ -211,31 +211,31 @@ export class BusinessAPI {
     // Validate UUID format to prevent database errors
     if (!validateBusinessId(businessId)) {
       console.error('Invalid business ID format:', businessId)
-      console.log('Expected UUID format like: 8424aa26-4fd5-4d4b-92aa-8a9c5ba77dad')
-      console.log('Please use proper authentication via localStorage or login system')
       return null
     }
 
-    // Ensure session is restored before querying (session restore is async)
-    await supabase.auth.getSession()
-
-    const { data, error } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('id', businessId)
-      .single()
-
-    if (error) {
-      console.error('Error fetching business:', error)
+    // Use the server-side API route (service role) to avoid RLS/session issues
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+      const res = await fetch(`/api/business?businessId=${businessId}`, { headers })
+      if (!res.ok) {
+        console.error('Error fetching business:', res.status)
+        return null
+      }
+      const json = await res.json()
+      const data = json.business
+      if (data && !data.subscription_tier) {
+        data.subscription_tier = 'professional'
+      }
+      return data
+    } catch (err) {
+      console.error('Error fetching business:', err)
       return null
     }
-
-    // Default subscription tier to professional if not set
-    if (data && !data.subscription_tier) {
-      data.subscription_tier = 'professional'
-    }
-
-    return data
   }
 
   static async getBusinessByEmail(email: string): Promise<Business | null> {
