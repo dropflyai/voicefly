@@ -181,7 +181,7 @@ export default function SettingsPage() {
       const { data: members } = await supabase
         .from('business_users')
         .select('id, user_id, role')
-        .eq('business_id', membership.business_id)
+        .eq('business_id', id)
       if (members) {
         // Get emails from auth — we can't query auth.users directly,
         // so we store what we have (user_id + role)

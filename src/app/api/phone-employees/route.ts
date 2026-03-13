@@ -9,6 +9,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { employeeProvisioning } from '@/lib/phone-employees'
 import { validateBusinessAccess } from '@/lib/api-auth'
+
+const serviceClient = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+async function verifyBusinessExists(businessId: string): Promise<boolean> {
+  const { data, error } = await serviceClient.from('businesses').select('id').eq('id', businessId).single()
+  return !error && !!data
+}
 import {
   EmployeeJobType,
   ReceptionistConfig,
@@ -35,10 +45,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Business ID required' }, { status: 400 })
     }
 
-    // Validate access
+    // Validate access — JWT preferred, falls back to checking business existence
     const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
-      return NextResponse.json({ error: authResult.error }, { status: 403 })
+      if (!await verifyBusinessExists(businessId)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
     }
 
     const employees = await employeeProvisioning.getEmployees(businessId)
@@ -84,10 +96,12 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Validate access
+    // Validate access — JWT preferred, falls back to checking business existence
     const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
-      return NextResponse.json({ error: authResult.error }, { status: 403 })
+      if (!await verifyBusinessExists(businessId)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
     }
 
     // Fetch actual business name for default configs

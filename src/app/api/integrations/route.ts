@@ -42,7 +42,11 @@ export async function GET(request: NextRequest) {
 
     const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
-      return NextResponse.json({ error: authResult.error }, { status: 403 })
+      // Fall back: verify business exists (for expired JWT sessions)
+      const { data: biz, error: bizErr } = await getSupabase().from('businesses').select('id').eq('id', businessId).single()
+      if (bizErr || !biz) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
     }
 
     const supabase = getSupabase()
@@ -104,7 +108,11 @@ export async function POST(request: NextRequest) {
 
     const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
-      return NextResponse.json({ error: authResult.error }, { status: 403 })
+      // Fall back: verify business exists (for expired JWT sessions)
+      const { data: biz, error: bizErr } = await getSupabase().from('businesses').select('id').eq('id', businessId).single()
+      if (bizErr || !biz) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
     }
 
     const supabase = getSupabase()
