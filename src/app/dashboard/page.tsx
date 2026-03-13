@@ -180,23 +180,21 @@ function DashboardPage() {
       }
       setBusiness(businessData)
 
-      // Fetch employees via API
+      // Fetch employees via API (business-existence fallback handles expired JWT)
       const headers = await getAuthHeaders()
       let employees: PhoneEmployee[] = []
 
-      if (headers) {
-        try {
-          const empRes = await fetch(
-            `/api/phone-employees?businessId=${businessId}`,
-            { headers }
-          )
-          if (empRes.ok) {
-            const empData = await empRes.json()
-            employees = empData.employees || []
-          }
-        } catch (e) {
-          console.error('Failed to fetch employees:', e)
+      try {
+        const empRes = await fetch(
+          `/api/phone-employees?businessId=${businessId}`,
+          { headers: headers || {} }
+        )
+        if (empRes.ok) {
+          const empData = await empRes.json()
+          employees = empData.employees || []
         }
+      } catch (e) {
+        console.error('Failed to fetch employees:', e)
       }
 
       setEmployeeCount(employees.length)
