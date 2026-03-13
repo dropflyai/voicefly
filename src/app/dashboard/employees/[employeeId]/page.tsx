@@ -21,6 +21,16 @@ import {
   MicrophoneIcon,
   SpeakerWaveIcon,
   SpeakerXMarkIcon,
+  PhoneIcon,
+  ChatBubbleLeftRightIcon,
+  Cog6ToothIcon,
+  ChartBarIcon,
+  ClockIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  PhoneArrowDownLeftIcon,
+  DocumentTextIcon,
+  ClipboardDocumentIcon,
 } from '@heroicons/react/24/outline'
 
 // ============================================
@@ -188,6 +198,18 @@ export default function EmployeeEditPage() {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveSuccess, setSaveSuccess] = useState(false)
 
+  // Hub tabs
+  const [activeTab, setActiveTab] = useState<'overview' | 'configure' | 'calls' | 'messages'>('overview')
+  const [calls, setCalls] = useState<any[]>([])
+  const [messages, setMessages] = useState<any[]>([])
+  const [integrations, setIntegrations] = useState<any[]>([])
+  const [callStats, setCallStats] = useState({ total: 0, today: 0, avgDuration: 0, missed: 0 })
+  const [configGaps, setConfigGaps] = useState<string[]>([])
+  const [testCallPhone, setTestCallPhone] = useState('')
+  const [testCallStatus, setTestCallStatus] = useState<'idle' | 'calling' | 'success' | 'error'>('idle')
+  const [expandedCallId, setExpandedCallId] = useState<string | null>(null)
+  const [copiedPhone, setCopiedPhone] = useState(false)
+
   // Training chat state
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
   const [chatInput, setChatInput] = useState('')
@@ -235,6 +257,19 @@ export default function EmployeeEditPage() {
     )
   }, [original, name, greeting, voiceId, tone, enthusiasm, formality, customInstructions, callHandlingRules, restrictions, businessDescription, timezone, businessHours, faqs, services, transferDestinations, qualifyingQuestions, hotLeadCriteria, hotLeadAction, hotLeadTransferNumber, discoveryCallLabel, warmLeadResponse, coldLeadResponse, disqualifyingAnswers, apptTypes, bookingRules, staffMembers, cancellationPolicy])
 
+  function detectConfigGaps(emp: any): string[] {
+    const jc = emp.jobConfig || {}
+    const gaps: string[] = []
+    if (!emp.phoneNumber) gaps.push('Phone number not assigned')
+    if (!jc.greeting) gaps.push('Custom greeting not set')
+    if (!jc.businessDescription) gaps.push('Business description missing')
+    if (!emp.schedule?.businessHours) gaps.push('Business hours not configured')
+    if (emp.jobType === 'receptionist' && (!jc.services || jc.services.length === 0)) gaps.push('No services listed')
+    if (emp.jobType === 'lead-qualifier' && (!jc.qualifyingQuestions || jc.qualifyingQuestions.length === 0)) gaps.push('No qualifying questions')
+    if (emp.jobType === 'appointment-scheduler' && (!jc.apptTypes || jc.apptTypes.length === 0)) gaps.push('No appointment types')
+    return gaps
+  }
+
   // ============================================
   // LOAD EMPLOYEE
   // ============================================
@@ -261,6 +296,35 @@ export default function EmployeeEditPage() {
         }
         setOriginal(emp)
         populateForm(emp)
+
+        // Config gaps
+        setConfigGaps(detectConfigGaps(emp))
+
+        // Fetch calls for this employee
+        const todayStart = new Date()
+        todayStart.setHours(0, 0, 0, 0)
+        const [callsRes, messagesRes] = await Promise.all([
+          supabase.from('employee_calls').select('*').eq('employee_id', employeeId).order('started_at', { ascending: false }).limit(50),
+          supabase.from('phone_messages').select('*').eq('business_id', businessId).order('created_at', { ascending: false }).limit(50),
+        ])
+        const empCalls = callsRes.data || []
+        setCalls(empCalls)
+        setMessages(messagesRes.data || [])
+        // Compute stats
+        const today = empCalls.filter((c: any) => new Date(c.started_at) >= todayStart).length
+        const durations = empCalls.filter((c: any) => c.duration).map((c: any) => c.duration as number)
+        const avgDuration = durations.length ? Math.round(durations.reduce((a: number, b: number) => a + b, 0) / durations.length) : 0
+        const missed = empCalls.filter((c: any) => c.status === 'missed' || c.status === 'no-answer').length
+        setCallStats({ total: empCalls.length, today, avgDuration, missed })
+
+        // Fetch integrations
+        try {
+          const intRes = await fetch(`/api/integrations?businessId=${businessId}`, { headers })
+          if (intRes.ok) {
+            const intData = await intRes.json()
+            setIntegrations(intData.integrations || [])
+          }
+        } catch { /* ignore */ }
 
         // Fetch subscription status for feature gating
         const { data: { session } } = await supabase.auth.getSession()
@@ -777,6 +841,30 @@ export default function EmployeeEditPage() {
             </div>
           </div>
 
+          {/* Tab Navigation */}
+          <div className="flex gap-1 mb-6 border-b border-gray-200">
+            {([
+              { id: 'overview', label: 'Overview', icon: ChartBarIcon },
+              { id: 'configure', label: 'Configure', icon: Cog6ToothIcon },
+              { id: 'calls', label: `Calls${callStats.total > 0 ? ` (${callStats.total})` : ''}`, icon: PhoneIcon },
+              { id: 'messages', label: `Messages${messages.length > 0 ? ` (${messages.length})` : ''}`, icon: ChatBubbleLeftRightIcon },
+            ] as const).map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {activeTab === 'configure' && (<>
           {/* Training Chat */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
@@ -1951,6 +2039,252 @@ export default function EmployeeEditPage() {
               </button>
             </div>
           </div>
+          </>)}
+
+          {/* OVERVIEW TAB */}
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              {/* Config Gaps */}
+              {configGaps.length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-amber-600 flex-shrink-0" />
+                    <h3 className="text-sm font-semibold text-amber-800">Setup incomplete — {configGaps.length} item{configGaps.length !== 1 ? 's' : ''} need attention</h3>
+                  </div>
+                  <ul className="space-y-1 ml-7">
+                    {configGaps.map(gap => (
+                      <li key={gap} className="text-sm text-amber-700 flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                        {gap}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => setActiveTab('configure')}
+                    className="mt-3 ml-7 text-xs font-medium text-amber-700 hover:text-amber-900 underline"
+                  >
+                    Go to Configure →
+                  </button>
+                </div>
+              )}
+              {configGaps.length === 0 && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-2">
+                  <CheckCircleIcon className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  <span className="text-sm text-green-800 font-medium">Employee fully configured and ready</span>
+                </div>
+              )}
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: 'Total Calls', value: callStats.total, icon: PhoneIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
+                  { label: 'Today', value: callStats.today, icon: PhoneArrowDownLeftIcon, color: 'text-green-600', bg: 'bg-green-50' },
+                  { label: 'Avg Duration', value: callStats.avgDuration > 0 ? `${callStats.avgDuration}s` : '—', icon: ClockIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
+                  { label: 'Missed', value: callStats.missed, icon: ExclamationTriangleIcon, color: 'text-red-600', bg: 'bg-red-50' },
+                ].map(stat => (
+                  <div key={stat.label} className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className={`inline-flex p-2 rounded-lg ${stat.bg} mb-2`}>
+                      <stat.icon className={`h-4 w-4 ${stat.color}`} />
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                    <div className="text-xs text-gray-500">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Test Call */}
+              {original.phoneNumber && (
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <PhoneIcon className="h-4 w-4 text-gray-500" />
+                    Test This Employee
+                  </h3>
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 flex items-center justify-between">
+                      <span className="text-sm font-mono text-gray-700">{original.phoneNumber}</span>
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(original.phoneNumber); setCopiedPhone(true); setTimeout(() => setCopiedPhone(false), 2000) }}
+                        className="ml-2 p-1 text-gray-400 hover:text-gray-600"
+                        title="Copy number"
+                      >
+                        {copiedPhone ? <CheckIcon className="h-4 w-4 text-green-500" /> : <ClipboardDocumentIcon className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    <a
+                      href={`tel:${original.phoneNumber}`}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <PhoneIcon className="h-4 w-4" />
+                      Call
+                    </a>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">Call this number from any phone to test {original.name}&apos;s responses</p>
+                </div>
+              )}
+
+              {/* Integrations */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-gray-900">Integrations</h3>
+                  <a href="/dashboard/integrations" className="text-xs text-blue-600 hover:text-blue-800">Manage →</a>
+                </div>
+                {integrations.length === 0 ? (
+                  <div className="text-sm text-gray-400 text-center py-4">No integrations connected</div>
+                ) : (
+                  <div className="space-y-2">
+                    {integrations.map((intg: any) => (
+                      <div key={intg.id} className="flex items-center justify-between py-1.5">
+                        <span className="text-sm text-gray-700 capitalize">{intg.platform?.replace(/-/g, ' ')}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          intg.status === 'connected' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                        }`}>{intg.status}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Recent Calls Preview */}
+              {calls.length > 0 && (
+                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-900">Recent Calls</h3>
+                    <button onClick={() => setActiveTab('calls')} className="text-xs text-blue-600 hover:text-blue-800">View all →</button>
+                  </div>
+                  <div className="space-y-2">
+                    {calls.slice(0, 3).map((call: any) => (
+                      <div key={call.call_id || call.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
+                        <div className="flex items-center gap-2">
+                          <PhoneArrowDownLeftIcon className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm text-gray-700">{call.customer_phone || 'Unknown'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {call.duration && <span className="text-xs text-gray-400">{call.duration}s</span>}
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            call.status === 'completed' ? 'bg-green-100 text-green-700' :
+                            call.status === 'missed' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-500'
+                          }`}>{call.status}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* CALLS TAB */}
+          {activeTab === 'calls' && (
+            <div className="space-y-3">
+              {calls.length === 0 ? (
+                <div className="text-center py-16">
+                  <PhoneIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">No calls recorded yet</p>
+                  <p className="text-gray-400 text-xs mt-1">Calls will appear here once {original.name} starts handling them</p>
+                </div>
+              ) : (
+                calls.map((call: any) => {
+                  const callId = call.call_id || call.id
+                  const isExpanded = expandedCallId === callId
+                  const duration = call.duration ? `${Math.floor(call.duration / 60)}m ${call.duration % 60}s` : null
+                  const startedAt = call.started_at ? new Date(call.started_at) : null
+                  return (
+                    <div key={callId} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                      <button
+                        onClick={() => setExpandedCallId(isExpanded ? null : callId)}
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <PhoneArrowDownLeftIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <div className="min-w-0 text-left">
+                            <div className="text-sm font-medium text-gray-900">{call.customer_phone || 'Unknown caller'}</div>
+                            <div className="text-xs text-gray-400">
+                              {startedAt ? startedAt.toLocaleString() : ''}{duration ? ` · ${duration}` : ''}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            call.status === 'completed' ? 'bg-green-100 text-green-700' :
+                            call.status === 'missed' || call.status === 'no-answer' ? 'bg-red-100 text-red-700' :
+                            call.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-500'
+                          }`}>{call.status || 'unknown'}</span>
+                          <ChevronDownIcon className={`h-4 w-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        </div>
+                      </button>
+                      {isExpanded && (
+                        <div className="px-4 pb-4 border-t border-gray-100">
+                          {call.summary && (
+                            <div className="mt-3">
+                              <div className="text-xs font-medium text-gray-500 mb-1">Summary</div>
+                              <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{call.summary}</p>
+                            </div>
+                          )}
+                          {call.transcript && (
+                            <div className="mt-3">
+                              <div className="text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
+                                <DocumentTextIcon className="h-3.5 w-3.5" />
+                                Transcript
+                              </div>
+                              <pre className="text-xs text-gray-600 bg-gray-50 rounded-lg p-3 overflow-auto max-h-60 whitespace-pre-wrap font-sans">{call.transcript}</pre>
+                            </div>
+                          )}
+                          {!call.summary && !call.transcript && (
+                            <p className="text-sm text-gray-400 mt-3 text-center">No transcript available for this call</p>
+                          )}
+                          {call.recording_url && (
+                            <div className="mt-3">
+                              <div className="text-xs font-medium text-gray-500 mb-1">Recording</div>
+                              <audio controls src={call.recording_url} className="w-full h-8" />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          )}
+
+          {/* MESSAGES TAB */}
+          {activeTab === 'messages' && (
+            <div className="space-y-3">
+              {messages.length === 0 ? (
+                <div className="text-center py-16">
+                  <ChatBubbleLeftRightIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 text-sm">No messages yet</p>
+                  <p className="text-gray-400 text-xs mt-1">SMS messages and voicemails will appear here</p>
+                </div>
+              ) : (
+                messages.map((msg: any) => (
+                  <div key={msg.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-gray-900">{msg.caller_name || msg.caller_phone || 'Unknown'}</span>
+                          {msg.urgency && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              msg.urgency === 'high' ? 'bg-red-100 text-red-700' :
+                              msg.urgency === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                              'bg-gray-100 text-gray-500'
+                            }`}>{msg.urgency}</span>
+                          )}
+                        </div>
+                        {msg.reason && <p className="text-xs text-gray-500 mb-1">{msg.reason}</p>}
+                        {msg.full_message && <p className="text-sm text-gray-700">{msg.full_message}</p>}
+                      </div>
+                      <div className="text-xs text-gray-400 flex-shrink-0">
+                        {msg.created_at ? new Date(msg.created_at).toLocaleDateString() : ''}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </Layout>
     </ProtectedRoute>
