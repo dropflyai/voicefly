@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { X, Send, Bot, CheckCircle, Circle, Mic, MicOff, Volume2, VolumeX } from 'lucide-react'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase-client'
 import ReactMarkdown from 'react-markdown'
 
 interface Message {
@@ -15,10 +15,6 @@ interface Message {
 
 type OnboardingStep = 1 | 2 | 3 | 'done'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 const ONBOARDING_STEPS = [
   { step: 1, label: 'Create employee' },

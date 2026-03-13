@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { supabase as _supabaseClient } from './supabase-client'
 import {
   Location, BusinessWithLocations, PaymentWithDetails, PaymentProcessor,
   LoyaltyProgram, CustomerLoyaltyPoints, LoyaltyTransaction,
@@ -12,7 +13,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Use the shared singleton to avoid multiple GoTrueClient instances
+export const supabase = _supabaseClient
 
 // Create admin client for operations that require elevated permissions
 const createAdminClient = () => {
