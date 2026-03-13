@@ -31,6 +31,9 @@ import {
   PhoneArrowDownLeftIcon,
   DocumentTextIcon,
   ClipboardDocumentIcon,
+  InformationCircleIcon,
+  ArrowPathIcon,
+  GlobeAltIcon,
 } from '@heroicons/react/24/outline'
 
 // ============================================
@@ -209,6 +212,9 @@ export default function EmployeeEditPage() {
   const [testCallStatus, setTestCallStatus] = useState<'idle' | 'calling' | 'success' | 'error'>('idle')
   const [expandedCallId, setExpandedCallId] = useState<string | null>(null)
   const [copiedPhone, setCopiedPhone] = useState(false)
+  const [rescrapeUrl, setRescrapeUrl] = useState('')
+  const [rescrapingWebsite, setRescrapingWebsite] = useState(false)
+  const [rescrapeMessage, setRescrapeMessage] = useState<{type: 'success'|'error', text: string} | null>(null)
 
   // Training chat state
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
@@ -815,6 +821,37 @@ export default function EmployeeEditPage() {
 
   const jobLabel = original.jobType?.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) || 'Employee'
 
+  async function handleRescrapeWebsite() {
+    if (!rescrapeUrl) return
+    setRescrapingWebsite(true)
+    setRescrapeMessage(null)
+    try {
+      const res = await fetch('/api/phone-employees/extract-from-website', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: rescrapeUrl, jobType: original.jobType, businessId }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Scrape failed')
+      const ex = data.extracted
+      const newMenuItems = ex.menu?.categories?.flatMap((c: any) =>
+        (c.items || []).map((i: any) => ({ name: i.name, price: i.price || 0, description: i.description || '' }))
+      )
+      setConfig((prev: any) => ({
+        ...prev,
+        businessDescription: ex.businessDescription || prev.businessDescription,
+        faqs: ex.faqs?.length ? ex.faqs : prev.faqs,
+        menuItems: newMenuItems?.length ? newMenuItems : (ex.services?.length ? ex.services.map((s: any) => ({ name: s.name, price: 0, description: s.description || '' })) : prev.menuItems),
+        services: ex.services?.length ? ex.services : prev.services,
+      }))
+      setRescrapeMessage({ type: 'success', text: `Scraped ${data.pagesScanned} pages — review the changes below and save.` })
+    } catch (err: any) {
+      setRescrapeMessage({ type: 'error', text: err.message })
+    } finally {
+      setRescrapingWebsite(false)
+    }
+  }
+
   return (
     <ProtectedRoute>
       <Layout>
@@ -865,6 +902,37 @@ export default function EmployeeEditPage() {
           </div>
 
           {activeTab === 'configure' && (<>
+          {/* Re-scrape website */}
+          <div className="mb-5 bg-white border border-gray-200 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <GlobeAltIcon className="h-4 w-4 text-gray-500" />
+              <h3 className="text-sm font-medium text-gray-700">Update from website</h3>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                value={rescrapeUrl}
+                onChange={e => setRescrapeUrl(e.target.value)}
+                placeholder="https://yourbusiness.com"
+                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                type="button"
+                onClick={handleRescrapeWebsite}
+                disabled={rescrapingWebsite || !rescrapeUrl}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg disabled:opacity-50 hover:bg-gray-700 transition-colors"
+              >
+                {rescrapingWebsite ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ArrowPathIcon className="h-4 w-4" />}
+                {rescrapingWebsite ? 'Scanning...' : 'Re-scrape'}
+              </button>
+            </div>
+            {rescrapeMessage && (
+              <p className={`mt-2 text-xs ${rescrapeMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+                {rescrapeMessage.type === 'success' ? '✓ ' : '✗ '}{rescrapeMessage.text}
+              </p>
+            )}
+          </div>
+
           {/* Training Chat */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
@@ -2252,6 +2320,12 @@ export default function EmployeeEditPage() {
           {/* MESSAGES TAB */}
           {activeTab === 'messages' && (
             <div className="space-y-3">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-start gap-2">
+                <InformationCircleIcon className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-blue-700">
+                  SMS messaging is pending carrier registration (A2P 10DLC) and will be active within 2–3 weeks. Voicemail messages will appear here immediately.
+                </p>
+              </div>
               {messages.length === 0 ? (
                 <div className="text-center py-16">
                   <ChatBubbleLeftRightIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
