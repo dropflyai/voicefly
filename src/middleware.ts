@@ -21,6 +21,8 @@ const PUBLIC_ROUTES = [
   '/privacy',
   '/testimonials',
   '/pricing',
+  '/dashboard/login',
+  '/onboarding',
 ]
 
 // API routes that do NOT require auth (webhooks, public APIs)
