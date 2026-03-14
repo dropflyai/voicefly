@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 
 /**
  * Next.js Middleware
@@ -63,50 +62,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // For dashboard routes, check for auth cookie/header
-  if (pathname.startsWith('/dashboard')) {
-    // Check for Supabase session cookie
-    const accessToken =
-      request.cookies.get('sb-access-token')?.value ||
-      request.cookies.get('supabase-auth-token')?.value
-
-    if (!accessToken) {
-      // No session cookie -- redirect to login
-      const loginUrl = new URL('/dashboard/login', request.url)
-      loginUrl.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(loginUrl)
-    }
-
-    // Validate the token with Supabase
-    try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-
-      if (supabaseUrl && supabaseServiceKey) {
-        const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-        // Parse token if it's JSON array format
-        let token = accessToken
-        try {
-          const parsed = JSON.parse(accessToken)
-          if (Array.isArray(parsed) && parsed[0]) token = parsed[0]
-        } catch {
-          // Not JSON, use as-is
-        }
-
-        const { data: { user }, error } = await supabase.auth.getUser(token)
-
-        if (error || !user) {
-          const loginUrl = new URL('/dashboard/login', request.url)
-          loginUrl.searchParams.set('redirect', pathname)
-          return NextResponse.redirect(loginUrl)
-        }
-      }
-    } catch {
-      // If token validation fails, let the page-level auth handle it
-      // This prevents middleware from blocking during Supabase outages
-    }
-  }
+  // Dashboard auth is handled client-side by each page via redirectToLoginIfUnauthenticated()
+  // Auth state lives in localStorage (not cookies) so middleware cannot inspect it.
 
   return NextResponse.next()
 }
