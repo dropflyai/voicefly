@@ -193,8 +193,7 @@ function DemoPageContent() {
       })
 
       vapi.on('error', (error: any) => {
-        console.error('VAPI demo error:', JSON.stringify(error, null, 2), error)
-        const msg = error?.message || error?.error?.message || error?.errorMsg || JSON.stringify(error) || 'Call error'
+        const msg = error?.error?.message?.[0] || error?.message || 'Call error'
         if (msg.toLowerCase().includes('microphone') || msg.toLowerCase().includes('notallowed') || msg.toLowerCase().includes('permission')) {
           setErrorMessage('Microphone access is required. Please allow microphone access and try again.')
         } else {
@@ -206,8 +205,7 @@ function DemoPageContent() {
 
       await vapi.start(industry.assistantId)
     } catch (err: any) {
-      console.error('Failed to start demo call:', JSON.stringify(err, null, 2), err)
-      setErrorMessage(err?.message || JSON.stringify(err) || 'Failed to connect. Please try again.')
+      setErrorMessage(err?.message || 'Failed to connect. Please try again.')
       setStatus('error')
     }
   }, [industry.assistantId])
