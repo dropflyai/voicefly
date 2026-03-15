@@ -1,5 +1,5 @@
 'use client'
-
+// v2
 import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Vapi from '@vapi-ai/web'
@@ -193,8 +193,7 @@ function DemoPageContent() {
       })
 
       vapi.on('error', (error: any) => {
-        console.error('VAPI demo error:', error)
-        const msg = error?.message || 'Call error'
+        const msg = error?.error?.message?.[0] || error?.message || 'Call error'
         if (msg.toLowerCase().includes('microphone') || msg.toLowerCase().includes('notallowed') || msg.toLowerCase().includes('permission')) {
           setErrorMessage('Microphone access is required. Please allow microphone access and try again.')
         } else {
@@ -206,7 +205,6 @@ function DemoPageContent() {
 
       await vapi.start(industry.assistantId)
     } catch (err: any) {
-      console.error('Failed to start demo call:', err)
       setErrorMessage(err?.message || 'Failed to connect. Please try again.')
       setStatus('error')
     }

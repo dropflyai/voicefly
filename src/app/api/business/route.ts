@@ -53,24 +53,22 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'updates object is required' }, { status: 400 })
   }
 
-  // Allowlist: only permit safe fields to be updated
+  // Allowlist: only permit safe business profile fields — never billing/tier/credits
   const ALLOWED_FIELDS = new Set([
-    'name', 'business_type', 'phone', 'address', 'website',
-    'hours', 'timezone', 'logo_url', 'description',
+    'name', 'phone', 'address', 'business_type', 'website', 'description',
+    'logo_url', 'timezone', 'onboarding_completed', 'ai_phone_number',
+    'vapi_assistant_id', 'hours_of_operation', 'updated_at',
   ])
-  const sanitizedUpdates: Record<string, any> = {}
-  for (const key of Object.keys(updates)) {
-    if (ALLOWED_FIELDS.has(key)) {
-      sanitizedUpdates[key] = updates[key]
-    }
-  }
-  if (Object.keys(sanitizedUpdates).length === 0) {
+  const safeUpdates = Object.fromEntries(
+    Object.entries(updates).filter(([key]) => ALLOWED_FIELDS.has(key))
+  )
+  if (Object.keys(safeUpdates).length === 0) {
     return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
   }
 
   const { error } = await serviceClient
     .from('businesses')
-    .update(sanitizedUpdates)
+    .update(safeUpdates)
     .eq('id', businessId)
 
   if (error) {

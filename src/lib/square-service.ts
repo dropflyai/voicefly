@@ -9,7 +9,7 @@
  * Order syncing uses direct fetch to Square REST API (not the squareup SDK).
  */
 
-import { Client, Environment } from 'square'
+import { SquareClient as Client, SquareEnvironment as Environment } from 'square'
 import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
 

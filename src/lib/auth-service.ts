@@ -195,14 +195,6 @@ export class AuthService {
       severity: 'low'
     })
 
-    // Log login event (legacy)
-    await supabase.rpc('log_user_action', {
-      p_business_id: primaryBusiness.id,
-      p_action: 'login',
-      p_entity_type: 'auth',
-      p_entity_name: 'User Login'
-    })
-
     return {
       user: {
         id: userId,
@@ -217,21 +209,6 @@ export class AuthService {
    * Logout current user
    */
   static async logout(): Promise<void> {
-    // Log logout event before clearing session
-    const businessId = localStorage.getItem('authenticated_business_id')
-    if (businessId) {
-      try {
-        await supabase.rpc('log_user_action', {
-          p_business_id: businessId,
-          p_action: 'logout',
-          p_entity_type: 'auth',
-          p_entity_name: 'User Logout'
-        })
-      } catch (err) {
-        console.error('Error logging logout:', err)
-      }
-    }
-
     const { error } = await supabase.auth.signOut()
     if (error) {
       console.error('Logout error:', error)
