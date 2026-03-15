@@ -26,6 +26,15 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Daily usage cap: max 100 requests per IP per day
+  const dailyLimitResult = await checkRateLimitUpstash(ip, 'daily')
+  if (!dailyLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Daily usage limit exceeded. Please try again tomorrow.' },
+      { status: 429, headers: { 'Retry-After': '86400' } }
+    )
+  }
+
   if (!ELEVENLABS_API_KEY) {
     return NextResponse.json(
       { error: 'ElevenLabs API key not configured' },
@@ -39,6 +48,14 @@ export async function POST(request: NextRequest) {
     if (!text || text.trim().length === 0) {
       return NextResponse.json(
         { error: 'Text is required' },
+        { status: 400 }
+      )
+    }
+
+    // Input length validation: reject text longer than 500 characters
+    if (text.length > 500) {
+      return NextResponse.json(
+        { error: 'Text too long. Maximum 500 characters allowed.' },
         { status: 400 }
       )
     }

@@ -297,40 +297,40 @@ export default function HomePage() {
               <span className="text-purple-600 text-sm font-medium mt-3 inline-flex items-center">Learn more <ArrowRight className="h-4 w-4 ml-1" /></span>
             </Link>
 
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-100">
+            <Link href="/solutions" className="group bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-100 hover:shadow-md transition-all">
               <div className="text-3xl mb-3">🦷</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Dental Practices</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Dental Practices</h3>
               <p className="text-sm text-gray-600">Handle appointment scheduling, insurance questions, and new patient inquiries automatically.</p>
-              <span className="text-blue-500 text-sm font-medium mt-3 inline-block">Coming soon</span>
-            </div>
+              <span className="text-blue-600 text-sm font-medium mt-3 inline-flex items-center">Learn more <ArrowRight className="h-4 w-4 ml-1" /></span>
+            </Link>
 
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100">
+            <Link href="/solutions" className="group bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-100 hover:shadow-md transition-all">
               <div className="text-3xl mb-3">🏠</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Home Services</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-green-600 transition-colors">Home Services</h3>
               <p className="text-sm text-gray-600">Capture leads for plumbers, electricians, HVAC, and cleaning services while you're on the job.</p>
-              <span className="text-green-500 text-sm font-medium mt-3 inline-block">Coming soon</span>
-            </div>
+              <span className="text-green-600 text-sm font-medium mt-3 inline-flex items-center">Learn more <ArrowRight className="h-4 w-4 ml-1" /></span>
+            </Link>
 
-            <div className="bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-6 border border-amber-100">
+            <Link href="/solutions" className="group bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl p-6 border border-amber-100 hover:shadow-md transition-all">
               <div className="text-3xl mb-3">⚖️</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Law Firms</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-amber-600 transition-colors">Law Firms</h3>
               <p className="text-sm text-gray-600">Screen potential clients, schedule consultations, and capture case details after hours.</p>
-              <span className="text-amber-500 text-sm font-medium mt-3 inline-block">Coming soon</span>
-            </div>
+              <span className="text-amber-600 text-sm font-medium mt-3 inline-flex items-center">Learn more <ArrowRight className="h-4 w-4 ml-1" /></span>
+            </Link>
 
-            <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-6 border border-red-100">
+            <Link href="/solutions" className="group bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-6 border border-red-100 hover:shadow-md transition-all">
               <div className="text-3xl mb-3">🏥</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Medical & Wellness</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-red-600 transition-colors">Medical & Wellness</h3>
               <p className="text-sm text-gray-600">Manage patient scheduling, answer common questions, and reduce front desk workload.</p>
-              <span className="text-red-500 text-sm font-medium mt-3 inline-block">Coming soon</span>
-            </div>
+              <span className="text-red-600 text-sm font-medium mt-3 inline-flex items-center">Learn more <ArrowRight className="h-4 w-4 ml-1" /></span>
+            </Link>
 
-            <div className="bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl p-6 border border-indigo-100">
+            <Link href="/solutions" className="group bg-gradient-to-br from-indigo-50 to-violet-50 rounded-xl p-6 border border-indigo-100 hover:shadow-md transition-all">
               <div className="text-3xl mb-3">🐾</div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Veterinary Clinics</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">Veterinary Clinics</h3>
               <p className="text-sm text-gray-600">Book pet appointments, handle prescription refill requests, and triage urgent calls.</p>
-              <span className="text-indigo-500 text-sm font-medium mt-3 inline-block">Coming soon</span>
-            </div>
+              <span className="text-indigo-600 text-sm font-medium mt-3 inline-flex items-center">Learn more <ArrowRight className="h-4 w-4 ml-1" /></span>
+            </Link>
           </div>
         </div>
       </section>
@@ -413,8 +413,8 @@ export default function HomePage() {
               <h4 className="font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li><Link href="/beauty" className="hover:text-white">For Salons & Spas</Link></li>
-                <li><span className="text-gray-600">Dental (Coming Soon)</span></li>
-                <li><span className="text-gray-600">Home Services (Coming Soon)</span></li>
+                <li><Link href="/solutions" className="hover:text-white">For Dental Practices</Link></li>
+                <li><Link href="/solutions" className="hover:text-white">For Home Services</Link></li>
                 <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
                 <li><Link href="/signup" className="hover:text-white">Start Trial</Link></li>
               </ul>
@@ -433,7 +433,7 @@ export default function HomePage() {
 
           <div className="border-t border-gray-800 pt-8">
             <p className="text-gray-400 text-sm text-center">
-              © 2025 VoiceFly. All rights reserved.
+              © 2026 VoiceFly. All rights reserved.
             </p>
           </div>
         </div>

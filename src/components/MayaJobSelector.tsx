@@ -79,7 +79,6 @@ export const MAYA_JOBS: MayaJob[] = [
     pricing: '$67-197/mo',
     features: ['Haircut booking', 'Shave scheduling', 'Beard trimming', 'Hot towel services']
   },
-  // Coming Soon Jobs
   {
     id: 'medical-scheduler',
     title: 'Medical Scheduler',
@@ -88,8 +87,7 @@ export const MAYA_JOBS: MayaJob[] = [
     businessTypes: ['Medical Practice', 'Clinic'],
     pricing: '$49-199/mo',
     features: ['Medical scheduling', 'Insurance verification', 'Follow-up booking', 'Referral coordination'],
-    premium: true,
-    comingSoon: true
+    premium: true
   },
   {
     id: 'dental-coordinator',
@@ -98,8 +96,7 @@ export const MAYA_JOBS: MayaJob[] = [
     description: 'Schedules cleanings, procedures, and dental care appointments',
     businessTypes: ['Dental Practice'],
     pricing: '$49-199/mo',
-    features: ['Cleaning booking', 'Procedure scheduling', 'Insurance handling', 'Reminder systems'],
-    comingSoon: true
+    features: ['Cleaning booking', 'Procedure scheduling', 'Insurance handling', 'Reminder systems']
   },
   {
     id: 'fitness-coordinator',
@@ -108,8 +105,7 @@ export const MAYA_JOBS: MayaJob[] = [
     description: 'Books classes, training sessions, and fitness consultations',
     businessTypes: ['Gym', 'Fitness Studio'],
     pricing: '$97-297/mo',
-    features: ['Class booking', 'Trainer scheduling', 'Membership sales', 'Trial coordination'],
-    comingSoon: true
+    features: ['Class booking', 'Trainer scheduling', 'Membership sales', 'Trial coordination']
   }
 ]
 

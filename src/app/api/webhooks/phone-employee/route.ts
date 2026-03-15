@@ -211,6 +211,16 @@ async function getOrCreateTrialEmployee(businessId: string): Promise<any | null>
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify webhook secret before any processing
+    const webhookSecret = process.env.VAPI_WEBHOOK_SECRET
+    if (webhookSecret) {
+      const incomingSecret = request.headers.get('x-vapi-secret')
+      if (incomingSecret !== webhookSecret) {
+        console.warn('[PhoneEmployeeWebhook] Invalid or missing x-vapi-secret header')
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+    }
+
     const body = await request.json()
     const { message } = body
 

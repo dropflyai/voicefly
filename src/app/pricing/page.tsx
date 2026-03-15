@@ -520,7 +520,7 @@ export default function PricingPage() {
 
           <div className="border-t border-gray-800 pt-8">
             <p className="text-gray-400 text-sm text-center">
-              © 2025 VoiceFly. All rights reserved.
+              © 2026 VoiceFly. All rights reserved.
             </p>
           </div>
         </div>

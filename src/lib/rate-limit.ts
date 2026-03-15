@@ -50,6 +50,12 @@ export const RateLimitTiers = {
     requests: 5,
     window: '1 m' as const,
     identifier: 'strict'
+  },
+  // Daily cap for expensive public endpoints (TTS, voice preview)
+  daily: {
+    requests: 100,
+    window: '1 d' as const,
+    identifier: 'daily'
   }
 } as const
 
@@ -89,6 +95,12 @@ const upstashLimiters = UPSTASH_CONFIGURED && redis ? {
     limiter: Ratelimit.slidingWindow(RateLimitTiers.strict.requests, RateLimitTiers.strict.window),
     analytics: true,
     prefix: 'voicefly:rl:strict'
+  }),
+  daily: new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(RateLimitTiers.daily.requests, RateLimitTiers.daily.window),
+    analytics: true,
+    prefix: 'voicefly:rl:daily'
   })
 } : null
 

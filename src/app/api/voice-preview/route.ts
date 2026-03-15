@@ -28,10 +28,24 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  // Daily usage cap: max 100 requests per IP per day
+  const dailyLimitResult = await checkRateLimitUpstash(ip, 'daily')
+  if (!dailyLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Daily usage limit exceeded. Please try again tomorrow.' },
+      { status: 429, headers: { 'Retry-After': '86400' } }
+    )
+  }
+
   const voiceId = request.nextUrl.searchParams.get('voiceId')
 
   if (!voiceId) {
     return NextResponse.json({ error: 'voiceId required' }, { status: 400 })
+  }
+
+  // Validate voiceId format (alphanumeric, typical ElevenLabs voice ID)
+  if (!/^[a-zA-Z0-9]{10,30}$/.test(voiceId)) {
+    return NextResponse.json({ error: 'Invalid voiceId format' }, { status: 400 })
   }
 
   // Return cached audio if available

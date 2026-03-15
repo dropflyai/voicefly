@@ -189,7 +189,8 @@ export default function WidgetPage() {
 
   const closeWidget = () => {
     sendSessionEnd(messagesRef.current)
-    window.parent.postMessage({ type: 'vf_widget_close' }, '*')
+    const targetOrigin = document.referrer ? new URL(document.referrer).origin : '*'
+    window.parent.postMessage({ type: 'vf_widget_close' }, targetOrigin)
   }
 
   if (configLoading) {

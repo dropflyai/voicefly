@@ -1,9 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getBrowserService, closeBrowserService } from '@/lib/browser-service'
+import { createClient } from '@supabase/supabase-js'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
+
+// Internal/private IP ranges that must be blocked to prevent SSRF
+const BLOCKED_IP_PATTERNS = [
+  /^127\./,                          // 127.0.0.0/8 loopback
+  /^10\./,                           // 10.0.0.0/8 private
+  /^172\.(1[6-9]|2[0-9]|3[0-1])\./, // 172.16.0.0/12 private
+  /^192\.168\./,                     // 192.168.0.0/16 private
+  /^169\.254\./,                     // 169.254.0.0/16 link-local
+  /^0\./,                            // 0.0.0.0/8
+  /^::1$/,                           // IPv6 loopback
+  /^fc00:/i,                         // IPv6 unique local
+  /^fe80:/i,                         // IPv6 link-local
+]
+
+const BLOCKED_HOSTNAMES = ['localhost', '0.0.0.0', '[::1]']
+
+function isBlockedUrl(urlString: string): boolean {
+  try {
+    const parsed = new URL(urlString)
+    const hostname = parsed.hostname.toLowerCase()
+
+    // Block known internal hostnames
+    if (BLOCKED_HOSTNAMES.includes(hostname)) {
+      return true
+    }
+
+    // Block internal IP ranges
+    for (const pattern of BLOCKED_IP_PATTERNS) {
+      if (pattern.test(hostname)) {
+        return true
+      }
+    }
+
+    return false
+  } catch {
+    // If URL cannot be parsed, block it
+    return true
+  }
+}
 
 interface BrowserResearchRequest {
   url?: string
@@ -16,6 +56,30 @@ interface BrowserResearchRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Authenticate: require a valid Supabase JWT
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Missing or invalid Authorization header' },
+        { status: 401 }
+      )
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
+    )
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized: invalid or expired token' },
+        { status: 401 }
+      )
+    }
+
     const body: BrowserResearchRequest = await request.json()
     const { url, query, mode, selectors, screenshot, businessId } = body
 
@@ -37,6 +101,12 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           )
         }
+        if (isBlockedUrl(url)) {
+          return NextResponse.json(
+            { error: 'URL targets a blocked internal address' },
+            { status: 403 }
+          )
+        }
         result = await browserService.navigateAndExtract(url, { screenshot })
         break
 
@@ -45,6 +115,12 @@ export async function POST(request: NextRequest) {
           return NextResponse.json(
             { error: 'URL and selectors are required for extract mode' },
             { status: 400 }
+          )
+        }
+        if (isBlockedUrl(url)) {
+          return NextResponse.json(
+            { error: 'URL targets a blocked internal address' },
+            { status: 403 }
           )
         }
         result = await browserService.extractStructuredData(url, selectors)

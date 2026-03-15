@@ -35,19 +35,22 @@ export async function POST(request: NextRequest) {
   const body = formData.get('Body') as string
   const messageSid = formData.get('MessageSid') as string
 
-  // Validate Twilio signature
+  // Validate Twilio signature (fail closed — reject if auth token is not configured)
   const authToken = process.env.TWILIO_AUTH_TOKEN
-  if (authToken && !authToken.startsWith('placeholder')) {
-    const twilioSignature = request.headers.get('x-twilio-signature') || ''
-    const url = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/sms`
-    const params: Record<string, string> = {}
-    formData.forEach((value, key) => { params[key] = value as string })
+  if (!authToken || authToken.startsWith('placeholder')) {
+    console.error('[SMS Webhook] TWILIO_AUTH_TOKEN is not configured — rejecting request')
+    return new NextResponse('Unauthorized', { status: 401 })
+  }
 
-    const isValid = twilio.validateRequest(authToken, twilioSignature, url, params)
-    if (!isValid) {
-      console.warn('[SMS Webhook] Invalid Twilio signature')
-      return new NextResponse('Forbidden', { status: 403 })
-    }
+  const twilioSignature = request.headers.get('x-twilio-signature') || ''
+  const url = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/sms`
+  const params: Record<string, string> = {}
+  formData.forEach((value, key) => { params[key] = value as string })
+
+  const isValid = twilio.validateRequest(authToken, twilioSignature, url, params)
+  if (!isValid) {
+    console.warn('[SMS Webhook] Invalid Twilio signature')
+    return new NextResponse('Forbidden', { status: 403 })
   }
 
   if (!from || !to || !body) {

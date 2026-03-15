@@ -24,16 +24,13 @@ export async function GET(req: NextRequest) {
       )
     }
 
-    // Validate authentication and business access — JWT preferred, falls back to business existence check
+    // Validate authentication and business access — JWT required
     const authResult = await validateBusinessAccess(req, businessId)
     if (!authResult.success) {
-      const { data: biz, error: bizErr } = await serviceClient.from('businesses').select('id').eq('id', businessId).single()
-      if (bizErr || !biz) {
-        return NextResponse.json(
-          { error: authResult.error || 'Unauthorized' },
-          { status: authResult.error === 'Access denied to this business' ? 403 : 401 }
-        )
-      }
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized' },
+        { status: authResult.error === 'Access denied to this business' ? 403 : 401 }
+      )
     }
 
     // Query balance directly with service role to bypass RLS

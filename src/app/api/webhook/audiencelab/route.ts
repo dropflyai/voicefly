@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { LeadFlyIntegration } from '@/lib/leadfly-integration'
+import crypto from 'crypto'
 
 // AudienceLab webhook endpoint
 // Receives leads from AudienceLab platform
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const rawBody = await request.text()
+    const body = JSON.parse(rawBody)
 
-    console.log('🎯 AudienceLab webhook received:', body)
+    console.log('AudienceLab webhook received:', body)
 
-    // Verify webhook authenticity (add your AudienceLab webhook secret)
-    const signature = request.headers.get('x-audiencelab-signature')
-    if (!verifyAudienceLabSignature(body, signature)) {
+    // Verify webhook authenticity
+    const signature = request.headers.get('x-webhook-signature')
+    if (!verifyAudienceLabSignature(rawBody, signature)) {
       return NextResponse.json(
         { error: 'Invalid webhook signature' },
         { status: 401 }
@@ -29,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log successful processing
-    console.log('✅ AudienceLab lead processed:', leadId)
+    console.log('AudienceLab lead processed:', leadId)
 
     return NextResponse.json({
       success: true,
@@ -46,21 +48,33 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function verifyAudienceLabSignature(body: any, signature: string | null): boolean {
-  // Implement AudienceLab signature verification
-  // For development, we'll skip verification
-  if (process.env.NODE_ENV === 'development') {
-    return true
-  }
-
-  // In production, verify the webhook signature
+function verifyAudienceLabSignature(rawBody: string, signature: string | null): boolean {
+  // Fail closed: if secret is not configured, reject all requests
   const webhookSecret = process.env.AUDIENCELAB_WEBHOOK_SECRET
-  if (!webhookSecret || !signature) {
+  if (!webhookSecret) {
+    console.error('AUDIENCELAB_WEBHOOK_SECRET is not set — rejecting webhook')
     return false
   }
 
-  // Add actual signature verification logic here
-  // Usually involves HMAC-SHA256 verification
+  if (!signature) {
+    return false
+  }
 
-  return true // Placeholder
+  // Compute HMAC-SHA256 of the raw body using the secret
+  const expectedSignature = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(rawBody)
+    .digest('hex')
+
+  // Use timing-safe comparison to prevent timing attacks
+  try {
+    const sigBuffer = Buffer.from(signature, 'hex')
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex')
+    if (sigBuffer.length !== expectedBuffer.length) {
+      return false
+    }
+    return crypto.timingSafeEqual(sigBuffer, expectedBuffer)
+  } catch {
+    return false
+  }
 }

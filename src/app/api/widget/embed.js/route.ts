@@ -147,8 +147,10 @@ export async function GET(request: NextRequest) {
     if (isOpen) { closeWidget(); } else { openWidget(); }
   }
 
-  // Listen for close messages from the iframe
+  // Listen for close messages from the iframe (validate origin)
   window.addEventListener('message', function(e) {
+    var widgetOrigin = new URL(WIDGET_URL).origin;
+    if (e.origin !== widgetOrigin) return;
     if (e.data && e.data.type === 'vf_widget_close') closeWidget();
   });
 

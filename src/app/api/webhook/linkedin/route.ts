@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { LeadFlyIntegration } from '@/lib/leadfly-integration'
+import crypto from 'crypto'
 
 // LinkedIn webhook endpoint
 // Receives leads from LinkedIn Sales Navigator, LinkedIn Ads, etc.
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    const rawBody = await request.text()
+    const body = JSON.parse(rawBody)
 
-    console.log('💼 LinkedIn webhook received:', body)
+    console.log('LinkedIn webhook received:', body)
 
     // Verify LinkedIn webhook authenticity
-    const signature = request.headers.get('x-linkedin-signature')
-    if (!verifyLinkedInSignature(body, signature)) {
+    const signature = request.headers.get('x-webhook-signature')
+    if (!verifyLinkedInSignature(rawBody, signature)) {
       return NextResponse.json(
         { error: 'Invalid webhook signature' },
         { status: 401 }
@@ -82,17 +84,33 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function verifyLinkedInSignature(body: any, signature: string | null): boolean {
-  // Implement LinkedIn signature verification
-  if (process.env.NODE_ENV === 'development') {
-    return true
-  }
-
+function verifyLinkedInSignature(rawBody: string, signature: string | null): boolean {
+  // Fail closed: if secret is not configured, reject all requests
   const webhookSecret = process.env.LINKEDIN_WEBHOOK_SECRET
-  if (!webhookSecret || !signature) {
+  if (!webhookSecret) {
+    console.error('LINKEDIN_WEBHOOK_SECRET is not set — rejecting webhook')
     return false
   }
 
-  // Add LinkedIn signature verification logic here
-  return true // Placeholder
+  if (!signature) {
+    return false
+  }
+
+  // Compute HMAC-SHA256 of the raw body using the secret
+  const expectedSignature = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(rawBody)
+    .digest('hex')
+
+  // Use timing-safe comparison to prevent timing attacks
+  try {
+    const sigBuffer = Buffer.from(signature, 'hex')
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex')
+    if (sigBuffer.length !== expectedBuffer.length) {
+      return false
+    }
+    return crypto.timingSafeEqual(sigBuffer, expectedBuffer)
+  } catch {
+    return false
+  }
 }

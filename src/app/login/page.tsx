@@ -371,7 +371,7 @@ export default function LoginPage() {
               </Link>
             </nav>
             <p className="text-gray-400 text-sm">
-              © 2025 VoiceFly. All rights reserved.
+              © 2026 VoiceFly. All rights reserved.
             </p>
           </div>
         </div>

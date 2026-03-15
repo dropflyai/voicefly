@@ -61,6 +61,50 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // For /api/ routes not in the public list, require authentication
+  if (pathname.startsWith('/api/')) {
+    const accessToken =
+      request.cookies.get('sb-access-token')?.value ||
+      request.cookies.get('supabase-auth-token')?.value ||
+      request.headers.get('Authorization')?.replace('Bearer ', '')
+
+    if (!accessToken) {
+      return NextResponse.json(
+        { error: 'Unauthorized', message: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    // Validate the token with Supabase
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+      if (supabaseUrl && supabaseServiceKey) {
+        const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+        let token = accessToken
+        try {
+          const parsed = JSON.parse(accessToken)
+          if (Array.isArray(parsed) && parsed[0]) token = parsed[0]
+        } catch {
+          // Not JSON, use as-is
+        }
+
+        const { data: { user }, error } = await supabase.auth.getUser(token)
+
+        if (error || !user) {
+          return NextResponse.json(
+            { error: 'Unauthorized', message: 'Invalid or expired token' },
+            { status: 401 }
+          )
+        }
+      }
+    } catch {
+      // If validation fails, let route-level auth handle it
+    }
+  }
+
   // For dashboard routes, check for auth cookie/header
   if (pathname.startsWith('/dashboard')) {
     // Check for Supabase session cookie

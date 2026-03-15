@@ -173,25 +173,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Business ID is required' }, { status: 400 })
     }
 
-    // Auth check — prefer JWT, fall back to service-role business existence check
-    // for onboarding flows where the session may not be available yet
+    // Auth check — JWT required
     const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
-      const serviceClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
+      return NextResponse.json(
+        { error: authResult.error || 'Unauthorized' },
+        { status: authResult.error === 'Access denied to this business' ? 403 : 401 }
       )
-      const { data: biz, error: bizError } = await serviceClient
-        .from('businesses')
-        .select('id')
-        .eq('id', businessId)
-        .single()
-      if (bizError || !biz) {
-        return NextResponse.json(
-          { error: authResult.error || 'Unauthorized' },
-          { status: authResult.error === 'Access denied to this business' ? 403 : 401 }
-        )
-      }
     }
 
     const {

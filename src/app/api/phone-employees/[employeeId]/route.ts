@@ -31,10 +31,7 @@ export async function GET(
 
     const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
-      const { data: biz, error: bizErr } = await supabase.from('businesses').select('id').eq('id', businessId).single()
-      if (bizErr || !biz) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const employee = await employeeProvisioning.getEmployee(employeeId, businessId)
@@ -65,10 +62,7 @@ export async function PATCH(
 
     const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
-      const { data: biz, error: bizErr } = await supabase.from('businesses').select('id').eq('id', businessId).single()
-      if (bizErr || !biz) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // If this is a widget-config-only update, handle it directly
@@ -162,10 +156,7 @@ export async function DELETE(
 
     const authResult = await validateBusinessAccess(request, businessId)
     if (!authResult.success) {
-      const { data: biz, error: bizErr } = await supabase.from('businesses').select('id').eq('id', businessId).single()
-      if (bizErr || !biz) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const success = await employeeProvisioning.deleteEmployee(employeeId, businessId)

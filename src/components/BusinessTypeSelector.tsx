@@ -34,8 +34,7 @@ export default function BusinessTypeSelector({ onBusinessTypeSelect, selectedTyp
       name: 'Medical Practice',
       description: 'Medical clinic, family practice, urgent care, specialist office',
       features: ['HIPAA-compliant scheduling', 'Insurance verification', 'Patient reminders', 'Emergency routing'],
-      available: false,
-      comingSoon: true
+      available: true
     },
     {
       type: 'dental_practice' as BusinessType,
@@ -43,8 +42,7 @@ export default function BusinessTypeSelector({ onBusinessTypeSelect, selectedTyp
       name: 'Dental Practice',
       description: 'Dental office, orthodontist, oral surgeon, hygienist clinic',
       features: ['Appointment scheduling', 'Insurance pre-auth', 'Treatment reminders', 'Emergency triage'],
-      available: false,
-      comingSoon: true
+      available: true
     },
     {
       type: 'home_services' as BusinessType,

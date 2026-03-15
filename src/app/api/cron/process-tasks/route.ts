@@ -6,7 +6,7 @@
  *
  * Protected by CRON_SECRET to prevent unauthorized access.
  *
- * GET /api/cron/process-tasks?secret=CRON_SECRET
+ * GET /api/cron/process-tasks  (Authorization: Bearer CRON_SECRET)
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -15,8 +15,9 @@ import { actionExecutor } from '@/lib/phone-employees/action-executor'
 import { campaignExecutor } from '@/lib/phone-employees/campaign-executor'
 
 export async function GET(request: NextRequest) {
-  // Verify cron secret
-  const secret = request.nextUrl.searchParams.get('secret')
+  // Verify cron secret via Authorization header
+  const authHeader = request.headers.get('authorization')
+  const secret = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
   const cronSecret = process.env.CRON_SECRET
 
   if (!cronSecret || secret !== cronSecret) {

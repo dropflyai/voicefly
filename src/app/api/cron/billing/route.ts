@@ -8,8 +8,8 @@
  *
  * Protected by CRON_SECRET to prevent unauthorized access.
  *
- * GET /api/cron/billing?secret=CRON_SECRET
- * GET /api/cron/billing?secret=CRON_SECRET&cycle=daily  (force daily cycle)
+ * GET /api/cron/billing  (Authorization: Bearer CRON_SECRET)
+ * GET /api/cron/billing?cycle=daily  (force daily cycle)
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -17,8 +17,9 @@ import { BillingAgent } from '@/lib/billing-agent'
 import { mayaPrime } from '@/lib/agents/maya-prime'
 
 export async function GET(request: NextRequest) {
-  // Verify cron secret
-  const secret = request.nextUrl.searchParams.get('secret')
+  // Verify cron secret via Authorization header
+  const authHeader = request.headers.get('authorization')
+  const secret = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
   const cronSecret = process.env.CRON_SECRET
 
   if (!cronSecret || secret !== cronSecret) {

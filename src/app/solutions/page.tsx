@@ -557,7 +557,7 @@ export default function SolutionsPage() {
 
           <div style={{ borderTop: '1px solid #374151', paddingTop: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', textAlign: 'center' }}>
             <p style={{ fontSize: '14px', color: '#9ca3af' }}>
-              © 2025 VoiceFly. All rights reserved.
+              © 2026 VoiceFly. All rights reserved.
             </p>
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '14px', color: '#9ca3af', flexWrap: 'wrap', justifyContent: 'center' }}>
               <span>SOC 2 Certified</span>

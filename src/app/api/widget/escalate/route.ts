@@ -19,6 +19,22 @@ const supabase = createClient(
 
 const VAPI_API_KEY = process.env.VAPI_API_KEY!
 
+// In-memory rate limit: max 3 escalation calls per token per hour
+const RATE_LIMIT_MAX = 3
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000 // 1 hour
+const rateLimitMap = new Map<string, number[]>()
+
+function checkRateLimit(token: string): boolean {
+  const now = Date.now()
+  const timestamps = rateLimitMap.get(token) ?? []
+  // Remove entries outside the window
+  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS)
+  rateLimitMap.set(token, recent)
+  if (recent.length >= RATE_LIMIT_MAX) return false
+  recent.push(now)
+  return true
+}
+
 export async function POST(request: NextRequest) {
   let body: any
   try {
@@ -31,6 +47,14 @@ export async function POST(request: NextRequest) {
 
   if (!token || !visitorPhone) {
     return NextResponse.json({ error: 'token and visitorPhone are required' }, { status: 400 })
+  }
+
+  // Rate limit: max 3 escalation calls per token per hour
+  if (!checkRateLimit(token)) {
+    return NextResponse.json(
+      { error: 'Too many escalation requests. Please try again later.' },
+      { status: 429 }
+    )
   }
 
   // Validate phone number format loosely

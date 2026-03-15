@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { validateBusinessAccess, checkRateLimit, rateLimitedResponse } from '@/lib/api-auth'
+import { validateBusinessAccess, validateAuth, checkRateLimit, rateLimitedResponse } from '@/lib/api-auth'
 import { testCallSchema, validate } from '@/lib/validations'
 
 const VAPI_API_KEY = process.env.VAPI_API_KEY!
@@ -200,6 +200,15 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    // Authenticate: require valid Supabase JWT
+    const authResult = await validateAuth(request)
+    if (!authResult.success || !authResult.user) {
+      return NextResponse.json(
+        { error: authResult.error || 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const callId = searchParams.get('callId')
 
@@ -209,11 +218,6 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       )
     }
-
-    // Note: We don't require full business auth here since:
-    // 1. callId is already a secure identifier (VAPI-generated UUID)
-    // 2. User can only check calls they initiated (they must have the callId)
-    // 3. No sensitive business data is exposed
 
     // Get call status from VAPI
     const vapiResponse = await fetch(`https://api.vapi.ai/call/${callId}`, {
