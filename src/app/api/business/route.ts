@@ -15,19 +15,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
   }
 
-  // Validate access — JWT preferred, falls back to checking business existence
   const authResult = await validateBusinessAccess(request, businessId)
   if (!authResult.success) {
-    // Fall back: verify business exists (for cases where Supabase session has expired
-    // but the user's localStorage auth is still valid)
-    const { data: biz, error } = await serviceClient
-      .from('businesses')
-      .select('id')
-      .eq('id', businessId)
-      .single()
-    if (error || !biz) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    return NextResponse.json({ error: authResult.error || 'Unauthorized' }, { status: 401 })
   }
 
   const { data, error } = await serviceClient
@@ -53,14 +43,7 @@ export async function PATCH(request: NextRequest) {
 
   const authResult = await validateBusinessAccess(request, businessId)
   if (!authResult.success) {
-    const { data: biz, error } = await serviceClient
-      .from('businesses')
-      .select('id')
-      .eq('id', businessId)
-      .single()
-    if (error || !biz) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    return NextResponse.json({ error: authResult.error || 'Unauthorized' }, { status: 401 })
   }
 
   const body = await request.json()
@@ -69,9 +52,22 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: 'updates object is required' }, { status: 400 })
   }
 
+  // Allowlist: only permit safe business profile fields — never billing/tier/credits
+  const ALLOWED_FIELDS = new Set([
+    'name', 'phone', 'address', 'business_type', 'website', 'description',
+    'logo_url', 'timezone', 'onboarding_completed', 'ai_phone_number',
+    'vapi_assistant_id', 'hours_of_operation', 'updated_at',
+  ])
+  const safeUpdates = Object.fromEntries(
+    Object.entries(updates).filter(([key]) => ALLOWED_FIELDS.has(key))
+  )
+  if (Object.keys(safeUpdates).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 })
+  }
+
   const { error } = await serviceClient
     .from('businesses')
-    .update(updates)
+    .update(safeUpdates)
     .eq('id', businessId)
 
   if (error) {

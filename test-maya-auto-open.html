@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Maya Auto-Open Testing Tool</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 24px;
+    }
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    button:hover {
+      background: #1d4ed8;
+    }
+    button.secondary {
+      background: #64748b;
+    }
+    button.secondary:hover {
+      background: #475569;
+    }
+    button.danger {
+      background: #dc2626;
+    }
+    button.danger:hover {
+      background: #b91c1c;
+    }
+    .status {
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    .status.info {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .status.warning {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .code {
+      background: #1a1a1a;
+      color: #0f0;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Maya Auto-Open Testing Tool</h1>
+    <p class="subtitle">Test the DashboardAssistant auto-open behavior in VoiceFly</p>
+
+    <h3>Current State</h3>
+    <div id="currentState"></div>
+
+    <h3>Actions</h3>
+    <button onclick="resetWelcome()">Reset Welcome Flag</button>
+    <button class="secondary" onclick="setWelcomeSeen()">Mark as Seen (Now)</button>
+    <button class="secondary" onclick="setWelcomeOld()">Set to 25 Hours Ago</button>
+    <button class="danger" onclick="clearAllMaya()">Clear All Maya Data</button>
+
+    <h3>Test Scenarios</h3>
+    <button onclick="testNewUser()">Simulate New User</button>
+    <button onclick="testReturning()">Simulate Returning User</button>
+    <button onclick="testOldReturning()">Simulate Old Returning (25h)</button>
+
+    <div id="output"></div>
+  </div>
+
+  <div class="card">
+    <h3>Manual Testing Steps</h3>
+    <ol>
+      <li>Click "Reset Welcome Flag" above</li>
+      <li>Make sure you have 0 phone employees (delete via Supabase or employees page)</li>
+      <li>Navigate to <code>/dashboard</code></li>
+      <li>Wait 3 seconds - Maya should auto-open</li>
+      <li>Close Maya and reload page - should NOT auto-open again</li>
+      <li>Click "Set to 25 Hours Ago" above</li>
+      <li>Reload <code>/dashboard</code> - should auto-open again</li>
+    </ol>
+
+    <h3>Browser Console Commands</h3>
+    <div class="code">
+// Check current state
+localStorage.getItem('maya_welcome_seen')
+
+// Reset (force auto-open on next visit)
+localStorage.removeItem('maya_welcome_seen')
+
+// Set to now (prevent auto-open)
+localStorage.setItem('maya_welcome_seen', new Date().toISOString())
+
+// Set to 25 hours ago (allow auto-open)
+const old = new Date(Date.now() - 25 * 60 * 60 * 1000)
+localStorage.setItem('maya_welcome_seen', old.toISOString())
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Expected Behavior</h3>
+    <ul>
+      <li><strong>New User (0 employees, no flag):</strong> Auto-opens after 3 seconds on /dashboard</li>
+      <li><strong>Returning User (&lt;24h):</strong> Does NOT auto-open</li>
+      <li><strong>Old Returning (&gt;24h, still 0 employees):</strong> Auto-opens again</li>
+      <li><strong>Has Employees:</strong> Never auto-opens (not on step 1)</li>
+      <li><strong>Other Pages:</strong> Never auto-opens (only /dashboard)</li>
+    </ul>
+  </div>
+
+  <script>
+    function updateState() {
+      const seen = localStorage.getItem('maya_welcome_seen')
+      const div = document.getElementById('currentState')
+
+      if (!seen) {
+        div.innerHTML = '<div class="status warning">Welcome flag: NOT SET (will auto-open)</div>'
+      } else {
+        const seenDate = new Date(seen)
+        const now = new Date()
+        const hoursAgo = (now - seenDate) / (1000 * 60 * 60)
+        const willOpen = hoursAgo >= 24
+
+        div.innerHTML = `
+          <div class="status ${willOpen ? 'warning' : 'info'}">
+            Welcome flag: SET<br>
+            Last seen: ${seenDate.toLocaleString()}<br>
+            Hours ago: ${hoursAgo.toFixed(1)}<br>
+            Will auto-open: ${willOpen ? 'YES (>24h)' : 'NO (<24h)'}
+          </div>
+        `
+      }
+    }
+
+    function log(message, type = 'info') {
+      const div = document.getElementById('output')
+      div.innerHTML = `<div class="status ${type}">${message}</div>`
+      updateState()
+    }
+
+    function resetWelcome() {
+      localStorage.removeItem('maya_welcome_seen')
+      log('✓ Welcome flag cleared - Maya will auto-open on next /dashboard visit', 'success')
+    }
+
+    function setWelcomeSeen() {
+      localStorage.setItem('maya_welcome_seen', new Date().toISOString())
+      log('✓ Welcome flag set to now - Maya will NOT auto-open for 24 hours', 'info')
+    }
+
+    function setWelcomeOld() {
+      const old = new Date(Date.now() - 25 * 60 * 60 * 1000)
+      localStorage.setItem('maya_welcome_seen', old.toISOString())
+      log('✓ Welcome flag set to 25 hours ago - Maya will auto-open', 'warning')
+    }
+
+    function clearAllMaya() {
+      const keys = Object.keys(localStorage).filter(k => k.includes('maya'))
+      keys.forEach(k => localStorage.removeItem(k))
+      log(`✓ Cleared ${keys.length} Maya-related keys`, 'success')
+    }
+
+    function testNewUser() {
+      resetWelcome()
+      log('New User Simulation:<br>1. Welcome flag cleared<br>2. Navigate to /dashboard<br>3. Wait 3 seconds<br>4. Maya should open automatically', 'info')
+    }
+
+    function testReturning() {
+      setWelcomeSeen()
+      log('Returning User Simulation:<br>1. Welcome flag set to now<br>2. Navigate to /dashboard<br>3. Maya should NOT open', 'info')
+    }
+
+    function testOldReturning() {
+      setWelcomeOld()
+      log('Old Returning User Simulation:<br>1. Welcome flag set to 25h ago<br>2. Navigate to /dashboard<br>3. Wait 3 seconds<br>4. Maya should open again', 'warning')
+    }
+
+    // Initial load
+    updateState()
+  </script>
+</body>
+</html>
