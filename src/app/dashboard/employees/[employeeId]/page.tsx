@@ -823,6 +823,8 @@ export default function EmployeeEditPage() {
 
   async function handleRescrapeWebsite() {
     if (!rescrapeUrl) return
+    const businessId = getSecureBusinessId()
+    if (!businessId) return
     setRescrapingWebsite(true)
     setRescrapeMessage(null)
     try {
@@ -834,16 +836,9 @@ export default function EmployeeEditPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Scrape failed')
       const ex = data.extracted
-      const newMenuItems = ex.menu?.categories?.flatMap((c: any) =>
-        (c.items || []).map((i: any) => ({ name: i.name, price: i.price || 0, description: i.description || '' }))
-      )
-      setConfig((prev: any) => ({
-        ...prev,
-        businessDescription: ex.businessDescription || prev.businessDescription,
-        faqs: ex.faqs?.length ? ex.faqs : prev.faqs,
-        menuItems: newMenuItems?.length ? newMenuItems : (ex.services?.length ? ex.services.map((s: any) => ({ name: s.name, price: 0, description: s.description || '' })) : prev.menuItems),
-        services: ex.services?.length ? ex.services : prev.services,
-      }))
+      if (ex.businessDescription) setBusinessDescription(ex.businessDescription)
+      if (ex.faqs?.length) setFaqs(ex.faqs)
+      if (ex.services?.length) setServices(ex.services)
       setRescrapeMessage({ type: 'success', text: `Scraped ${data.pagesScanned} pages — review the changes below and save.` })
     } catch (err: any) {
       setRescrapeMessage({ type: 'error', text: err.message })
