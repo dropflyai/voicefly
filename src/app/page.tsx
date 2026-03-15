@@ -28,6 +28,7 @@ export default function HomePage() {
             <nav className="hidden md:flex items-center space-x-8">
               <Link href="/" className="text-blue-600 font-medium">Home</Link>
               <Link href="/beauty" className="text-gray-700 hover:text-blue-600 font-medium">Industries</Link>
+              <Link href="/demo" className="text-gray-700 hover:text-blue-600 font-medium">Demo</Link>
               <Link href="/pricing" className="text-gray-700 hover:text-blue-600 font-medium">Pricing</Link>
               <Link href="/login" className="text-gray-700 hover:text-blue-600 font-medium">Sign In</Link>
               <Link
@@ -53,6 +54,7 @@ export default function HomePage() {
             <div className="md:hidden py-4 space-y-2 border-t border-gray-200">
               <Link href="/" className="block px-4 py-2 text-blue-600 font-medium rounded-lg hover:bg-blue-50" onClick={() => setMobileMenuOpen(false)}>Home</Link>
               <Link href="/beauty" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Industries</Link>
+              <Link href="/demo" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Demo</Link>
               <Link href="/pricing" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
               <Link href="/login" className="block px-4 py-2 text-gray-700 font-medium rounded-lg hover:bg-gray-50" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
               <Link
@@ -93,12 +95,12 @@ export default function HomePage() {
               >
                 Start 14-Day Free Trial <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
-              <button
-                onClick={handleTryDemo}
+              <Link
+                href="/demo"
                 className="border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg transition-colors"
               >
                 Try a Demo Call
-              </button>
+              </Link>
             </div>
 
             {/* Trust Badges */}
