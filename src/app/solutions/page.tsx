@@ -309,6 +309,32 @@ const industries: Industry[] = [
     roi: '10-14x within 3 months',
     avgTransaction: '$150-400',
     conversionRate: '74%'
+  },
+  {
+    id: 'nonprofit',
+    name: 'Nonprofits & Community Orgs',
+    icon: '🤝',
+    description: 'Nonprofit organizations, community centers, and social service agencies',
+    painPoints: [
+      'Missing calls from potential donors and grant partners',
+      'Volunteers can\'t reach you when they\'re ready to help',
+      'Parents and community members get voicemail during programs',
+      'After-hours inquiries about services go unanswered'
+    ],
+    solutions: [
+      'Maya answers every call with warmth — shares your mission, programs, and how to get involved',
+      'Captures donor and volunteer contact info automatically',
+      'Routes urgent calls to staff while handling routine inquiries',
+      'Provides program schedules, event details, and enrollment info 24/7'
+    ],
+    stats: {
+      missedCalls: '35%',
+      lostRevenue: '$25K+/year',
+      afterHours: '45%'
+    },
+    roi: '15-20x within 3 months',
+    avgTransaction: '$100-5,000 (donations)',
+    conversionRate: '70%'
   }
 ]
 

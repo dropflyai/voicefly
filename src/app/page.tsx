@@ -1,9 +1,12 @@
 "use client"
 
 import Link from 'next/link'
-import { Phone, CheckCircle, ArrowRight, Star, Clock, Calendar, Mic, Sparkles, Menu, X } from 'lucide-react'
+import { Phone, PhoneCall, CheckCircle, ArrowRight, Star, Clock, Calendar, Mic, Sparkles, Menu, X } from 'lucide-react'
 import { useState, useRef } from 'react'
 import AIChatbot, { AIChatbotRef } from '@/components/AIChatbot'
+
+const DEMO_PHONE = process.env.NEXT_PUBLIC_DEMO_PHONE || '+14248887754'
+const DEMO_PHONE_DISPLAY = DEMO_PHONE.replace(/^\+1(\d{3})(\d{3})(\d{4})$/, '($1) $2-$3')
 
 export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -95,12 +98,13 @@ export default function HomePage() {
               >
                 Start 14-Day Free Trial <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
-              <Link
-                href="/demo"
-                className="border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg transition-colors"
+              <a
+                href={`tel:${DEMO_PHONE}`}
+                className="border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center"
               >
-                Try a Demo Call
-              </Link>
+                <Phone className="h-5 w-5 mr-2" />
+                Call AI Demo: {DEMO_PHONE_DISPLAY}
+              </a>
             </div>
 
             {/* Trust Badges */}
@@ -117,6 +121,42 @@ export default function HomePage() {
                 <CheckCircle className="h-5 w-5 mr-2 text-green-600 flex-shrink-0" />
                 <span>Starting at $49/mo</span>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Call Our AI Right Now */}
+      <section className="py-12 bg-white">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="relative bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-8 sm:p-10 text-center shadow-2xl overflow-hidden">
+            {/* Decorative rings */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 border-4 border-white/10 rounded-full" />
+            <div className="absolute -bottom-8 -left-8 w-32 h-32 border-4 border-white/10 rounded-full" />
+
+            <div className="relative z-10">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-5 ring-4 ring-white/10">
+                <PhoneCall className="h-8 w-8 text-white animate-pulse" />
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
+                Hear Maya in Action
+              </h2>
+              <p className="text-blue-100 text-lg mb-6 max-w-xl mx-auto">
+                Call our AI receptionist right now and experience what your customers will hear. No signup needed.
+              </p>
+
+              <a
+                href={`tel:${DEMO_PHONE}`}
+                className="inline-flex items-center bg-white text-blue-700 hover:bg-blue-50 px-8 py-4 rounded-xl font-bold text-2xl sm:text-3xl tracking-wide transition-all transform hover:scale-105 shadow-lg"
+              >
+                <Phone className="h-7 w-7 mr-3 flex-shrink-0" />
+                {DEMO_PHONE_DISPLAY}
+              </a>
+
+              <p className="text-blue-200 text-sm mt-4">
+                Available 24/7 &middot; Try asking about appointments, pricing, or hours
+              </p>
             </div>
           </div>
         </div>
