@@ -26,7 +26,8 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 
 const PLAN_PRICES: Record<string, number> = {
   starter: 49,
-  pro: 199,
+  growth: 129,
+  pro: 249,
 }
 
 interface BillingInfo {
@@ -72,7 +73,7 @@ function BillingPageContent() {
     const subscribed = searchParams.get('subscribed')
     const plan = searchParams.get('plan')
     if (subscribed === 'true' && plan) {
-      setSuccess(`Welcome to VoiceFly ${plan === 'pro' ? 'Pro' : 'Starter'}! Your subscription is now active.`)
+      setSuccess(`Welcome to VoiceFly ${plan === 'pro' ? 'Pro' : plan === 'growth' ? 'Growth' : 'Starter'}! Your subscription is now active.`)
       setTimeout(() => setSuccess(null), 8000)
     }
 
@@ -214,8 +215,9 @@ function BillingPageContent() {
 
   const currentTier = business?.subscription_tier || 'starter'
   const isOnTrial = business?.subscription_status === 'trial'
-  const isPaidPlan = ['starter', 'pro'].includes(currentTier) && business?.subscription_status === 'active'
+  const isPaidPlan = ['starter', 'growth', 'pro'].includes(currentTier) && business?.subscription_status === 'active'
   const isStarter = currentTier === 'starter' && !isOnTrial && isPaidPlan
+  const isGrowth = currentTier === 'growth' && isPaidPlan
   const isPro = currentTier === 'pro' && isPaidPlan
   const canUpgrade = !isPro
 
@@ -299,7 +301,7 @@ function BillingPageContent() {
               <div>
                 <div className="flex items-center gap-3 mb-1">
                   <h3 className="text-2xl font-bold text-gray-900 capitalize">
-                    {isOnTrial ? 'Free Trial' : currentTier === 'pro' ? 'Pro' : 'Starter'}
+                    {isOnTrial ? 'Free Trial' : currentTier === 'pro' ? 'Pro' : currentTier === 'growth' ? 'Growth' : 'Starter'}
                   </h3>
                   <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
                     business?.subscription_status === 'active' ? 'bg-green-100 text-green-700' :
@@ -315,8 +317,9 @@ function BillingPageContent() {
                 </div>
                 <p className="text-sm text-gray-500">
                   {isOnTrial ? '10 free calls, shared phone number, basic AI receptionist'
-                    : currentTier === 'pro' ? '1,000 voice minutes/month, up to 5 AI employees, custom training & voice'
-                    : '100 voice minutes/month, dedicated number, Maya AI receptionist'}
+                    : currentTier === 'pro' ? '750 voice minutes/month, up to 5 AI employees, fully custom AI agent'
+                    : currentTier === 'growth' ? '250 voice minutes/month, up to 3 AI employees, custom greetings & routing'
+                    : '60 voice minutes/month, 1 AI employee, 24/7 call answering'}
                 </p>
               </div>
               <div className="text-right">
@@ -396,7 +399,7 @@ function BillingPageContent() {
               </h2>
             </div>
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {/* Trial / Free */}
                 <div className={`border-2 rounded-xl p-6 transition-colors ${
                   isOnTrial ? 'border-gray-300 bg-gray-50' : 'border-gray-200'
@@ -461,18 +464,56 @@ function BillingPageContent() {
                   )}
                 </div>
 
+                {/* Growth Plan */}
+                <div className={`border-2 rounded-xl p-6 transition-colors relative ${
+                  isGrowth ? 'border-blue-300 bg-blue-50' : 'border-blue-200 hover:border-blue-300'
+                }`}>
+                  <div className="absolute -top-3 left-6">
+                    <span className="bg-blue-600 text-white px-3 py-0.5 rounded-full text-xs font-medium">
+                      Most Popular
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">Growth</h3>
+                    <div className="text-2xl font-bold text-blue-600">$129<span className="text-sm font-normal text-gray-500">/mo</span></div>
+                  </div>
+                  <ul className="space-y-2 mb-6">
+                    {SUBSCRIPTION_PRODUCTS.growth.features.slice(0, 7).map((f, i) => (
+                      <li key={i} className="flex items-center text-sm text-gray-700">
+                        <SparklesIcon className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  {isGrowth ? (
+                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium bg-blue-100 text-blue-700">
+                      Current Plan
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleUpgrade('growth')}
+                      disabled={upgrading === 'growth'}
+                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                      {upgrading === 'growth' ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      ) : (
+                        <>
+                          {isStarter ? 'Upgrade to Growth' : 'Get Growth'}
+                          <ArrowRightIcon className="h-4 w-4 ml-2" />
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
+
                 {/* Pro Plan */}
                 <div className={`border-2 rounded-xl p-6 transition-colors relative ${
                   isPro ? 'border-indigo-300 bg-indigo-50' : 'border-indigo-200 hover:border-indigo-300'
                 }`}>
-                  <div className="absolute -top-3 left-6">
-                    <span className="bg-indigo-600 text-white px-3 py-0.5 rounded-full text-xs font-medium">
-                      Recommended
-                    </span>
-                  </div>
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-xl font-bold text-gray-900">Pro</h3>
-                    <div className="text-2xl font-bold text-indigo-600">$199<span className="text-sm font-normal text-gray-500">/mo</span></div>
+                    <div className="text-2xl font-bold text-indigo-600">$249<span className="text-sm font-normal text-gray-500">/mo</span></div>
                   </div>
                   <ul className="space-y-2 mb-6">
                     {SUBSCRIPTION_PRODUCTS.pro.features.slice(0, 7).map((f, i) => (

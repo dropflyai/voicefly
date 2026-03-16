@@ -11,8 +11,8 @@ import { StarIcon as CrownIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 
 interface PlanComparisonProps {
-  currentPlan?: 'starter' | 'professional' | 'business'
-  highlightPlan?: 'starter' | 'professional' | 'business'
+  currentPlan?: 'starter' | 'growth' | 'pro'
+  highlightPlan?: 'starter' | 'growth' | 'pro'
   onClose?: () => void
   showModal?: boolean
 }
@@ -20,77 +20,66 @@ interface PlanComparisonProps {
 interface PlanFeature {
   name: string
   starter: boolean | string
-  professional: boolean | string
-  business: boolean | string
-  category: 'core' | 'communication' | 'payment' | 'analytics' | 'business'
+  growth: boolean | string
+  pro: boolean | string
+  category: 'core' | 'communication' | 'customization' | 'analytics' | 'integrations'
 }
 
 const PLAN_FEATURES: PlanFeature[] = [
   // Core Features - AI Voice
-  { name: '24/7 AI Voice Assistant', starter: 'Shared AI', professional: 'Shared AI', business: 'CUSTOM AI', category: 'core' },
-  { name: 'Dedicated Phone Number', starter: true, professional: true, business: true, category: 'core' },
-  { name: 'Web Booking Widget', starter: true, professional: true, business: true, category: 'core' },
-  { name: 'Monthly Appointments', starter: 'Up to 200', professional: 'Unlimited', business: 'Unlimited', category: 'core' },
-  { name: 'Customer Database', starter: true, professional: true, business: true, category: 'core' },
-  
+  { name: 'Voice minutes/month', starter: '60', growth: '250', pro: '750', category: 'core' },
+  { name: 'AI employees', starter: '1', growth: 'Up to 3', pro: 'Up to 5', category: 'core' },
+  { name: '24/7 call answering', starter: true, growth: true, pro: true, category: 'core' },
+  { name: 'Appointment booking', starter: true, growth: true, pro: true, category: 'core' },
+  { name: 'Lead capture', starter: true, growth: true, pro: true, category: 'core' },
+  { name: 'Fully custom AI agent (dedicated)', starter: false, growth: false, pro: true, category: 'core' },
+  { name: 'Overage rate', starter: '$0.25/min', growth: '$0.20/min', pro: '$0.18/min', category: 'core' },
+
+  // Communication & Messaging
+  { name: 'SMS confirmations', starter: true, growth: true, pro: true, category: 'communication' },
+  { name: 'AI SMS conversations', starter: false, growth: false, pro: true, category: 'communication' },
+
+  // Customization
+  { name: 'Custom greeting', starter: false, growth: true, pro: true, category: 'customization' },
+  { name: 'Custom FAQ answers', starter: false, growth: true, pro: true, category: 'customization' },
+  { name: 'Custom call routing', starter: false, growth: true, pro: true, category: 'customization' },
+  { name: 'Custom voice selection', starter: false, growth: false, pro: true, category: 'customization' },
+  { name: 'Custom call scripts', starter: false, growth: false, pro: true, category: 'customization' },
+
   // Analytics & Reporting
-  { name: 'Analytics Dashboard', starter: false, professional: true, business: true, category: 'analytics' },
-  { name: 'Revenue Tracking', starter: false, professional: true, business: true, category: 'analytics' },
-  { name: 'Staff Performance', starter: false, professional: true, business: true, category: 'analytics' },
-  { name: 'Service Analytics', starter: false, professional: true, business: true, category: 'analytics' },
-  { name: 'Cross-Location Analytics', starter: false, professional: false, business: true, category: 'analytics' },
-  
-  // Communication & Marketing
-  { name: 'Basic SMS Confirmations', starter: true, professional: true, business: true, category: 'communication' },
-  { name: 'Automated 24hr Reminders', starter: false, professional: true, business: true, category: 'communication' },
-  { name: 'Email Marketing Campaigns', starter: false, professional: true, business: true, category: 'communication' },
-  { name: 'SMS Marketing Campaigns', starter: false, professional: true, business: true, category: 'communication' },
-  { name: 'Customer Segmentation', starter: false, professional: true, business: true, category: 'communication' },
-  
-  // Payment & Loyalty
-  { name: 'Square Payment Processing', starter: false, professional: true, business: true, category: 'payment' },
-  { name: 'Stripe Payment Processing', starter: false, professional: true, business: true, category: 'payment' },
-  { name: 'Loyalty Points Program', starter: false, professional: true, business: true, category: 'payment' },
-  { name: 'Tier-Based Rewards', starter: false, professional: true, business: true, category: 'payment' },
-  { name: 'Points Auto-Award', starter: false, professional: true, business: true, category: 'payment' },
-  
-  // Branding & Customization
-  { name: 'Custom Branding', starter: false, professional: true, business: true, category: 'business' },
-  { name: 'Logo Upload', starter: false, professional: true, business: true, category: 'business' },
-  { name: 'Color Customization', starter: false, professional: true, business: true, category: 'business' },
-  
-  // Multi-Location & Enterprise
-  { name: 'Business Locations', starter: '1 Location', professional: '1 Location', business: 'Up to 3', category: 'business' },
-  { name: 'White-Label Options', starter: false, professional: false, business: true, category: 'business' },
-  { name: 'Custom Domain Support', starter: false, professional: false, business: true, category: 'business' },
-  { name: 'API Access', starter: false, professional: false, business: true, category: 'business' },
-  { name: 'Priority Support', starter: false, professional: false, business: true, category: 'business' },
+  { name: 'Call analytics dashboard', starter: true, growth: true, pro: true, category: 'analytics' },
+  { name: 'Advanced analytics', starter: false, growth: true, pro: true, category: 'analytics' },
+
+  // Integrations & Support
+  { name: 'API access', starter: false, growth: false, pro: true, category: 'integrations' },
+  { name: 'CRM integration', starter: false, growth: false, pro: true, category: 'integrations' },
+  { name: 'Support', starter: 'Email', growth: 'Chat', pro: 'Priority', category: 'integrations' },
 ]
 
 const PLANS = {
   starter: {
-    name: 'AI Starter',
-    price: 67,
-    yearlyPrice: 57,
-    description: 'Never miss another booking with 24/7 AI',
+    name: 'Starter',
+    price: 49,
+    yearlyPrice: 42,
+    description: 'For businesses getting started with AI',
     color: 'gray',
     icon: SparklesIcon,
     popular: false
   },
-  professional: {
-    name: 'AI Professional', 
-    price: 147,
-    yearlyPrice: 125,
-    description: 'Grow smarter with AI, analytics & loyalty',
+  growth: {
+    name: 'Growth',
+    price: 129,
+    yearlyPrice: 109,
+    description: 'For growing businesses that need more',
     color: 'blue',
     icon: CrownIcon,
     popular: true
   },
-  business: {
-    name: 'AI Business',
-    price: 297,
-    yearlyPrice: 252,
-    description: 'Custom AI & multi-location management',
+  pro: {
+    name: 'Pro',
+    price: 249,
+    yearlyPrice: 212,
+    description: 'For busy businesses ready to scale',
     color: 'purple',
     icon: BuildingStorefrontIcon,
     popular: false
@@ -98,11 +87,11 @@ const PLANS = {
 }
 
 const FEATURE_CATEGORIES = {
-  core: '🎯 Core Features',
-  communication: '📧 Communication',
-  payment: '💳 Payments & Loyalty', 
-  analytics: '📊 Analytics & Reporting',
-  business: '🏢 Business & Integrations'
+  core: 'Core Features',
+  communication: 'Communication',
+  customization: 'Customization',
+  analytics: 'Analytics & Reporting',
+  integrations: 'Integrations & Support'
 }
 
 export default function PlanComparison({ 
@@ -300,10 +289,10 @@ export default function PlanComparison({
                     {renderFeatureValue(feature.starter, 'starter')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    {renderFeatureValue(feature.professional, 'professional')}
+                    {renderFeatureValue(feature.growth, 'growth')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    {renderFeatureValue(feature.business, 'business')}
+                    {renderFeatureValue(feature.pro, 'pro')}
                   </td>
                 </tr>
               ))}

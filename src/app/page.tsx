@@ -8,6 +8,10 @@ import AIChatbot, { AIChatbotRef } from '@/components/AIChatbot'
 const DEMO_PHONE = process.env.NEXT_PUBLIC_DEMO_PHONE || '+14248887754'
 const DEMO_PHONE_DISPLAY = DEMO_PHONE.replace(/^\+1(\d{3})(\d{3})(\d{4})$/, '($1) $2-$3')
 
+// Jordan — VoiceFly's lead qualifier AI
+const JORDAN_PHONE = '+19892997944'
+const JORDAN_PHONE_DISPLAY = '(989) 299-7944'
+
 export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const chatbotRef = useRef<AIChatbotRef>(null)
@@ -91,6 +95,23 @@ export default function HomePage() {
               questions -- so you can focus on running your business.
             </p>
 
+            {/* Jordan CTA — #1 conversion driver */}
+            <div className="mb-8">
+              <a
+                href={`tel:${JORDAN_PHONE}`}
+                className="inline-flex flex-col items-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-10 py-6 rounded-2xl font-semibold transition-all transform hover:scale-105 shadow-xl"
+              >
+                <span className="flex items-center text-xl sm:text-2xl mb-1">
+                  <PhoneCall className="h-6 w-6 mr-3 animate-pulse" />
+                  Call Our AI — Right Now
+                </span>
+                <span className="text-2xl sm:text-3xl font-bold tracking-wide">+1 {JORDAN_PHONE_DISPLAY}</span>
+              </a>
+              <p className="text-gray-500 text-sm mt-3">
+                Talk to Jordan, our AI lead qualifier. Available 7am &ndash; 9pm PT.
+              </p>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link
                 href="/signup"
@@ -103,7 +124,7 @@ export default function HomePage() {
                 className="border-2 border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600 px-8 py-4 rounded-lg font-semibold text-lg transition-colors flex items-center justify-center"
               >
                 <Phone className="h-5 w-5 mr-2" />
-                Call AI Demo: {DEMO_PHONE_DISPLAY}
+                Hear Maya Demo: {DEMO_PHONE_DISPLAY}
               </a>
             </div>
 
@@ -126,7 +147,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Call Our AI Right Now */}
+      {/* Call Jordan — Lead Qualifier */}
       <section className="py-12 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="relative bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-8 sm:p-10 text-center shadow-2xl overflow-hidden">
@@ -140,23 +161,35 @@ export default function HomePage() {
               </div>
 
               <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
-                Hear Maya in Action
+                Talk to Jordan — Our AI Lead Qualifier
               </h2>
               <p className="text-blue-100 text-lg mb-6 max-w-xl mx-auto">
-                Call our AI receptionist right now and experience what your customers will hear. No signup needed.
+                Call right now and see how VoiceFly qualifies leads, answers questions, and books meetings. No signup needed.
               </p>
 
               <a
-                href={`tel:${DEMO_PHONE}`}
+                href={`tel:${JORDAN_PHONE}`}
                 className="inline-flex items-center bg-white text-blue-700 hover:bg-blue-50 px-8 py-4 rounded-xl font-bold text-2xl sm:text-3xl tracking-wide transition-all transform hover:scale-105 shadow-lg"
               >
                 <Phone className="h-7 w-7 mr-3 flex-shrink-0" />
-                {DEMO_PHONE_DISPLAY}
+                +1 {JORDAN_PHONE_DISPLAY}
               </a>
 
               <p className="text-blue-200 text-sm mt-4">
-                Available 24/7 &middot; Try asking about appointments, pricing, or hours
+                Available 7am &ndash; 9pm PT &middot; Ask about pricing, demos, or how VoiceFly works
               </p>
+
+              {/* Secondary: Maya receptionist demo */}
+              <div className="mt-6 pt-5 border-t border-white/20">
+                <p className="text-blue-200 text-sm mb-2">Want to hear our AI receptionist instead?</p>
+                <a
+                  href={`tel:${DEMO_PHONE}`}
+                  className="inline-flex items-center text-white hover:text-blue-100 font-semibold text-lg transition-colors"
+                >
+                  <Phone className="h-5 w-5 mr-2 flex-shrink-0" />
+                  Call Maya: {DEMO_PHONE_DISPLAY}
+                </a>
+              </div>
             </div>
           </div>
         </div>

@@ -9,7 +9,7 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
   : Promise.resolve(null)
 
-export type PlanTier = 'starter' | 'professional' | 'business'
+export type PlanTier = 'starter' | 'growth' | 'pro'
 
 export interface PlanDetails {
   id: PlanTier
@@ -31,52 +31,57 @@ const PLANS: PlanDetails[] = [
   {
     id: 'starter',
     name: 'Starter',
-    price: 67,
-    yearlyPrice: 670,
-    description: 'Perfect for single-location businesses',
+    price: 49,
+    yearlyPrice: 504,
+    description: 'For businesses getting started with AI',
     features: [
-      '24/7 AI Voice Assistant',
-      'Smart Web Booking Widget', 
-      'Unlimited Appointments',
-      'SMS Text Confirmations',
-      'Customer Management',
-      'Single Location Support'
+      '60 minutes/month',
+      '1 AI employee',
+      '24/7 call answering',
+      'Appointment booking',
+      'Lead capture',
+      'SMS confirmations',
+      'Call analytics dashboard',
+      'Email support'
     ]
   },
   {
-    id: 'professional',
-    name: 'Professional',
-    price: 147,
-    yearlyPrice: 1470,
-    description: 'Advanced features for growing businesses',
+    id: 'growth',
+    name: 'Growth',
+    price: 129,
+    yearlyPrice: 1308,
+    description: 'For growing businesses that need more',
     features: [
-      'Everything in Starter',
-      'Advanced Analytics Dashboard',
-      'Payment Processing Integration',
-      'Email Marketing Campaigns',
-      'Custom Branding System',
-      'Loyalty Points Program',
-      'Automated Daily Reports'
+      '250 minutes/month',
+      'Up to 3 AI employees',
+      'Everything in Starter plus:',
+      'Custom greeting',
+      'Custom FAQ answers',
+      'Custom call routing',
+      'Advanced analytics',
+      'Chat support'
     ],
     popular: true,
     badge: 'Most Popular'
   },
   {
-    id: 'business',
-    name: 'Business',
-    price: 297,
-    yearlyPrice: 2970,
-    description: 'Enterprise features for multiple locations',
+    id: 'pro',
+    name: 'Pro',
+    price: 249,
+    yearlyPrice: 2544,
+    description: 'For busy businesses ready to scale',
     features: [
-      'Everything in Professional',
-      'Up to 3 Business Locations',
-      'Cross-Location Analytics',
-      'Custom AI Voice Assistant',
-      'Multi-Location Staff Management',
-      'White-Label Options',
-      'Priority Support'
-    ],
-    badge: 'Enterprise'
+      '750 minutes/month',
+      'Up to 5 AI employees',
+      'Everything in Growth plus:',
+      'Fully custom AI agent (dedicated)',
+      'AI SMS conversations',
+      'Custom voice selection',
+      'Custom call scripts',
+      'API access',
+      'CRM integration',
+      'Priority support'
+    ]
   }
 ]
 
@@ -348,7 +353,7 @@ function PlanCard({ plan, isYearly, selected, onSelect }: {
 }
 
 function PlanSelectorContent({ onPlanSelected, loading }: PlanSelectorProps) {
-  const [selectedPlan, setSelectedPlan] = useState<PlanTier>('professional')
+  const [selectedPlan, setSelectedPlan] = useState<PlanTier>('growth')
   const [isYearly, setIsYearly] = useState(false)
   const [showPayment, setShowPayment] = useState(false)
 

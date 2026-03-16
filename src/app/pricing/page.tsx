@@ -25,50 +25,79 @@ export default function PricingPage() {
       yearlyPrice: 42,
       description: 'Your AI employee answers calls, books appointments, and sends confirmations via text.',
       features: [
-        '100 AI voice minutes/month',
+        '60 AI voice minutes/month',
         '1 AI employee',
         '24/7 call answering',
         'Appointment booking',
         'Lead capture',
-        'SMS appointment confirmations',
+        'SMS confirmations',
         'Call analytics dashboard',
         'Email support'
       ],
       limitations: [
+        'Custom greeting',
+        'Custom call routing',
         'AI SMS conversations',
-        'Custom call scripts',
-        'Multiple AI employees',
-        'Priority support'
+        'CRM integration'
       ],
       cta: 'Start 14-Day Trial',
       popular: false,
-      overage: '$0.15/additional minute'
+      overage: '$0.25/additional minute'
+    },
+    {
+      id: 'growth',
+      name: 'Growth',
+      subtitle: 'For growing businesses that need more',
+      monthlyPrice: 129,
+      yearlyPrice: 109,
+      description: 'Everything in Starter plus custom greetings, FAQ answers, call routing, and advanced analytics.',
+      features: [
+        '250 AI voice minutes/month',
+        'Up to 3 AI employees',
+        '24/7 call answering',
+        'Appointment booking',
+        'Lead capture',
+        'SMS confirmations',
+        'Custom greeting',
+        'Custom FAQ answers',
+        'Custom call routing',
+        'Advanced analytics',
+        'Chat support'
+      ],
+      limitations: [
+        'AI SMS conversations',
+        'Custom voice selection',
+        'API access',
+        'CRM integration'
+      ],
+      cta: 'Start 14-Day Trial',
+      popular: true,
+      overage: '$0.20/additional minute'
     },
     {
       id: 'pro',
       name: 'Pro',
-      subtitle: 'For busy businesses ready to grow',
-      monthlyPrice: 199,
-      yearlyPrice: 169,
-      description: 'Everything in Starter plus AI-powered SMS conversations, custom scripts, and advanced analytics.',
+      subtitle: 'For busy businesses ready to scale',
+      monthlyPrice: 249,
+      yearlyPrice: 212,
+      description: 'Everything in Growth plus a fully custom AI agent, SMS conversations, API access, and CRM integration.',
       features: [
-        '1,000 AI voice minutes/month',
+        '750 AI voice minutes/month',
         'Up to 5 AI employees',
         '24/7 call answering',
-        'Appointment booking',
-        'Lead capture',
+        'Fully custom AI agent (dedicated, not shared)',
         'AI SMS conversations',
-        'SMS appointment reminders',
+        'Custom voice selection',
         'Custom call scripts',
-        'Advanced analytics dashboard',
-        'Voice customization',
         'API access',
+        'CRM integration',
+        'Advanced analytics',
         'Priority support'
       ],
       limitations: [],
       cta: 'Start 14-Day Trial',
-      popular: true,
-      overage: '$0.12/additional minute'
+      popular: false,
+      overage: '$0.18/additional minute'
     }
   ]
 
@@ -76,45 +105,46 @@ export default function PricingPage() {
     {
       category: 'AI Voice & Calls',
       items: [
-        { name: 'AI voice minutes per month', starter: '100', pro: '1,000' },
-        { name: 'AI employees included', starter: '1', pro: '5' },
-        { name: 'Overage pricing', starter: '$0.15/min', pro: '$0.12/min' },
-        { name: '24/7 call answering', starter: true, pro: true },
-        { name: 'Voice customization', starter: false, pro: true }
+        { name: 'AI voice minutes per month', starter: '60', growth: '250', pro: '750' },
+        { name: 'AI employees included', starter: '1', growth: '3', pro: '5' },
+        { name: 'Overage pricing', starter: '$0.25/min', growth: '$0.20/min', pro: '$0.18/min' },
+        { name: '24/7 call answering', starter: true, growth: true, pro: true },
+        { name: 'Custom voice selection', starter: false, growth: false, pro: true },
+        { name: 'Fully custom AI agent (dedicated)', starter: false, growth: false, pro: true }
       ]
     },
     {
       category: 'SMS & Messaging',
       items: [
-        { name: 'SMS appointment confirmations', starter: true, pro: true },
-        { name: 'SMS appointment reminders', starter: false, pro: true },
-        { name: 'AI SMS conversations', starter: false, pro: true },
-        { name: 'Book appointments via text', starter: false, pro: true }
+        { name: 'SMS confirmations', starter: true, growth: true, pro: true },
+        { name: 'AI SMS conversations', starter: false, growth: false, pro: true }
       ]
     },
     {
-      category: 'Booking & Clients',
+      category: 'Booking & Customization',
       items: [
-        { name: 'Appointment booking', starter: true, pro: true },
-        { name: 'Lead capture', starter: true, pro: true },
-        { name: 'Custom call scripts', starter: false, pro: true },
-        { name: 'Calendar integration', starter: true, pro: true }
+        { name: 'Appointment booking', starter: true, growth: true, pro: true },
+        { name: 'Lead capture', starter: true, growth: true, pro: true },
+        { name: 'Custom greeting', starter: false, growth: true, pro: true },
+        { name: 'Custom FAQ answers', starter: false, growth: true, pro: true },
+        { name: 'Custom call routing', starter: false, growth: true, pro: true },
+        { name: 'Custom call scripts', starter: false, growth: false, pro: true }
       ]
     },
     {
       category: 'Analytics & Integrations',
       items: [
-        { name: 'Call analytics dashboard', starter: true, pro: true },
-        { name: 'Advanced analytics', starter: false, pro: true },
-        { name: 'API access', starter: false, pro: true },
-        { name: 'Data export', starter: false, pro: true }
+        { name: 'Call analytics dashboard', starter: true, growth: true, pro: true },
+        { name: 'Advanced analytics', starter: false, growth: true, pro: true },
+        { name: 'API access', starter: false, growth: false, pro: true },
+        { name: 'CRM integration', starter: false, growth: false, pro: true }
       ]
     },
     {
       category: 'Support',
       items: [
-        { name: 'Support', starter: 'Email', pro: 'Priority' },
-        { name: 'Onboarding', starter: 'Self-service', pro: 'Guided setup' }
+        { name: 'Support', starter: 'Email', growth: 'Chat', pro: 'Priority' },
+        { name: 'Onboarding', starter: 'Self-service', growth: 'Self-service', pro: 'Guided setup' }
       ]
     }
   ]
@@ -126,7 +156,7 @@ export default function PricingPage() {
     },
     {
       question: "What happens if I exceed my monthly minutes?",
-      answer: "We'll notify you when you reach 80% of your minute allocation. Overage minutes are billed at $0.15/min (Starter) or $0.12/min (Pro)."
+      answer: "We'll notify you when you reach 80% of your minute allocation. Overage minutes are billed at $0.25/min (Starter), $0.20/min (Growth), or $0.18/min (Pro)."
     },
     {
       question: "How does the 14-day trial work?",
@@ -195,7 +225,7 @@ export default function PricingPage() {
           {/* Founding Offer */}
           <div className="inline-flex items-center bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-full text-sm font-medium mb-8">
             <Sparkles className="h-4 w-4 mr-2" />
-            Founding customer? Get 50% off for life.{' '}
+            Founding customer? Get up to 50% off for life.{' '}
             <Link href="/founding" className="underline ml-1 font-semibold">Learn more</Link>
           </div>
 
@@ -226,8 +256,8 @@ export default function PricingPage() {
 
       {/* Pricing Cards */}
       <section className="py-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {plans.map((plan) => (
               <div
                 key={plan.id}
@@ -239,7 +269,7 @@ export default function PricingPage() {
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                     <span className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-semibold flex items-center">
                       <Star className="h-4 w-4 mr-1" />
-                      BEST VALUE
+                      MOST POPULAR
                     </span>
                   </div>
                 )}
@@ -335,7 +365,7 @@ export default function PricingPage() {
 
       {/* Feature Comparison */}
       <section className="py-16 bg-gray-50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
               Compare Plans
@@ -345,7 +375,7 @@ export default function PricingPage() {
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-200">
             {/* Header Row */}
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3 border-b border-gray-200">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 <div className="font-bold text-gray-900">Features</div>
                 <div className="text-center">
                   <div className="font-bold text-gray-900">Starter</div>
@@ -354,9 +384,13 @@ export default function PricingPage() {
                 <div className="text-center">
                   <div className="font-bold text-blue-600 flex items-center justify-center">
                     <Star className="h-3 w-3 mr-1" />
-                    Pro
+                    Growth
                   </div>
-                  <div className="text-xs text-gray-600">${billingPeriod === 'yearly' ? '169' : '199'}/mo</div>
+                  <div className="text-xs text-gray-600">${billingPeriod === 'yearly' ? '109' : '129'}/mo</div>
+                </div>
+                <div className="text-center">
+                  <div className="font-bold text-gray-900">Pro</div>
+                  <div className="text-xs text-gray-600">${billingPeriod === 'yearly' ? '212' : '249'}/mo</div>
                 </div>
               </div>
             </div>
@@ -369,7 +403,7 @@ export default function PricingPage() {
                   </h3>
                 </div>
                 {category.items.map((item, itemIndex) => (
-                  <div key={itemIndex} className="grid grid-cols-3 gap-3 px-4 py-2 border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  <div key={itemIndex} className="grid grid-cols-4 gap-3 px-4 py-2 border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <div className="text-sm font-medium text-gray-900">{item.name}</div>
                     <div className="text-center">
                       {typeof item.starter === 'boolean' ? (
@@ -389,8 +423,8 @@ export default function PricingPage() {
                       )}
                     </div>
                     <div className="text-center">
-                      {typeof item.pro === 'boolean' ? (
-                        item.pro ? (
+                      {typeof item.growth === 'boolean' ? (
+                        item.growth ? (
                           <div className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full">
                             <CheckCircle className="h-4 w-4 text-blue-600" />
                           </div>
@@ -401,6 +435,23 @@ export default function PricingPage() {
                         )
                       ) : (
                         <div className="bg-blue-100 rounded px-2 py-1 text-xs font-medium text-blue-700">
+                          {item.growth}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-center">
+                      {typeof item.pro === 'boolean' ? (
+                        item.pro ? (
+                          <div className="inline-flex items-center justify-center w-6 h-6 bg-indigo-100 rounded-full">
+                            <CheckCircle className="h-4 w-4 text-indigo-600" />
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center justify-center w-6 h-6 bg-gray-100 rounded-full">
+                            <X className="h-4 w-4 text-gray-400" />
+                          </div>
+                        )
+                      ) : (
+                        <div className="bg-indigo-100 rounded px-2 py-1 text-xs font-medium text-indigo-700">
                           {item.pro}
                         </div>
                       )}
@@ -412,7 +463,7 @@ export default function PricingPage() {
 
             {/* Bottom CTA Row */}
             <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-4 py-3">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-4 gap-3">
                 <div></div>
                 <div className="text-center">
                   <Link href="/signup" className="inline-block w-full bg-gray-200 text-gray-900 py-2 px-3 rounded-lg text-sm font-semibold hover:bg-gray-300 transition-colors">
@@ -421,6 +472,11 @@ export default function PricingPage() {
                 </div>
                 <div className="text-center">
                   <Link href="/signup" className="inline-block w-full bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors">
+                    Start Trial
+                  </Link>
+                </div>
+                <div className="text-center">
+                  <Link href="/signup" className="inline-block w-full bg-indigo-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors">
                     Start Trial
                   </Link>
                 </div>

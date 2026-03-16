@@ -7,35 +7,53 @@ const Stripe = require('stripe');
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// Subscription Products
+// Subscription Products (Monthly)
 const subscriptionProducts = [
   {
     name: 'VoiceFly Starter',
-    description: '200 voice minutes per month. Perfect for small businesses getting started with AI voice.',
-    price_cents: 9700, // $97
+    description: '60 voice minutes per month. 1 AI employee. Perfect for small businesses getting started.',
+    price_cents: 4900, // $49
     interval: 'month',
-    metadata: { tier: 'starter', minutes: '200', overage_per_minute: '0.45' }
+    metadata: { tier: 'starter', minutes: '60', overage_per_minute: '0.25', ai_employees: '1' }
   },
   {
     name: 'VoiceFly Growth',
-    description: '500 voice minutes per month. For growing businesses ready to scale.',
-    price_cents: 19700, // $197
+    description: '250 voice minutes per month. Up to 3 AI employees. For growing businesses ready to scale.',
+    price_cents: 12900, // $129
     interval: 'month',
-    metadata: { tier: 'growth', minutes: '500', overage_per_minute: '0.38' }
+    metadata: { tier: 'growth', minutes: '250', overage_per_minute: '0.20', ai_employees: '3' }
   },
   {
     name: 'VoiceFly Pro',
-    description: '1,200 voice minutes per month. Multi-location support for expanding businesses.',
-    price_cents: 29700, // $297
+    description: '750 voice minutes per month. Up to 5 AI employees. Full-scale AI workforce.',
+    price_cents: 24900, // $249
     interval: 'month',
-    metadata: { tier: 'pro', minutes: '1200', overage_per_minute: '0.28' }
+    metadata: { tier: 'pro', minutes: '750', overage_per_minute: '0.18', ai_employees: '5' }
+  }
+];
+
+// Subscription Products (Yearly)
+const yearlySubscriptionProducts = [
+  {
+    name: 'VoiceFly Starter (Annual)',
+    description: '60 voice minutes per month. 1 AI employee. Billed annually — save vs monthly.',
+    price_cents: 50400, // $504/year ($42/mo)
+    interval: 'year',
+    metadata: { tier: 'starter_yearly', minutes: '60', overage_per_minute: '0.25', ai_employees: '1', monthly_equivalent: '42' }
   },
   {
-    name: 'VoiceFly Scale',
-    description: '2,500 voice minutes per month. Enterprise-ready with unlimited locations.',
-    price_cents: 49700, // $497
-    interval: 'month',
-    metadata: { tier: 'scale', minutes: '2500', overage_per_minute: '0.22' }
+    name: 'VoiceFly Growth (Annual)',
+    description: '250 voice minutes per month. Up to 3 AI employees. Billed annually — save vs monthly.',
+    price_cents: 130800, // $1,308/year ($109/mo)
+    interval: 'year',
+    metadata: { tier: 'growth_yearly', minutes: '250', overage_per_minute: '0.20', ai_employees: '3', monthly_equivalent: '109' }
+  },
+  {
+    name: 'VoiceFly Pro (Annual)',
+    description: '750 voice minutes per month. Up to 5 AI employees. Billed annually — save vs monthly.',
+    price_cents: 254400, // $2,544/year ($212/mo)
+    interval: 'year',
+    metadata: { tier: 'pro_yearly', minutes: '750', overage_per_minute: '0.18', ai_employees: '5', monthly_equivalent: '212' }
   }
 ];
 
@@ -72,6 +90,7 @@ async function createProducts() {
 
   const results = {
     subscriptions: [],
+    yearlySubscriptions: [],
     minutePacks: []
   };
 
@@ -101,6 +120,42 @@ async function createProducts() {
       console.log(`   💰 Created price: $${sub.price_cents / 100}/mo (${price.id})\n`);
 
       results.subscriptions.push({
+        tier: sub.metadata.tier,
+        product_id: product.id,
+        price_id: price.id,
+        price: sub.price_cents / 100
+      });
+    } catch (error) {
+      console.error(`❌ Error creating ${sub.name}:`, error.message);
+    }
+  }
+
+  // Create Yearly Subscription Products
+  console.log('📦 Creating Yearly Subscription Products...\n');
+
+  for (const sub of yearlySubscriptionProducts) {
+    try {
+      // Create product
+      const product = await stripe.products.create({
+        name: sub.name,
+        description: sub.description,
+        metadata: sub.metadata
+      });
+
+      console.log(`✅ Created product: ${product.name} (${product.id})`);
+
+      // Create price
+      const price = await stripe.prices.create({
+        product: product.id,
+        unit_amount: sub.price_cents,
+        currency: 'usd',
+        recurring: { interval: sub.interval },
+        metadata: sub.metadata
+      });
+
+      console.log(`   💰 Created price: $${sub.price_cents / 100}/yr ($${sub.metadata.monthly_equivalent}/mo) (${price.id})\n`);
+
+      results.yearlySubscriptions.push({
         tier: sub.metadata.tier,
         product_id: product.id,
         price_id: price.id,
@@ -151,8 +206,13 @@ async function createProducts() {
   console.log('📋 SETUP COMPLETE - Add these to your .env file:');
   console.log('='.repeat(60) + '\n');
 
-  console.log('# Subscription Price IDs');
+  console.log('# Monthly Subscription Price IDs');
   for (const sub of results.subscriptions) {
+    console.log(`STRIPE_PRICE_${sub.tier.toUpperCase()}=${sub.price_id}`);
+  }
+
+  console.log('\n# Yearly Subscription Price IDs');
+  for (const sub of results.yearlySubscriptions) {
     console.log(`STRIPE_PRICE_${sub.tier.toUpperCase()}=${sub.price_id}`);
   }
 

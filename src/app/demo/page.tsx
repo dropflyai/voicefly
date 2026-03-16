@@ -85,6 +85,21 @@ const INDUSTRIES = {
     description: 'Maxwell screens potential clients, gathers case info, and schedules consultations.',
     examples: ['Car accident case', 'Divorce inquiry', 'Free consultation'],
   },
+  nonprofit: {
+    id: 'nonprofit',
+    label: 'Nonprofit',
+    assistantId: process.env.NEXT_PUBLIC_DEMO_ASSISTANT_NONPROFIT || '1142c85b-3e64-4ccb-b776-ab5515056834',
+    persona: 'Maya',
+    tagline: 'AI Community Coordinator',
+    color: 'emerald',
+    bgClass: 'from-emerald-50 to-green-50',
+    accentClass: 'bg-emerald-600 hover:bg-emerald-700',
+    ringClass: 'ring-emerald-500',
+    badgeClass: 'bg-emerald-100 text-emerald-700',
+    emoji: '🤝',
+    description: 'See how Maya handles donor calls, volunteer signups, program inquiries, and event questions for a community nonprofit.',
+    examples: ['Donate to the program', 'Sign up to volunteer', 'Youth program inquiry'],
+  },
 }
 
 type IndustryKey = keyof typeof INDUSTRIES

@@ -30,40 +30,39 @@ export const getPlanFeatures = (tier: string) => {
       'Try Before You Buy'
     ],
     starter: [
-      '200 Voice Minutes/mo',
-      '24/7 AI Voice Assistant',
-      'Unlimited Bookings',
-      'Customer Portal',
-      'Basic Analytics',
+      '60 Voice Minutes/mo',
+      '1 AI employee',
+      '24/7 Call Answering',
+      'Appointment Booking',
+      'Lead Capture',
+      'SMS Confirmations',
+      'Call Analytics Dashboard',
       'Email Support',
-      '$0.45/min overage'
+      '$0.25/min overage'
     ],
     growth: [
-      '500 Voice Minutes/mo',
-      'Everything in Starter',
-      'Payment Processing',
-      'SMS Notifications',
+      '250 Voice Minutes/mo',
+      'Up to 3 AI employees',
+      'Everything in Starter plus:',
+      'Custom Greeting',
+      'Custom FAQ Answers',
+      'Custom Call Routing',
       'Advanced Analytics',
-      'Priority Support',
-      '$0.38/min overage'
+      'Chat Support',
+      '$0.20/min overage'
     ],
     pro: [
-      '1,200 Voice Minutes/mo',
-      'Everything in Growth',
-      'Multi-Location (3 locations)',
-      'Staff Management',
-      'Custom Integrations',
-      'Phone Support',
-      '$0.28/min overage'
-    ],
-    scale: [
-      '2,500 Voice Minutes/mo',
-      'Everything in Pro',
-      'Unlimited Locations',
-      'White-Label Options',
-      'Dedicated Account Manager',
-      '24/7 Phone Support',
-      '$0.22/min overage'
+      '750 Voice Minutes/mo',
+      'Up to 5 AI employees',
+      'Everything in Growth plus:',
+      'Fully Custom AI Agent (dedicated)',
+      'AI SMS Conversations',
+      'Custom Voice Selection',
+      'Custom Call Scripts',
+      'API Access',
+      'CRM Integration',
+      'Priority Support',
+      '$0.18/min overage'
     ]
   }
 
@@ -73,40 +72,22 @@ export const getPlanFeatures = (tier: string) => {
 export const getUpgradeROI = (currentTier: string, targetTier: string) => {
   const roi = {
     'starter-growth': {
-      revenue_increase: '25-40%',
-      features: ['2.5x more voice minutes', 'Payment processing reduces friction', 'SMS notifications'],
+      revenue_increase: '30-50%',
+      features: ['4x more voice minutes', 'Up to 3 AI employees', 'Custom greetings & routing'],
       payback_period: '2-3 months',
-      minutes_increase: '+300 minutes'
+      minutes_increase: '+190 minutes'
     },
     'starter-pro': {
-      revenue_increase: '40-70%',
-      features: ['6x more voice minutes', 'Multi-location support', 'Staff management'],
+      revenue_increase: '50-80%',
+      features: ['12.5x more voice minutes', 'Fully custom AI agent', 'API & CRM integration'],
       payback_period: '3-4 months',
-      minutes_increase: '+1,000 minutes'
-    },
-    'starter-scale': {
-      revenue_increase: '70-120%',
-      features: ['12.5x more voice minutes', 'Unlimited locations', 'Dedicated support'],
-      payback_period: '4-5 months',
-      minutes_increase: '+2,300 minutes'
+      minutes_increase: '+690 minutes'
     },
     'growth-pro': {
-      revenue_increase: '20-35%',
-      features: ['2.4x more voice minutes', 'Multi-location scaling', 'Advanced integrations'],
+      revenue_increase: '25-40%',
+      features: ['3x more voice minutes', 'Fully custom AI agent', 'AI SMS conversations & CRM'],
       payback_period: '2-3 months',
-      minutes_increase: '+700 minutes'
-    },
-    'growth-scale': {
-      revenue_increase: '40-60%',
-      features: ['5x more voice minutes', 'Unlimited locations', 'White-label options'],
-      payback_period: '3-4 months',
-      minutes_increase: '+2,000 minutes'
-    },
-    'pro-scale': {
-      revenue_increase: '20-30%',
-      features: ['2x more voice minutes', 'Unlimited locations', 'Dedicated account manager'],
-      payback_period: '2-3 months',
-      minutes_increase: '+1,300 minutes'
+      minutes_increase: '+500 minutes'
     }
   }
 
