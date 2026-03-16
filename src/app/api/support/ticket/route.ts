@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { validateBusinessAccess } from '@/lib/api-auth'
+import { sendEmail } from '@/lib/gmail'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -66,8 +67,42 @@ export async function POST(req: NextRequest) {
       }).catch(err => console.error('[Support] n8n webhook error:', err))
     }
 
-    // Also send email notification if configured
-    console.log(`[Support] New ticket from ${business?.name}: ${summary}`)
+    // Send email notification to Tony
+    try {
+      const conversationHtml = (conversation || [])
+        .map((msg: { role: string; content: string }) =>
+          `<p><strong>${msg.role === 'user' ? 'Customer' : 'Maya (AI)'}:</strong> ${msg.content}</p>`
+        )
+        .join('')
+
+      const dashboardUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://voiceflyai.com'}/admin`
+
+      await sendEmail({
+        to: 'tony@dropfly.io',
+        from: 'support@voiceflyai.com',
+        subject: `[VoiceFly Support] New ticket from ${business?.name || 'Unknown'}`,
+        body: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #1a1a1a; border-bottom: 2px solid #2563eb; padding-bottom: 8px;">New Support Ticket</h2>
+            <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+              <tr><td style="padding: 8px 0; color: #666; width: 130px;">Business:</td><td style="padding: 8px 0; font-weight: bold;">${business?.name || 'Unknown'}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">Plan:</td><td style="padding: 8px 0;">${business?.subscription_tier || 'starter'}</td></tr>
+              <tr><td style="padding: 8px 0; color: #666;">User Email:</td><td style="padding: 8px 0;">${userEmail || 'Not provided'}</td></tr>
+            </table>
+            <h3 style="color: #1a1a1a;">Summary</h3>
+            <p style="background: #f3f4f6; padding: 12px; border-radius: 6px;">${summary}</p>
+            ${conversationHtml ? `<h3 style="color: #1a1a1a;">Conversation</h3><div style="background: #f9fafb; padding: 12px; border-radius: 6px; font-size: 14px;">${conversationHtml}</div>` : ''}
+            <p style="margin-top: 24px;">
+              <a href="${dashboardUrl}" style="background: #2563eb; color: #fff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold;">View in Dashboard</a>
+            </p>
+          </div>
+        `,
+      })
+      console.log(`[Support] Email notification sent for ticket from ${business?.name}`)
+    } catch (emailError: any) {
+      // Don't fail the ticket creation if email fails
+      console.error('[Support] Email notification failed:', emailError.message)
+    }
 
     return NextResponse.json({
       success: true,
