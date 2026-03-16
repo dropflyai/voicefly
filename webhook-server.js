@@ -10,6 +10,35 @@ const { createClient } = require('@supabase/supabase-js');
 const axios = require('axios');
 require('dotenv').config();
 
+// Gmail + Post-Call Email Integration
+let sendPostCallEmail = null;
+try {
+    const { sendEmail } = require('./lib/gmail-send');
+    const { generatePostCallEmail } = require('./lib/post-call-emails');
+
+    sendPostCallEmail = async (params) => {
+        const emailContent = generatePostCallEmail(params);
+        if (!emailContent) {
+            console.log(`📧 No email for ${params.tier} lead: ${params.callerName}`);
+            return null;
+        }
+        console.log(`📧 Sending ${params.tier} lead follow-up email to ${params.callerEmail}`);
+        const result = await sendEmail({
+            to: params.callerEmail,
+            subject: emailContent.subject,
+            body: emailContent.html,
+            textBody: emailContent.text,
+            from: 'tony@voiceflyai.com',
+            replyTo: 'tony@voiceflyai.com',
+        });
+        console.log(`✅ Post-call email sent: ${result.messageId}`);
+        return result;
+    };
+    console.log('📧 Gmail + post-call email modules loaded');
+} catch (err) {
+    console.warn('⚠️  Email integration not available:', err.message);
+}
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -321,7 +350,32 @@ async function handleToolCall(toolCall, businessId) {
             case 'reschedule_appointment':
                 result = await rescheduleAppointment(fn.arguments, businessId);
                 break;
-                
+
+            // === LEAD QUALIFIER FUNCTIONS (Jordan) ===
+            case 'qualifyLead':
+                result = await handleQualifyLead(fn.arguments, businessId);
+                break;
+
+            case 'scoreLead':
+                result = await handleScoreLead(fn.arguments, businessId);
+                break;
+
+            case 'bookDiscoveryCall':
+                result = await handleBookDiscoveryCall(fn.arguments, businessId);
+                break;
+
+            case 'captureLeadInfo':
+                result = await handleCaptureLeadInfo(fn.arguments, businessId);
+                break;
+
+            case 'transferCall':
+                result = await handleTransferCall(fn.arguments, businessId);
+                break;
+
+            case 'scheduleCallback':
+                result = await handleScheduleCallback(fn.arguments, businessId);
+                break;
+
             default:
                 result = { error: `Unknown function: ${fn.name}` };
         }
@@ -849,6 +903,296 @@ async function rescheduleAppointment(args, businessId) {
         return {
             success: false,
             message: "I'm having trouble rescheduling your appointment right now. Please call back or speak with our staff."
+        };
+    }
+}
+
+// ============================================
+// LEAD QUALIFIER FUNCTIONS (Jordan)
+// ============================================
+
+// In-memory store for lead data during a call session
+// Key: callerPhone, Value: accumulated lead info
+const activeLeadSessions = new Map();
+
+async function handleQualifyLead(args, businessId) {
+    try {
+        console.log('📋 QUALIFY LEAD:', {
+            businessId,
+            callerName: args.callerName,
+            callerPhone: args.callerPhone,
+            interest: args.interest,
+        });
+
+        // Store lead info in session for later use by scoreLead
+        const sessionKey = args.callerPhone || `lead_${Date.now()}`;
+        activeLeadSessions.set(sessionKey, {
+            ...args,
+            businessId,
+            qualifiedAt: new Date().toISOString(),
+        });
+
+        // Store in database
+        const { data: lead, error } = await supabase
+            .from('leads')
+            .upsert({
+                business_id: businessId,
+                first_name: args.callerName?.split(' ')[0] || 'Unknown',
+                last_name: args.callerName?.split(' ').slice(1).join(' ') || '',
+                phone: args.callerPhone,
+                email: args.callerEmail || null,
+                company: args.callerCompany || null,
+                source: 'voice_ai',
+                notes: [
+                    `Interest: ${args.interest || 'Not specified'}`,
+                    `Timeline: ${args.timeline || 'Not discussed'}`,
+                    `Budget: ${args.budgetRange || 'Not discussed'}`,
+                    `Decision Maker: ${args.isDecisionMaker !== undefined ? (args.isDecisionMaker ? 'Yes' : 'No') : 'Unknown'}`,
+                    args.additionalNotes ? `Notes: ${args.additionalNotes}` : '',
+                ].filter(Boolean).join('\n'),
+                updated_at: new Date().toISOString(),
+            }, {
+                onConflict: 'business_id,phone',
+                ignoreDuplicates: false,
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('❌ Error storing lead:', error);
+            // Don't fail the call flow -- just log
+        }
+
+        return {
+            success: true,
+            message: `Lead information recorded for ${args.callerName}.`,
+            leadId: lead?.id || null,
+        };
+    } catch (error) {
+        console.error('❌ qualifyLead error:', error);
+        return {
+            success: true,
+            message: 'Lead information noted.',
+        };
+    }
+}
+
+async function handleScoreLead(args, businessId) {
+    try {
+        const tier = (args.tier || 'cold').toLowerCase();
+        console.log(`🎯 SCORE LEAD [${tier.toUpperCase()}]:`, {
+            businessId,
+            callerName: args.callerName,
+            reasoning: args.reasoning,
+        });
+
+        // Get session data if available
+        const sessionKey = args.callerPhone || '';
+        const sessionData = activeLeadSessions.get(sessionKey) || {};
+
+        // Update lead in database with score
+        if (args.callerPhone) {
+            const { error } = await supabase
+                .from('leads')
+                .update({
+                    qualification_tier: tier,
+                    qualification_score: tier === 'hot' ? 90 : tier === 'warm' ? 60 : 25,
+                    recommended_action: args.reasoning || `Scored as ${tier} lead`,
+                    qualified_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('business_id', businessId)
+                .eq('phone', args.callerPhone);
+
+            if (error) {
+                console.error('❌ Error updating lead score:', error);
+            }
+        }
+
+        // Send post-call follow-up email for hot/warm leads
+        const callerEmail = sessionData.callerEmail || args.callerEmail;
+        if (callerEmail && (tier === 'hot' || tier === 'warm') && sendPostCallEmail) {
+            try {
+                await sendPostCallEmail({
+                    callerName: args.callerName || sessionData.callerName || 'there',
+                    callerEmail: callerEmail,
+                    callerCompany: sessionData.callerCompany || args.callerCompany || null,
+                    tier: tier,
+                    interest: sessionData.interest || null,
+                    reasoning: args.reasoning || null,
+                });
+            } catch (emailErr) {
+                console.error('❌ Post-call email failed (non-blocking):', emailErr.message);
+                // Don't fail the call flow
+            }
+        } else if (!callerEmail && (tier === 'hot' || tier === 'warm')) {
+            console.log(`⚠️  No email captured for ${tier} lead ${args.callerName} -- skipping follow-up email`);
+        }
+
+        // Clean up session
+        if (sessionKey) {
+            activeLeadSessions.delete(sessionKey);
+        }
+
+        // Build response based on tier
+        if (tier === 'cold') {
+            const firstName = (args.callerName || '').split(' ')[0] || 'there';
+            return {
+                success: true,
+                tier: 'cold',
+                closing_message: `${firstName}, I really appreciate you taking the time to call and learn about what we do. It sounds like the timing might not be quite right at the moment, and that's totally okay. If things change down the road, we'd love to hear from you again. Wishing you all the best!`,
+            };
+        }
+
+        return {
+            success: true,
+            tier: tier,
+            message: `Lead scored as ${tier}. ${tier === 'hot' ? 'Proceeding with immediate action.' : 'Lead captured for follow-up.'}`,
+        };
+    } catch (error) {
+        console.error('❌ scoreLead error:', error);
+        return {
+            success: true,
+            tier: args.tier || 'warm',
+            message: 'Lead scored successfully.',
+        };
+    }
+}
+
+async function handleBookDiscoveryCall(args, businessId) {
+    try {
+        console.log('📅 BOOK DISCOVERY CALL:', {
+            businessId,
+            callerName: args.callerName,
+            date: args.date,
+            time: args.time,
+        });
+
+        // Store the booking request
+        const { error } = await supabase
+            .from('leads')
+            .update({
+                recommended_action: `Discovery call booked: ${args.date} at ${args.time}`,
+                notes: supabase.rpc ? undefined : `Discovery call: ${args.date} ${args.time}. ${args.notes || ''}`,
+                updated_at: new Date().toISOString(),
+            })
+            .eq('business_id', businessId)
+            .eq('phone', args.callerPhone);
+
+        if (error) {
+            console.error('❌ Error updating lead with discovery call:', error);
+        }
+
+        return {
+            success: true,
+            message: `Discovery call booked for ${args.callerName} on ${args.date} at ${args.time}. You're all set!`,
+            booking: {
+                date: args.date,
+                time: args.time,
+                callerName: args.callerName,
+            },
+        };
+    } catch (error) {
+        console.error('❌ bookDiscoveryCall error:', error);
+        return {
+            success: true,
+            message: `I've noted the discovery call request. Our team will confirm the time with you shortly.`,
+        };
+    }
+}
+
+async function handleCaptureLeadInfo(args, businessId) {
+    try {
+        console.log('💾 CAPTURE LEAD INFO:', {
+            businessId,
+            name: args.name,
+            phone: args.phone,
+            interestedIn: args.interestedIn,
+        });
+
+        // Upsert lead with captured info
+        const { error } = await supabase
+            .from('leads')
+            .upsert({
+                business_id: businessId,
+                first_name: args.name?.split(' ')[0] || 'Unknown',
+                last_name: args.name?.split(' ').slice(1).join(' ') || '',
+                phone: args.phone,
+                email: args.email || null,
+                source: 'voice_ai',
+                notes: [
+                    args.interestedIn ? `Interested in: ${args.interestedIn}` : '',
+                    args.notes ? `Notes: ${args.notes}` : '',
+                ].filter(Boolean).join('\n'),
+                updated_at: new Date().toISOString(),
+            }, {
+                onConflict: 'business_id,phone',
+                ignoreDuplicates: false,
+            });
+
+        if (error) {
+            console.error('❌ Error capturing lead info:', error);
+        }
+
+        return {
+            success: true,
+            message: `Contact info saved for ${args.name}. Our team will follow up soon.`,
+        };
+    } catch (error) {
+        console.error('❌ captureLeadInfo error:', error);
+        return {
+            success: true,
+            message: 'Contact information captured. Someone will be in touch.',
+        };
+    }
+}
+
+async function handleTransferCall(args, businessId) {
+    console.log('📞 TRANSFER CALL:', { businessId, destination: args.destination, reason: args.reason });
+
+    return {
+        success: true,
+        message: `Transferring you now. ${args.reason ? `I'll let them know: ${args.reason}` : 'One moment please.'}`,
+        transfer: {
+            destination: args.destination,
+            reason: args.reason || '',
+        },
+    };
+}
+
+async function handleScheduleCallback(args, businessId) {
+    try {
+        console.log('⏰ SCHEDULE CALLBACK:', {
+            businessId,
+            callerName: args.callerName,
+            callbackTime: args.callbackTime,
+        });
+
+        // Store callback request
+        if (args.callerPhone) {
+            const { error } = await supabase
+                .from('leads')
+                .update({
+                    recommended_action: `Callback requested: ${args.callbackTime || 'TBD'}. Reason: ${args.reason || 'Follow-up'}`,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('business_id', businessId)
+                .eq('phone', args.callerPhone);
+
+            if (error) {
+                console.error('❌ Error storing callback request:', error);
+            }
+        }
+
+        return {
+            success: true,
+            message: `I've scheduled a callback for ${args.callerName}${args.callbackTime ? ` around ${args.callbackTime}` : ''}. We'll be in touch!`,
+        };
+    } catch (error) {
+        console.error('❌ scheduleCallback error:', error);
+        return {
+            success: true,
+            message: 'Callback request noted. Our team will reach out.',
         };
     }
 }
