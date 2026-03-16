@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { randomUUID } from 'crypto'
+import { createHmac, randomBytes } from 'crypto'
 import { validateBusinessAccess } from '@/lib/api-auth'
 
 const SQUARE_OAUTH_BASE = 'https://connect.squareup.com'
@@ -47,16 +47,19 @@ export async function POST(request: NextRequest) {
       'ITEMS_READ',
     ].join('+')
 
-    // state = base64({ businessId, nonce }) for CSRF protection
-    const nonce = randomUUID()
-    const state = Buffer.from(JSON.stringify({ businessId, nonce })).toString('base64url')
+    // Build CSRF-safe state: businessId|nonce|hmac
+    const nonce = randomBytes(16).toString('hex')
+    const stateSecret = process.env.SQUARE_STATE_SECRET || process.env.NEXTAUTH_SECRET || applicationId
+    const payload = `${businessId}|${nonce}`
+    const hmac = createHmac('sha256', stateSecret).update(payload).digest('hex')
+    const state = `${payload}|${hmac}`
 
     const authUrl =
       `${SQUARE_OAUTH_BASE}/oauth2/authorize` +
       `?client_id=${applicationId}` +
       `&scope=${scopes}` +
       `&session=false` +
-      `&state=${state}` +
+      `&state=${encodeURIComponent(state)}` +
       `&redirect_uri=${encodeURIComponent(redirectUri)}`
 
     return NextResponse.json({ authUrl })

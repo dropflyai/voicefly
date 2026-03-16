@@ -33,7 +33,6 @@ const PUBLIC_API_PREFIXES = [
   '/api/chat',
   '/api/widget/',
   '/api/leads/capture',
-  '/api/voice-preview',
   '/api/tts',
   '/api/voices',
 ]

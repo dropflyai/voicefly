@@ -479,7 +479,10 @@ export default function OnboardingPage() {
     // Fetch from API
     setLoadingVoice(voiceId)
     try {
-      const res = await fetch(`/api/voice-preview?voiceId=${voiceId}`)
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`/api/voice-preview?voiceId=${voiceId}`, {
+        headers: session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {},
+      })
       if (!res.ok) throw new Error('Failed to load preview')
       const blob = await res.blob()
       const url = URL.createObjectURL(blob)

@@ -9,16 +9,30 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createHmac, timingSafeEqual } from 'crypto'
 import { SquareService } from '@/lib/square-service'
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const code = searchParams.get('code')
-    const stateRaw = searchParams.get('state')
+    const rawState = searchParams.get('state') || ''
     const error = searchParams.get('error')
     const errorDescription = searchParams.get('error_description')
+
+    // Verify CSRF state: format is businessId|nonce|hmac
+    const stateParts = rawState.split('|')
+    const businessId = stateParts[0] || null
+    const stateNonce = stateParts[1] || ''
+    const stateHmac = stateParts[2] || ''
+    const stateSecret = process.env.SQUARE_STATE_SECRET || process.env.NEXTAUTH_SECRET || process.env.SQUARE_APPLICATION_ID || ''
+    const expectedHmac = createHmac('sha256', stateSecret).update(`${businessId}|${stateNonce}`).digest('hex')
+    const hmacMatch = stateHmac.length > 0 && timingSafeEqual(Buffer.from(stateHmac), Buffer.from(expectedHmac))
+    if (!hmacMatch) {
+      console.warn('[Square Callback] Invalid state/CSRF token')
+      const params = new URLSearchParams({ tab: 'integrations', square_error: 'Invalid request (CSRF check failed)' })
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard/settings?${params.toString()}`)
+    }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     const settingsBase = `${appUrl}/dashboard/settings`
@@ -33,53 +47,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${settingsBase}?${params.toString()}`)
     }
 
-    // Decode state to extract businessId and nonce
-    let businessId: string | null = null
-    if (stateRaw) {
-      try {
-        const decoded = JSON.parse(Buffer.from(stateRaw, 'base64url').toString())
-        businessId = decoded.businessId ?? null
-        // nonce is present — its existence in the signed state prevents CSRF
-      } catch {
-        // Fallback: treat raw state as businessId for backward compat
-        businessId = stateRaw
-      }
-    }
-
     if (!code || !businessId) {
       const params = new URLSearchParams({
         tab: 'integrations',
         square_error: 'Missing authorization code or business ID',
-      })
-      return NextResponse.redirect(`${settingsBase}?${params.toString()}`)
-    }
-
-    // Verify the user is authenticated via Supabase JWT
-    const authHeader = request.headers.get('authorization')
-    const cookieHeader = request.cookies.get('sb-access-token')?.value
-      ?? request.cookies.get('sb:token')?.value
-    const jwt = authHeader?.replace('Bearer ', '') ?? cookieHeader
-
-    if (!jwt) {
-      // For OAuth redirects the user arrives via browser — check for Supabase cookie
-      // If no auth at all, redirect to login
-      const params = new URLSearchParams({
-        tab: 'integrations',
-        square_error: 'Authentication required. Please log in and try again.',
-      })
-      return NextResponse.redirect(`${settingsBase}?${params.toString()}`)
-    }
-
-    // Validate the JWT
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-    const { data: { user }, error: authError } = await supabase.auth.getUser(jwt)
-    if (authError || !user) {
-      const params = new URLSearchParams({
-        tab: 'integrations',
-        square_error: 'Invalid session. Please log in and try again.',
       })
       return NextResponse.redirect(`${settingsBase}?${params.toString()}`)
     }

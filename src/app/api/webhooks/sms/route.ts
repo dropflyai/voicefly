@@ -35,13 +35,12 @@ export async function POST(request: NextRequest) {
   const body = formData.get('Body') as string
   const messageSid = formData.get('MessageSid') as string
 
-  // Validate Twilio signature (fail closed — reject if auth token is not configured)
+  // Validate Twilio signature — always required
   const authToken = process.env.TWILIO_AUTH_TOKEN
-  if (!authToken || authToken.startsWith('placeholder')) {
-    console.error('[SMS Webhook] TWILIO_AUTH_TOKEN is not configured — rejecting request')
-    return new NextResponse('Unauthorized', { status: 401 })
+  if (!authToken) {
+    console.error('[SMS Webhook] TWILIO_AUTH_TOKEN not configured')
+    return new NextResponse('Service Unavailable', { status: 503 })
   }
-
   const twilioSignature = request.headers.get('x-twilio-signature') || ''
   const url = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/sms`
   const params: Record<string, string> = {}
