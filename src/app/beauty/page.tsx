@@ -425,7 +425,7 @@ export default function BeautyLandingPage() {
             Be one of our first salon partners and get <span className="font-bold">50% off for life</span>.
           </p>
           <p className="text-gray-600 mb-6 text-sm">
-            Starter at $25/mo or Pro at $100/mo -- forever. In exchange, we ask for honest feedback
+            Starter at $25/mo, Growth at $90/mo, or Pro at $175/mo -- forever. In exchange, we ask for honest feedback
             and permission to share your story.
           </p>
           <Link

@@ -3892,7 +3892,7 @@ function EmployeesDashboard() {
                     </div>
                     {starterUsage.minutesUsed >= starterUsage.minutesTotal && (
                       <p className="mt-2 text-xs text-red-600 font-medium">
-                        You&apos;ve used all included minutes. Overage at $0.15/min or upgrade to Pro for 1,000 min/mo.
+                        You&apos;ve used all included minutes. Overage at $0.25/min or upgrade to Growth ($129/mo) for 250 min.
                       </p>
                     )}
                   </div>
