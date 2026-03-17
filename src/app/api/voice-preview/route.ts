@@ -9,6 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { checkRateLimit as checkRateLimitUpstash, getClientIp } from '@/lib/rate-limit'
 
 const SAMPLE_TEXT =
@@ -18,6 +19,22 @@ const SAMPLE_TEXT =
 const audioCache = new Map<string, Buffer>()
 
 export async function GET(request: NextRequest) {
+  // Require authenticated session
+  const authHeader = request.headers.get('authorization')
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  )
+  const { error: authError } = await supabase.auth.getUser()
+  if (authError) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   // Rate limit - expensive API call
   const ip = getClientIp(request.headers)
   const rateLimitResult = await checkRateLimitUpstash(ip, 'strict')

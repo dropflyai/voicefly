@@ -235,6 +235,12 @@ export async function POST(request: NextRequest) {
     const assistantId = message?.call?.assistantId || message?.call?.assistant?.id
     const sharedAssistantId = process.env.VAPI_SHARED_ASSISTANT_ID
 
+    // For non-shared-assistant calls, require the x-vapi-secret header
+    if (!(sharedAssistantId && assistantId === sharedAssistantId) && !secretHeader) {
+      console.warn('[PhoneEmployeeWebhook] Missing x-vapi-secret on non-shared-assistant call')
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     if (sharedAssistantId && assistantId === sharedAssistantId) {
       const trialBusinessId = message?.call?.assistant?.metadata?.businessId || metadataBusinessId
       if (!trialBusinessId) {
