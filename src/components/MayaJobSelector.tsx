@@ -48,7 +48,7 @@ export const MAYA_JOBS: MayaJob[] = [
     icon: '🧘‍♀️',
     description: 'Coordinates treatments, packages, and wellness experiences professionally',
     businessTypes: ['Day Spa', 'Medical Spa', 'Wellness Center'],
-    pricing: '$97-397/mo',
+    pricing: '$49-249/mo',
     features: ['18+ Treatment booking', 'High-value service coordination', 'Medical spa procedures', 'Holistic wellness programs'],
     premium: true
   },
@@ -85,7 +85,7 @@ export const MAYA_JOBS: MayaJob[] = [
     icon: '🏥',
     description: 'Professional medical appointment coordination with insurance handling',
     businessTypes: ['Medical Practice', 'Clinic'],
-    pricing: '$49-199/mo',
+    pricing: '$49-249/mo',
     features: ['Medical scheduling', 'Insurance verification', 'Follow-up booking', 'Referral coordination'],
     premium: true
   },
@@ -95,7 +95,7 @@ export const MAYA_JOBS: MayaJob[] = [
     icon: '🦷',
     description: 'Schedules cleanings, procedures, and dental care appointments',
     businessTypes: ['Dental Practice'],
-    pricing: '$49-199/mo',
+    pricing: '$49-249/mo',
     features: ['Cleaning booking', 'Procedure scheduling', 'Insurance handling', 'Reminder systems']
   },
   {
@@ -104,7 +104,7 @@ export const MAYA_JOBS: MayaJob[] = [
     icon: '🏃‍♂️',
     description: 'Books classes, training sessions, and fitness consultations',
     businessTypes: ['Gym', 'Fitness Studio'],
-    pricing: '$97-297/mo',
+    pricing: '$49-249/mo',
     features: ['Class booking', 'Trainer scheduling', 'Membership sales', 'Trial coordination']
   }
 ]

@@ -13,33 +13,33 @@ export const TEAM_PRICING: Record<string, TeamPricingTier> = {
   starter: {
     id: 'starter',
     name: 'Starter',
-    basePrice: 147,
+    basePrice: 49,
     includedSeats: 1,
-    additionalSeatPrice: 39,
-    maxSeats: 3
+    additionalSeatPrice: 29,
+    maxSeats: 1
   },
-  professional: {
-    id: 'professional',
-    name: 'Professional',
-    basePrice: 397,
+  growth: {
+    id: 'growth',
+    name: 'Growth',
+    basePrice: 129,
     includedSeats: 3,
-    additionalSeatPrice: 49,
-    maxSeats: 10
+    additionalSeatPrice: 29,
+    maxSeats: 5
   },
-  business: {
-    id: 'business',
-    name: 'Business',
-    basePrice: 697,
+  pro: {
+    id: 'pro',
+    name: 'Pro',
+    basePrice: 249,
     includedSeats: 5,
-    additionalSeatPrice: 59,
-    maxSeats: 25
+    additionalSeatPrice: 29,
+    maxSeats: 10
   },
   enterprise: {
     id: 'enterprise',
     name: 'Enterprise',
-    basePrice: 997,
-    includedSeats: 10,
-    additionalSeatPrice: 69,
+    basePrice: 499,
+    includedSeats: 15,
+    additionalSeatPrice: 29,
     maxSeats: null // unlimited
   }
 }

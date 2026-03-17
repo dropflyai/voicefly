@@ -32,11 +32,12 @@ const PLANS: PlanDetails[] = [
     id: 'starter',
     name: 'Starter',
     price: 49,
-    yearlyPrice: 504,
+    yearlyPrice: 468,
     description: 'For businesses getting started with AI',
     features: [
       '60 minutes/month',
       '1 AI employee',
+      '1 phone number',
       '24/7 call answering',
       'Appointment booking',
       'Lead capture',
@@ -49,11 +50,12 @@ const PLANS: PlanDetails[] = [
     id: 'growth',
     name: 'Growth',
     price: 129,
-    yearlyPrice: 1308,
+    yearlyPrice: 1236,
     description: 'For growing businesses that need more',
     features: [
       '250 minutes/month',
-      'Up to 3 AI employees',
+      '3 AI employees',
+      '3 phone numbers',
       'Everything in Starter plus:',
       'Custom greeting',
       'Custom FAQ answers',
@@ -68,11 +70,12 @@ const PLANS: PlanDetails[] = [
     id: 'pro',
     name: 'Pro',
     price: 249,
-    yearlyPrice: 2544,
+    yearlyPrice: 2388,
     description: 'For busy businesses ready to scale',
     features: [
       '750 minutes/month',
-      'Up to 5 AI employees',
+      '5 AI employees',
+      '5 phone numbers',
       'Everything in Growth plus:',
       'Fully custom AI agent (dedicated)',
       'AI SMS conversations',
@@ -385,7 +388,7 @@ function PlanSelectorContent({ onPlanSelected, loading }: PlanSelectorProps) {
           selectedPlan={selectedPlanDetails}
           isYearly={isYearly}
           onPaymentComplete={handlePaymentComplete}
-          loading={loading}
+          loading={loading ?? false}
         />
       </div>
     )
@@ -421,7 +424,7 @@ function PlanSelectorContent({ onPlanSelected, loading }: PlanSelectorProps) {
           </span>
           {isYearly && (
             <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
-              Save up to 17%
+              Save 20%
             </span>
           )}
         </div>

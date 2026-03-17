@@ -53,41 +53,43 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: 'starter',
     name: 'Starter',
     slug: 'starter',
-    price_monthly: 39,
-    price_yearly: 390, // 17% off
+    price_monthly: 49,
+    price_yearly: 468, // 20% off ($39/mo x 12)
     features: [
-      'Web booking widget',
-      'SMS reminders',
-      'Customer portal',
-      'Smart analytics',
-      'Email marketing',
-      'Custom themes',
-      'Social booking',
-      'Smart scheduling',
-      '500 bookings/month'
+      '60 voice minutes/month',
+      '1 AI employee',
+      '1 phone number',
+      '24/7 call answering',
+      'Appointment booking',
+      'Lead capture',
+      'SMS confirmations',
+      'Call analytics dashboard',
+      'Email support'
     ],
     limits: {
       max_locations: 1,
       max_bookings_per_month: 500,
       payment_processors: [],
       loyalty_program: false,
-      voice_ai: false
+      voice_ai: true
     }
   },
   {
-    id: 'professional',
-    name: 'Professional',
-    slug: 'professional',
-    price_monthly: 127,
-    price_yearly: 1270, // 17% off
+    id: 'growth',
+    name: 'Growth',
+    slug: 'growth',
+    price_monthly: 129,
+    price_yearly: 1236, // 20% off ($103/mo x 12)
     features: [
+      '250 voice minutes/month',
+      '3 AI employees',
+      '3 phone numbers',
       'Everything in Starter',
-      'Voice AI booking agent',
-      'Online payments (Square/Stripe)',
-      'Loyalty program',
-      'Advanced reporting',
-      'Unlimited bookings',
-      'Priority support'
+      'Custom greeting',
+      'Custom FAQ answers',
+      'Custom call routing',
+      'Advanced analytics',
+      'Chat support'
     ],
     limits: {
       max_locations: 1,
@@ -99,18 +101,22 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     popular: true
   },
   {
-    id: 'business',
-    name: 'Business',
-    slug: 'business',
-    price_monthly: 247,
-    price_yearly: 2470, // 17% off
+    id: 'pro',
+    name: 'Pro',
+    slug: 'pro',
+    price_monthly: 249,
+    price_yearly: 2388, // 20% off ($199/mo x 12)
     features: [
-      'Everything in Professional',
-      'Multi-location (up to 3)',
-      'Team management',
-      'Advanced analytics',
-      'Custom integrations',
-      'Dedicated support'
+      '750 voice minutes/month',
+      '5 AI employees',
+      '5 phone numbers',
+      'Everything in Growth',
+      'Fully custom AI agent (dedicated)',
+      'AI SMS conversations',
+      'Custom voice selection',
+      'API access',
+      'CRM integration',
+      'Priority support'
     ],
     limits: {
       max_locations: 3,
@@ -124,15 +130,15 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: 'enterprise',
     name: 'Enterprise',
     slug: 'enterprise',
-    price_monthly: 497,
-    price_yearly: 4970, // 17% off
+    price_monthly: 499,
+    price_yearly: 4990, // 20% off
     features: [
-      'Everything in Business',
-      'Unlimited locations',
-      'White-label solution',
-      'API access',
-      'Custom development',
-      'Account manager'
+      '2,000 voice minutes/month',
+      '15 AI employees',
+      'Everything in Pro',
+      'SLA guarantee',
+      'Dedicated account manager',
+      'Custom integrations'
     ],
     limits: {
       max_locations: -1,

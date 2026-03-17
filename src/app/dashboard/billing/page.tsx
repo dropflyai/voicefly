@@ -317,9 +317,9 @@ function BillingPageContent() {
                 </div>
                 <p className="text-sm text-gray-500">
                   {isOnTrial ? '10 free calls, shared phone number, basic AI receptionist'
-                    : currentTier === 'pro' ? '750 voice minutes/month, up to 5 AI employees, fully custom AI agent'
-                    : currentTier === 'growth' ? '250 voice minutes/month, up to 3 AI employees, custom greetings & routing'
-                    : '60 voice minutes/month, 1 AI employee, 24/7 call answering'}
+                    : currentTier === 'pro' ? '750 voice minutes/month, 5 AI employees, 5 phone numbers, fully custom AI agent'
+                    : currentTier === 'growth' ? '250 voice minutes/month, 3 AI employees, 3 phone numbers, custom greetings & routing'
+                    : '60 voice minutes/month, 1 AI employee, 1 phone number, 24/7 call answering'}
                 </p>
               </div>
               <div className="text-right">
@@ -435,7 +435,7 @@ function BillingPageContent() {
                     <div className="text-2xl font-bold text-blue-600">$49<span className="text-sm font-normal text-gray-500">/mo</span></div>
                   </div>
                   <ul className="space-y-2 mb-6">
-                    {SUBSCRIPTION_PRODUCTS.starter.features.slice(0, 7).map((f, i) => (
+                    {SUBSCRIPTION_PRODUCTS.starter.features.slice(0, 8).map((f, i) => (
                       <li key={i} className="flex items-center text-sm text-gray-700">
                         <SparklesIcon className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
                         {f}

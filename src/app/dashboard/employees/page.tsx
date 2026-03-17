@@ -3846,7 +3846,7 @@ function EmployeesDashboard() {
                   </div>
                 )}
                 <p className="text-xs text-yellow-700">
-                  Upgrade to Starter ($49/mo) for a dedicated phone number, call transfers, and SMS notifications.
+                  Upgrade to Starter ($49/mo) for 60 minutes, a dedicated phone number, call transfers, and SMS notifications.
                 </p>
               </div>
               <button
@@ -3899,7 +3899,7 @@ function EmployeesDashboard() {
                 )}
 
                 <p className="text-xs text-blue-700">
-                  Upgrade to Pro ($199/mo) for custom AI training, voice customization, calendar integrations, and 1,000 minutes/month.
+                  Upgrade to Pro ($249/mo) for custom AI training, voice customization, calendar integrations, and 750 minutes/month.
                 </p>
               </div>
               <button

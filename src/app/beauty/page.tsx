@@ -109,7 +109,7 @@ export default function BeautyLandingPage() {
               </div>
               <div className="flex items-center">
                 <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
-                <span>Starting at $49/mo</span>
+                <span>Starting at $49/mo — 60 min included</span>
               </div>
             </div>
           </div>
@@ -188,7 +188,7 @@ export default function BeautyLandingPage() {
 
             <div className="mt-8 text-center">
               <p className="text-gray-600 mb-4">
-                VoiceFly starts at <span className="font-bold">$49/month</span>. It pays for itself by capturing
+                VoiceFly starts at <span className="font-bold">$49/month</span> with 60 minutes included. It pays for itself by capturing
                 just <span className="font-bold">1 extra booking per week</span>.
               </p>
               <Link
@@ -346,7 +346,7 @@ export default function BeautyLandingPage() {
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center text-gray-700">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
-                  100 AI voice minutes
+                  60 AI voice minutes
                 </li>
                 <li className="flex items-center text-gray-700">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
@@ -375,17 +375,17 @@ export default function BeautyLandingPage() {
               <h3 className="text-2xl font-bold text-gray-900 mb-2">Pro</h3>
               <p className="text-gray-600 mb-4">For busy salons ready to grow</p>
               <div className="mb-6">
-                <span className="text-5xl font-bold text-gray-900">$199</span>
+                <span className="text-5xl font-bold text-gray-900">$249</span>
                 <span className="text-gray-600">/month</span>
               </div>
               <ul className="space-y-3 mb-8">
                 <li className="flex items-center text-gray-700">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
-                  1,000 AI voice minutes
+                  750 AI voice minutes
                 </li>
                 <li className="flex items-center text-gray-700">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />
-                  Up to 5 AI receptionists
+                  5 AI receptionists
                 </li>
                 <li className="flex items-center text-gray-700">
                   <CheckCircle className="h-5 w-5 text-green-500 mr-3 flex-shrink-0" />

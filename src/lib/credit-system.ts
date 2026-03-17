@@ -42,36 +42,41 @@ export const CREDITS_PER_MINUTE = 5
 // Conversion: 5 credits = 1 voice minute
 export enum MonthlyCredits {
   TRIAL = 50,           // 10 minutes - One-time, doesn't reset
-  STARTER = 500,        // 100 minutes - $49/mo
-  PRO = 5000,           // 1,000 minutes - $199/mo
+  STARTER = 300,        // 60 minutes - $49/mo
+  GROWTH = 1250,        // 250 minutes - $129/mo
+  PRO = 3750,           // 750 minutes - $249/mo
 }
 
 // Subscription tier pricing in cents
 export const TIER_PRICING = {
   trial: { price_cents: 0, name: 'Free Trial' },
   starter: { price_cents: 4900, name: 'Starter' },
-  pro: { price_cents: 19900, name: 'Pro' },
+  growth: { price_cents: 12900, name: 'Growth' },
+  pro: { price_cents: 24900, name: 'Pro' },
 } as const
 
 // Minutes included per tier (for customer display)
 export const TIER_MINUTES = {
   trial: 10,
-  starter: 100,
-  pro: 1000,
+  starter: 60,
+  growth: 250,
+  pro: 750,
 } as const
 
 // Overage pricing by tier (per minute for customer display)
 export const OVERAGE_PRICING_PER_MINUTE = {
   trial: 0.50,      // $0.50/min overage
-  starter: 0.15,    // $0.15/min overage
-  pro: 0.12,        // $0.12/min overage
+  starter: 0.25,    // $0.25/min overage
+  growth: 0.20,     // $0.20/min overage
+  pro: 0.18,        // $0.18/min overage
 } as const
 
 // Internal overage pricing per credit (for actual billing)
 export const OVERAGE_PRICING_PER_CREDIT = {
   trial: 0.10,
-  starter: 0.03,
-  pro: 0.024,
+  starter: 0.05,
+  growth: 0.04,
+  pro: 0.036,
 } as const
 
 interface CreditBalance {
@@ -336,6 +341,9 @@ export class CreditSystem {
         case 'starter':
           monthlyAllocation = MonthlyCredits.STARTER
           break
+        case 'growth':
+          monthlyAllocation = MonthlyCredits.GROWTH
+          break
         case 'pro':
         case 'professional': // Legacy support
           monthlyAllocation = MonthlyCredits.PRO
@@ -383,13 +391,16 @@ export class CreditSystem {
    */
   static async initializeCredits(
     businessId: string,
-    tier: 'trial' | 'starter' | 'pro'
+    tier: 'trial' | 'starter' | 'growth' | 'pro'
   ): Promise<boolean> {
     try {
       let monthlyAllocation = MonthlyCredits.TRIAL
       switch (tier) {
         case 'starter':
           monthlyAllocation = MonthlyCredits.STARTER
+          break
+        case 'growth':
+          monthlyAllocation = MonthlyCredits.GROWTH
           break
         case 'pro':
           monthlyAllocation = MonthlyCredits.PRO

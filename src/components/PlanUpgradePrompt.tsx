@@ -21,40 +21,40 @@ interface PlanUpgradePromptProps {
 const PLAN_DETAILS = {
   starter: {
     name: 'Starter',
-    price: 47,
+    price: 49,
     color: 'gray',
     features: [
-      '24/7 AI Voice Booking',
-      'Web Booking Widget', 
-      'Customer Management',
-      'SMS Notifications',
-      'Single Location'
+      '60 voice minutes/month',
+      '1 AI employee',
+      '1 phone number',
+      '24/7 call answering',
+      'Email support'
     ]
   },
   professional: {
-    name: 'Professional', 
-    price: 97,
+    name: 'Growth',
+    price: 129,
     color: 'blue',
     features: [
-      'Everything in Starter',
-      'Payment Processing',
-      'Loyalty Program',
-      'Email Marketing',
-      'Advanced Analytics',
-      'Priority Support'
+      '250 voice minutes/month',
+      '3 AI employees',
+      '3 phone numbers',
+      'Custom greeting & routing',
+      'Advanced analytics',
+      'Chat support'
     ]
   },
   business: {
-    name: 'Business',
-    price: 197, 
+    name: 'Pro',
+    price: 249,
     color: 'purple',
     features: [
-      'Everything in Professional',
-      'Up to 3 Locations',
-      'Custom Integrations',
-      'White-Label Options',
-      'Priority Phone Support',
-      'Advanced Reporting'
+      '750 voice minutes/month',
+      '5 AI employees',
+      '5 phone numbers',
+      'Custom AI agent (dedicated)',
+      'API + CRM integration',
+      'Priority support'
     ]
   }
 }

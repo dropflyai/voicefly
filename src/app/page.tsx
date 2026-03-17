@@ -140,7 +140,7 @@ export default function HomePage() {
               </div>
               <div className="flex items-center">
                 <CheckCircle className="h-5 w-5 mr-2 text-green-600 flex-shrink-0" />
-                <span>Starting at $49/mo</span>
+                <span>Starting at $49/mo — 60 min included</span>
               </div>
             </div>
           </div>
@@ -308,7 +308,7 @@ export default function HomePage() {
 
             <div className="text-center">
               <p className="text-blue-100 mb-6">
-                VoiceFly starts at $49/mo. That's a 32x return if it captures just 1 extra booking per week.
+                VoiceFly starts at $49/mo with 60 minutes included. That&apos;s a 32x return if it captures just 1 extra booking per week.
               </p>
               <Link
                 href="/signup"

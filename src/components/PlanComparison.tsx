@@ -28,7 +28,8 @@ interface PlanFeature {
 const PLAN_FEATURES: PlanFeature[] = [
   // Core Features - AI Voice
   { name: 'Voice minutes/month', starter: '60', growth: '250', pro: '750', category: 'core' },
-  { name: 'AI employees', starter: '1', growth: 'Up to 3', pro: 'Up to 5', category: 'core' },
+  { name: 'AI employees', starter: '1', growth: '3', pro: '5', category: 'core' },
+  { name: 'Phone numbers', starter: '1', growth: '3', pro: '5', category: 'core' },
   { name: '24/7 call answering', starter: true, growth: true, pro: true, category: 'core' },
   { name: 'Appointment booking', starter: true, growth: true, pro: true, category: 'core' },
   { name: 'Lead capture', starter: true, growth: true, pro: true, category: 'core' },
@@ -60,7 +61,7 @@ const PLANS = {
   starter: {
     name: 'Starter',
     price: 49,
-    yearlyPrice: 42,
+    yearlyPrice: 39,
     description: 'For businesses getting started with AI',
     color: 'gray',
     icon: SparklesIcon,
@@ -69,7 +70,7 @@ const PLANS = {
   growth: {
     name: 'Growth',
     price: 129,
-    yearlyPrice: 109,
+    yearlyPrice: 103,
     description: 'For growing businesses that need more',
     color: 'blue',
     icon: CrownIcon,
@@ -78,7 +79,7 @@ const PLANS = {
   pro: {
     name: 'Pro',
     price: 249,
-    yearlyPrice: 212,
+    yearlyPrice: 199,
     description: 'For busy businesses ready to scale',
     color: 'purple',
     icon: BuildingStorefrontIcon,
@@ -149,7 +150,7 @@ export default function PlanComparison({
             }`}
           >
             Yearly
-            <span className="ml-1 text-xs text-green-600 font-bold">Save 15%</span>
+            <span className="ml-1 text-xs text-green-600 font-bold">Save 20%</span>
           </button>
         </div>
       </div>

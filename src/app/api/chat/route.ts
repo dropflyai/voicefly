@@ -52,9 +52,12 @@ VoiceFly gives small and medium businesses AI-powered phone employees that answe
 11. **Collections** — Outbound payment collection (FDCPA-compliant)
 
 ## Pricing
-- **Starter** — $49/month: 100 voice minutes, 1 AI employee (overage: $0.15/min)
-- **Pro** — $199/month: 1,000 voice minutes, up to 5 AI employees (overage: $0.12/min)
+- **Starter** — $49/month: 60 voice minutes, 1 AI employee, 1 phone number (overage: $0.25/min)
+- **Growth** — $129/month: 250 voice minutes, 3 AI employees, 3 phone numbers (overage: $0.20/min) — MOST POPULAR
+- **Pro** — $249/month: 750 voice minutes, 5 AI employees, 5 phone numbers (overage: $0.18/min)
 - All plans: **14-day free trial** (no credit card needed)
+- Annual billing saves 20%: Starter $39/mo, Growth $103/mo, Pro $199/mo
+- Founding customer pricing: Starter $25/mo (50% off for life), Growth $90/mo (30% off), Pro $175/mo (30% off)
 - Join 500+ businesses already using VoiceFly
 
 ## Integrations
@@ -89,7 +92,7 @@ Common objections and how to handle them:
 - "What if it can't answer something?" → "It handles the 80% of calls that are routine. For anything outside its training, it takes a message and flags it for you."
 - "Is it hard to set up?" → "You paste your website URL, the AI reads your business in 30 seconds, and generates a full employee config. Most users go live same day."
 - "We already have a receptionist" → "Your human receptionist handles complex situations. This handles the volume — after-hours, hold overflow, outbound reminders — so they can focus on what matters."
-- "What does it cost really?" → "At $49/month for 100 minutes, that's about $0.49/minute for 24/7 coverage. A part-time human receptionist costs $15-20/hour. The math is pretty clear."
+- "What does it cost really?" → "At $49/month for 60 minutes on Starter, that's less than $1/minute for 24/7 coverage. Most businesses pick Growth at $129/mo for 250 minutes. A part-time human receptionist costs $15-20/hour. The math is pretty clear."
 
 ### Step 4: Offer a Live Demo
 When a visitor asks "what does it sound like?", "can I try it?", "show me", or expresses curiosity about hearing the AI, direct them to the live voice demo page. Say something like:
@@ -565,8 +568,9 @@ ${callSummary}
 - Square: Click "Authorize with Square" to connect POS and sync menu
 
 ### Billing
-- Starter: $49/mo — 100 voice minutes, 1 AI employee
-- Pro: $199/mo — 1,000 voice minutes, up to 5 employees
+- Starter: $49/mo — 60 voice minutes, 1 AI employee, 1 phone number
+- Growth: $129/mo — 250 voice minutes, 3 AI employees, 3 phone numbers (MOST POPULAR)
+- Pro: $249/mo — 750 voice minutes, 5 AI employees, 5 phone numbers
 - Upgrade at /dashboard/billing
 - Cancel anytime — access continues until end of billing period
 
@@ -581,8 +585,9 @@ ${callSummary}
 - To edit the full job config (detailed behavior, instructions, business hours schedule), those were set during the creation wizard. Currently the edit modal covers the most common changes (name, greeting, voice, timezone).
 
 ### Billing & Overages
-- Starter plan ($49/mo): 100 voice minutes included, $0.15/min overage
-- Pro plan ($199/mo): 1,000 voice minutes included, $0.12/min overage
+- Starter plan ($49/mo): 60 voice minutes included, 1 AI employee, 1 phone number, $0.25/min overage
+- Growth plan ($129/mo): 250 voice minutes included, 3 AI employees, 3 phone numbers, $0.20/min overage (MOST POPULAR)
+- Pro plan ($249/mo): 750 voice minutes included, 5 AI employees, 5 phone numbers, $0.18/min overage
 - Overages are billed through Stripe at the end of the billing cycle
 - To check current usage, look at the dashboard stats for total call minutes
 - Upgrading from Starter to Pro resets your minute allocation at the higher tier

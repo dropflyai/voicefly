@@ -9,7 +9,9 @@ import {
   Mic,
   Phone,
   Clock,
-  Sparkles
+  Sparkles,
+  Building2,
+  Plus
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -22,11 +24,13 @@ export default function PricingPage() {
       name: 'Starter',
       subtitle: 'For businesses getting started with AI',
       monthlyPrice: 49,
-      yearlyPrice: 42,
+      yearlyPrice: 39,
+      yearlySavings: 120,
       description: 'Your AI employee answers calls, books appointments, and sends confirmations via text.',
       features: [
         '60 AI voice minutes/month',
         '1 AI employee',
+        '1 phone number',
         '24/7 call answering',
         'Appointment booking',
         'Lead capture',
@@ -42,18 +46,22 @@ export default function PricingPage() {
       ],
       cta: 'Start 14-Day Trial',
       popular: false,
-      overage: '$0.25/additional minute'
+      overage: '$0.25/additional minute',
+      foundingPrice: 25,
+      foundingDiscount: '50% off for life'
     },
     {
       id: 'growth',
       name: 'Growth',
       subtitle: 'For growing businesses that need more',
       monthlyPrice: 129,
-      yearlyPrice: 109,
+      yearlyPrice: 103,
+      yearlySavings: 312,
       description: 'Everything in Starter plus custom greetings, FAQ answers, call routing, and advanced analytics.',
       features: [
         '250 AI voice minutes/month',
-        'Up to 3 AI employees',
+        '3 AI employees',
+        '3 phone numbers',
         '24/7 call answering',
         'Appointment booking',
         'Lead capture',
@@ -67,23 +75,26 @@ export default function PricingPage() {
       limitations: [
         'AI SMS conversations',
         'Custom voice selection',
-        'API access',
-        'CRM integration'
+        'API access'
       ],
       cta: 'Start 14-Day Trial',
       popular: true,
-      overage: '$0.20/additional minute'
+      overage: '$0.20/additional minute',
+      foundingPrice: 90,
+      foundingDiscount: '30% off for life'
     },
     {
       id: 'pro',
       name: 'Pro',
       subtitle: 'For busy businesses ready to scale',
       monthlyPrice: 249,
-      yearlyPrice: 212,
+      yearlyPrice: 199,
+      yearlySavings: 600,
       description: 'Everything in Growth plus a fully custom AI agent, SMS conversations, API access, and CRM integration.',
       features: [
         '750 AI voice minutes/month',
-        'Up to 5 AI employees',
+        '5 AI employees',
+        '5 phone numbers',
         '24/7 call answering',
         'Fully custom AI agent (dedicated, not shared)',
         'AI SMS conversations',
@@ -97,7 +108,62 @@ export default function PricingPage() {
       limitations: [],
       cta: 'Start 14-Day Trial',
       popular: false,
-      overage: '$0.18/additional minute'
+      overage: '$0.18/additional minute',
+      foundingPrice: 175,
+      foundingDiscount: '30% off for life'
+    }
+  ]
+
+  const addOns = [
+    { name: 'Extra 100 Minutes', price: '$29/mo', availability: 'All tiers' },
+    { name: 'Extra 500 Minutes', price: '$99/mo', availability: 'All tiers' },
+    { name: '+1 AI Employee', price: '$29/mo', availability: 'All tiers' },
+    { name: 'SMS Starter (100 texts)', price: '$19/mo', availability: 'All tiers' },
+    { name: 'SMS Pro (500 texts)', price: '$49/mo', availability: 'Growth+' },
+    { name: 'Custom Voice Clone', price: '$99/mo', availability: 'Growth+' },
+    { name: 'Dedicated Phone Number', price: '$15/mo', availability: 'All tiers' },
+    { name: 'CRM Integration', price: '$39/mo per integration', availability: 'Growth+' },
+    { name: 'White Label', price: '$79/mo', availability: 'Pro only' },
+    { name: 'Call Recording + Storage', price: '$19/mo', availability: 'All tiers' },
+    { name: 'Appointment Reminders', price: '$19/mo', availability: 'All tiers' },
+    { name: 'Spam Call Filtering', price: '$9/mo', availability: 'All tiers' },
+  ]
+
+  const enterprisePlans = [
+    {
+      name: 'Enterprise',
+      price: '$499/mo',
+      features: [
+        '2,000 AI voice minutes/month',
+        '15 AI employees',
+        'SLA guarantee',
+        'Dedicated account manager',
+        'Everything in Pro'
+      ]
+    },
+    {
+      name: 'Enterprise Plus',
+      price: '$899/mo',
+      features: [
+        '5,000 AI voice minutes/month',
+        '30 AI employees',
+        '99.9% uptime SLA',
+        'White-label solution',
+        'Full API access',
+        'Everything in Enterprise'
+      ]
+    },
+    {
+      name: 'Enterprise Custom',
+      price: '$1,500+/mo',
+      features: [
+        'Unlimited minutes',
+        'Custom integrations',
+        'HIPAA BAA available',
+        'Custom SLA',
+        'Dedicated infrastructure',
+        'Everything in Enterprise Plus'
+      ]
     }
   ]
 
@@ -107,6 +173,7 @@ export default function PricingPage() {
       items: [
         { name: 'AI voice minutes per month', starter: '60', growth: '250', pro: '750' },
         { name: 'AI employees included', starter: '1', growth: '3', pro: '5' },
+        { name: 'Phone numbers included', starter: '1', growth: '3', pro: '5' },
         { name: 'Overage pricing', starter: '$0.25/min', growth: '$0.20/min', pro: '$0.18/min' },
         { name: '24/7 call answering', starter: true, growth: true, pro: true },
         { name: 'Custom voice selection', starter: false, growth: false, pro: true },
@@ -156,7 +223,7 @@ export default function PricingPage() {
     },
     {
       question: "What happens if I exceed my monthly minutes?",
-      answer: "We'll notify you when you reach 80% of your minute allocation. Overage minutes are billed at $0.25/min (Starter), $0.20/min (Growth), or $0.18/min (Pro)."
+      answer: "We'll notify you when you reach 80% of your minute allocation. Overage minutes are billed at $0.25/min (Starter), $0.20/min (Growth), or $0.18/min (Pro). You can also add minute packs to avoid overages."
     },
     {
       question: "How does the 14-day trial work?",
@@ -171,6 +238,10 @@ export default function PricingPage() {
       answer: "Our AI voices sound natural and conversational. Many clients won't notice the difference. The AI handles bookings, answers questions about services, and takes messages just like a human receptionist."
     },
     {
+      question: "What is the Founding Customer offer?",
+      answer: "Early adopters lock in discounted rates for life: Starter at $25/mo (50% off), Growth at $90/mo (30% off), and Pro at $175/mo (30% off). These rates never increase as long as you remain subscribed."
+    },
+    {
       question: "Can I cancel anytime?",
       answer: "Yes, cancel your subscription at any time. No cancellation fees. You'll retain access until the end of your billing period."
     }
@@ -178,15 +249,6 @@ export default function PricingPage() {
 
   const getPrice = (plan: typeof plans[0]) => {
     return billingPeriod === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice
-  }
-
-  const getSavings = (plan: typeof plans[0]) => {
-    if (billingPeriod === 'yearly') {
-      const monthlyCost = plan.monthlyPrice * 12
-      const yearlyCost = plan.yearlyPrice * 12
-      return Math.round(((monthlyCost - yearlyCost) / monthlyCost) * 100)
-    }
-    return 0
   }
 
   return (
@@ -247,7 +309,7 @@ export default function PricingPage() {
             </span>
             {billingPeriod === 'yearly' && (
               <span className="ml-2 bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded">
-                Save ~15%
+                Save 20%
               </span>
             )}
           </div>
@@ -279,14 +341,22 @@ export default function PricingPage() {
                     <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
                     <p className="text-gray-600 mb-4">{plan.subtitle}</p>
 
-                    <div className="mb-4">
+                    <div className="mb-2">
                       <span className="text-5xl font-bold text-gray-900">${getPrice(plan)}</span>
                       <span className="text-gray-600">/month</span>
-                      {billingPeriod === 'yearly' && (
-                        <div className="text-sm text-green-600 font-semibold mt-1">
-                          Save {getSavings(plan)}% annually
-                        </div>
-                      )}
+                    </div>
+
+                    {billingPeriod === 'yearly' && (
+                      <div className="text-sm text-green-600 font-semibold mb-2">
+                        Save ${plan.yearlySavings}/year (billed annually at ${plan.yearlyPrice * 12}/yr)
+                      </div>
+                    )}
+
+                    {/* Founding price callout */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                      <p className="text-xs text-amber-800 font-medium">
+                        Founding Price: <span className="font-bold">${plan.foundingPrice}/mo</span> ({plan.foundingDiscount})
+                      </p>
                     </div>
 
                     <p className="text-gray-600 text-sm">{plan.description}</p>
@@ -329,6 +399,77 @@ export default function PricingPage() {
                     14-day trial - No credit card needed
                   </p>
                 </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Add-Ons Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Add-Ons
+            </h2>
+            <p className="text-lg text-gray-600">
+              Customize your plan with powerful add-ons
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto">
+            {addOns.map((addon, index) => (
+              <div key={index} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between mb-2">
+                  <h4 className="font-semibold text-gray-900 text-sm">{addon.name}</h4>
+                  <Plus className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-blue-600 font-bold text-sm">{addon.price}</span>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{addon.availability}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Enterprise Tiers */}
+      <section className="py-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Enterprise Solutions
+            </h2>
+            <p className="text-lg text-gray-600">
+              For large businesses and agencies that need dedicated support and scale
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {enterprisePlans.map((plan, index) => (
+              <div key={index} className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-8 hover:shadow-xl transition-shadow">
+                <div className="text-center mb-6">
+                  <Building2 className="h-10 w-10 text-indigo-600 mx-auto mb-3" />
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                  <div className="text-2xl font-bold text-indigo-600 mb-1">{plan.price}</div>
+                </div>
+
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, fi) => (
+                    <li key={fi} className="flex items-start">
+                      <CheckCircle className="h-5 w-5 text-indigo-500 mr-3 mt-0.5 flex-shrink-0" />
+                      <span className="text-gray-700 text-sm">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  href="mailto:hello@voiceflyai.com?subject=Enterprise%20Inquiry"
+                  className="w-full py-3 px-6 rounded-lg font-semibold transition-colors block text-center bg-indigo-100 text-indigo-700 hover:bg-indigo-200"
+                >
+                  Contact Us
+                </Link>
               </div>
             ))}
           </div>
@@ -379,18 +520,18 @@ export default function PricingPage() {
                 <div className="font-bold text-gray-900">Features</div>
                 <div className="text-center">
                   <div className="font-bold text-gray-900">Starter</div>
-                  <div className="text-xs text-gray-600">${billingPeriod === 'yearly' ? '42' : '49'}/mo</div>
+                  <div className="text-xs text-gray-600">${billingPeriod === 'yearly' ? '39' : '49'}/mo</div>
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-blue-600 flex items-center justify-center">
                     <Star className="h-3 w-3 mr-1" />
                     Growth
                   </div>
-                  <div className="text-xs text-gray-600">${billingPeriod === 'yearly' ? '109' : '129'}/mo</div>
+                  <div className="text-xs text-gray-600">${billingPeriod === 'yearly' ? '103' : '129'}/mo</div>
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-gray-900">Pro</div>
-                  <div className="text-xs text-gray-600">${billingPeriod === 'yearly' ? '212' : '249'}/mo</div>
+                  <div className="text-xs text-gray-600">${billingPeriod === 'yearly' ? '199' : '249'}/mo</div>
                 </div>
               </div>
             </div>
@@ -576,7 +717,7 @@ export default function PricingPage() {
 
           <div className="border-t border-gray-800 pt-8">
             <p className="text-gray-400 text-sm text-center">
-              © 2026 VoiceFly. All rights reserved.
+              &copy; 2026 VoiceFly. All rights reserved.
             </p>
           </div>
         </div>

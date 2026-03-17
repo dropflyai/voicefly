@@ -32,6 +32,7 @@ export const getPlanFeatures = (tier: string) => {
     starter: [
       '60 Voice Minutes/mo',
       '1 AI employee',
+      '1 Phone Number',
       '24/7 Call Answering',
       'Appointment Booking',
       'Lead Capture',
@@ -42,7 +43,8 @@ export const getPlanFeatures = (tier: string) => {
     ],
     growth: [
       '250 Voice Minutes/mo',
-      'Up to 3 AI employees',
+      '3 AI employees',
+      '3 Phone Numbers',
       'Everything in Starter plus:',
       'Custom Greeting',
       'Custom FAQ Answers',
@@ -53,7 +55,8 @@ export const getPlanFeatures = (tier: string) => {
     ],
     pro: [
       '750 Voice Minutes/mo',
-      'Up to 5 AI employees',
+      '5 AI employees',
+      '5 Phone Numbers',
       'Everything in Growth plus:',
       'Fully Custom AI Agent (dedicated)',
       'AI SMS Conversations',
@@ -73,7 +76,7 @@ export const getUpgradeROI = (currentTier: string, targetTier: string) => {
   const roi = {
     'starter-growth': {
       revenue_increase: '30-50%',
-      features: ['4x more voice minutes', 'Up to 3 AI employees', 'Custom greetings & routing'],
+      features: ['4x more voice minutes', '3 AI employees', '3 phone numbers', 'Custom greetings & routing'],
       payback_period: '2-3 months',
       minutes_increase: '+190 minutes'
     },

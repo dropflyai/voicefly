@@ -1,6 +1,8 @@
 /**
  * VoiceFly Stripe Products Configuration
  * 3-tier model: Starter ($49/mo), Growth ($129/mo), Pro ($249/mo)
+ * Annual pricing: 20% off — Starter $39/mo, Growth $103/mo, Pro $199/mo
+ * Founding offers: Starter $25/mo (50% off), Growth $90/mo (30% off), Pro $175/mo (30% off)
  */
 
 // Subscription Products - Monthly recurring
@@ -9,10 +11,13 @@ export const SUBSCRIPTION_PRODUCTS = {
     name: 'VoiceFly Starter',
     description: '60 voice minutes per month. Your AI employee answers calls 24/7.',
     price_cents: 4900,
+    annual_price_cents: 3900,
+    founding_price_cents: 2500,
     interval: 'month' as const,
     features: [
       '60 voice minutes/month',
       '1 AI employee',
+      '1 phone number',
       '24/7 call answering',
       'Appointment booking',
       'Lead capture',
@@ -24,6 +29,8 @@ export const SUBSCRIPTION_PRODUCTS = {
     metadata: {
       tier: 'starter',
       minutes: '60',
+      employees: '1',
+      phone_numbers: '1',
       overage_per_minute: '0.25'
     }
   },
@@ -31,10 +38,13 @@ export const SUBSCRIPTION_PRODUCTS = {
     name: 'VoiceFly Growth',
     description: '250 voice minutes per month. For growing businesses that need more.',
     price_cents: 12900,
+    annual_price_cents: 10300,
+    founding_price_cents: 9000,
     interval: 'month' as const,
     features: [
       '250 voice minutes/month',
-      'Up to 3 AI employees',
+      '3 AI employees',
+      '3 phone numbers',
       '24/7 call answering',
       'Appointment booking',
       'Lead capture',
@@ -49,6 +59,8 @@ export const SUBSCRIPTION_PRODUCTS = {
     metadata: {
       tier: 'growth',
       minutes: '250',
+      employees: '3',
+      phone_numbers: '3',
       overage_per_minute: '0.20'
     }
   },
@@ -56,10 +68,13 @@ export const SUBSCRIPTION_PRODUCTS = {
     name: 'VoiceFly Pro',
     description: '750 voice minutes per month. For busy businesses ready to scale.',
     price_cents: 24900,
+    annual_price_cents: 19900,
+    founding_price_cents: 17500,
     interval: 'month' as const,
     features: [
       '750 voice minutes/month',
-      'Up to 5 AI employees',
+      '5 AI employees',
+      '5 phone numbers',
       '24/7 call answering',
       'Fully custom AI agent (dedicated, not shared)',
       'AI SMS conversations',
@@ -74,6 +89,8 @@ export const SUBSCRIPTION_PRODUCTS = {
     metadata: {
       tier: 'pro',
       minutes: '750',
+      employees: '5',
+      phone_numbers: '5',
       overage_per_minute: '0.18'
     }
   }

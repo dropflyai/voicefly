@@ -122,7 +122,7 @@ const helpSections = [
     articles: [
       {
         title: 'Plans Overview',
-        content: 'Starter ($49/mo) includes 100 voice minutes and 1 AI employee. Pro ($199/mo) includes 1,000 minutes and up to 5 employees.',
+        content: 'Starter ($49/mo) includes 60 voice minutes, 1 AI employee, and 1 phone number. Growth ($129/mo) includes 250 minutes, 3 employees, and 3 phone numbers. Pro ($249/mo) includes 750 minutes, 5 employees, and 5 phone numbers.',
       },
       {
         title: 'Upgrading Your Plan',
