@@ -9,6 +9,31 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+async function setupDashboardSession(userId: string, email: string) {
+  // Look up the user's business (same logic as AuthService.login)
+  const { data: businessUsers } = await supabase
+    .from('business_users')
+    .select('business_id, role, businesses:business_id(id, name)')
+    .eq('user_id', userId)
+
+  if (!businessUsers || businessUsers.length === 0) return false
+
+  const businesses = businessUsers.map((bu: any) => ({
+    id: bu.businesses.id,
+    name: bu.businesses.name,
+    role: bu.role,
+  }))
+
+  const primary = businesses.find((b: any) => b.role === 'owner') || businesses[0]
+
+  // Set the localStorage keys the dashboard expects
+  localStorage.setItem('authenticated_business_id', primary.id)
+  localStorage.setItem('authenticated_user_email', email)
+  localStorage.setItem('authenticated_business_name', primary.name)
+
+  return true
+}
+
 export default function AuthCallbackPage() {
   const router = useRouter()
 
@@ -16,16 +41,24 @@ export default function AuthCallbackPage() {
     const code = new URLSearchParams(window.location.search).get('code')
 
     if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-        if (error) {
-          console.error('[AuthCallback] Error exchanging code:', error.message)
+      supabase.auth.exchangeCodeForSession(code).then(async ({ data, error }) => {
+        if (error || !data.session) {
+          console.error('[AuthCallback] Error exchanging code:', error?.message)
           router.replace('/login?error=auth_failed')
+          return
+        }
+
+        const user = data.session.user
+        const ok = await setupDashboardSession(user.id, user.email || '')
+
+        if (!ok) {
+          // No business found — send to onboarding
+          router.replace('/onboarding')
         } else {
           router.replace('/dashboard')
         }
       })
     } else {
-      // No code — check if already signed in
       supabase.auth.getSession().then(({ data: { session } }) => {
         router.replace(session ? '/dashboard' : '/login')
       })
