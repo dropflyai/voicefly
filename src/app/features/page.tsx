@@ -598,8 +598,8 @@ export default function FeaturesPage() {
 
           <div className="text-center mt-12">
             <p className="text-gray-600 mb-4">Plus many more integrations through our API</p>
-            <Link href="/integrations" className="text-blue-600 hover:text-blue-700 font-semibold inline-flex items-center">
-              View All Integrations <ArrowRight className="ml-2 h-4 w-4" />
+            <Link href="/solutions" className="text-blue-600 hover:text-blue-700 font-semibold inline-flex items-center">
+              View All Solutions <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
         </div>

@@ -245,7 +245,7 @@ export default function LoginPage() {
                 </label>
               </div>
 
-              <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
+              <Link href="mailto:support@voiceflyai.com?subject=Password%20Reset" className="text-sm text-blue-600 hover:text-blue-500">
                 Forgot password?
               </Link>
             </div>
@@ -346,7 +346,7 @@ export default function LoginPage() {
               <div className="text-blue-200 text-sm mb-2">
                 Need help getting started?
               </div>
-              <Link href="/support" className="text-white underline hover:no-underline">
+              <Link href="mailto:support@voiceflyai.com" className="text-white underline hover:no-underline">
                 Contact our support team
               </Link>
             </div>

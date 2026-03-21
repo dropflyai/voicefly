@@ -418,28 +418,28 @@ export default function TestimonialsPage() {
               <ul className="space-y-2 text-gray-400">
                 <li><Link href="/features" className="hover:text-white">Features</Link></li>
                 <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
-                <li><Link href="/integrations" className="hover:text-white">Integrations</Link></li>
+                <li><Link href="/solutions" className="hover:text-white">Solutions</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="/about" className="hover:text-white">About</Link></li>
                 <li><Link href="/testimonials" className="hover:text-white">Testimonials</Link></li>
-                <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
+                <li><Link href="/privacy" className="hover:text-white">Privacy</Link></li>
+                <li><Link href="mailto:hello@voiceflyai.com" className="hover:text-white">Contact</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Support</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="/help" className="hover:text-white">Help Center</Link></li>
-                <li><Link href="/docs" className="hover:text-white">Documentation</Link></li>
-                <li><Link href="/status" className="hover:text-white">Status</Link></li>
+                <li><Link href="mailto:support@voiceflyai.com" className="hover:text-white">Help Center</Link></li>
+                <li><Link href="/demo" className="hover:text-white">Demo</Link></li>
+                <li><Link href="/terms" className="hover:text-white">Terms</Link></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 VoiceFly. All rights reserved.</p>
+            <p>&copy; 2026 VoiceFly. All rights reserved.</p>
           </div>
         </div>
       </footer>
