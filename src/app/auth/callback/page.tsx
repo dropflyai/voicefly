@@ -1,16 +1,10 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '@/lib/supabase-client'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
-async function setupDashboardSession(userId: string, email: string) {
-  // Look up the user's business (same logic as AuthService.login)
+async function setupDashboardSession(userId: string, email: string): Promise<boolean> {
   const { data: businessUsers } = await supabase
     .from('business_users')
     .select('business_id, role, businesses:business_id(id, name)')
@@ -26,7 +20,6 @@ async function setupDashboardSession(userId: string, email: string) {
 
   const primary = businesses.find((b: any) => b.role === 'owner') || businesses[0]
 
-  // Set the localStorage keys the dashboard expects
   localStorage.setItem('authenticated_business_id', primary.id)
   localStorage.setItem('authenticated_user_email', email)
   localStorage.setItem('authenticated_business_name', primary.name)
@@ -36,33 +29,40 @@ async function setupDashboardSession(userId: string, email: string) {
 
 export default function AuthCallbackPage() {
   const router = useRouter()
+  const handled = useRef(false)
 
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get('code')
+    // Log what we received for debugging
+    console.log('[AuthCallback] URL:', window.location.href)
+    console.log('[AuthCallback] Search:', window.location.search)
+    console.log('[AuthCallback] Hash:', window.location.hash ? '(has hash)' : '(no hash)')
 
-    if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(async ({ data, error }) => {
-        if (error || !data.session) {
-          console.error('[AuthCallback] Error exchanging code:', error?.message)
-          router.replace('/login?error=auth_failed')
-          return
-        }
+    // Supabase auto-detects tokens in URL (hash for implicit, code for PKCE).
+    // Poll getSession() until the session is available.
+    let attempts = 0
+    const maxAttempts = 30 // 7.5 seconds max
 
-        const user = data.session.user
-        const ok = await setupDashboardSession(user.id, user.email || '')
+    const interval = setInterval(async () => {
+      if (handled.current) return
+      attempts++
 
-        if (!ok) {
-          // No business found — send to onboarding
-          router.replace('/onboarding')
-        } else {
-          router.replace('/dashboard')
-        }
-      })
-    } else {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        router.replace(session ? '/dashboard' : '/login')
-      })
-    }
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (session) {
+        handled.current = true
+        clearInterval(interval)
+        console.log('[AuthCallback] Session found for:', session.user.email)
+        const ok = await setupDashboardSession(session.user.id, session.user.email || '')
+        router.replace(ok ? '/dashboard' : '/onboarding')
+      } else if (attempts >= maxAttempts) {
+        handled.current = true
+        clearInterval(interval)
+        console.error('[AuthCallback] Timed out waiting for session')
+        router.replace('/login?error=auth_timeout')
+      }
+    }, 250)
+
+    return () => clearInterval(interval)
   }, [router])
 
   return (
