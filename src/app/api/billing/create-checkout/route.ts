@@ -34,12 +34,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate target plan
-    if (!['starter', 'pro'].includes(targetPlan)) {
-      return NextResponse.json({ error: 'Invalid plan. Must be "starter" or "pro".' }, { status: 400 })
+    if (!['starter', 'growth', 'pro'].includes(targetPlan)) {
+      return NextResponse.json({ error: 'Invalid plan. Must be "starter", "growth", or "pro".' }, { status: 400 })
     }
 
     // Get Stripe price ID
-    const priceId = getSubscriptionPriceId(targetPlan as 'starter' | 'pro')
+    const priceId = getSubscriptionPriceId(targetPlan as 'starter' | 'growth' | 'pro')
     if (!priceId) {
       return NextResponse.json({ error: `Stripe price not configured for ${targetPlan} plan` }, { status: 500 })
     }
