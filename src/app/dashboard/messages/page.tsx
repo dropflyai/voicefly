@@ -122,7 +122,7 @@ function MessagesPage() {
 
     // Fetch all data in parallel via server-side API routes
     const [bizRes, empRes, msgRes, convRes] = await Promise.all([
-      fetch(`/api/businesses/${bId}`, { headers }).catch(() => null),
+      fetch(`/api/business?businessId=${bId}`, { headers }).catch(() => null),
       fetch(`/api/phone-employees?businessId=${bId}`, { headers }).catch(() => null),
       fetch(`/api/phone-messages?businessId=${bId}`, { headers }).catch(() => null),
       fetch(`/api/conversations?businessId=${bId}`, { headers }).catch(() => null),

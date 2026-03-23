@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Clock, Battery, BatteryLow, BatteryWarning, Plus, TrendingUp } from 'lucide-react'
 import Link from 'next/link'
+import { supabase } from '@/lib/supabase-client'
 
 interface CreditBalance {
   monthly_credits: number
@@ -45,7 +46,12 @@ export default function CreditMeter({
 
   const fetchBalance = async () => {
     try {
-      const response = await fetch(`/api/credits/balance?business_id=${businessId}`)
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers: Record<string, string> = {}
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`
+      }
+      const response = await fetch(`/api/credits/balance?business_id=${businessId}`, { headers })
       if (!response.ok) throw new Error('Failed to fetch balance')
 
       const data = await response.json()

@@ -178,6 +178,7 @@ export default function SettingsPage() {
       }
 
       // Load team members
+      const { data: { session: currentSession } } = await supabase.auth.getSession()
       const { data: members } = await supabase
         .from('business_users')
         .select('id, user_id, role')
@@ -189,7 +190,7 @@ export default function SettingsPage() {
           id: m.id,
           user_id: m.user_id,
           role: m.role,
-          email: m.user_id === session.user.id ? session.user.email || '' : '',
+          email: m.user_id === currentSession?.user.id ? currentSession?.user.email || '' : '',
         })))
       }
 
