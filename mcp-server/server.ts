@@ -25,9 +25,10 @@ import { eyesTools, handleEyesTool } from './tools/eyes.js'
 import { earsTools, handleEarsTool } from './tools/ears.js'
 import { mouthTools, handleMouthTool } from './tools/mouth.js'
 import { memoryTools, handleMemoryTool } from './tools/memory.js'
+import { conversionTools, handleConversionTool } from './tools/conversion.js'
 
 // All tools
-const allTools = [...handsTools, ...eyesTools, ...earsTools, ...mouthTools, ...memoryTools]
+const allTools = [...handsTools, ...eyesTools, ...earsTools, ...mouthTools, ...memoryTools, ...conversionTools]
 
 // Map tool names to their layer handler
 const handlerMap: Record<string, (name: string, args: any) => Promise<string>> = {}
@@ -36,10 +37,11 @@ for (const t of eyesTools) handlerMap[t.name] = handleEyesTool
 for (const t of earsTools) handlerMap[t.name] = handleEarsTool
 for (const t of mouthTools) handlerMap[t.name] = handleMouthTool
 for (const t of memoryTools) handlerMap[t.name] = handleMemoryTool
+for (const t of conversionTools) handlerMap[t.name] = handleConversionTool
 
 // Create server
 const server = new Server(
-  { name: 'voicefly', version: '2.0.0' },
+  { name: 'voicefly', version: '3.0.0' },
   { capabilities: { tools: {} } }
 )
 
