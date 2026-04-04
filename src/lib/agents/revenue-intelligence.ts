@@ -129,13 +129,7 @@ export class RevenueIntelligenceAgent {
         healthScore: this.calculateRevenueHealth(revenueData, trendAnalysis),
       }
 
-      // Deduct credits
-      // Included feature — no deduction: // await deductCredits(
-        businessId,
-        AgentCreditCost.DEEP_ANALYSIS,
-        'revenue_analysis',
-        { analysisDate: new Date().toISOString() }
-      )
+      // Included feature — no deduction
 
       // Store analysis
       await this.storeAnalysis(businessId, summary, insights)

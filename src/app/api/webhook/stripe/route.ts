@@ -179,38 +179,33 @@ export async function POST(request: NextRequest) {
               }).eq('id', businessId)
             }
 
-            {
-              logger.info('Minutes added', { businessId, minutes })
+            logger.info('Minutes added', { businessId, minutes })
 
-              await supabase
-                .from('credit_purchases')
-                .insert({
-                  business_id: businessId,
-                  pack_id: packId,
-                  credits_purchased: credits,
-                  minutes_purchased: minutes,
-                  amount_paid: session.amount_total || 0,
-                  stripe_payment_id: paymentIntentId,
-                  stripe_invoice_id: typeof session.invoice === 'string' ? session.invoice : session.invoice?.id,
-                  status: 'completed',
-                  created_at: new Date().toISOString()
-                })
-
-              await AuditLogger.log({
-                event_type: AuditEventType.CREDIT_PURCHASED,
+            await supabase
+              .from('credit_purchases')
+              .insert({
                 business_id: businessId,
-                metadata: {
-                  pack_id: packId,
-                  minutes_purchased: minutes,
-                  credits_purchased: credits,
-                  amount_paid: session.amount_total,
-                  stripe_session_id: session.id
-                },
-                severity: 'low'
+                pack_id: packId,
+                credits_purchased: minutes,
+                minutes_purchased: minutes,
+                amount_paid: session.amount_total || 0,
+                stripe_payment_id: paymentIntentId,
+                stripe_invoice_id: typeof session.invoice === 'string' ? session.invoice : session.invoice?.id,
+                status: 'completed',
+                created_at: new Date().toISOString()
               })
-            } else {
-              logger.error('Failed to add purchased credits', { businessId, result })
-            }
+
+            await AuditLogger.log({
+              event_type: AuditEventType.CREDIT_PURCHASED,
+              business_id: businessId,
+              metadata: {
+                pack_id: packId,
+                minutes_purchased: minutes,
+                amount_paid: session.amount_total,
+                stripe_session_id: session.id
+              },
+              severity: 'low'
+            })
           } else {
             logger.error('Missing metadata in minute pack purchase', { metadata: session.metadata })
           }

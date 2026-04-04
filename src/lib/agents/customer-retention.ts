@@ -236,13 +236,7 @@ export class CustomerRetentionAgent {
         scheduledFor: new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours
       }))
 
-      // Deduct credits
-      // Included feature — no deduction: // await deductCredits(
-        businessId,
-        AgentCreditCost.DEEP_ANALYSIS,
-        'daily_retention_analysis',
-        { customersAnalyzed: analyzed }
-      )
+      // Included feature — no deduction
 
       // Log to audit
       await AuditLogger.log({

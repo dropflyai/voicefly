@@ -496,13 +496,7 @@ export class MayaPrime {
         },
       }
 
-      // Deduct credits
-      // Included feature //
-        businessId,
-        AgentCreditCost.DAILY_SUMMARY,
-        'daily_summary',
-        { date: now.toISOString() }
-      )
+      // Included feature — no deduction
 
       // Store summary
       await this.storeDailySummary(summary)

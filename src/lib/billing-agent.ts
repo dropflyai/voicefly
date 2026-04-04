@@ -11,8 +11,6 @@
 
 import { supabase } from './supabase-client'
 import { EmployeeProvisioningService } from './phone-employees/employee-provisioning'
-import CreditSystem, {
-// Credit system removed — using minutes system
 import { TIER_MINUTES, getMinutesBalance } from './minutes'
 import AuditLogger, { AuditEventType } from './audit-logger'
 
@@ -38,11 +36,11 @@ const FEATURE_TO_SERVICE: Record<string, string> = {
 // Get monthly allocation for a tier
 function getMonthlyAllocation(tier: string): number {
   switch (tier) {
-    case 'trial': return MonthlyCredits.TRIAL
-    case 'starter': return MonthlyCredits.STARTER
+    case 'trial': return 10
+    case 'starter': return 60
     case 'pro':
-    case 'professional': return MonthlyCredits.PRO
-    default: return MonthlyCredits.STARTER
+    case 'professional': return 750
+    default: return 60
   }
 }
 
@@ -67,16 +65,16 @@ export class BillingAgent {
         processed++
 
         // Check credit levels
-        const balance = await import("@/lib/minutes").then(m => m.getMinutesBalance(biz.id)
+        const balance = await getMinutesBalance(biz.id)
         if (!balance) continue
 
         const allocation = getMonthlyAllocation(biz.subscription_tier)
         const totalAvailable = allocation + (biz.purchased_credits || 0)
         if (totalAvailable === 0) continue
 
-        const percentRemaining = (balance.total_credits / totalAvailable) * 100
+        const percentRemaining = (balance.minutes_remaining / totalAvailable) * 100
 
-        if (percentRemaining <= 5 && balance.total_credits > 0) {
+        if (percentRemaining <= 5 && balance.minutes_remaining > 0) {
           const sent = await this.insertBillingAlert(
             biz.id,
             'credits_exhausted',
@@ -85,7 +83,7 @@ export class BillingAgent {
             { percentRemaining, totalMinutes: balance.total_minutes }
           )
           if (sent) alerts++
-        } else if (percentRemaining <= 20 && balance.total_credits > 0) {
+        } else if (percentRemaining <= 20 && balance.minutes_remaining > 0) {
           const sent = await this.insertBillingAlert(
             biz.id,
             'low_credits',
@@ -94,7 +92,7 @@ export class BillingAgent {
             { percentRemaining, totalMinutes: balance.total_minutes }
           )
           if (sent) alerts++
-        } else if (balance.total_credits <= 0) {
+        } else if (balance.minutes_remaining <= 0) {
           const sent = await this.insertBillingAlert(
             biz.id,
             'credits_exhausted',
@@ -194,7 +192,7 @@ export class BillingAgent {
             businessId,
             'usage_spike',
             'critical',
-            `Unusual usage detected: ${Math.round(creditsThisHour / CREDITS_PER_MINUTE)} minutes consumed in the last hour.`,
+            `Unusual usage detected: ${Math.round(creditsThisHour / 1)} minutes consumed in the last hour.`,
             {
               creditsThisHour,
               avgHourlyRate: Math.round(avgHourlyRate),
@@ -451,9 +449,9 @@ export class BillingAgent {
         // Only count overage if used more than allocation AND credits are depleted
         if (used > allocation && (biz.monthly_credits || 0) === 0 && (biz.purchased_credits || 0) === 0) {
           const overageCredits = used - allocation
-          const overageMinutes = Math.ceil(overageCredits / CREDITS_PER_MINUTE)
+          const overageMinutes = Math.ceil(overageCredits / 1)
           const tierKey = biz.subscription_tier as keyof typeof OVERAGE_PRICING_PER_MINUTE
-          const ratePerMinute = OVERAGE_PRICING_PER_MINUTE[tierKey] || OVERAGE_PRICING_PER_MINUTE.starter
+          const ratePerMinute = 0.25 || 0.25
           const overageCost = overageMinutes * ratePerMinute
 
           // Upsert usage record for overage
@@ -546,7 +544,7 @@ export class BillingAgent {
       for (const biz of businesses) {
         processed++
 
-        const result = await CreditSystem.resetMonthlyCredits(biz.id)
+        const result = await supabase.from("businesses").update({ credits_used_this_month: 0 }).eq("id", biz.id)
         if (result) {
           succeeded++
         } else {
@@ -601,9 +599,9 @@ export class BillingAgent {
 
         // Calculate units based on service type
         if (serviceType === 'voice_inbound') {
-          aggregated[tx.business_id][serviceType].units += Math.ceil(credits / CreditCost.VOICE_CALL_INBOUND)
+          aggregated[tx.business_id][serviceType].units += Math.ceil(credits / 1)
         } else if (serviceType === 'voice_outbound') {
-          aggregated[tx.business_id][serviceType].units += Math.ceil(credits / CreditCost.VOICE_CALL_OUTBOUND)
+          aggregated[tx.business_id][serviceType].units += Math.ceil(credits / 1)
         } else {
           aggregated[tx.business_id][serviceType].units += 1
         }
@@ -701,7 +699,7 @@ export class BillingAgent {
 
         // Get subscription price
         const tierKey = biz.subscription_tier as keyof typeof TIER_PRICING
-        const subscriptionCents = TIER_PRICING[tierKey]?.price_cents || 0
+        const subscriptionCents = TIER_MINUTES[tierKey as keyof typeof TIER_MINUTES] ? (tierKey === 'pro' ? 24900 : tierKey === 'growth' ? 12900 : 4900) : 4900 || 0
 
         // Get overage from usage_records
         const { data: overageRecord } = await supabase
@@ -737,7 +735,7 @@ export class BillingAgent {
         const lineItems = []
         if (subscriptionCents > 0) {
           lineItems.push({
-            description: `${TIER_PRICING[tierKey]?.name || biz.subscription_tier} Plan - Monthly`,
+            description: `${tierKey || biz.subscription_tier} Plan - Monthly`,
             amount_cents: subscriptionCents,
           })
         }
@@ -820,7 +818,7 @@ export class BillingAgent {
         const tierKey = biz.subscription_tier as keyof typeof TIER_PRICING
 
         if (biz.subscription_status === 'active' && biz.subscription_tier !== 'trial') {
-          const priceCents = TIER_PRICING[tierKey]?.price_cents || 0
+          const priceCents = TIER_MINUTES[tierKey as keyof typeof TIER_MINUTES] ? (tierKey === 'pro' ? 24900 : tierKey === 'growth' ? 12900 : 4900) : 4900 || 0
           subscriptionMrr += priceCents
           payingCount++
 
@@ -1111,18 +1109,17 @@ export class BillingAgent {
 
         if (existingRefund) continue
 
-        // Issue refund
-        const refundCredits = Math.abs(deduction.amount)
-        const result = await CreditSystem.addPurchasedCredits(
-          call.business_id,
-          refundCredits,
-          'refund_failed_call',
-          undefined
-        )
+        // Issue refund — add minutes back
+        const refundMinutes = Math.abs(deduction.amount)
+        const { data: biz } = await supabase.from('businesses').select('purchased_credits').eq('id', call.business_id).single()
+        const { error: refundErr } = await supabase.from('businesses').update({
+          purchased_credits: (biz?.purchased_credits || 0) + refundMinutes,
+          updated_at: new Date().toISOString(),
+        }).eq('id', call.business_id)
 
-        if (result.success) {
+        if (!refundErr) {
           issued++
-          creditsRefunded += refundCredits
+          const creditsRefunded_local = refundMinutes
 
           // Log the refund with call reference
           await supabase.from('credit_transactions').insert({
@@ -1131,7 +1128,7 @@ export class BillingAgent {
             operation: 'refund',
             feature: 'failed_call_refund',
             metadata: { callId: call.call_id, originalDeduction: deduction.amount },
-            balance_after: result.balance?.total_credits || 0,
+            balance_after: result.balance?.minutes_remaining || 0,
             created_at: new Date().toISOString(),
           })
 
@@ -1243,16 +1240,17 @@ export class BillingAgent {
     metadata?: Record<string, any>
   ): Promise<{ success: boolean; newBalance: number }> {
     try {
-      const result = await CreditSystem.addPurchasedCredits(
-        businessId,
-        credits,
-        `promo_${reason}`,
-        undefined
-      )
+      // Add promotional minutes directly
+      const { data: currentBiz } = await supabase.from('businesses').select('purchased_credits').eq('id', businessId).single()
+      const { error: promoErr } = await supabase.from('businesses').update({
+        purchased_credits: (currentBiz?.purchased_credits || 0) + credits,
+        updated_at: new Date().toISOString(),
+      }).eq('id', businessId)
 
-      if (!result.success) {
+      if (promoErr) {
         return { success: false, newBalance: 0 }
       }
+      const result = { balance: { minutes_remaining: (currentBiz?.purchased_credits || 0) + credits } }
 
       // Update promotional_credits tracking column
       const { data: biz } = await supabase
@@ -1283,7 +1281,7 @@ export class BillingAgent {
 
       return {
         success: true,
-        newBalance: result.balance?.total_credits || 0,
+        newBalance: result.balance?.minutes_remaining || 0,
       }
     } catch (err) {
       console.error('[BillingAgent] applyPromotionalCredits error:', err)
@@ -1301,7 +1299,7 @@ export class BillingAgent {
     willNeedTopUp: boolean
   } | null> {
     try {
-      const balance = await import("@/lib/minutes").then(m => m.getMinutesBalance(businessId)
+      const balance = await getMinutesBalance(businessId)
       if (!balance) return null
 
       // Get last 7 days of deductions
@@ -1318,7 +1316,7 @@ export class BillingAgent {
         return {
           dailyBurnRate: 0,
           daysUntilExhaustion: -1, // -1 means no usage
-          projectedEndOfPeriod: balance.total_credits,
+          projectedEndOfPeriod: balance.minutes_remaining,
           willNeedTopUp: false,
         }
       }
@@ -1327,7 +1325,7 @@ export class BillingAgent {
       const dailyBurnRate = totalUsed7d / 7
 
       const daysUntilExhaustion = dailyBurnRate > 0
-        ? balance.total_credits / dailyBurnRate
+        ? balance.minutes_remaining / dailyBurnRate
         : -1
 
       // Days remaining in billing period
@@ -1339,7 +1337,7 @@ export class BillingAgent {
       )
 
       const projectedEndOfPeriod = Math.max(0,
-        balance.total_credits - (dailyBurnRate * daysRemaining)
+        balance.minutes_remaining - (dailyBurnRate * daysRemaining)
       )
 
       return {

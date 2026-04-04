@@ -127,13 +127,7 @@ export class LeadQualificationAgent {
       // Store qualification
       await this.storeQualification(qualification)
 
-      // Deduct credits
-      // Included feature — no deduction: // await deductCredits(
-        businessId,
-        AgentCreditCost.LEAD_QUALIFICATION,
-        'lead_qualification',
-        { leadId }
-      )
+      // Included feature — no deduction
 
       // Log to audit
       await AuditLogger.log({

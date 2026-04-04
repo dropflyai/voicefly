@@ -116,13 +116,7 @@ export class CallIntelligenceAgent {
       // Store analysis
       await this.storeAnalysis(analysis)
 
-      // Deduct credits
-      // Included feature — no deduction: // await deductCredits(
-        businessId,
-        AgentCreditCost.CALL_ANALYSIS,
-        'call_analysis',
-        { callId }
-      )
+      // Included feature — no deduction
 
       // Log to audit
       await AuditLogger.log({
