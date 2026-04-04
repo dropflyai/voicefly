@@ -387,6 +387,18 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
               ? `Provisioned phone number: **${action.result.phone_number}**`
               : action.tool === 'update_employee_config'
               ? `Updated employee configuration`
+              : action.tool === 'toggle_employee'
+              ? action.result.message
+              : action.tool === 'delete_employee'
+              ? action.result.message
+              : action.tool === 'update_business_settings'
+              ? `Updated business settings: ${action.result.updated_fields?.join(', ')}`
+              : action.tool === 'update_ai_knowledge'
+              ? `Updated AI Knowledge: ${action.result.updated_fields?.join(', ')}`
+              : action.tool === 'update_business_hours'
+              ? action.result.message
+              : action.tool === 'resolve_message'
+              ? action.result.message
               : action.result.message || `Action completed`
 
             setMessages(prev => [

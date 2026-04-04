@@ -768,6 +768,90 @@ export async function POST(request: NextRequest) {
           required: ['page'],
         },
       },
+      {
+        name: 'toggle_employee',
+        description: 'Activate or deactivate an employee. Use when user wants to pause, turn off, enable, or reactivate an employee.',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            employee_id: { type: 'string', description: 'The ID of the employee' },
+            active: { type: 'boolean', description: 'true to activate, false to deactivate' },
+          },
+          required: ['employee_id', 'active'],
+        },
+      },
+      {
+        name: 'delete_employee',
+        description: 'Permanently delete an employee. Always confirm with the user before using this tool. Use only when user explicitly asks to remove/delete an employee.',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            employee_id: { type: 'string', description: 'The ID of the employee to delete' },
+            employee_name: { type: 'string', description: 'Name of the employee (for confirmation)' },
+          },
+          required: ['employee_id'],
+        },
+      },
+      {
+        name: 'update_business_settings',
+        description: 'Update business profile settings — name, phone, email, address, timezone, business type. Use when user wants to change their business information.',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            name: { type: 'string', description: 'Business name' },
+            phone: { type: 'string', description: 'Business phone number' },
+            email: { type: 'string', description: 'Business email' },
+            address: { type: 'string', description: 'Business address' },
+            timezone: { type: 'string', description: 'Timezone (e.g. America/Los_Angeles)' },
+            business_type: { type: 'string', description: 'Business type (e.g. dental_practice, beauty_salon)' },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'update_ai_knowledge',
+        description: 'Update AI Knowledge fields that all employees share — owner name, address description, hours summary, payment methods, parking info, policies, languages, special notes. Use when user provides business details that callers should know.',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            owner_name: { type: 'string', description: 'Owner or manager name' },
+            address_display: { type: 'string', description: 'Address as you want it spoken to callers' },
+            hours_summary: { type: 'string', description: 'Business hours in natural language' },
+            payment_methods: { type: 'string', description: 'Accepted payment methods' },
+            parking_info: { type: 'string', description: 'Parking information' },
+            languages: { type: 'string', description: 'Languages spoken' },
+            policies: { type: 'string', description: 'Business policies (cancellation, refund, etc.)' },
+            special_notes: { type: 'string', description: 'Any current promos, closures, or special info' },
+          },
+          required: [],
+        },
+      },
+      {
+        name: 'update_business_hours',
+        description: 'Set the business hours for specific days. Use when user tells you their hours.',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            hours: {
+              type: 'object',
+              description: 'Object with day names as keys. Each value is either null (closed) or { open: "HH:MM", close: "HH:MM" }. Days: monday, tuesday, wednesday, thursday, friday, saturday, sunday.',
+            },
+          },
+          required: ['hours'],
+        },
+      },
+      {
+        name: 'resolve_message',
+        description: 'Mark a phone message as resolved or in-progress. Use when user says they handled a callback or want to update message status.',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            message_id: { type: 'string', description: 'The ID of the phone message' },
+            status: { type: 'string', enum: ['read', 'in_progress', 'resolved', 'archived'], description: 'New status' },
+          },
+          required: ['message_id', 'status'],
+        },
+      },
     ]
 
     // Tool execution functions
@@ -886,11 +970,147 @@ export async function POST(request: NextRequest) {
       return { success: true, message: 'Employee configuration updated', updated_fields: Object.keys(updates) }
     }
 
+    async function executeToggleEmployee(input: any): Promise<any> {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+      const { data: emp } = await supabase
+        .from('phone_employees')
+        .select('name')
+        .eq('id', input.employee_id)
+        .eq('business_id', businessId)
+        .single()
+
+      const { error } = await supabase
+        .from('phone_employees')
+        .update({ is_active: input.active, updated_at: new Date().toISOString() })
+        .eq('id', input.employee_id)
+        .eq('business_id', businessId)
+
+      if (error) return { success: false, error: error.message }
+      return { success: true, message: `${emp?.name || 'Employee'} ${input.active ? 'activated' : 'deactivated'}` }
+    }
+
+    async function executeDeleteEmployee(input: any): Promise<any> {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+      const { data: emp } = await supabase
+        .from('phone_employees')
+        .select('name')
+        .eq('id', input.employee_id)
+        .eq('business_id', businessId)
+        .single()
+
+      const { error } = await supabase
+        .from('phone_employees')
+        .delete()
+        .eq('id', input.employee_id)
+        .eq('business_id', businessId)
+
+      if (error) return { success: false, error: error.message }
+      return { success: true, message: `${emp?.name || 'Employee'} has been deleted` }
+    }
+
+    async function executeUpdateBusinessSettings(input: any): Promise<any> {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+      const updates: any = { updated_at: new Date().toISOString() }
+
+      if (input.name) updates.name = input.name
+      if (input.phone) updates.phone = input.phone
+      if (input.email) updates.email = input.email
+      if (input.address) updates.address = input.address
+      if (input.timezone) updates.timezone = input.timezone
+      if (input.business_type) updates.business_type = input.business_type
+
+      const updatedFields = Object.keys(updates).filter(k => k !== 'updated_at')
+      if (updatedFields.length === 0) return { success: false, error: 'No fields to update' }
+
+      const { error } = await supabase
+        .from('businesses')
+        .update(updates)
+        .eq('id', businessId)
+
+      if (error) return { success: false, error: error.message }
+      return { success: true, message: `Updated business ${updatedFields.join(', ')}`, updated_fields: updatedFields }
+    }
+
+    async function executeUpdateAiKnowledge(input: any): Promise<any> {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+      // Get existing context
+      const { data: biz } = await supabase
+        .from('businesses')
+        .select('business_context')
+        .eq('id', businessId)
+        .single()
+
+      const existing = biz?.business_context || {}
+      const updated: any = { ...existing }
+
+      for (const key of ['owner_name', 'address_display', 'hours_summary', 'payment_methods', 'parking_info', 'languages', 'policies', 'special_notes']) {
+        if (input[key] !== undefined) updated[key] = input[key]
+      }
+
+      const { error } = await supabase
+        .from('businesses')
+        .update({ business_context: updated, updated_at: new Date().toISOString() })
+        .eq('id', businessId)
+
+      if (error) return { success: false, error: error.message }
+      const changedFields = Object.keys(input).filter(k => input[k] !== undefined)
+      return { success: true, message: `Updated AI Knowledge: ${changedFields.join(', ')}`, updated_fields: changedFields }
+    }
+
+    async function executeUpdateBusinessHours(input: any): Promise<any> {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+      const hours = input.hours
+
+      if (!hours || typeof hours !== 'object') return { success: false, error: 'Invalid hours format' }
+
+      // Delete existing hours and insert new ones
+      await supabase.from('business_hours').delete().eq('business_id', businessId)
+
+      const rows = Object.entries(hours).map(([day, value]: [string, any]) => ({
+        business_id: businessId,
+        day_of_week: day,
+        is_open: value !== null,
+        open_time: value?.open || '09:00',
+        close_time: value?.close || '17:00',
+      }))
+
+      const { error } = await supabase.from('business_hours').insert(rows)
+      if (error) return { success: false, error: error.message }
+
+      const openDays = rows.filter(r => r.is_open).map(r => r.day_of_week)
+      return { success: true, message: `Business hours updated. Open: ${openDays.join(', ') || 'none'}` }
+    }
+
+    async function executeResolveMessage(input: any): Promise<any> {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+      const updates: any = { status: input.status, updated_at: new Date().toISOString() }
+      if (input.status === 'resolved' || input.status === 'archived') {
+        updates.callback_completed = true
+      }
+
+      const { error } = await supabase
+        .from('phone_messages')
+        .update(updates)
+        .eq('id', input.message_id)
+        .eq('business_id', businessId)
+
+      if (error) return { success: false, error: error.message }
+      return { success: true, message: `Message marked as ${input.status}` }
+    }
+
     async function executeTool(name: string, input: any): Promise<any> {
       switch (name) {
         case 'create_employee': return executeCreateEmployee(input)
         case 'provision_phone_number': return executeProvisionPhone(input)
         case 'update_employee_config': return executeUpdateConfig(input)
+        case 'toggle_employee': return executeToggleEmployee(input)
+        case 'delete_employee': return executeDeleteEmployee(input)
+        case 'update_business_settings': return executeUpdateBusinessSettings(input)
+        case 'update_ai_knowledge': return executeUpdateAiKnowledge(input)
+        case 'update_business_hours': return executeUpdateBusinessHours(input)
+        case 'resolve_message': return executeResolveMessage(input)
         case 'navigate_user': return { success: true, page: input.page, message: `Navigating to ${input.page}` }
         default: return { success: false, error: `Unknown tool: ${name}` }
       }
@@ -907,7 +1127,33 @@ export async function POST(request: NextRequest) {
     let response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1024,
-      system: systemPrompt + (isDashboard ? `\n\n## Your Action Capabilities\nYou can take real actions for the user using tools. When a user asks you to create an employee, set up a phone number, or update settings — DO IT using the tools available. Don't just give instructions. Ask for confirmation before creating employees or provisioning numbers. After executing, tell them what you did and suggest the next step.` : ''),
+      system: systemPrompt + (isDashboard ? `\n\n## Your Action Capabilities — IMPORTANT
+You can take REAL actions for the user using tools. When a user asks you to do something — DO IT, don't just give instructions. You have these abilities:
+
+**Employee Management:**
+- Create new AI employees (ask for business type, suggest a name, optionally use their website URL)
+- Provision phone numbers (ask for preferred area code)
+- Update employee config (greeting, tone, business context, instructions)
+- Activate or deactivate employees
+- Delete employees (always confirm first)
+
+**Business Settings:**
+- Update business profile (name, phone, email, address, timezone, type)
+- Update AI Knowledge (owner name, address, hours, payments, parking, policies, languages, special notes)
+- Set business hours for each day of the week
+
+**Messages:**
+- Mark phone messages as resolved, in-progress, or archived
+
+**Navigation:**
+- Navigate the user to any dashboard page
+
+**Rules:**
+- Always confirm before destructive actions (delete employee)
+- Ask for confirmation before creating employees or provisioning numbers
+- After each action, tell the user what you did and suggest the next step
+- If the user describes their business naturally (hours, services, policies), extract that info and save it using the appropriate tool
+- Be proactive — if someone says "we're open 9 to 5 Monday through Friday", save those hours immediately` : ''),
       messages,
       ...(isDashboard ? { tools: DASHBOARD_TOOLS } : {}),
     })
