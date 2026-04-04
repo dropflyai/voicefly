@@ -377,6 +377,51 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
         setOnboardingStep(data.onboardingStep as OnboardingStep)
       }
 
+      // Handle executed actions — show inline confirmations
+      if (data.actions?.length > 0) {
+        for (const action of data.actions) {
+          if (action.result?.success) {
+            const actionMsg = action.tool === 'create_employee'
+              ? `Created **${action.result.name}** (${action.result.job_type?.replace(/-/g, ' ')})`
+              : action.tool === 'provision_phone_number'
+              ? `Provisioned phone number: **${action.result.phone_number}**`
+              : action.tool === 'update_employee_config'
+              ? `Updated employee configuration`
+              : action.result.message || `Action completed`
+
+            setMessages(prev => [
+              ...prev,
+              {
+                id: `action-${Date.now()}-${action.tool}`,
+                role: 'assistant',
+                content: `[ACTION] ${actionMsg}`,
+                timestamp: new Date(),
+              },
+            ])
+          }
+        }
+
+        // Refresh onboarding state after actions
+        const id = localStorage.getItem('authenticated_business_id')
+        if (id) {
+          supabase.auth.getSession().then(() =>
+            supabase.from('phone_employees').select('id, phone_number').eq('business_id', id).eq('is_active', true)
+          ).then(({ data: emps }) => {
+            if (emps && emps.length > 0 && onboardingStep === 1) setOnboardingStep(2)
+            if (emps?.some((e: any) => e.phone_number) && onboardingStep === 2) setOnboardingStep(3)
+          }).catch(() => {})
+        }
+      }
+
+      // Handle navigation
+      if (data.navigate) {
+        const { push } = await import('next/navigation').then(m => ({ push: m.useRouter })).catch(() => ({ push: null }))
+        // Use window.location for navigation since we can't use hooks here
+        setTimeout(() => {
+          window.location.href = data.navigate
+        }, 1500)
+      }
+
       const responseText = data.response || data.error || "Sorry, I ran into an issue. Please try again."
       setMessages(prev => [
         ...prev,
@@ -538,36 +583,54 @@ export default function DashboardAssistant({ autoOpenForNewUser = false }: Dashb
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
-            {messages.map(msg => (
-              <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div
-                  className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-sm ${
-                    msg.role === 'user'
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-white text-gray-900 shadow-sm border border-gray-200'
-                  }`}
-                >
-                  {msg.role === 'assistant' ? (
-                    <div className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-strong:text-gray-900 leading-relaxed">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+            {messages.map(msg => {
+              const isAction = msg.content.startsWith('[ACTION]')
+              const displayContent = isAction ? msg.content.replace('[ACTION] ', '') : msg.content
+
+              if (isAction) {
+                return (
+                  <div key={msg.id} className="flex justify-start">
+                    <div className="max-w-[82%] rounded-xl px-3 py-2 text-sm bg-emerald-500/10 text-emerald-400 flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                      <div className="prose prose-sm max-w-none prose-strong:text-emerald-400 leading-relaxed">
+                        <ReactMarkdown>{displayContent}</ReactMarkdown>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="whitespace-pre-line leading-relaxed">{msg.content}</div>
-                  )}
-                  <div className="text-[10px] mt-1 text-gray-400">
-                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                )
+              }
+
+              return (
+                <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div
+                    className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-sm ${
+                      msg.role === 'user'
+                        ? 'bg-brand-primary text-brand-on'
+                        : 'bg-surface-low text-text-primary'
+                    }`}
+                  >
+                    {msg.role === 'assistant' ? (
+                      <div className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-strong:text-text-primary leading-relaxed prose-invert">
+                        <ReactMarkdown>{displayContent}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      <div className="whitespace-pre-line leading-relaxed">{displayContent}</div>
+                    )}
+                    <div className="text-[10px] mt-1 text-text-muted">
+                      {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
 
             {isTyping && (
               <div className="flex justify-start">
-                <div className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-200">
+                <div className="bg-surface-low rounded-2xl px-4 py-3">
                   <div className="flex space-x-1">
-                    <span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <span className="h-2 w-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <span className="h-2 w-2 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="h-2 w-2 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="h-2 w-2 bg-text-muted rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
               </div>

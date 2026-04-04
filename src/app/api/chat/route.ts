@@ -704,19 +704,264 @@ export async function POST(request: NextRequest) {
       { role: 'user', content: message },
     ]
 
-    const response = await anthropic.messages.create({
+    // ============================================
+    // DASHBOARD TOOLS — Maya can execute actions
+    // ============================================
+
+    const DASHBOARD_TOOLS: Anthropic.Tool[] = [
+      {
+        name: 'create_employee',
+        description: 'Create a new AI phone employee for the business. Use when the user wants to set up a new employee, says they need someone to answer calls, or agrees to create one after your recommendation.',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            job_type: {
+              type: 'string',
+              enum: ['receptionist', 'order-taker', 'appointment-scheduler', 'personal-assistant', 'customer-service', 'after-hours-emergency', 'restaurant-host', 'lead-qualifier'],
+              description: 'The type of employee to create based on the business needs',
+            },
+            name: { type: 'string', description: 'A human name for the employee (e.g. Sarah, Aria, Jake). Pick a fitting name if user does not specify.' },
+            website_url: { type: 'string', description: 'Business website URL to auto-generate config from. Ask for this if user has not provided it.' },
+          },
+          required: ['job_type', 'name'],
+        },
+      },
+      {
+        name: 'provision_phone_number',
+        description: 'Give a phone number to an existing employee so they can receive calls. Use after creating an employee or when user asks to add a number.',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            employee_id: { type: 'string', description: 'The ID of the employee to provision a number for' },
+            area_code: { type: 'string', description: '3-digit US area code for a local number (e.g. 310, 424). Ask the user for preference.' },
+          },
+          required: ['employee_id'],
+        },
+      },
+      {
+        name: 'update_employee_config',
+        description: 'Update an employee\'s configuration — greeting, business hours, FAQs, services, custom instructions, etc. Use when user wants to change how their employee behaves.',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            employee_id: { type: 'string', description: 'The ID of the employee to update' },
+            greeting: { type: 'string', description: 'New greeting message' },
+            custom_instructions: { type: 'string', description: 'Business context and special instructions' },
+            business_description: { type: 'string', description: 'Description of the business' },
+            tone: { type: 'string', enum: ['professional', 'friendly', 'warm', 'casual', 'luxury'] },
+          },
+          required: ['employee_id'],
+        },
+      },
+      {
+        name: 'navigate_user',
+        description: 'Navigate the user to a specific dashboard page. Use when they need to see something or when directing them after an action.',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            page: {
+              type: 'string',
+              enum: ['/dashboard', '/dashboard/employees', '/dashboard/voice-ai', '/dashboard/messages', '/dashboard/integrations', '/dashboard/settings', '/dashboard/billing', '/dashboard/appointments', '/dashboard/orders'],
+              description: 'The dashboard page to navigate to',
+            },
+          },
+          required: ['page'],
+        },
+      },
+    ]
+
+    // Tool execution functions
+    async function executeCreateEmployee(input: any): Promise<any> {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
+      // If website URL provided, try to generate config
+      let config: any = undefined
+      if (input.website_url) {
+        try {
+          const extractRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3005'}/api/phone-employees/generate-config`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              businessId,
+              jobType: input.job_type,
+              websiteUrl: input.website_url,
+            }),
+          })
+          if (extractRes.ok) {
+            const extractData = await extractRes.json()
+            config = extractData.config
+          }
+        } catch (err) {
+          console.error('[Maya Tool] Config generation failed:', err)
+        }
+      }
+
+      // Create the employee
+      const { data: employee, error } = await supabase
+        .from('phone_employees')
+        .insert({
+          business_id: businessId,
+          name: input.name || 'Maya',
+          job_type: input.job_type,
+          is_active: true,
+          personality: { tone: 'professional', enthusiasm: 'medium' },
+          job_config: config || {},
+        })
+        .select()
+        .single()
+
+      if (error) {
+        return { success: false, error: error.message }
+      }
+
+      // Trigger VAPI provisioning
+      try {
+        const { employeeProvisioning } = await import('@/lib/phone-employees')
+        await employeeProvisioning.provisionEmployee(employee.id, businessId!)
+      } catch (err) {
+        console.error('[Maya Tool] VAPI provisioning error:', err)
+      }
+
+      return {
+        success: true,
+        employee_id: employee.id,
+        name: employee.name,
+        job_type: employee.job_type,
+        message: `Created ${employee.name} as ${employee.job_type.replace(/-/g, ' ')}`,
+      }
+    }
+
+    async function executeProvisionPhone(input: any): Promise<any> {
+      try {
+        const { employeeProvisioning } = await import('@/lib/phone-employees')
+        const result = await employeeProvisioning.provisionPhoneNumber(
+          input.employee_id,
+          businessId!,
+          {
+            mode: 'twilio-vapi',
+            areaCode: input.area_code || '',
+          }
+        )
+        return {
+          success: true,
+          phone_number: result.phoneNumber,
+          message: `Phone number ${result.phoneNumber} provisioned`,
+        }
+      } catch (err: any) {
+        return { success: false, error: err.message || 'Failed to provision phone number' }
+      }
+    }
+
+    async function executeUpdateConfig(input: any): Promise<any> {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+      const updates: any = {}
+
+      if (input.greeting) updates['job_config'] = { ...(updates.job_config || {}), greeting: input.greeting }
+      if (input.custom_instructions) updates['job_config'] = { ...(updates.job_config || {}), customInstructions: input.custom_instructions }
+      if (input.business_description) updates['job_config'] = { ...(updates.job_config || {}), businessDescription: input.business_description }
+      if (input.tone) updates['personality'] = { tone: input.tone, enthusiasm: 'medium' }
+
+      // Merge with existing job_config
+      const { data: existing } = await supabase
+        .from('phone_employees')
+        .select('job_config, personality')
+        .eq('id', input.employee_id)
+        .eq('business_id', businessId)
+        .single()
+
+      const mergedConfig = { ...(existing?.job_config || {}), ...(updates.job_config || {}) }
+      const mergedPersonality = { ...(existing?.personality || {}), ...(updates.personality || {}) }
+
+      const { error } = await supabase
+        .from('phone_employees')
+        .update({
+          job_config: mergedConfig,
+          personality: mergedPersonality,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', input.employee_id)
+        .eq('business_id', businessId)
+
+      if (error) return { success: false, error: error.message }
+      return { success: true, message: 'Employee configuration updated', updated_fields: Object.keys(updates) }
+    }
+
+    async function executeTool(name: string, input: any): Promise<any> {
+      switch (name) {
+        case 'create_employee': return executeCreateEmployee(input)
+        case 'provision_phone_number': return executeProvisionPhone(input)
+        case 'update_employee_config': return executeUpdateConfig(input)
+        case 'navigate_user': return { success: true, page: input.page, message: `Navigating to ${input.page}` }
+        default: return { success: false, error: `Unknown tool: ${name}` }
+      }
+    }
+
+    // ============================================
+    // CALL CLAUDE — with tool use loop for dashboard
+    // ============================================
+
+    const isDashboard = context === 'dashboard'
+    const executedActions: any[] = []
+    let navigateTo: string | null = null
+
+    let response = await anthropic.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1024,
-      system: systemPrompt,
+      system: systemPrompt + (isDashboard ? `\n\n## Your Action Capabilities\nYou can take real actions for the user using tools. When a user asks you to create an employee, set up a phone number, or update settings — DO IT using the tools available. Don't just give instructions. Ask for confirmation before creating employees or provisioning numbers. After executing, tell them what you did and suggest the next step.` : ''),
       messages,
+      ...(isDashboard ? { tools: DASHBOARD_TOOLS } : {}),
     })
 
+    // Tool use loop — execute tools and feed results back (max 3 iterations)
+    let iterations = 0
+    while (response.stop_reason === 'tool_use' && iterations < 3) {
+      iterations++
+      const toolUseBlocks = response.content.filter(b => b.type === 'tool_use')
+      const toolResults: Anthropic.MessageParam['content'] = []
+
+      for (const block of toolUseBlocks) {
+        if (block.type !== 'tool_use') continue
+        console.log(`[Maya Tool] Executing: ${block.name}`, JSON.stringify(block.input).slice(0, 200))
+
+        const result = await executeTool(block.name, block.input)
+        executedActions.push({ tool: block.name, input: block.input, result })
+
+        if (block.name === 'navigate_user' && result.page) {
+          navigateTo = result.page
+        }
+
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: block.id,
+          content: JSON.stringify(result),
+        } as any)
+      }
+
+      // Feed tool results back to Claude for final response
+      messages.push({ role: 'assistant', content: response.content })
+      messages.push({ role: 'user', content: toolResults as any })
+
+      response = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages,
+        ...(isDashboard ? { tools: DASHBOARD_TOOLS } : {}),
+      })
+    }
+
+    // Extract final text response
     const textBlock = response.content.find(b => b.type === 'text')
-    if (!textBlock || textBlock.type !== 'text') {
+    let responseText = textBlock && textBlock.type === 'text' ? textBlock.text : ''
+
+    if (!responseText && executedActions.length > 0) {
+      responseText = executedActions.map(a => a.result?.message || `Executed ${a.tool}`).join('\n')
+    }
+
+    if (!responseText) {
       return NextResponse.json({ error: 'No response from AI' }, { status: 500 })
     }
 
-    let responseText = textBlock.text
     let showLeadCapture = false
     let createTicket = false
     let ticketSummary: string | null = null
@@ -759,6 +1004,8 @@ export async function POST(request: NextRequest) {
       ...(onboardingStep !== null ? { onboardingStep } : {}),
       ...(showLeadCapture ? { showLeadCapture: true } : {}),
       ...(createTicket ? { createTicket: true, ticketSummary } : {}),
+      ...(executedActions.length > 0 ? { actions: executedActions } : {}),
+      ...(navigateTo ? { navigate: navigateTo } : {}),
     })
   } catch (error: any) {
     console.error('[API] Chat error:', error?.message || error)
