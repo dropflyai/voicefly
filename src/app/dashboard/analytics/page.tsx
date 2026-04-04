@@ -152,25 +152,25 @@ export default function AnalyticsPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-                <ChartBarIcon className="h-8 w-8 mr-3 text-purple-600" />
+              <h1 className="text-3xl font-bold text-text-primary flex items-center">
+                <ChartBarIcon className="h-8 w-8 mr-3 text-purple-400" />
                 Analytics Dashboard
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-text-secondary mt-2">
                 Get insights into your salon's performance and growth opportunities
               </p>
             </div>
             
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <label htmlFor="dateRange" className="text-sm font-medium text-gray-700">
+                <label htmlFor="dateRange" className="text-sm font-medium text-text-primary">
                   Period:
                 </label>
                 <select 
                   id="dateRange"
                   value={dateRange}
                   onChange={(e) => setDateRange(e.target.value as any)}
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500"
+                  className="px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-sm focus:ring-2 focus:ring-purple-500"
                 >
                   <option value="week">This Week</option>
                   <option value="month">This Month</option>
@@ -188,7 +188,7 @@ export default function AnalyticsPage() {
                   Export Data
                 </button>
               ) : (
-                <div className="text-xs text-gray-500 bg-gray-100 px-3 py-2 rounded-md">
+                <div className="text-xs text-text-secondary bg-surface-high px-3 py-2 rounded-md">
                   Export available in Professional+
                 </div>
               )}
@@ -203,8 +203,8 @@ export default function AnalyticsPage() {
         />
         
         {/* Tab Navigation */}
-        <div className="bg-white rounded-xl shadow-sm mb-6">
-          <div className="border-b border-gray-200">
+        <div className="bg-surface-low rounded-xl shadow-sm mb-6">
+          <div className="border-b border-[rgba(65,71,84,0.15)]">
             <nav className="-mb-px flex space-x-8 px-6">
               {[
                 { id: 'overview', name: 'Overview', icon: ChartBarIcon },
@@ -218,12 +218,12 @@ export default function AnalyticsPage() {
                   onClick={() => setActiveTab(tab.id as any)}
                   className={`group inline-flex items-center px-1 py-4 border-b-2 font-medium text-sm ${
                     activeTab === tab.id
-                      ? 'border-purple-500 text-purple-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-purple-500 text-purple-400'
+                      : 'border-transparent text-text-secondary hover:text-text-primary hover:border-[rgba(65,71,84,0.2)]'
                   }`}
                 >
                   <tab.icon className={`-ml-0.5 mr-2 h-5 w-5 ${
-                    activeTab === tab.id ? 'text-purple-500' : 'text-gray-400 group-hover:text-gray-500'
+                    activeTab === tab.id ? 'text-purple-500' : 'text-text-muted group-hover:text-text-secondary'
                   }`} />
                   {tab.name}
                 </button>
@@ -246,22 +246,22 @@ export default function AnalyticsPage() {
         {activeTab === 'revenue' && (
           <div>
             <div className="space-y-6">
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-6">Revenue Analytics</h3>
+              <div className="bg-surface-low rounded-xl shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-text-primary mb-6">Revenue Analytics</h3>
                 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-4">Daily Revenue Trend</h4>
+                    <h4 className="font-medium text-text-primary mb-4">Daily Revenue Trend</h4>
                     <RevenueChart data={revenueData} type="line" height={300} />
                   </div>
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-4">Revenue by Service</h4>
+                    <h4 className="font-medium text-text-primary mb-4">Revenue by Service</h4>
                     <ServicePopularityChart data={serviceData} height={300} />
                   </div>
                 </div>
 
-                <div className="border-t border-gray-200 pt-6">
-                  <h4 className="font-medium text-gray-900 mb-4">Customer Retention</h4>
+                <div className="border-t border-[rgba(65,71,84,0.15)] pt-6">
+                  <h4 className="font-medium text-text-primary mb-4">Customer Retention</h4>
                   <CustomerRetentionChart data={retentionData} height={300} />
                 </div>
               </div>
@@ -277,37 +277,37 @@ export default function AnalyticsPage() {
 
         {activeTab === 'services' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-6">Service Analytics</h3>
+            <div className="bg-surface-low rounded-xl shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-text-primary mb-6">Service Analytics</h3>
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-4">Revenue Distribution</h4>
+                  <h4 className="font-medium text-text-primary mb-4">Revenue Distribution</h4>
                   <ServicePopularityChart data={serviceData} height={300} />
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-4">Service Performance</h4>
+                  <h4 className="font-medium text-text-primary mb-4">Service Performance</h4>
                   <div className="space-y-4">
                     {serviceData.map((service, index) => {
                       const maxRevenue = Math.max(...serviceData.map(s => s.revenue))
                       const percentage = (service.revenue / maxRevenue) * 100
                       
                       return (
-                        <div key={index} className="border border-gray-200 rounded-lg p-4">
+                        <div key={index} className="border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
                           <div className="flex justify-between items-center mb-2">
-                            <span className="font-medium text-gray-900">{service.name}</span>
-                            <span className="text-lg font-bold text-green-600">
+                            <span className="font-medium text-text-primary">{service.name}</span>
+                            <span className="text-lg font-bold text-emerald-500">
                               ${service.revenue.toLocaleString()}
                             </span>
                           </div>
                           <div className="flex items-center space-x-4">
-                            <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div className="flex-1 bg-surface-highest rounded-full h-2">
                               <div 
                                 className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-300"
                                 style={{ width: `${percentage}%` }}
                               />
                             </div>
-                            <span className="text-sm font-medium text-gray-600">
+                            <span className="text-sm font-medium text-text-secondary">
                               {service.percentage}% of total
                             </span>
                           </div>
@@ -327,42 +327,42 @@ export default function AnalyticsPage() {
 
         {/* Advanced Analytics for Professional+ */}
         {(['professional', 'business', 'enterprise'].includes(business?.subscription_tier || 'starter')) && (
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Advanced Reporting</h3>
+          <div className="bg-surface-low rounded-xl shadow-sm p-6">
+            <h3 className="text-lg font-semibold text-text-primary mb-6">Advanced Reporting</h3>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-4">Customer Lifetime Value</h4>
+              <div className="border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
+                <h4 className="font-medium text-text-primary mb-4">Customer Lifetime Value</h4>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Average CLV</span>
-                    <span className="font-semibold text-green-600">$485</span>
+                    <span className="text-sm text-text-secondary">Average CLV</span>
+                    <span className="font-semibold text-emerald-500">$485</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Top 20% CLV</span>
-                    <span className="font-semibold text-green-600">$1,200</span>
+                    <span className="text-sm text-text-secondary">Top 20% CLV</span>
+                    <span className="font-semibold text-emerald-500">$1,200</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Avg Visit Frequency</span>
+                    <span className="text-sm text-text-secondary">Avg Visit Frequency</span>
                     <span className="font-semibold">6.2 times/year</span>
                   </div>
                 </div>
               </div>
 
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-4">Service Profitability</h4>
+              <div className="border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
+                <h4 className="font-medium text-text-primary mb-4">Service Profitability</h4>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Highest Margin</span>
-                    <span className="font-semibold text-green-600">Nail Art (78%)</span>
+                    <span className="text-sm text-text-secondary">Highest Margin</span>
+                    <span className="font-semibold text-emerald-500">Nail Art (78%)</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Most Popular</span>
+                    <span className="text-sm text-text-secondary">Most Popular</span>
                     <span className="font-semibold">Gel Manicure (45 bookings)</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Revenue/Hour</span>
-                    <span className="font-semibold text-green-600">$75.50</span>
+                    <span className="text-sm text-text-secondary">Revenue/Hour</span>
+                    <span className="font-semibold text-emerald-500">$75.50</span>
                   </div>
                 </div>
               </div>

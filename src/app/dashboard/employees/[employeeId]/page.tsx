@@ -90,33 +90,33 @@ function Section({ title, defaultOpen = false, children, badge, locked, lockedMe
 }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div className={`border rounded-lg ${locked ? 'border-gray-200 bg-gray-50 opacity-75' : 'border-gray-200'}`}>
+    <div className={`border rounded-lg ${locked ? 'border-[rgba(65,71,84,0.15)] bg-surface opacity-75' : 'border-[rgba(65,71,84,0.15)]'}`}>
       <button
         type="button"
         onClick={() => !locked && setOpen(!open)}
-        className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors ${locked ? 'cursor-not-allowed' : 'hover:bg-gray-50'}`}
+        className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors ${locked ? 'cursor-not-allowed' : 'hover:bg-surface'}`}
       >
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-900">{title}</span>
+          <span className="text-sm font-semibold text-text-primary">{title}</span>
           {badge && (
-            <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">{badge}</span>
+            <span className="text-xs px-2 py-0.5 bg-brand-primary/10 text-brand-primary rounded-full">{badge}</span>
           )}
           {locked && (
-            <span className="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full">Upgrade to unlock</span>
+            <span className="text-xs px-2 py-0.5 bg-accent/10 text-accent rounded-full">Upgrade to unlock</span>
           )}
         </div>
         {locked ? (
-          <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+          <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
         ) : open ? (
-          <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+          <ChevronDownIcon className="h-4 w-4 text-text-muted" />
         ) : (
-          <ChevronRightIcon className="h-4 w-4 text-gray-400" />
+          <ChevronRightIcon className="h-4 w-4 text-text-muted" />
         )}
       </button>
       {locked && (
-        <div className="px-4 pb-3 text-xs text-gray-500">{lockedMessage || 'Available on paid plans.'}</div>
+        <div className="px-4 pb-3 text-xs text-text-secondary">{lockedMessage || 'Available on paid plans.'}</div>
       )}
-      {open && !locked && <div className="px-4 pb-4 space-y-4 border-t border-gray-100">{children}</div>}
+      {open && !locked && <div className="px-4 pb-4 space-y-4 border-t border-[rgba(65,71,84,0.1)]">{children}</div>}
     </div>
   )
 }
@@ -797,7 +797,7 @@ export default function EmployeeEditPage() {
       <ProtectedRoute>
         <Layout>
           <div className="flex items-center justify-center min-h-[60vh]">
-            <div className="text-gray-500">Loading employee...</div>
+            <div className="text-text-secondary">Loading employee...</div>
           </div>
         </Layout>
       </ProtectedRoute>
@@ -809,8 +809,8 @@ export default function EmployeeEditPage() {
       <ProtectedRoute>
         <Layout>
           <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-            <div className="text-red-600">{error || 'Employee not found'}</div>
-            <button onClick={() => router.push('/dashboard/employees')} className="text-sm text-blue-600 hover:text-blue-800">
+            <div className="text-[#ffb4ab]">{error || 'Employee not found'}</div>
+            <button onClick={() => router.push('/dashboard/employees')} className="text-sm text-brand-primary hover:text-blue-800">
               Back to Employees
             </button>
           </div>
@@ -850,58 +850,75 @@ export default function EmployeeEditPage() {
   return (
     <ProtectedRoute>
       <Layout>
-        <div className="max-w-3xl mx-auto py-6 px-4 sm:px-6">
-          {/* Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <button
-              onClick={() => router.push('/dashboard/employees')}
-              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ArrowLeftIcon className="h-5 w-5" />
-            </button>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold text-gray-900 truncate">{original.name}</h1>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-sm text-gray-500 capitalize">{jobLabel}</span>
-                {original.phoneNumber && (
-                  <span className="text-xs text-gray-400">{original.phoneNumber}</span>
-                )}
-                <span className={`text-xs px-2 py-0.5 rounded-full ${original.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                  {original.isActive ? 'Active' : 'Inactive'}
-                </span>
+        <div className="py-6 px-4 sm:px-6 lg:px-8">
+          {/* Agent Header Card — Stitch Style */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push('/dashboard/employees')}
+                className="p-2 text-text-muted hover:text-text-secondary hover:bg-surface-high rounded-lg transition-colors"
+              >
+                <ArrowLeftIcon className="h-5 w-5" />
+              </button>
+              <div className="w-14 h-14 rounded-2xl bg-brand-primary/10 flex items-center justify-center">
+                <PhoneIcon className="h-7 w-7 text-brand-primary" />
               </div>
+              <div>
+                <h1 className="text-2xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight">{original.name}</h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${original.isActive ? 'bg-emerald-500/10 text-emerald-500' : 'bg-surface-high text-text-secondary'}`}>
+                    {original.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                  <span className="text-sm text-text-secondary capitalize">{jobLabel}</span>
+                  {original.phoneNumber && (
+                    <span className="text-sm text-text-muted">{original.phoneNumber}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              {original.phoneNumber && (
+                <a href={`tel:${original.phoneNumber}`} className="flex items-center gap-1.5 px-4 py-2 bg-brand-primary text-brand-on text-sm font-medium rounded-lg hover:bg-[#0060d0] transition-colors">
+                  <PhoneIcon className="h-4 w-4" />
+                  Test Call
+                </a>
+              )}
             </div>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="flex gap-1 mb-6 border-b border-gray-200">
-            {([
-              { id: 'overview', label: 'Overview', icon: ChartBarIcon },
-              { id: 'configure', label: 'Configure', icon: Cog6ToothIcon },
-              { id: 'calls', label: `Calls${callStats.total > 0 ? ` (${callStats.total})` : ''}`, icon: PhoneIcon },
-              { id: 'messages', label: `Messages${messages.length > 0 ? ` (${messages.length})` : ''}`, icon: ChatBubbleLeftRightIcon },
-            ] as const).map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-blue-600 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <tab.icon className="h-4 w-4" />
-                {tab.label}
-              </button>
+          {/* Two-Column Layout */}
+          <div className="flex gap-8">
+            {/* Left Column — Main Content */}
+            <div className="flex-1 min-w-0">
+              {/* Tab Navigation */}
+              <div className="flex gap-1 mb-6 border-b border-[rgba(65,71,84,0.15)]">
+                {([
+                  { id: 'overview', label: 'Overview', icon: ChartBarIcon },
+                  { id: 'configure', label: 'Configure', icon: Cog6ToothIcon },
+                  { id: 'calls', label: `Calls${callStats.total > 0 ? ` (${callStats.total})` : ''}`, icon: PhoneIcon },
+                  { id: 'messages', label: `Messages${messages.length > 0 ? ` (${messages.length})` : ''}`, icon: ChatBubbleLeftRightIcon },
+                ] as const).map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                      activeTab === tab.id
+                        ? 'border-brand-primary text-brand-primary'
+                        : 'border-transparent text-text-secondary hover:text-text-primary'
+                    }`}
+                  >
+                    <tab.icon className="h-4 w-4" />
+                    {tab.label}
+                  </button>
             ))}
           </div>
 
           {activeTab === 'configure' && (<>
           {/* Re-scrape website */}
-          <div className="mb-5 bg-white border border-gray-200 rounded-lg p-4">
+          <div className="mb-5 bg-surface-low border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
-              <GlobeAltIcon className="h-4 w-4 text-gray-500" />
-              <h3 className="text-sm font-medium text-gray-700">Update from website</h3>
+              <GlobeAltIcon className="h-4 w-4 text-text-secondary" />
+              <h3 className="text-sm font-medium text-text-primary">Update from website</h3>
             </div>
             <div className="flex gap-2">
               <input
@@ -909,20 +926,20 @@ export default function EmployeeEditPage() {
                 value={rescrapeUrl}
                 onChange={e => setRescrapeUrl(e.target.value)}
                 placeholder="https://yourbusiness.com"
-                className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex-1 text-sm border border-[rgba(65,71,84,0.15)] rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-primary/50"
               />
               <button
                 type="button"
                 onClick={handleRescrapeWebsite}
                 disabled={rescrapingWebsite || !rescrapeUrl}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-gray-900 text-white rounded-lg disabled:opacity-50 hover:bg-gray-700 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-surface-lowest text-white rounded-lg disabled:opacity-50 hover:bg-surface-high transition-colors"
               >
                 {rescrapingWebsite ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ArrowPathIcon className="h-4 w-4" />}
                 {rescrapingWebsite ? 'Scanning...' : 'Re-scrape'}
               </button>
             </div>
             {rescrapeMessage && (
-              <p className={`mt-2 text-xs ${rescrapeMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}>
+              <p className={`mt-2 text-xs ${rescrapeMessage.type === 'success' ? 'text-emerald-500' : 'text-[#ffb4ab]'}`}>
                 {rescrapeMessage.type === 'success' ? '✓ ' : '✗ '}{rescrapeMessage.text}
               </p>
             )}
@@ -932,8 +949,8 @@ export default function EmployeeEditPage() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <SparklesIcon className="h-5 w-5 text-blue-600" />
-                <h2 className="text-base font-semibold text-gray-900">
+                <SparklesIcon className="h-5 w-5 text-brand-primary" />
+                <h2 className="text-base font-semibold text-text-primary">
                   {isStarterOrTrial
                     ? `What do you need to train ${name} today?`
                     : `How can Maya help you train ${name} today?`}
@@ -946,35 +963,36 @@ export default function EmployeeEditPage() {
                   setChatSpeakerOn(v => !v)
                 }}
                 title={chatSpeakerOn ? 'Mute Maya' : 'Hear Maya speak'}
-                className={`p-1.5 rounded-lg transition-colors ${chatSpeakerOn ? 'bg-blue-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`p-1.5 rounded-lg transition-colors ${chatSpeakerOn ? 'bg-brand-primary/10 text-brand-primary' : 'text-text-muted hover:text-text-secondary'}`}
               >
                 {chatSpeakerOn ? <SpeakerWaveIcon className="h-4 w-4" /> : <SpeakerXMarkIcon className="h-4 w-4" />}
               </button>
             </div>
-            <p className="text-sm text-gray-500 mb-3">
+            <p className="text-sm text-text-secondary mb-3">
               {isStarterOrTrial
                 ? "Tell me about your business and I'll configure your employee for you."
                 : "Describe what you want your employee to handle and I'll update their configuration."}
             </p>
 
-            <div className="border border-gray-200 rounded-lg bg-gray-50">
+            <div className="bg-surface-lowest rounded-2xl overflow-hidden relative">
+              <div className="absolute -top-16 -right-16 w-40 h-40 bg-brand-primary/10 blur-[60px] rounded-full pointer-events-none" />
               {/* Chat messages */}
               <div className="max-h-80 overflow-y-auto p-4 space-y-3">
                 {chatMessages.length === 0 && (
                   <div className="text-center py-6 space-y-3">
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-text-muted">
                       Try: &quot;We&apos;re a dental office open 8-6. Never quote prices over the phone.&quot;
                     </p>
                     <button
                       type="button"
                       onClick={analyzeTranscripts}
                       disabled={analyzing || chatLoading}
-                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-brand-primary bg-brand-primary/5 border border-blue-200 rounded-lg hover:bg-brand-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       <MagnifyingGlassIcon className="h-4 w-4" />
                       {analyzing ? 'Analyzing transcripts...' : 'Analyze Call Transcripts'}
                     </button>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-text-muted">
                       Auto-suggest configuration from your recent call recordings
                     </p>
                   </div>
@@ -984,18 +1002,18 @@ export default function EmployeeEditPage() {
                     {msg.role === 'assistant' && (
                       <img src="/maya-avatars/holo-d1.png" alt="Maya" className="h-7 w-7 rounded-full border border-blue-300/50 flex-shrink-0 object-cover object-top mt-0.5" />
                     )}
-                    <div className={`max-w-[85%] ${msg.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-900'} rounded-lg px-3 py-2`}>
-                      {msg.role === 'assistant' && <p className="text-xs font-medium text-blue-600 mb-1">Maya</p>}
+                    <div className={`max-w-[85%] ${msg.role === 'user' ? 'bg-brand-primary text-white' : 'bg-surface-low border border-[rgba(65,71,84,0.15)] text-text-primary'} rounded-lg px-3 py-2`}>
+                      {msg.role === 'assistant' && <p className="text-xs font-medium text-brand-primary mb-1">Maya</p>}
                       <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                       {/* Change confirmation cards */}
                       {msg.changes && msg.changes.length > 0 && (
                         <div className="mt-2 space-y-2">
                           {msg.changes.map((change) => (
-                            <div key={change.id} className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2">
+                            <div key={change.id} className="bg-surface border border-[rgba(65,71,84,0.15)] rounded-md px-3 py-2">
                               <div className="flex items-center justify-between gap-2">
                                 <div className="flex-1 min-w-0">
-                                  <span className="text-xs font-medium text-gray-500 uppercase">{change.type}</span>
-                                  <p className="text-sm text-gray-800 truncate">
+                                  <span className="text-xs font-medium text-text-secondary uppercase">{change.type}</span>
+                                  <p className="text-sm text-text-primary truncate">
                                     {formatChangeDescription(change)}
                                   </p>
                                 </div>
@@ -1014,8 +1032,8 @@ export default function EmployeeEditPage() {
                                   }}
                                   className={`flex-shrink-0 w-6 h-6 rounded-md border flex items-center justify-center transition-colors ${
                                     change.accepted
-                                      ? 'bg-blue-600 border-blue-600 text-white'
-                                      : 'bg-white border-gray-300 text-gray-400'
+                                      ? 'bg-brand-primary border-blue-600 text-white'
+                                      : 'bg-surface-low border-[rgba(65,71,84,0.2)] text-text-muted'
                                   }`}
                                 >
                                   <CheckIcon className="h-3.5 w-3.5" />
@@ -1029,7 +1047,7 @@ export default function EmployeeEditPage() {
                               const msgChanges = msg.changes
                               if (msgChanges) applyChanges(msgChanges)
                             }}
-                            className="w-full mt-1 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors"
+                            className="w-full mt-1 py-1.5 text-xs font-medium text-brand-primary hover:text-blue-800 bg-brand-primary/5 hover:bg-brand-primary/10 rounded-md transition-colors"
                           >
                             Apply Selected Changes
                           </button>
@@ -1041,18 +1059,18 @@ export default function EmployeeEditPage() {
                 {chatLoading && (
                   <div className="flex justify-start gap-2">
                     <img src="/maya-avatars/holo-d1.png" alt="Maya" className="h-7 w-7 rounded-full border border-blue-300/50 flex-shrink-0 object-cover object-top mt-0.5" />
-                    <div className="bg-white border border-gray-200 rounded-lg px-3 py-2">
-                      <p className="text-xs font-medium text-blue-600 mb-1">Maya</p>
-                      <p className="text-sm text-gray-400">Thinking...</p>
+                    <div className="bg-surface-low border border-[rgba(65,71,84,0.15)] rounded-lg px-3 py-2">
+                      <p className="text-xs font-medium text-brand-primary mb-1">Maya</p>
+                      <p className="text-sm text-text-muted">Thinking...</p>
                     </div>
                   </div>
                 )}
                 {analyzing && (
                   <div className="flex justify-start gap-2">
                     <img src="/maya-avatars/holo-d1.png" alt="Maya" className="h-7 w-7 rounded-full border border-blue-300/50 flex-shrink-0 object-cover object-top mt-0.5" />
-                    <div className="bg-white border border-gray-200 rounded-lg px-3 py-2">
-                      <p className="text-xs font-medium text-blue-600 mb-1">Maya</p>
-                      <p className="text-sm text-gray-400">Analyzing call transcripts... This may take a moment.</p>
+                    <div className="bg-surface-low border border-[rgba(65,71,84,0.15)] rounded-lg px-3 py-2">
+                      <p className="text-xs font-medium text-brand-primary mb-1">Maya</p>
+                      <p className="text-sm text-text-muted">Analyzing call transcripts... This may take a moment.</p>
                     </div>
                   </div>
                 )}
@@ -1060,7 +1078,7 @@ export default function EmployeeEditPage() {
               </div>
 
               {/* Chat input */}
-              <div className="border-t border-gray-200 p-3">
+              <div className="border-t border-[rgba(65,71,84,0.15)] p-3">
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -1068,7 +1086,7 @@ export default function EmployeeEditPage() {
                     onChange={e => setChatInput(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendTrainingMessage() } }}
                     placeholder={chatListening ? 'Listening...' : isStarterOrTrial ? `Tell me about your business...` : `Tell me how you want ${name} to behave...`}
-                    className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                    className="flex-1 px-3 py-2 text-sm border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary bg-surface-low"
                     disabled={chatLoading || analyzing}
                   />
                   <button
@@ -1076,7 +1094,7 @@ export default function EmployeeEditPage() {
                     onClick={toggleChatListening}
                     disabled={chatLoading || analyzing}
                     title={chatListening ? 'Stop listening' : 'Speak to Maya'}
-                    className={`px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${chatListening ? 'bg-red-500 text-white animate-pulse' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                    className={`px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${chatListening ? 'bg-[#93000a]/50 text-white animate-pulse' : 'bg-surface-high text-text-secondary hover:bg-surface-highest'}`}
                   >
                     <MicrophoneIcon className="h-4 w-4" />
                   </button>
@@ -1084,7 +1102,7 @@ export default function EmployeeEditPage() {
                     type="button"
                     onClick={() => sendTrainingMessage()}
                     disabled={chatLoading || analyzing || !chatInput.trim()}
-                    className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-3 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     <PaperAirplaneIcon className="h-4 w-4" />
                   </button>
@@ -1093,7 +1111,7 @@ export default function EmployeeEditPage() {
                   type="button"
                   onClick={analyzeTranscripts}
                   disabled={analyzing || chatLoading}
-                  className="mt-2 w-full flex items-center justify-center gap-2 py-1.5 text-xs font-medium text-gray-600 hover:text-blue-700 bg-gray-100 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="mt-2 w-full flex items-center justify-center gap-2 py-1.5 text-xs font-medium text-text-secondary hover:text-brand-primary bg-surface-high hover:bg-brand-primary/5 border border-[rgba(65,71,84,0.15)] hover:border-blue-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <MagnifyingGlassIcon className="h-3.5 w-3.5" />
                   {analyzing ? 'Analyzing transcripts...' : 'Analyze Call Transcripts'}
@@ -1104,37 +1122,149 @@ export default function EmployeeEditPage() {
 
           {/* Configuration Sections */}
           <div className="space-y-3 mb-8">
-            <h2 className="text-base font-semibold text-gray-900 mb-1">Configuration</h2>
+            <h2 className="text-base font-semibold text-text-primary mb-1">Configuration</h2>
 
-            {/* Basic Info */}
-            <Section title="Basic Info" defaultOpen={true}>
-              <div className="pt-3 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    maxLength={40}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  />
+            {/* Job Type — Visual Cards (read-only) */}
+            <div className="bg-surface-low rounded-2xl p-6 space-y-4">
+              <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                <Cog6ToothIcon className="h-4 w-4 text-text-muted" />
+                Job Type
+              </h3>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { id: 'receptionist', label: 'Receptionist', desc: 'Handles inquiries & routing', icon: PhoneIcon },
+                  { id: 'order-taker', label: 'Order Taker', desc: 'Processes sales & bookings', icon: ClipboardDocumentIcon },
+                  { id: 'customer-service', label: 'Customer Support', desc: 'Solves problems', icon: ChatBubbleLeftRightIcon },
+                ].map(jt => (
+                  <div
+                    key={jt.id}
+                    className={`p-4 rounded-xl text-center transition-all ${
+                      original.jobType === jt.id
+                        ? 'bg-brand-primary/10 ring-2 ring-brand-primary'
+                        : 'bg-surface-med'
+                    }`}
+                  >
+                    <jt.icon className={`h-5 w-5 mx-auto mb-2 ${original.jobType === jt.id ? 'text-brand-primary' : 'text-text-muted'}`} />
+                    <div className={`text-sm font-semibold ${original.jobType === jt.id ? 'text-brand-light' : 'text-text-secondary'}`}>{jt.label}</div>
+                    <div className="text-xs text-text-muted mt-0.5">{jt.desc}</div>
+                  </div>
+                ))}
+              </div>
+              {!['receptionist', 'order-taker', 'customer-service'].includes(original.jobType) && (
+                <div className="bg-brand-primary/10 ring-2 ring-brand-primary p-3 rounded-xl text-center">
+                  <div className="text-sm font-semibold text-brand-light capitalize">{jobLabel}</div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Greeting</label>
-                  <textarea
-                    value={greeting}
-                    onChange={e => setGreeting(e.target.value)}
-                    rows={2}
-                    placeholder="Hello, thank you for calling..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                  />
+              )}
+            </div>
+
+            {/* Personality Settings — Stitch Card */}
+            <div className="bg-surface-low rounded-2xl p-6 space-y-5">
+              <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                <SparklesIcon className="h-4 w-4 text-text-muted" />
+                Personality Settings
+              </h3>
+
+              {/* Employee Name */}
+              <div>
+                <label className="block text-xs font-medium text-text-muted uppercase tracking-wider mb-1.5">Employee Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  maxLength={40}
+                  className="w-full px-3 py-2.5 bg-surface-lowest text-text-primary rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-brand-primary/50 border-none placeholder-text-muted"
+                />
+              </div>
+
+              {/* Greeting Message */}
+              <div>
+                <label className="block text-xs font-medium text-text-muted uppercase tracking-wider mb-1.5">Greeting Message</label>
+                <textarea
+                  value={greeting}
+                  onChange={e => setGreeting(e.target.value)}
+                  rows={3}
+                  placeholder="Hello, thank you for calling..."
+                  className="w-full px-3 py-2.5 bg-surface-lowest text-text-primary rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-brand-primary/50 border-none resize-none placeholder-text-muted"
+                />
+              </div>
+
+              {/* Tone — Pill Buttons */}
+              <div>
+                <label className="block text-xs font-medium text-text-muted uppercase tracking-wider mb-2">Tone</label>
+                <div className="flex gap-2">
+                  {['professional', 'friendly', 'warm', 'casual', 'luxury'].map(t => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTone(t)}
+                      className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                        tone === t
+                          ? 'bg-brand-primary text-brand-on'
+                          : 'bg-surface-med text-text-secondary hover:bg-surface-high hover:text-text-primary'
+                      }`}
+                    >
+                      {t.charAt(0).toUpperCase() + t.slice(1)}
+                    </button>
+                  ))}
                 </div>
               </div>
-            </Section>
 
-            {/* Voice */}
-            <Section title="Voice" badge={voiceName || voiceId || undefined} locked={isStarterOrTrial} lockedMessage={isTrial ? "Upgrade to choose a custom voice for your AI employee." : "Upgrade to Pro to customize your AI's voice."}>
-              <div className="pt-3">
+              {/* Enthusiasm — Pill Buttons */}
+              <div>
+                <label className="block text-xs font-medium text-text-muted uppercase tracking-wider mb-2">Enthusiasm</label>
+                <div className="flex gap-2">
+                  {['low', 'medium', 'high'].map(e => (
+                    <button
+                      key={e}
+                      type="button"
+                      onClick={() => setEnthusiasm(e)}
+                      className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                        enthusiasm === e
+                          ? 'bg-brand-primary text-brand-on'
+                          : 'bg-surface-med text-text-secondary hover:bg-surface-high hover:text-text-primary'
+                      }`}
+                    >
+                      {e.charAt(0).toUpperCase() + e.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Formality — Pill Buttons */}
+              <div>
+                <label className="block text-xs font-medium text-text-muted uppercase tracking-wider mb-2">Formality</label>
+                <div className="flex gap-2">
+                  {['formal', 'semi-formal', 'casual'].map(f => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setFormality(f)}
+                      className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
+                        formality === f
+                          ? 'bg-brand-primary text-brand-on'
+                          : 'bg-surface-med text-text-secondary hover:bg-surface-high hover:text-text-primary'
+                      }`}
+                    >
+                      {f === 'semi-formal' ? 'Semi-Formal' : f.charAt(0).toUpperCase() + f.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Voice — Card (not accordion) */}
+            <div className={`bg-surface-low rounded-2xl p-6 space-y-4 ${isStarterOrTrial ? 'opacity-60' : ''}`}>
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                  <MicrophoneIcon className="h-4 w-4 text-text-muted" />
+                  Voice
+                  {(voiceName || voiceId) && <span className="text-xs px-2 py-0.5 bg-brand-primary/10 text-brand-primary rounded-full">{voiceName || voiceId}</span>}
+                </h3>
+                {isStarterOrTrial && <span className="text-xs px-2 py-0.5 bg-accent/10 text-accent rounded-full">Upgrade to unlock</span>}
+              </div>
+              {isStarterOrTrial ? (
+                <p className="text-sm text-text-muted">{isTrial ? "Upgrade to choose a custom voice." : "Upgrade to Pro to customize your AI's voice."}</p>
+              ) : (
                 <VoicePicker
                   voiceId={voiceId}
                   voiceName={voiceName || voiceId}
@@ -1145,118 +1275,88 @@ export default function EmployeeEditPage() {
                     setVoicePreviewUrl(v.voicePreviewUrl)
                   }}
                 />
-              </div>
-            </Section>
+              )}
+            </div>
 
-            {/* Personality */}
-            <Section title="Personality">
-              <div className="pt-3 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tone</label>
-                  <select
-                    value={tone}
-                    onChange={e => setTone(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="professional">Professional</option>
-                    <option value="friendly">Friendly</option>
-                    <option value="warm">Warm</option>
-                    <option value="casual">Casual</option>
-                    <option value="luxury">Luxury</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Enthusiasm</label>
-                  <select
-                    value={enthusiasm}
-                    onChange={e => setEnthusiasm(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Formality</label>
-                  <select
-                    value={formality}
-                    onChange={e => setFormality(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="formal">Formal</option>
-                    <option value="semi-formal">Semi-Formal</option>
-                    <option value="casual">Casual</option>
-                  </select>
-                </div>
+            {/* Business Context — Card */}
+            <div className="bg-surface-low rounded-2xl p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                  <InformationCircleIcon className="h-4 w-4 text-text-muted" />
+                  Business Context
+                </h3>
+                {customInstructions && <span className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full">Configured</span>}
               </div>
-            </Section>
-
-            {/* Business Context */}
-            <Section title="Business Context" badge={customInstructions ? 'Configured' : undefined}>
-              <div className="pt-3 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">About Your Business</label>
-                  <p className="text-xs text-gray-500 mb-1">What should your employee know about your business? Services, specialties, location, etc.</p>
-                  <textarea
-                    value={customInstructions}
-                    onChange={e => setCustomInstructions(e.target.value)}
-                    rows={4}
-                    placeholder="We are a family dental practice in downtown Austin specializing in cosmetic dentistry..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                  />
+              <p className="text-xs text-text-muted">What should your employee know about your business?</p>
+              <div>
+                <textarea
+                  value={customInstructions}
+                  onChange={e => setCustomInstructions(e.target.value)}
+                  rows={4}
+                  placeholder="We are a family dental practice in downtown Austin specializing in cosmetic dentistry..."
+                  className="w-full px-3 py-2.5 bg-surface-lowest text-text-primary rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-brand-primary/50 border-none resize-none placeholder-text-muted"
+                />
                 </div>
                 {(original?.jobType === 'receptionist' || original?.jobType === 'customer-service' || original?.jobType === 'appointment-scheduler') && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Description</label>
+                    <label className="block text-xs font-medium text-text-muted uppercase tracking-wider mb-1.5">Business Description</label>
                     <textarea
                       value={businessDescription}
                       onChange={e => setBusinessDescription(e.target.value)}
                       rows={2}
                       placeholder="Short description used in the AI's system prompt..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                      className="w-full px-3 py-2.5 bg-surface-lowest text-text-primary rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-brand-primary/50 border-none resize-none placeholder-text-muted"
                     />
                   </div>
                 )}
-              </div>
-            </Section>
+            </div>
 
-            {/* Call Handling */}
-            <Section title="Call Handling" badge={callHandlingRules ? 'Configured' : undefined}>
-              <div className="pt-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Call Handling Rules</label>
-                <p className="text-xs text-gray-500 mb-1">How should calls be handled? What should the employee prioritize?</p>
+            {/* Call Handling — Card */}
+            <div className="bg-surface-low rounded-2xl p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                  <PhoneIcon className="h-4 w-4 text-text-muted" />
+                  Call Handling
+                </h3>
+                {callHandlingRules && <span className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full">Configured</span>}
+              </div>
+              <p className="text-xs text-text-muted">How should calls be handled? What should the employee prioritize?</p>
+              <div>
                 <textarea
                   value={callHandlingRules}
                   onChange={e => setCallHandlingRules(e.target.value)}
                   rows={4}
                   placeholder="Always ask for the caller's name first. If someone asks for pricing, offer to schedule a consultation instead..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className="w-full px-3 py-2.5 bg-surface-lowest text-text-primary rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-brand-primary/50 border-none resize-none placeholder-text-muted"
                 />
               </div>
-            </Section>
+            </div>
 
-            {/* Rules & Restrictions */}
-            <Section title="Rules & Restrictions" badge={restrictions ? 'Configured' : undefined}>
-              <div className="pt-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Things to Never Do</label>
-                <p className="text-xs text-gray-500 mb-1">Hard rules your employee must follow. One per line.</p>
-                <textarea
-                  value={restrictions}
-                  onChange={e => setRestrictions(e.target.value)}
-                  rows={4}
-                  placeholder="Never quote prices over the phone&#10;Never schedule appointments before 10am&#10;Never discuss competitor services"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                />
+            {/* Rules & Restrictions — Card */}
+            <div className="bg-surface-low rounded-2xl p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                  <ExclamationTriangleIcon className="h-4 w-4 text-text-muted" />
+                  Rules & Restrictions
+                </h3>
+                {restrictions && <span className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full">Configured</span>}
               </div>
-            </Section>
+              <p className="text-xs text-text-muted">Hard rules your employee must follow. One per line.</p>
+              <textarea
+                value={restrictions}
+                onChange={e => setRestrictions(e.target.value)}
+                rows={4}
+                placeholder="Never quote prices over the phone&#10;Never schedule appointments before 10am&#10;Never discuss competitor services"
+                className="w-full px-3 py-2.5 bg-surface-lowest text-text-primary rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-brand-primary/50 border-none resize-none placeholder-text-muted"
+              />
+            </div>
 
             {/* Services */}
             {(original?.jobType === 'receptionist' || original?.jobType === 'appointment-scheduler') && (
               <Section title="Services" badge={services.length > 0 ? `${services.length}` : undefined} locked={isStarterOrTrial} lockedMessage={isTrial ? "Upgrade to add custom services." : "Upgrade to Pro to add custom services."}>
                 <div className="pt-3 space-y-3">
                   {services.map((svc, i) => (
-                    <div key={i} className="flex items-start gap-2 p-2 bg-gray-50 rounded-lg">
+                    <div key={i} className="flex items-start gap-2 p-2 bg-surface rounded-lg">
                       <div className="flex-1 space-y-2">
                         <input
                           type="text"
@@ -1267,7 +1367,7 @@ export default function EmployeeEditPage() {
                             setServices(updated)
                           }}
                           placeholder="Service name"
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-2 py-1 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                         />
                         <div className="flex gap-2">
                           <input
@@ -1279,15 +1379,15 @@ export default function EmployeeEditPage() {
                               setServices(updated)
                             }}
                             placeholder="Duration (min)"
-                            className="w-24 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-24 px-2 py-1 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                           />
-                          <span className="text-xs text-gray-500 self-center">minutes</span>
+                          <span className="text-xs text-text-secondary self-center">minutes</span>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => setServices(services.filter((_, j) => j !== i))}
-                        className="p-1 text-gray-400 hover:text-red-500"
+                        className="p-1 text-text-muted hover:text-[#ffb4ab]"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -1296,7 +1396,7 @@ export default function EmployeeEditPage() {
                   <button
                     type="button"
                     onClick={() => setServices([...services, { name: '', duration: 60 }])}
-                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                    className="flex items-center gap-1 text-sm text-brand-primary hover:text-blue-800"
                   >
                     <PlusIcon className="h-4 w-4" /> Add Service
                   </button>
@@ -1308,7 +1408,7 @@ export default function EmployeeEditPage() {
             <Section title="FAQs" badge={faqs.length > 0 ? `${faqs.length}` : undefined} locked={isStarterOrTrial} lockedMessage={isTrial ? "Upgrade to add custom FAQs." : "Upgrade to Pro to add custom FAQs."}>
               <div className="pt-3 space-y-3">
                 {faqs.map((faq, i) => (
-                  <div key={i} className="p-2 bg-gray-50 rounded-lg space-y-2">
+                  <div key={i} className="p-2 bg-surface rounded-lg space-y-2">
                     <div className="flex items-start gap-2">
                       <div className="flex-1 space-y-2">
                         <input
@@ -1320,7 +1420,7 @@ export default function EmployeeEditPage() {
                             setFaqs(updated)
                           }}
                           placeholder="Question"
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-2 py-1 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                         />
                         <textarea
                           value={faq.answer}
@@ -1331,13 +1431,13 @@ export default function EmployeeEditPage() {
                           }}
                           placeholder="Answer"
                           rows={2}
-                          className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                          className="w-full px-2 py-1 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary resize-none"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={() => setFaqs(faqs.filter((_, j) => j !== i))}
-                        className="p-1 text-gray-400 hover:text-red-500"
+                        className="p-1 text-text-muted hover:text-[#ffb4ab]"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -1347,7 +1447,7 @@ export default function EmployeeEditPage() {
                 <button
                   type="button"
                   onClick={() => setFaqs([...faqs, { question: '', answer: '', keywords: [] }])}
-                  className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                  className="flex items-center gap-1 text-sm text-brand-primary hover:text-blue-800"
                 >
                   <PlusIcon className="h-4 w-4" /> Add FAQ
                 </button>
@@ -1360,11 +1460,11 @@ export default function EmployeeEditPage() {
             {/* Qualifying Questions */}
             <Section title="Qualifying Questions" badge={qualifyingQuestions.length > 0 ? `${qualifyingQuestions.length}` : undefined}>
               <div className="pt-3 space-y-3">
-                <p className="text-xs text-gray-500">These are the questions your AI weaves into the conversation to score each lead. Ask them in order of importance — the AI won't fire them mechanically but will gather the answers naturally.</p>
+                <p className="text-xs text-text-secondary">These are the questions your AI weaves into the conversation to score each lead. Ask them in order of importance — the AI won't fire them mechanically but will gather the answers naturally.</p>
                 {qualifyingQuestions.map((q, i) => (
-                  <div key={q.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
+                  <div key={q.id} className="p-3 bg-surface rounded-lg border border-[rgba(65,71,84,0.15)] space-y-2">
                     <div className="flex items-start gap-2">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium flex items-center justify-center mt-1">{i + 1}</span>
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-medium flex items-center justify-center mt-1">{i + 1}</span>
                       <div className="flex-1 space-y-2">
                         <textarea
                           value={q.question}
@@ -1375,7 +1475,7 @@ export default function EmployeeEditPage() {
                           }}
                           rows={2}
                           placeholder="e.g. What brings you to us today?"
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                          className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary resize-none"
                         />
                         <div className="flex items-center gap-3">
                           <select
@@ -1385,7 +1485,7 @@ export default function EmployeeEditPage() {
                               updated[i] = { ...updated[i], field: e.target.value }
                               setQualifyingQuestions(updated)
                             }}
-                            className="px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="px-2 py-1 border border-[rgba(65,71,84,0.2)] rounded text-xs focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                           >
                             <option value="interest">Interest / Need</option>
                             <option value="timeline">Timeline</option>
@@ -1396,7 +1496,7 @@ export default function EmployeeEditPage() {
                             <option value="location">Location</option>
                             <option value="custom">Custom</option>
                           </select>
-                          <label className="flex items-center gap-1.5 text-xs text-gray-600 cursor-pointer">
+                          <label className="flex items-center gap-1.5 text-xs text-text-secondary cursor-pointer">
                             <input
                               type="checkbox"
                               checked={q.required}
@@ -1405,7 +1505,7 @@ export default function EmployeeEditPage() {
                                 updated[i] = { ...updated[i], required: e.target.checked }
                                 setQualifyingQuestions(updated)
                               }}
-                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
                             />
                             Required
                           </label>
@@ -1418,7 +1518,7 @@ export default function EmployeeEditPage() {
                                 ;[updated[i - 1], updated[i]] = [updated[i], updated[i - 1]]
                                 setQualifyingQuestions(updated)
                               }}
-                              className="px-1.5 py-0.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                              className="px-1.5 py-0.5 text-xs text-text-muted hover:text-text-primary disabled:opacity-30"
                             >↑</button>
                             <button
                               type="button"
@@ -1428,7 +1528,7 @@ export default function EmployeeEditPage() {
                                 ;[updated[i], updated[i + 1]] = [updated[i + 1], updated[i]]
                                 setQualifyingQuestions(updated)
                               }}
-                              className="px-1.5 py-0.5 text-xs text-gray-400 hover:text-gray-700 disabled:opacity-30"
+                              className="px-1.5 py-0.5 text-xs text-text-muted hover:text-text-primary disabled:opacity-30"
                             >↓</button>
                           </div>
                         </div>
@@ -1436,7 +1536,7 @@ export default function EmployeeEditPage() {
                       <button
                         type="button"
                         onClick={() => setQualifyingQuestions(qualifyingQuestions.filter((_, j) => j !== i))}
-                        className="p-1 text-gray-400 hover:text-red-500 flex-shrink-0"
+                        className="p-1 text-text-muted hover:text-[#ffb4ab] flex-shrink-0"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -1446,7 +1546,7 @@ export default function EmployeeEditPage() {
                 <button
                   type="button"
                   onClick={() => setQualifyingQuestions([...qualifyingQuestions, { id: `q-${Date.now()}`, question: '', field: 'custom', required: false }])}
-                  className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                  className="flex items-center gap-1 text-sm text-brand-primary hover:text-blue-800"
                 >
                   <PlusIcon className="h-4 w-4" /> Add Question
                 </button>
@@ -1459,12 +1559,12 @@ export default function EmployeeEditPage() {
 
                 {/* Criteria */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Hot Lead Criteria</label>
-                  <p className="text-xs text-gray-500 mb-2">A lead is "hot" if ANY of these apply. The AI scores the lead against these after the conversation.</p>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Hot Lead Criteria</label>
+                  <p className="text-xs text-text-secondary mb-2">A lead is "hot" if ANY of these apply. The AI scores the lead against these after the conversation.</p>
                   <div className="space-y-2">
                     {hotLeadCriteria.map((criterion, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <span className="text-xs text-green-600 flex-shrink-0">✓</span>
+                        <span className="text-xs text-emerald-500 flex-shrink-0">✓</span>
                         <input
                           type="text"
                           value={criterion}
@@ -1474,12 +1574,12 @@ export default function EmployeeEditPage() {
                             setHotLeadCriteria(updated)
                           }}
                           placeholder="e.g. Ready to move forward within 30 days"
-                          className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          className="flex-1 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                         />
                         <button
                           type="button"
                           onClick={() => setHotLeadCriteria(hotLeadCriteria.filter((_, j) => j !== i))}
-                          className="p-1 text-gray-400 hover:text-red-500 flex-shrink-0"
+                          className="p-1 text-text-muted hover:text-[#ffb4ab] flex-shrink-0"
                         >
                           <TrashIcon className="h-4 w-4" />
                         </button>
@@ -1488,7 +1588,7 @@ export default function EmployeeEditPage() {
                     <button
                       type="button"
                       onClick={() => setHotLeadCriteria([...hotLeadCriteria, ''])}
-                      className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                      className="flex items-center gap-1 text-sm text-brand-primary hover:text-blue-800"
                     >
                       <PlusIcon className="h-4 w-4" /> Add Criterion
                     </button>
@@ -1497,7 +1597,7 @@ export default function EmployeeEditPage() {
 
                 {/* Hot lead action */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">When a Hot Lead is Identified</label>
+                  <label className="block text-sm font-medium text-text-primary mb-1">When a Hot Lead is Identified</label>
                   <div className="grid grid-cols-3 gap-2">
                     {([
                       { value: 'book', label: 'Book a Call', desc: 'Schedule a discovery call on the spot' },
@@ -1510,12 +1610,12 @@ export default function EmployeeEditPage() {
                         onClick={() => setHotLeadAction(opt.value)}
                         className={`p-3 rounded-lg border text-left transition-colors ${
                           hotLeadAction === opt.value
-                            ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 hover:border-gray-300'
+                            ? 'border-blue-500 bg-brand-primary/5'
+                            : 'border-[rgba(65,71,84,0.15)] hover:border-[rgba(65,71,84,0.2)]'
                         }`}
                       >
-                        <div className={`text-sm font-medium mb-0.5 ${hotLeadAction === opt.value ? 'text-blue-700' : 'text-gray-800'}`}>{opt.label}</div>
-                        <div className="text-xs text-gray-500">{opt.desc}</div>
+                        <div className={`text-sm font-medium mb-0.5 ${hotLeadAction === opt.value ? 'text-brand-primary' : 'text-text-primary'}`}>{opt.label}</div>
+                        <div className="text-xs text-text-secondary">{opt.desc}</div>
                       </button>
                     ))}
                   </div>
@@ -1524,14 +1624,14 @@ export default function EmployeeEditPage() {
                 {/* Transfer number — shown only when action = transfer */}
                 {hotLeadAction === 'transfer' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Sales Transfer Number</label>
-                    <p className="text-xs text-gray-500 mb-1">Hot leads will be live-transferred to this number.</p>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Sales Transfer Number</label>
+                    <p className="text-xs text-text-secondary mb-1">Hot leads will be live-transferred to this number.</p>
                     <input
                       type="tel"
                       value={hotLeadTransferNumber}
                       onChange={e => setHotLeadTransferNumber(e.target.value)}
                       placeholder="+15551234567"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                     />
                   </div>
                 )}
@@ -1539,15 +1639,15 @@ export default function EmployeeEditPage() {
                 {/* Discovery call label — shown when action = book */}
                 {hotLeadAction === 'book' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">What to Call the Next Step</label>
+                    <label className="block text-sm font-medium text-text-primary mb-1">What to Call the Next Step</label>
                     <input
                       type="text"
                       value={discoveryCallLabel}
                       onChange={e => setDiscoveryCallLabel(e.target.value)}
                       placeholder="e.g. Free consultation, 15-min intro call, Strategy session"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                     />
-                    <p className="text-xs text-gray-400 mt-1">The AI will invite hot leads to book a &quot;{discoveryCallLabel || 'discovery call'}&quot;.</p>
+                    <p className="text-xs text-text-muted mt-1">The AI will invite hot leads to book a &quot;{discoveryCallLabel || 'discovery call'}&quot;.</p>
                   </div>
                 )}
               </div>
@@ -1557,25 +1657,25 @@ export default function EmployeeEditPage() {
             <Section title="Lead Response Scripts" badge={warmLeadResponse || coldLeadResponse ? 'Customized' : undefined}>
               <div className="pt-3 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Warm Lead Response</label>
-                  <p className="text-xs text-gray-500 mb-1">What the AI says when a lead is interested but not quite ready. Should acknowledge their interest and set up a follow-up.</p>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Warm Lead Response</label>
+                  <p className="text-xs text-text-secondary mb-1">What the AI says when a lead is interested but not quite ready. Should acknowledge their interest and set up a follow-up.</p>
                   <textarea
                     value={warmLeadResponse}
                     onChange={e => setWarmLeadResponse(e.target.value)}
                     rows={3}
                     placeholder="That sounds like a great fit for what we offer! I'll make sure someone from our team follows up with you soon..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary resize-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Cold Lead Response</label>
-                  <p className="text-xs text-gray-500 mb-1">What the AI says when a lead isn't a fit right now. Should be kind, not dismissive — they may become a fit later.</p>
+                  <label className="block text-sm font-medium text-text-primary mb-1">Cold Lead Response</label>
+                  <p className="text-xs text-text-secondary mb-1">What the AI says when a lead isn't a fit right now. Should be kind, not dismissive — they may become a fit later.</p>
                   <textarea
                     value={coldLeadResponse}
                     onChange={e => setColdLeadResponse(e.target.value)}
                     rows={3}
                     placeholder="I appreciate you reaching out! Based on what you've shared, the timing might not be quite right yet. Feel free to reach back out when things change..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                    className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary resize-none"
                   />
                 </div>
               </div>
@@ -1584,13 +1684,13 @@ export default function EmployeeEditPage() {
             {/* Disqualifying Answers */}
             <Section title="Instant Disqualifiers" badge={disqualifyingAnswers.length > 0 ? `${disqualifyingAnswers.length}` : undefined}>
               <div className="pt-3 space-y-3">
-                <p className="text-xs text-gray-500">If a caller says something that immediately rules them out, the AI will score them cold and exit gracefully — without continuing to probe. Useful for budget floors, geography, or product fit issues.</p>
+                <p className="text-xs text-text-secondary">If a caller says something that immediately rules them out, the AI will score them cold and exit gracefully — without continuing to probe. Useful for budget floors, geography, or product fit issues.</p>
                 {disqualifyingAnswers.map((dq, i) => (
-                  <div key={i} className="flex items-start gap-2 p-2 bg-red-50 rounded-lg border border-red-100">
+                  <div key={i} className="flex items-start gap-2 p-2 bg-[#93000a]/5 rounded-lg border border-red-100">
                     <div className="flex-1 space-y-1">
                       <div className="flex gap-2">
                         <div className="flex-1">
-                          <label className="block text-xs text-gray-500 mb-1">Question topic</label>
+                          <label className="block text-xs text-text-secondary mb-1">Question topic</label>
                           <select
                             value={dq.questionId}
                             onChange={e => {
@@ -1598,7 +1698,7 @@ export default function EmployeeEditPage() {
                               updated[i] = { ...updated[i], questionId: e.target.value }
                               setDisqualifyingAnswers(updated)
                             }}
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-2 py-1 border border-[rgba(65,71,84,0.2)] rounded text-xs focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                           >
                             <option value="">Select a question</option>
                             {qualifyingQuestions.map(q => (
@@ -1613,13 +1713,13 @@ export default function EmployeeEditPage() {
                         <button
                           type="button"
                           onClick={() => setDisqualifyingAnswers(disqualifyingAnswers.filter((_, j) => j !== i))}
-                          className="p-1 text-gray-400 hover:text-red-500 mt-4 flex-shrink-0"
+                          className="p-1 text-text-muted hover:text-[#ffb4ab] mt-4 flex-shrink-0"
                         >
                           <TrashIcon className="h-4 w-4" />
                         </button>
                       </div>
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">If caller indicates...</label>
+                        <label className="block text-xs text-text-secondary mb-1">If caller indicates...</label>
                         <input
                           type="text"
                           value={dq.answer}
@@ -1629,7 +1729,7 @@ export default function EmployeeEditPage() {
                             setDisqualifyingAnswers(updated)
                           }}
                           placeholder="e.g. budget under $500, outside the US, just browsing"
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                         />
                       </div>
                     </div>
@@ -1638,7 +1738,7 @@ export default function EmployeeEditPage() {
                 <button
                   type="button"
                   onClick={() => setDisqualifyingAnswers([...disqualifyingAnswers, { questionId: '', answer: '' }])}
-                  className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                  className="flex items-center gap-1 text-sm text-brand-primary hover:text-blue-800"
                 >
                   <PlusIcon className="h-4 w-4" /> Add Disqualifier
                 </button>
@@ -1653,9 +1753,9 @@ export default function EmployeeEditPage() {
             {/* Appointment Types */}
             <Section title="Appointment Types" badge={apptTypes.length > 0 ? `${apptTypes.length}` : undefined}>
               <div className="pt-3 space-y-3">
-                <p className="text-xs text-gray-500">Define the types of appointments your AI can book. The AI will present these as options during the call.</p>
+                <p className="text-xs text-text-secondary">Define the types of appointments your AI can book. The AI will present these as options during the call.</p>
                 {apptTypes.map((apt, i) => (
-                  <div key={apt.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2">
+                  <div key={apt.id} className="p-3 bg-surface rounded-lg border border-[rgba(65,71,84,0.15)] space-y-2">
                     <div className="flex items-start gap-2">
                       <div className="flex-1 space-y-2">
                         <input
@@ -1667,11 +1767,11 @@ export default function EmployeeEditPage() {
                             setApptTypes(updated)
                           }}
                           placeholder="e.g. Initial Consultation, Follow-up, Deep Clean"
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                         />
                         <div className="flex gap-2">
                           <div className="flex-1">
-                            <label className="block text-xs text-gray-500 mb-1">Duration (min)</label>
+                            <label className="block text-xs text-text-secondary mb-1">Duration (min)</label>
                             <input
                               type="number"
                               min={5}
@@ -1682,11 +1782,11 @@ export default function EmployeeEditPage() {
                                 updated[i] = { ...updated[i], duration: parseInt(e.target.value) || 30 }
                                 setApptTypes(updated)
                               }}
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-2 py-1 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                             />
                           </div>
                           <div className="flex-1">
-                            <label className="block text-xs text-gray-500 mb-1">Price (optional)</label>
+                            <label className="block text-xs text-text-secondary mb-1">Price (optional)</label>
                             <input
                               type="number"
                               min={0}
@@ -1698,7 +1798,7 @@ export default function EmployeeEditPage() {
                                 setApptTypes(updated)
                               }}
                               placeholder="$"
-                              className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-2 py-1 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                             />
                           </div>
                         </div>
@@ -1711,13 +1811,13 @@ export default function EmployeeEditPage() {
                             setApptTypes(updated)
                           }}
                           placeholder="Short description (optional)"
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={() => setApptTypes(apptTypes.filter((_, j) => j !== i))}
-                        className="p-1 text-gray-400 hover:text-red-500 flex-shrink-0"
+                        className="p-1 text-text-muted hover:text-[#ffb4ab] flex-shrink-0"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -1727,7 +1827,7 @@ export default function EmployeeEditPage() {
                 <button
                   type="button"
                   onClick={() => setApptTypes([...apptTypes, { id: `apt-${Date.now()}`, name: '', duration: 60 }])}
-                  className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                  className="flex items-center gap-1 text-sm text-brand-primary hover:text-blue-800"
                 >
                   <PlusIcon className="h-4 w-4" /> Add Appointment Type
                 </button>
@@ -1739,39 +1839,39 @@ export default function EmployeeEditPage() {
               <div className="pt-3 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Min Notice (hours)</label>
-                    <p className="text-xs text-gray-500 mb-1">How far in advance must appointments be booked?</p>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Min Notice (hours)</label>
+                    <p className="text-xs text-text-secondary mb-1">How far in advance must appointments be booked?</p>
                     <input
                       type="number"
                       min={0}
                       value={bookingRules.minNoticeHours}
                       onChange={e => setBookingRules(prev => ({ ...prev, minNoticeHours: parseInt(e.target.value) || 0 }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Max Advance (days)</label>
-                    <p className="text-xs text-gray-500 mb-1">How far ahead can appointments be scheduled?</p>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Max Advance (days)</label>
+                    <p className="text-xs text-text-secondary mb-1">How far ahead can appointments be scheduled?</p>
                     <input
                       type="number"
                       min={1}
                       value={bookingRules.maxAdvanceDays}
                       onChange={e => setBookingRules(prev => ({ ...prev, maxAdvanceDays: parseInt(e.target.value) || 30 }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Buffer Time (minutes)</label>
-                    <p className="text-xs text-gray-500 mb-1">Gap between consecutive appointments.</p>
+                    <label className="block text-sm font-medium text-text-primary mb-1">Buffer Time (minutes)</label>
+                    <p className="text-xs text-text-secondary mb-1">Gap between consecutive appointments.</p>
                     <input
                       type="number"
                       min={0}
                       step={5}
                       value={bookingRules.bufferMinutes}
                       onChange={e => setBookingRules(prev => ({ ...prev, bufferMinutes: parseInt(e.target.value) || 0 }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                     />
                   </div>
                   <div className="flex items-start pt-6">
@@ -1780,11 +1880,11 @@ export default function EmployeeEditPage() {
                         type="checkbox"
                         checked={bookingRules.sameDayBooking}
                         onChange={e => setBookingRules(prev => ({ ...prev, sameDayBooking: e.target.checked }))}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
                       />
                       <div>
-                        <span className="text-sm font-medium text-gray-700">Allow same-day booking</span>
-                        <p className="text-xs text-gray-500">Callers can book for today</p>
+                        <span className="text-sm font-medium text-text-primary">Allow same-day booking</span>
+                        <p className="text-xs text-text-secondary">Callers can book for today</p>
                       </div>
                     </label>
                   </div>
@@ -1795,9 +1895,9 @@ export default function EmployeeEditPage() {
             {/* Staff Members */}
             <Section title="Staff Members" badge={staffMembers.length > 0 ? `${staffMembers.length}` : undefined}>
               <div className="pt-3 space-y-3">
-                <p className="text-xs text-gray-500">If callers can request a specific staff member, add them here. The AI will ask about preferences and note them in the booking.</p>
+                <p className="text-xs text-text-secondary">If callers can request a specific staff member, add them here. The AI will ask about preferences and note them in the booking.</p>
                 {staffMembers.map((staff, i) => (
-                  <div key={staff.id} className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div key={staff.id} className="flex items-start gap-2 p-3 bg-surface rounded-lg border border-[rgba(65,71,84,0.15)]">
                     <div className="flex-1 space-y-2">
                       <input
                         type="text"
@@ -1808,7 +1908,7 @@ export default function EmployeeEditPage() {
                           setStaffMembers(updated)
                         }}
                         placeholder="Staff member name"
-                        className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                       />
                       <input
                         type="text"
@@ -1819,13 +1919,13 @@ export default function EmployeeEditPage() {
                           setStaffMembers(updated)
                         }}
                         placeholder="Specialties (comma-separated, optional)"
-                        className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={() => setStaffMembers(staffMembers.filter((_, j) => j !== i))}
-                      className="p-1 text-gray-400 hover:text-red-500 flex-shrink-0"
+                      className="p-1 text-text-muted hover:text-[#ffb4ab] flex-shrink-0"
                     >
                       <TrashIcon className="h-4 w-4" />
                     </button>
@@ -1834,7 +1934,7 @@ export default function EmployeeEditPage() {
                 <button
                   type="button"
                   onClick={() => setStaffMembers([...staffMembers, { id: `staff-${Date.now()}`, name: '', specialties: [] }])}
-                  className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                  className="flex items-center gap-1 text-sm text-brand-primary hover:text-blue-800"
                 >
                   <PlusIcon className="h-4 w-4" /> Add Staff Member
                 </button>
@@ -1844,13 +1944,13 @@ export default function EmployeeEditPage() {
             {/* Cancellation Policy */}
             <Section title="Cancellation Policy" badge={cancellationPolicy ? 'Set' : undefined}>
               <div className="pt-3">
-                <p className="text-xs text-gray-500 mb-2">The AI will relay this to callers who ask about cancellations or reschedules.</p>
+                <p className="text-xs text-text-secondary mb-2">The AI will relay this to callers who ask about cancellations or reschedules.</p>
                 <textarea
                   value={cancellationPolicy}
                   onChange={e => setCancellationPolicy(e.target.value)}
                   rows={3}
                   placeholder="e.g. Cancellations must be made at least 24 hours in advance. Late cancellations may be subject to a $25 fee."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary resize-none"
                 />
               </div>
             </Section>
@@ -1861,23 +1961,23 @@ export default function EmployeeEditPage() {
             {(original?.jobType === 'receptionist' || original?.jobType === 'customer-service' || original?.jobType === 'appointment-scheduler') && (
               <Section title="Call Routing" badge={transferDestinations.length > 0 ? `${transferDestinations.length} destination${transferDestinations.length !== 1 ? 's' : ''}` : undefined} locked={isTrial} lockedMessage="Upgrade to configure call routing and live transfers.">
                 <div className="pt-3 space-y-4">
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-text-secondary">
                     Set up where calls get transferred. Each destination has a label your AI uses (e.g. "Sales", "Dr. Smith"), a phone number, and optional extension. Keywords tell the AI when to route there — or mark one as Default to catch all transfer requests.
                   </p>
 
                   {transferDestinations.length === 0 && (
-                    <div className="text-center py-4 border border-dashed border-gray-200 rounded-lg">
-                      <p className="text-sm text-gray-400">No transfer destinations yet.</p>
-                      <p className="text-xs text-gray-400 mt-0.5">Add one below so your receptionist can transfer callers to a real person.</p>
+                    <div className="text-center py-4 border border-dashed border-[rgba(65,71,84,0.15)] rounded-lg">
+                      <p className="text-sm text-text-muted">No transfer destinations yet.</p>
+                      <p className="text-xs text-text-muted mt-0.5">Add one below so your receptionist can transfer callers to a real person.</p>
                     </div>
                   )}
 
                   {transferDestinations.map((dest, i) => (
-                    <div key={dest.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-3">
+                    <div key={dest.id} className="p-3 bg-surface rounded-lg border border-[rgba(65,71,84,0.15)] space-y-3">
                       {/* Row 1: Label + Default toggle + Delete */}
                       <div className="flex items-center gap-2">
                         <div className="flex-1">
-                          <label className="block text-xs text-gray-500 mb-1">Label <span className="text-gray-400">(what callers & AI call this destination)</span></label>
+                          <label className="block text-xs text-text-secondary mb-1">Label <span className="text-text-muted">(what callers & AI call this destination)</span></label>
                           <input
                             type="text"
                             value={dest.label}
@@ -1887,11 +1987,11 @@ export default function EmployeeEditPage() {
                               setTransferDestinations(updated)
                             }}
                             placeholder="e.g. Front Desk, Sales, Dr. Smith"
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                           />
                         </div>
                         <div className="flex items-center gap-1 mt-4 flex-shrink-0">
-                          <label className="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600">
+                          <label className="flex items-center gap-1.5 cursor-pointer text-xs text-text-secondary">
                             <input
                               type="checkbox"
                               checked={dest.isDefault}
@@ -1902,7 +2002,7 @@ export default function EmployeeEditPage() {
                                 }))
                                 setTransferDestinations(updated)
                               }}
-                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
                             />
                             Default
                           </label>
@@ -1910,7 +2010,7 @@ export default function EmployeeEditPage() {
                         <button
                           type="button"
                           onClick={() => setTransferDestinations(transferDestinations.filter((_, j) => j !== i))}
-                          className="p-1 text-gray-400 hover:text-red-500 mt-4 flex-shrink-0"
+                          className="p-1 text-text-muted hover:text-[#ffb4ab] mt-4 flex-shrink-0"
                         >
                           <TrashIcon className="h-4 w-4" />
                         </button>
@@ -1919,7 +2019,7 @@ export default function EmployeeEditPage() {
                       {/* Row 2: Phone + Extension */}
                       <div className="flex gap-2">
                         <div className="flex-1">
-                          <label className="block text-xs text-gray-500 mb-1">Phone Number</label>
+                          <label className="block text-xs text-text-secondary mb-1">Phone Number</label>
                           <input
                             type="tel"
                             value={dest.phoneNumber}
@@ -1929,11 +2029,11 @@ export default function EmployeeEditPage() {
                               setTransferDestinations(updated)
                             }}
                             placeholder="+15551234567"
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                           />
                         </div>
                         <div className="w-28">
-                          <label className="block text-xs text-gray-500 mb-1">Extension <span className="text-gray-400">(optional)</span></label>
+                          <label className="block text-xs text-text-secondary mb-1">Extension <span className="text-text-muted">(optional)</span></label>
                           <input
                             type="text"
                             value={dest.extension}
@@ -1943,15 +2043,15 @@ export default function EmployeeEditPage() {
                               setTransferDestinations(updated)
                             }}
                             placeholder="e.g. 102"
-                            className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                           />
                         </div>
                       </div>
 
                       {/* Row 3: Keywords */}
                       <div>
-                        <label className="block text-xs text-gray-500 mb-1">
-                          Trigger Keywords <span className="text-gray-400">(comma-separated — caller says these to reach this destination)</span>
+                        <label className="block text-xs text-text-secondary mb-1">
+                          Trigger Keywords <span className="text-text-muted">(comma-separated — caller says these to reach this destination)</span>
                         </label>
                         <input
                           type="text"
@@ -1962,12 +2062,12 @@ export default function EmployeeEditPage() {
                             setTransferDestinations(updated)
                           }}
                           placeholder="e.g. sales, pricing, buy, upgrade"
-                          className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                         />
                       </div>
 
                       {dest.isDefault && (
-                        <p className="text-xs text-blue-600">This destination will be used for any transfer request that doesn&apos;t match a specific keyword.</p>
+                        <p className="text-xs text-brand-primary">This destination will be used for any transfer request that doesn&apos;t match a specific keyword.</p>
                       )}
                     </div>
                   ))}
@@ -1982,7 +2082,7 @@ export default function EmployeeEditPage() {
                       keywords: [],
                       isDefault: transferDestinations.length === 0,
                     }])}
-                    className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                    className="flex items-center gap-1 text-sm text-brand-primary hover:text-blue-800"
                   >
                     <PlusIcon className="h-4 w-4" /> Add Destination
                   </button>
@@ -1991,112 +2091,123 @@ export default function EmployeeEditPage() {
             )}
 
             {/* Schedule */}
-            <Section title="Schedule">
-              <div className="pt-3 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
-                  <select
-                    value={timezone}
-                    onChange={e => setTimezone(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    {TIMEZONES.map(tz => (
-                      <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium text-gray-700">Business Hours</label>
-                  {DAYS_OF_WEEK.map(day => {
-                    const hours = businessHours[day]
-                    const isOpen = hours !== null
-                    return (
-                      <div key={day} className="flex items-center gap-3">
-                        <label className="flex items-center gap-2 w-28">
-                          <input
-                            type="checkbox"
-                            checked={isOpen}
-                            onChange={e => {
-                              setBusinessHours(prev => ({
-                                ...prev,
-                                [day]: e.target.checked ? { start: '09:00', end: '17:00' } : null,
-                              }))
-                            }}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className="text-sm text-gray-700 capitalize">{day.slice(0, 3)}</span>
-                        </label>
-                        {isOpen && (
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="time"
-                              value={hours.start}
-                              onChange={e => {
-                                setBusinessHours(prev => ({
-                                  ...prev,
-                                  [day]: { ...prev[day]!, start: e.target.value },
-                                }))
-                              }}
-                              className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                            <span className="text-xs text-gray-400">to</span>
-                            <input
-                              type="time"
-                              value={hours.end}
-                              onChange={e => {
-                                setBusinessHours(prev => ({
-                                  ...prev,
-                                  [day]: { ...prev[day]!, end: e.target.value },
-                                }))
-                              }}
-                              className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </div>
-                        )}
-                        {!isOpen && <span className="text-xs text-gray-400">Closed</span>}
-                      </div>
-                    )
-                  })}
-                </div>
+            {/* Business Hours — Compact Grid Card */}
+            <div className="bg-surface-low rounded-2xl p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                  <ClockIcon className="h-4 w-4 text-text-muted" />
+                  Business Hours
+                </h3>
+                <span className="text-xs text-text-muted">{timezone.replace(/_/g, ' ')}</span>
               </div>
-            </Section>
 
-            {/* Phone Status */}
-            <Section title="Phone">
-              <div className="pt-3">
-                {original.phoneNumber ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-700">{original.phoneNumber}</span>
-                    <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
-                      {original.phoneProvider || 'vapi'}
-                    </span>
-                  </div>
-                ) : (
-                  <p className="text-sm text-gray-500">No phone number assigned. Provision one from the employees list.</p>
-                )}
+              {/* Timezone selector */}
+              <select
+                value={timezone}
+                onChange={e => setTimezone(e.target.value)}
+                className="w-full px-3 py-2 bg-surface-lowest text-text-primary rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-brand-primary/50 border-none"
+              >
+                {TIMEZONES.map(tz => (
+                  <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
+                ))}
+              </select>
+
+              {/* Day chips grid */}
+              <div className="grid grid-cols-7 gap-1.5">
+                {DAYS_OF_WEEK.map(day => {
+                  const hours = businessHours[day]
+                  const isOpen = hours !== null
+                  const formatHour = (t: string | undefined) => {
+                    if (!t) return '?'
+                    const [h] = t.split(':').map(Number)
+                    if (h === 0) return '12a'
+                    if (h < 12) return `${h}a`
+                    if (h === 12) return '12p'
+                    return `${h - 12}p`
+                  }
+                  return (
+                    <button
+                      key={day}
+                      type="button"
+                      onClick={() => {
+                        setBusinessHours(prev => ({
+                          ...prev,
+                          [day]: isOpen ? null : { start: '09:00', end: '17:00' },
+                        }))
+                      }}
+                      className={`rounded-lg p-2 text-center transition-all ${
+                        isOpen
+                          ? 'bg-brand-primary/10 text-brand-light'
+                          : 'bg-surface-med text-text-muted'
+                      }`}
+                    >
+                      <div className="text-xs font-bold uppercase">{day.slice(0, 3)}</div>
+                      <div className="text-[10px] mt-0.5">
+                        {isOpen ? `${formatHour(hours.start)}-${formatHour(hours.end)}` : 'OFF'}
+                      </div>
+                    </button>
+                  )
+                })}
               </div>
-            </Section>
+
+              {/* Editable time inputs for open days */}
+              <div className="space-y-1.5">
+                {DAYS_OF_WEEK.filter(day => businessHours[day] !== null).map(day => {
+                  const hours = businessHours[day]!
+                  return (
+                    <div key={day} className="flex items-center gap-2">
+                      <span className="text-xs text-text-secondary capitalize w-10">{day.slice(0, 3)}</span>
+                      <input type="time" value={hours.start}
+                        onChange={e => setBusinessHours(prev => ({ ...prev, [day]: { ...prev[day]!, start: e.target.value } }))}
+                        className="px-2 py-1 bg-surface-lowest text-text-primary rounded text-xs focus:outline-none focus:ring-1 focus:ring-brand-primary/50 border-none" />
+                      <span className="text-xs text-text-muted">to</span>
+                      <input type="time" value={hours.end}
+                        onChange={e => setBusinessHours(prev => ({ ...prev, [day]: { ...prev[day]!, end: e.target.value } }))}
+                        className="px-2 py-1 bg-surface-lowest text-text-primary rounded text-xs focus:outline-none focus:ring-1 focus:ring-brand-primary/50 border-none" />
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Phone Status — Card */}
+            <div className="bg-surface-low rounded-2xl p-6 space-y-3">
+              <h3 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                <PhoneIcon className="h-4 w-4 text-text-muted" />
+                Phone
+              </h3>
+              {original.phoneNumber ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-mono text-text-primary">{original.phoneNumber}</span>
+                  <span className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full">
+                    {original.phoneProvider || 'vapi'}
+                  </span>
+                </div>
+              ) : (
+                <p className="text-sm text-text-muted">No phone number assigned. Provision one from the employees list.</p>
+              )}
+            </div>
           </div>
 
           {/* Save Bar */}
-          <div className="sticky bottom-0 bg-white border-t border-gray-200 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6">
+          <div className="sticky bottom-0 bg-surface-low border-t border-[rgba(65,71,84,0.15)] -mx-4 px-4 py-3 sm:-mx-6 sm:px-6">
             <div className="flex items-center justify-between gap-3">
               <div className="flex-1 min-w-0">
                 {saveError && (
-                  <p className="text-sm text-red-600 truncate">{saveError}</p>
+                  <p className="text-sm text-[#ffb4ab] truncate">{saveError}</p>
                 )}
                 {saveSuccess && (
-                  <p className="text-sm text-green-600">Saved successfully</p>
+                  <p className="text-sm text-emerald-500">Saved successfully</p>
                 )}
                 {!saveError && !saveSuccess && isDirty() && (
-                  <p className="text-sm text-amber-600">You have unsaved changes</p>
+                  <p className="text-sm text-accent">You have unsaved changes</p>
                 )}
               </div>
               <button
                 type="button"
                 onClick={handleSave}
                 disabled={saving || !isDirty()}
-                className="px-6 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-2 bg-brand-primary text-white text-sm font-medium rounded-lg hover:bg-[#0060d0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
@@ -2109,65 +2220,65 @@ export default function EmployeeEditPage() {
             <div className="space-y-6">
               {/* Config Gaps */}
               {configGaps.length > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div className="bg-accent/5 rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <ExclamationTriangleIcon className="h-5 w-5 text-amber-600 flex-shrink-0" />
-                    <h3 className="text-sm font-semibold text-amber-800">Setup incomplete — {configGaps.length} item{configGaps.length !== 1 ? 's' : ''} need attention</h3>
+                    <ExclamationTriangleIcon className="h-5 w-5 text-accent flex-shrink-0" />
+                    <h3 className="text-sm font-semibold text-accent">Setup incomplete — {configGaps.length} item{configGaps.length !== 1 ? 's' : ''} need attention</h3>
                   </div>
                   <ul className="space-y-1 ml-7">
                     {configGaps.map(gap => (
-                      <li key={gap} className="text-sm text-amber-700 flex items-center gap-1.5">
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                      <li key={gap} className="text-sm text-text-secondary flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-accent flex-shrink-0" />
                         {gap}
                       </li>
                     ))}
                   </ul>
                   <button
                     onClick={() => setActiveTab('configure')}
-                    className="mt-3 ml-7 text-xs font-medium text-amber-700 hover:text-amber-900 underline"
+                    className="mt-3 ml-7 text-xs font-medium text-accent hover:text-text-primary underline"
                   >
                     Go to Configure →
                   </button>
                 </div>
               )}
               {configGaps.length === 0 && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-2">
-                  <CheckCircleIcon className="h-5 w-5 text-green-600 flex-shrink-0" />
-                  <span className="text-sm text-green-800 font-medium">Employee fully configured and ready</span>
+                <div className="bg-emerald-500/5 rounded-lg p-4 flex items-center gap-2">
+                  <CheckCircleIcon className="h-5 w-5 text-emerald-500 flex-shrink-0" />
+                  <span className="text-sm text-emerald-500 font-medium">Employee fully configured and ready</span>
                 </div>
               )}
 
               {/* Stats */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { label: 'Total Calls', value: callStats.total, icon: PhoneIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
-                  { label: 'Today', value: callStats.today, icon: PhoneArrowDownLeftIcon, color: 'text-green-600', bg: 'bg-green-50' },
-                  { label: 'Avg Duration', value: callStats.avgDuration > 0 ? `${callStats.avgDuration}s` : '—', icon: ClockIcon, color: 'text-purple-600', bg: 'bg-purple-50' },
-                  { label: 'Missed', value: callStats.missed, icon: ExclamationTriangleIcon, color: 'text-red-600', bg: 'bg-red-50' },
+                  { label: 'Total Calls', value: callStats.total, icon: PhoneIcon, color: 'text-brand-primary', bg: 'bg-brand-primary/5' },
+                  { label: 'Today', value: callStats.today, icon: PhoneArrowDownLeftIcon, color: 'text-emerald-500', bg: 'bg-emerald-500/5' },
+                  { label: 'Avg Duration', value: callStats.avgDuration > 0 ? `${callStats.avgDuration}s` : '—', icon: ClockIcon, color: 'text-purple-400', bg: 'bg-purple-400/5' },
+                  { label: 'Missed', value: callStats.missed, icon: ExclamationTriangleIcon, color: 'text-[#ffb4ab]', bg: 'bg-[#93000a]/5' },
                 ].map(stat => (
-                  <div key={stat.label} className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div key={stat.label} className="bg-surface-low border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
                     <div className={`inline-flex p-2 rounded-lg ${stat.bg} mb-2`}>
                       <stat.icon className={`h-4 w-4 ${stat.color}`} />
                     </div>
-                    <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-                    <div className="text-xs text-gray-500">{stat.label}</div>
+                    <div className="text-2xl font-bold text-text-primary">{stat.value}</div>
+                    <div className="text-xs text-text-secondary">{stat.label}</div>
                   </div>
                 ))}
               </div>
 
               {/* Test Call */}
               {original.phoneNumber && (
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <PhoneIcon className="h-4 w-4 text-gray-500" />
+                <div className="bg-surface-low border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
+                  <h3 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
+                    <PhoneIcon className="h-4 w-4 text-text-secondary" />
                     Test This Employee
                   </h3>
                   <div className="flex items-center gap-3">
-                    <div className="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 flex items-center justify-between">
-                      <span className="text-sm font-mono text-gray-700">{original.phoneNumber}</span>
+                    <div className="flex-1 bg-surface border border-[rgba(65,71,84,0.15)] rounded-lg px-3 py-2 flex items-center justify-between">
+                      <span className="text-sm font-mono text-text-primary">{original.phoneNumber}</span>
                       <button
                         onClick={() => { navigator.clipboard.writeText(original.phoneNumber); setCopiedPhone(true); setTimeout(() => setCopiedPhone(false), 2000) }}
-                        className="ml-2 p-1 text-gray-400 hover:text-gray-600"
+                        className="ml-2 p-1 text-text-muted hover:text-text-secondary"
                         title="Copy number"
                       >
                         {copiedPhone ? <CheckIcon className="h-4 w-4 text-green-500" /> : <ClipboardDocumentIcon className="h-4 w-4" />}
@@ -2175,31 +2286,31 @@ export default function EmployeeEditPage() {
                     </div>
                     <a
                       href={`tel:${original.phoneNumber}`}
-                      className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-brand-primary text-white text-sm font-medium rounded-lg hover:bg-[#0060d0] transition-colors"
                     >
                       <PhoneIcon className="h-4 w-4" />
                       Call
                     </a>
                   </div>
-                  <p className="text-xs text-gray-400 mt-2">Call this number from any phone to test {original.name}&apos;s responses</p>
+                  <p className="text-xs text-text-muted mt-2">Call this number from any phone to test {original.name}&apos;s responses</p>
                 </div>
               )}
 
               {/* Integrations */}
-              <div className="bg-white border border-gray-200 rounded-lg p-4">
+              <div className="bg-surface-low border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-900">Integrations</h3>
-                  <a href="/dashboard/integrations" className="text-xs text-blue-600 hover:text-blue-800">Manage →</a>
+                  <h3 className="text-sm font-semibold text-text-primary">Integrations</h3>
+                  <a href="/dashboard/integrations" className="text-xs text-brand-primary hover:text-blue-800">Manage →</a>
                 </div>
                 {integrations.length === 0 ? (
-                  <div className="text-sm text-gray-400 text-center py-4">No integrations connected</div>
+                  <div className="text-sm text-text-muted text-center py-4">No integrations connected</div>
                 ) : (
                   <div className="space-y-2">
                     {integrations.map((intg: any) => (
                       <div key={intg.id} className="flex items-center justify-between py-1.5">
-                        <span className="text-sm text-gray-700 capitalize">{intg.platform?.replace(/-/g, ' ')}</span>
+                        <span className="text-sm text-text-primary capitalize">{intg.platform?.replace(/-/g, ' ')}</span>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          intg.status === 'connected' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                          intg.status === 'connected' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-surface-high text-text-secondary'
                         }`}>{intg.status}</span>
                       </div>
                     ))}
@@ -2209,24 +2320,24 @@ export default function EmployeeEditPage() {
 
               {/* Recent Calls Preview */}
               {calls.length > 0 && (
-                <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="bg-surface-low border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold text-gray-900">Recent Calls</h3>
-                    <button onClick={() => setActiveTab('calls')} className="text-xs text-blue-600 hover:text-blue-800">View all →</button>
+                    <h3 className="text-sm font-semibold text-text-primary">Recent Calls</h3>
+                    <button onClick={() => setActiveTab('calls')} className="text-xs text-brand-primary hover:text-blue-800">View all →</button>
                   </div>
                   <div className="space-y-2">
                     {calls.slice(0, 3).map((call: any) => (
                       <div key={call.call_id || call.id} className="flex items-center justify-between py-1.5 border-b border-gray-50 last:border-0">
                         <div className="flex items-center gap-2">
-                          <PhoneArrowDownLeftIcon className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-700">{call.customer_phone || 'Unknown'}</span>
+                          <PhoneArrowDownLeftIcon className="h-4 w-4 text-text-muted" />
+                          <span className="text-sm text-text-primary">{call.customer_phone || 'Unknown'}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          {call.duration && <span className="text-xs text-gray-400">{call.duration}s</span>}
+                          {call.duration && <span className="text-xs text-text-muted">{call.duration}s</span>}
                           <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            call.status === 'completed' ? 'bg-green-100 text-green-700' :
-                            call.status === 'missed' ? 'bg-red-100 text-red-700' :
-                            'bg-gray-100 text-gray-500'
+                            call.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500' :
+                            call.status === 'missed' ? 'bg-[#93000a]/10 text-[#ffb4ab]' :
+                            'bg-surface-high text-text-secondary'
                           }`}>{call.status}</span>
                         </div>
                       </div>
@@ -2242,9 +2353,9 @@ export default function EmployeeEditPage() {
             <div className="space-y-3">
               {calls.length === 0 ? (
                 <div className="text-center py-16">
-                  <PhoneIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">No calls recorded yet</p>
-                  <p className="text-gray-400 text-xs mt-1">Calls will appear here once {original.name} starts handling them</p>
+                  <PhoneIcon className="h-10 w-10 text-text-muted mx-auto mb-3" />
+                  <p className="text-text-secondary text-sm">No calls recorded yet</p>
+                  <p className="text-text-muted text-xs mt-1">Calls will appear here once {original.name} starts handling them</p>
                 </div>
               ) : (
                 calls.map((call: any) => {
@@ -2253,53 +2364,53 @@ export default function EmployeeEditPage() {
                   const duration = call.duration ? `${Math.floor(call.duration / 60)}m ${call.duration % 60}s` : null
                   const startedAt = call.started_at ? new Date(call.started_at) : null
                   return (
-                    <div key={callId} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                    <div key={callId} className="bg-surface-low border border-[rgba(65,71,84,0.15)] rounded-lg overflow-hidden">
                       <button
                         onClick={() => setExpandedCallId(isExpanded ? null : callId)}
-                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface transition-colors"
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <PhoneArrowDownLeftIcon className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          <PhoneArrowDownLeftIcon className="h-4 w-4 text-text-muted flex-shrink-0" />
                           <div className="min-w-0 text-left">
-                            <div className="text-sm font-medium text-gray-900">{call.customer_phone || 'Unknown caller'}</div>
-                            <div className="text-xs text-gray-400">
+                            <div className="text-sm font-medium text-text-primary">{call.customer_phone || 'Unknown caller'}</div>
+                            <div className="text-xs text-text-muted">
                               {startedAt ? startedAt.toLocaleString() : ''}{duration ? ` · ${duration}` : ''}
                             </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0 ml-2">
                           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                            call.status === 'completed' ? 'bg-green-100 text-green-700' :
-                            call.status === 'missed' || call.status === 'no-answer' ? 'bg-red-100 text-red-700' :
-                            call.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
-                            'bg-gray-100 text-gray-500'
+                            call.status === 'completed' ? 'bg-emerald-500/10 text-emerald-500' :
+                            call.status === 'missed' || call.status === 'no-answer' ? 'bg-[#93000a]/10 text-[#ffb4ab]' :
+                            call.status === 'in-progress' ? 'bg-brand-primary/10 text-brand-primary' :
+                            'bg-surface-high text-text-secondary'
                           }`}>{call.status || 'unknown'}</span>
-                          <ChevronDownIcon className={`h-4 w-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                          <ChevronDownIcon className={`h-4 w-4 text-text-muted transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                         </div>
                       </button>
                       {isExpanded && (
-                        <div className="px-4 pb-4 border-t border-gray-100">
+                        <div className="px-4 pb-4 border-t border-[rgba(65,71,84,0.1)]">
                           {call.summary && (
                             <div className="mt-3">
-                              <div className="text-xs font-medium text-gray-500 mb-1">Summary</div>
-                              <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{call.summary}</p>
+                              <div className="text-xs font-medium text-text-secondary mb-1">Summary</div>
+                              <p className="text-sm text-text-primary bg-surface rounded-lg p-3">{call.summary}</p>
                             </div>
                           )}
                           {call.transcript && (
                             <div className="mt-3">
-                              <div className="text-xs font-medium text-gray-500 mb-1 flex items-center gap-1">
+                              <div className="text-xs font-medium text-text-secondary mb-1 flex items-center gap-1">
                                 <DocumentTextIcon className="h-3.5 w-3.5" />
                                 Transcript
                               </div>
-                              <pre className="text-xs text-gray-600 bg-gray-50 rounded-lg p-3 overflow-auto max-h-60 whitespace-pre-wrap font-sans">{call.transcript}</pre>
+                              <pre className="text-xs text-text-secondary bg-surface rounded-lg p-3 overflow-auto max-h-60 whitespace-pre-wrap font-sans">{call.transcript}</pre>
                             </div>
                           )}
                           {!call.summary && !call.transcript && (
-                            <p className="text-sm text-gray-400 mt-3 text-center">No transcript available for this call</p>
+                            <p className="text-sm text-text-muted mt-3 text-center">No transcript available for this call</p>
                           )}
                           {call.recording_url && (
                             <div className="mt-3">
-                              <div className="text-xs font-medium text-gray-500 mb-1">Recording</div>
+                              <div className="text-xs font-medium text-text-secondary mb-1">Recording</div>
                               <audio controls src={call.recording_url} className="w-full h-8" />
                             </div>
                           )}
@@ -2315,37 +2426,37 @@ export default function EmployeeEditPage() {
           {/* MESSAGES TAB */}
           {activeTab === 'messages' && (
             <div className="space-y-3">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 flex items-start gap-2">
-                <InformationCircleIcon className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-blue-700">
+              <div className="bg-brand-primary/5 border border-blue-200 rounded-lg px-4 py-3 flex items-start gap-2">
+                <InformationCircleIcon className="h-4 w-4 text-brand-primary flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-brand-primary">
                   SMS messaging is pending carrier registration (A2P 10DLC) and will be active within 2–3 weeks. Voicemail messages will appear here immediately.
                 </p>
               </div>
               {messages.length === 0 ? (
                 <div className="text-center py-16">
-                  <ChatBubbleLeftRightIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500 text-sm">No messages yet</p>
-                  <p className="text-gray-400 text-xs mt-1">SMS messages and voicemails will appear here</p>
+                  <ChatBubbleLeftRightIcon className="h-10 w-10 text-text-muted mx-auto mb-3" />
+                  <p className="text-text-secondary text-sm">No messages yet</p>
+                  <p className="text-text-muted text-xs mt-1">SMS messages and voicemails will appear here</p>
                 </div>
               ) : (
                 messages.map((msg: any) => (
-                  <div key={msg.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div key={msg.id} className="bg-surface-low border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium text-gray-900">{msg.caller_name || msg.caller_phone || 'Unknown'}</span>
+                          <span className="text-sm font-medium text-text-primary">{msg.caller_name || msg.caller_phone || 'Unknown'}</span>
                           {msg.urgency && (
                             <span className={`text-xs px-2 py-0.5 rounded-full ${
-                              msg.urgency === 'high' ? 'bg-red-100 text-red-700' :
-                              msg.urgency === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-gray-100 text-gray-500'
+                              msg.urgency === 'high' ? 'bg-[#93000a]/10 text-[#ffb4ab]' :
+                              msg.urgency === 'medium' ? 'bg-accent/10 text-accent' :
+                              'bg-surface-high text-text-secondary'
                             }`}>{msg.urgency}</span>
                           )}
                         </div>
-                        {msg.reason && <p className="text-xs text-gray-500 mb-1">{msg.reason}</p>}
-                        {msg.full_message && <p className="text-sm text-gray-700">{msg.full_message}</p>}
+                        {msg.reason && <p className="text-xs text-text-secondary mb-1">{msg.reason}</p>}
+                        {msg.full_message && <p className="text-sm text-text-primary">{msg.full_message}</p>}
                       </div>
-                      <div className="text-xs text-gray-400 flex-shrink-0">
+                      <div className="text-xs text-text-muted flex-shrink-0">
                         {msg.created_at ? new Date(msg.created_at).toLocaleDateString() : ''}
                       </div>
                     </div>
@@ -2354,6 +2465,88 @@ export default function EmployeeEditPage() {
               )}
             </div>
           )}
+            </div>{/* end left column */}
+
+            {/* Right Column — Performance Sidebar (Stitch Style) */}
+            <div className="hidden lg:block w-80 flex-shrink-0 space-y-6">
+              {/* Real-Time Performance */}
+              <div className="bg-surface-low rounded-2xl p-6 space-y-5">
+                <h4 className="text-xs uppercase tracking-widest text-text-muted font-bold">Real-Time Performance</h4>
+                <div className="text-center">
+                  <div className="text-5xl font-extrabold text-text-primary font-[family-name:var(--font-manrope)]">{callStats.total}</div>
+                  <div className="text-sm text-text-secondary mt-1">Total Calls</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-surface-med rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-text-primary font-[family-name:var(--font-manrope)]">{callStats.today}</div>
+                    <div className="text-xs text-text-muted">Today</div>
+                  </div>
+                  <div className="bg-surface-med rounded-lg p-3 text-center">
+                    <div className="text-lg font-bold text-text-primary font-[family-name:var(--font-manrope)]">
+                      {callStats.avgDuration > 0 ? `${Math.floor(callStats.avgDuration / 60)}m ${callStats.avgDuration % 60}s` : '--'}
+                    </div>
+                    <div className="text-xs text-text-muted">Avg Duration</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Info */}
+              <div className="bg-surface-low rounded-2xl p-6 space-y-4">
+                <h4 className="text-xs uppercase tracking-widest text-text-muted font-bold">Agent Details</h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-text-muted">Job Type</span>
+                    <span className="text-text-primary capitalize font-medium">{jobLabel}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-text-muted">Tone</span>
+                    <span className="text-text-primary capitalize font-medium">{tone}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-text-muted">Status</span>
+                    <span className={`font-medium ${original.isActive ? 'text-emerald-500' : 'text-text-secondary'}`}>
+                      {original.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  {original.phoneNumber && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-text-muted">Phone</span>
+                      <span className="text-text-primary font-mono text-xs">{original.phoneNumber}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Integrations Quick View */}
+              {integrations.length > 0 && (
+                <div className="bg-surface-low rounded-2xl p-6 space-y-4">
+                  <h4 className="text-xs uppercase tracking-widest text-text-muted font-bold">Integrations</h4>
+                  <div className="space-y-2">
+                    {integrations.map((intg: any) => (
+                      <div key={intg.id} className="flex items-center justify-between">
+                        <span className="text-sm text-text-primary capitalize">{intg.platform?.replace(/-/g, ' ')}</span>
+                        <CheckCircleIcon className={`h-4 w-4 ${intg.status === 'connected' ? 'text-emerald-500' : 'text-text-muted'}`} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Monitoring Status */}
+              <div className="bg-surface-lowest rounded-2xl p-6 relative overflow-hidden">
+                <div className="absolute -top-10 -right-10 w-24 h-24 bg-brand-primary/10 rounded-full blur-[40px]" />
+                <div className="relative z-10">
+                  <div className="text-xs uppercase tracking-widest text-text-muted font-bold mb-3">Current Status</div>
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 bg-emerald-500 rounded-full animate-pulse" />
+                    <span className="text-sm font-medium text-text-primary">
+                      {original.isActive ? 'Live Monitoring Active' : 'Monitoring Paused'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>{/* end two-column flex */}
         </div>
       </Layout>
     </ProtectedRoute>

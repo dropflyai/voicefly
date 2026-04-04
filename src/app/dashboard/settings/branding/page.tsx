@@ -154,13 +154,13 @@ export default function BrandingSettingsPage() {
     return (
       <div className="max-w-7xl mx-auto p-6">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-8 bg-surface-highest rounded w-1/4"></div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-4">
-              <div className="h-64 bg-gray-200 rounded"></div>
-              <div className="h-32 bg-gray-200 rounded"></div>
+              <div className="h-64 bg-surface-highest rounded"></div>
+              <div className="h-32 bg-surface-highest rounded"></div>
             </div>
-            <div className="h-96 bg-gray-200 rounded"></div>
+            <div className="h-96 bg-surface-highest rounded"></div>
           </div>
         </div>
       </div>
@@ -176,8 +176,8 @@ export default function BrandingSettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Brand Customization</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-text-primary">Brand Customization</h1>
+          <p className="text-text-secondary mt-2">
             Customize your brand colors and logo. Changes apply to booking widgets, emails, SMS, and analytics.
           </p>
         </div>
@@ -186,8 +186,8 @@ export default function BrandingSettingsPage() {
             onClick={() => setPreviewMode(!previewMode)}
             className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
               previewMode 
-                ? 'bg-purple-100 text-purple-700' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-purple-500/10 text-purple-400' 
+                : 'bg-surface-high text-text-primary hover:bg-surface-highest'
             }`}
           >
             <EyeIcon className="h-5 w-5" />
@@ -198,7 +198,7 @@ export default function BrandingSettingsPage() {
 
       {successMessage && (
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3">
-          <CheckIcon className="h-5 w-5 text-green-600" />
+          <CheckIcon className="h-5 w-5 text-emerald-500" />
           <span className="text-green-800">{successMessage}</span>
         </div>
       )}
@@ -207,20 +207,20 @@ export default function BrandingSettingsPage() {
         {/* Branding Controls */}
         <div className="xl:col-span-1 space-y-6">
           {/* Logo Upload */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
             <div className="flex items-center space-x-3 mb-4">
-              <PhotoIcon className="h-6 w-6 text-gray-600" />
+              <PhotoIcon className="h-6 w-6 text-text-secondary" />
               <h2 className="text-lg font-semibold">Business Logo</h2>
             </div>
 
             <div className="space-y-4">
-              <div className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+              <div className="w-full h-32 border-2 border-dashed border-[rgba(65,71,84,0.2)] rounded-lg flex items-center justify-center bg-surface">
                 {branding.logo_url ? (
                   <img src={branding.logo_url} alt="Logo" className="max-h-28 max-w-full object-contain" />
                 ) : (
                   <div className="text-center">
-                    <PhotoIcon className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                    <span className="text-gray-500 text-sm">No logo uploaded</span>
+                    <PhotoIcon className="h-12 w-12 text-text-muted mx-auto mb-2" />
+                    <span className="text-text-secondary text-sm">No logo uploaded</span>
                   </div>
                 )}
               </div>
@@ -240,28 +240,28 @@ export default function BrandingSettingsPage() {
               />
               <label
                 htmlFor="logo-upload"
-                className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors flex items-center justify-center space-x-2"
+                className="w-full px-4 py-2 bg-surface-high text-text-primary rounded-lg cursor-pointer hover:bg-surface-highest transition-colors flex items-center justify-center space-x-2"
               >
                 <PhotoIcon className="h-5 w-5" />
                 <span>Upload Logo</span>
               </label>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-text-secondary">
                 Recommended: 500x500px, PNG or SVG format
               </p>
             </div>
           </div>
 
           {/* Brand Colors */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
             <div className="flex items-center space-x-3 mb-4">
-              <SwatchIcon className="h-6 w-6 text-gray-600" />
+              <SwatchIcon className="h-6 w-6 text-text-secondary" />
               <h2 className="text-lg font-semibold">Brand Colors</h2>
             </div>
 
             <div className="space-y-4">
               {/* Primary Color */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-text-primary mb-2">
                   Primary Color
                 </label>
                 <div className="flex items-center space-x-3">
@@ -269,20 +269,20 @@ export default function BrandingSettingsPage() {
                     type="color"
                     value={branding.primary_color}
                     onChange={(e) => setBranding(prev => ({ ...prev, primary_color: e.target.value }))}
-                    className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
+                    className="w-12 h-10 rounded border border-[rgba(65,71,84,0.2)] cursor-pointer"
                   />
                   <input
                     type="text"
                     value={branding.primary_color}
                     onChange={(e) => setBranding(prev => ({ ...prev, primary_color: e.target.value }))}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    className="flex-1 px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg text-sm"
                   />
                 </div>
               </div>
 
               {/* Secondary Color */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-text-primary mb-2">
                   Secondary Color
                 </label>
                 <div className="flex items-center space-x-3">
@@ -290,20 +290,20 @@ export default function BrandingSettingsPage() {
                     type="color"
                     value={branding.secondary_color}
                     onChange={(e) => setBranding(prev => ({ ...prev, secondary_color: e.target.value }))}
-                    className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
+                    className="w-12 h-10 rounded border border-[rgba(65,71,84,0.2)] cursor-pointer"
                   />
                   <input
                     type="text"
                     value={branding.secondary_color}
                     onChange={(e) => setBranding(prev => ({ ...prev, secondary_color: e.target.value }))}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    className="flex-1 px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg text-sm"
                   />
                 </div>
               </div>
 
               {/* Accent Color */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-text-primary mb-2">
                   Accent Color
                 </label>
                 <div className="flex items-center space-x-3">
@@ -311,13 +311,13 @@ export default function BrandingSettingsPage() {
                     type="color"
                     value={branding.accent_color}
                     onChange={(e) => setBranding(prev => ({ ...prev, accent_color: e.target.value }))}
-                    className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
+                    className="w-12 h-10 rounded border border-[rgba(65,71,84,0.2)] cursor-pointer"
                   />
                   <input
                     type="text"
                     value={branding.accent_color}
                     onChange={(e) => setBranding(prev => ({ ...prev, accent_color: e.target.value }))}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                    className="flex-1 px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg text-sm"
                   />
                 </div>
               </div>
@@ -325,16 +325,16 @@ export default function BrandingSettingsPage() {
           </div>
 
           {/* Font Family */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
             <h2 className="text-lg font-semibold mb-4">Typography</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-text-primary mb-2">
                 Font Family
               </label>
               <select
                 value={branding.font_family}
                 onChange={(e) => setBranding(prev => ({ ...prev, font_family: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg"
               >
                 <option value="Inter">Inter (Default)</option>
                 <option value="Roboto">Roboto</option>
@@ -358,7 +358,7 @@ export default function BrandingSettingsPage() {
             
             <button
               onClick={sendTestBrandedEmail}
-              className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+              className="w-full px-4 py-3 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] font-medium transition-colors"
             >
               Send Test Email
             </button>
@@ -368,7 +368,7 @@ export default function BrandingSettingsPage() {
         {/* Live Preview */}
         <div className="xl:col-span-2 space-y-6">
           {/* Analytics Preview with Custom Branding */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
             <h2 className="text-xl font-semibold mb-6" style={{ color: branding.primary_color }}>
               Branded Analytics Preview
             </h2>
@@ -376,10 +376,10 @@ export default function BrandingSettingsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Revenue Chart with Brand Colors */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900">Revenue Trends</h3>
-                <div className="branded-chart p-4 border border-gray-200 rounded-lg">
+                <h3 className="font-semibold text-text-primary">Revenue Trends</h3>
+                <div className="branded-chart p-4 border border-[rgba(65,71,84,0.15)] rounded-lg">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-sm text-gray-600">Revenue Analytics</span>
+                    <span className="text-sm text-text-secondary">Revenue Analytics</span>
                     <div className="flex space-x-2">
                       {mockRevenueData.map((_, i) => (
                         <div 
@@ -393,14 +393,14 @@ export default function BrandingSettingsPage() {
                   <div className="text-2xl font-bold" style={{ color: branding.primary_color }}>
                     ${mockRevenueData.reduce((sum, d) => sum + d.revenue, 0).toLocaleString()}
                   </div>
-                  <div className="text-sm text-gray-600">Total Revenue (Demo)</div>
+                  <div className="text-sm text-text-secondary">Total Revenue (Demo)</div>
                 </div>
               </div>
 
               {/* Service Popularity with Brand Colors */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900">Service Popularity</h3>
-                <div className="branded-chart p-4 border border-gray-200 rounded-lg space-y-3">
+                <h3 className="font-semibold text-text-primary">Service Popularity</h3>
+                <div className="branded-chart p-4 border border-[rgba(65,71,84,0.15)] rounded-lg space-y-3">
                   {mockServiceData.map((service, i) => (
                     <div key={i} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -419,12 +419,12 @@ export default function BrandingSettingsPage() {
           </div>
 
           {/* Booking Widget Preview */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
             <h2 className="text-xl font-semibold mb-6" style={{ color: branding.primary_color }}>
               Branded Booking Widget
             </h2>
             
-            <div className="max-w-md mx-auto border border-gray-200 rounded-lg p-6 branded-widget">
+            <div className="max-w-md mx-auto border border-[rgba(65,71,84,0.15)] rounded-lg p-6 branded-widget">
               {/* Widget Header with Logo */}
               <div className="text-center mb-6">
                 {branding.logo_url && (
@@ -433,7 +433,7 @@ export default function BrandingSettingsPage() {
                 <h3 className="text-xl font-semibold" style={{ color: branding.primary_color }}>
                   {business?.name || 'Your Business Name'}
                 </h3>
-                <p className="text-gray-600 text-sm mt-1">Book your appointment online</p>
+                <p className="text-text-secondary text-sm mt-1">Book your appointment online</p>
               </div>
 
               {/* Sample Service Selection */}
@@ -451,10 +451,10 @@ export default function BrandingSettingsPage() {
                   </div>
                 </div>
                 
-                <div className="p-3 rounded-lg border border-gray-200">
+                <div className="p-3 rounded-lg border border-[rgba(65,71,84,0.15)]">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">Pedicure</span>
-                    <span className="text-gray-600">$55</span>
+                    <span className="text-text-secondary">$55</span>
                   </div>
                 </div>
               </div>
@@ -476,12 +476,12 @@ export default function BrandingSettingsPage() {
           </div>
 
           {/* Email Template Preview */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
             <h2 className="text-xl font-semibold mb-6" style={{ color: branding.primary_color }}>
               Branded Email Template
             </h2>
             
-            <div className="border border-gray-200 rounded-lg overflow-hidden max-w-lg mx-auto">
+            <div className="border border-[rgba(65,71,84,0.15)] rounded-lg overflow-hidden max-w-lg mx-auto">
               {/* Email Header */}
               <div 
                 className="p-6 text-white"
@@ -497,16 +497,16 @@ export default function BrandingSettingsPage() {
               </div>
               
               {/* Email Body */}
-              <div className="p-6 bg-gray-50">
-                <div className="bg-white p-6 rounded-lg">
+              <div className="p-6 bg-surface">
+                <div className="bg-surface-low p-6 rounded-lg">
                   <h2 style={{ color: branding.primary_color }} className="text-lg font-semibold mb-4">
                     Hello Customer!
                   </h2>
-                  <p className="text-gray-700 mb-4">
+                  <p className="text-text-primary mb-4">
                     We're excited to see you! Your appointment has been confirmed.
                   </p>
                   
-                  <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="bg-surface p-4 rounded-lg">
                     <div className="flex justify-between py-1">
                       <span className="font-medium">📅 Date:</span>
                       <span>September 3, 2025</span>

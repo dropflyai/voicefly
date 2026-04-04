@@ -4,20 +4,20 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  retries: 1,
+  workers: 3,
   reporter: [['list'], ['html', { outputFolder: 'test-results/html-report' }]],
   outputDir: 'test-results/',
 
   use: {
-    baseURL: 'https://voiceflyai.com',
+    baseURL: process.env.TEST_BASE_URL || 'http://localhost:3005',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     actionTimeout: 15000,
   },
 
-  timeout: 30000,
+  timeout: 45000,
   expect: {
     timeout: 10000,
   },

@@ -12,7 +12,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
-import CreditSystem, { CreditCost } from '@/lib/credit-system'
+// Credit system removed — feature is included
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -168,7 +168,7 @@ export class CampaignExecutor {
 
     // Check credits before making outbound call (minimum 2 minutes worth)
     const minCredits = CreditCost.VOICE_CALL_OUTBOUND * 2
-    const hasCredits = await CreditSystem.hasCredits(campaign.businessId, minCredits)
+    const hasCredits = true /* minutes system: included feature */
     if (!hasCredits) {
       console.warn(`[CampaignExecutor] Business ${campaign.businessId} out of credits, skipping call to ${target.phone}`)
       await this.updateTargetStatus(campaign.id, target.phone, 'skipped_no_credits')

@@ -71,10 +71,10 @@ function AgentsDashboardPage() {
       <Layout business={business}>
         <div className="p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+            <div className="h-8 bg-surface-highest rounded w-1/4 mb-8"></div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="h-64 bg-gray-200 rounded"></div>
-              <div className="lg:col-span-2 h-64 bg-gray-200 rounded"></div>
+              <div className="h-64 bg-surface-highest rounded"></div>
+              <div className="lg:col-span-2 h-64 bg-surface-highest rounded"></div>
             </div>
           </div>
         </div>
@@ -87,7 +87,7 @@ function AgentsDashboardPage() {
       <Layout business={business}>
         <div className="p-8">
           <div className="text-center">
-            <div className="text-red-600 text-lg font-medium mb-4">{error}</div>
+            <div className="text-[#ffb4ab] text-lg font-medium mb-4">{error}</div>
             <button onClick={loadBusinessData} className="btn-primary">
               Try Again
             </button>
@@ -111,10 +111,10 @@ function AgentsDashboardPage() {
                   <SparklesIcon className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-2xl font-bold text-text-primary">
                     Maya AI Agents
                   </h1>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-text-secondary">
                     Autonomous business intelligence powered by AI
                   </p>
                 </div>
@@ -122,7 +122,7 @@ function AgentsDashboardPage() {
             </div>
             <button
               onClick={handleRefresh}
-              className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-surface-low border border-[rgba(65,71,84,0.2)] rounded-lg text-sm font-medium text-text-primary hover:bg-surface transition-colors"
             >
               <ArrowPathIcon className="h-4 w-4 mr-2" />
               Refresh
@@ -132,39 +132,39 @@ function AgentsDashboardPage() {
           {/* Feature Highlights */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="flex items-center p-3 bg-purple-50 rounded-lg">
-              <BoltIcon className="h-5 w-5 text-purple-600 mr-3" />
+              <BoltIcon className="h-5 w-5 text-purple-400 mr-3" />
               <div>
                 <p className="text-sm font-medium text-purple-900">
                   Real-time Analysis
                 </p>
-                <p className="text-xs text-purple-600">Always monitoring</p>
+                <p className="text-xs text-purple-400">Always monitoring</p>
               </div>
             </div>
-            <div className="flex items-center p-3 bg-blue-50 rounded-lg">
-              <ChartBarIcon className="h-5 w-5 text-blue-600 mr-3" />
+            <div className="flex items-center p-3 bg-brand-primary/5 rounded-lg">
+              <ChartBarIcon className="h-5 w-5 text-brand-primary mr-3" />
               <div>
                 <p className="text-sm font-medium text-blue-900">
                   Predictive Insights
                 </p>
-                <p className="text-xs text-blue-600">Data-driven decisions</p>
+                <p className="text-xs text-brand-primary">Data-driven decisions</p>
               </div>
             </div>
             <div className="flex items-center p-3 bg-green-50 rounded-lg">
-              <ShieldCheckIcon className="h-5 w-5 text-green-600 mr-3" />
+              <ShieldCheckIcon className="h-5 w-5 text-emerald-500 mr-3" />
               <div>
                 <p className="text-sm font-medium text-green-900">
                   Churn Prevention
                 </p>
-                <p className="text-xs text-green-600">Proactive retention</p>
+                <p className="text-xs text-emerald-500">Proactive retention</p>
               </div>
             </div>
             <div className="flex items-center p-3 bg-amber-50 rounded-lg">
-              <SparklesIcon className="h-5 w-5 text-amber-600 mr-3" />
+              <SparklesIcon className="h-5 w-5 text-accent mr-3" />
               <div>
                 <p className="text-sm font-medium text-amber-900">
                   Revenue Optimization
                 </p>
-                <p className="text-xs text-amber-600">Maximize earnings</p>
+                <p className="text-xs text-accent">Maximize earnings</p>
               </div>
             </div>
           </div>
@@ -194,18 +194,18 @@ function AgentsDashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <div className="mt-8 bg-surface-low rounded-xl shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
+          <h3 className="text-lg font-semibold text-text-primary mb-4">
             Agent Capabilities
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <button
               onClick={() => router.push('/dashboard/leads')}
-              className="flex flex-col items-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+              className="flex flex-col items-center p-4 bg-brand-primary/5 rounded-lg hover:bg-brand-primary/10 transition-colors"
             >
-              <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center mb-2">
+              <div className="h-10 w-10 bg-brand-primary/10 rounded-full flex items-center justify-center mb-2">
                 <svg
-                  className="h-5 w-5 text-blue-600"
+                  className="h-5 w-5 text-brand-primary"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -221,16 +221,16 @@ function AgentsDashboardPage() {
               <span className="text-sm font-medium text-blue-900">
                 Qualified Leads
               </span>
-              <span className="text-xs text-blue-600">View hot prospects</span>
+              <span className="text-xs text-brand-primary">View hot prospects</span>
             </button>
 
             <button
               onClick={() => router.push('/dashboard/customers')}
-              className="flex flex-col items-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+              className="flex flex-col items-center p-4 bg-[#93000a]/5 rounded-lg hover:bg-[#93000a]/10 transition-colors"
             >
-              <div className="h-10 w-10 bg-red-100 rounded-full flex items-center justify-center mb-2">
+              <div className="h-10 w-10 bg-[#93000a]/10 rounded-full flex items-center justify-center mb-2">
                 <svg
-                  className="h-5 w-5 text-red-600"
+                  className="h-5 w-5 text-[#ffb4ab]"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -246,16 +246,16 @@ function AgentsDashboardPage() {
               <span className="text-sm font-medium text-red-900">
                 At-Risk Customers
               </span>
-              <span className="text-xs text-red-600">Prevent churn</span>
+              <span className="text-xs text-[#ffb4ab]">Prevent churn</span>
             </button>
 
             <button
               onClick={() => router.push('/dashboard/appointments')}
-              className="flex flex-col items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
+              className="flex flex-col items-center p-4 bg-purple-50 rounded-lg hover:bg-purple-500/10 transition-colors"
             >
-              <div className="h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center mb-2">
+              <div className="h-10 w-10 bg-purple-500/10 rounded-full flex items-center justify-center mb-2">
                 <svg
-                  className="h-5 w-5 text-purple-600"
+                  className="h-5 w-5 text-purple-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -271,16 +271,16 @@ function AgentsDashboardPage() {
               <span className="text-sm font-medium text-purple-900">
                 Slot Recovery
               </span>
-              <span className="text-xs text-purple-600">Fill cancellations</span>
+              <span className="text-xs text-purple-400">Fill cancellations</span>
             </button>
 
             <button
               onClick={() => router.push('/dashboard/analytics')}
-              className="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+              className="flex flex-col items-center p-4 bg-green-50 rounded-lg hover:bg-emerald-500/10 transition-colors"
             >
-              <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center mb-2">
+              <div className="h-10 w-10 bg-emerald-500/10 rounded-full flex items-center justify-center mb-2">
                 <svg
-                  className="h-5 w-5 text-green-600"
+                  className="h-5 w-5 text-emerald-500"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -296,16 +296,16 @@ function AgentsDashboardPage() {
               <span className="text-sm font-medium text-green-900">
                 Revenue Intel
               </span>
-              <span className="text-xs text-green-600">Track performance</span>
+              <span className="text-xs text-emerald-500">Track performance</span>
             </button>
 
             <button
               onClick={() => router.push('/dashboard/voice-ai')}
-              className="flex flex-col items-center p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+              className="flex flex-col items-center p-4 bg-indigo-50 rounded-lg hover:bg-indigo-500/10 transition-colors"
             >
-              <div className="h-10 w-10 bg-indigo-100 rounded-full flex items-center justify-center mb-2">
+              <div className="h-10 w-10 bg-indigo-500/10 rounded-full flex items-center justify-center mb-2">
                 <svg
-                  className="h-5 w-5 text-indigo-600"
+                  className="h-5 w-5 text-indigo-400"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -321,7 +321,7 @@ function AgentsDashboardPage() {
               <span className="text-sm font-medium text-indigo-900">
                 Call Intelligence
               </span>
-              <span className="text-xs text-indigo-600">Analyze calls</span>
+              <span className="text-xs text-indigo-400">Analyze calls</span>
             </button>
           </div>
         </div>

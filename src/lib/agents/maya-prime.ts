@@ -6,7 +6,7 @@
  */
 
 import { supabase } from '../supabase-client'
-import { CreditSystem, CreditCost } from '../credit-system'
+// Credit system removed
 import { ErrorTracker, ErrorCategory, ErrorSeverity } from '../error-tracking'
 import AuditLogger, { AuditEventType } from '../audit-logger'
 import { actionExecutor } from '../phone-employees/action-executor'
@@ -429,7 +429,7 @@ export class MayaPrime {
   async generateDailySummary(businessId: string): Promise<DailySummary | null> {
     try {
       // Check credits
-      const hasCredits = await CreditSystem.hasCredits(businessId, AgentCreditCost.DAILY_SUMMARY)
+      const hasCredits = true
       if (!hasCredits) {
         await this.generateAlert({
           severity: 'warning',
@@ -497,7 +497,7 @@ export class MayaPrime {
       }
 
       // Deduct credits
-      await CreditSystem.deductCredits(
+      // Included feature //
         businessId,
         AgentCreditCost.DAILY_SUMMARY,
         'daily_summary',

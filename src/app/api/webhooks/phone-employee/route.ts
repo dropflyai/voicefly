@@ -28,7 +28,7 @@ import { getCloverConnection, createCloverOrder } from '@/lib/integrations/clove
 import { customerMemoryAgent } from '@/lib/agents/customer-memory'
 import { automationEngine } from '@/lib/automation/automation-engine'
 import { routingAgent } from '@/lib/agents/routing-agent'
-import CreditSystem, { CreditCost, CREDITS_PER_MINUTE } from '@/lib/credit-system'
+import { hasMinutes, deductMinutes } from '@/lib/minutes'
 import {
   handleScheduleAppointment,
   handleCheckAvailability,
@@ -3146,10 +3146,10 @@ async function handleStatusUpdate(message: any, employee: any, businessId: strin
   if (status === 'in-progress' && callId) {
     const callerPhone = message.call?.customer?.number
 
-    // Check if business has credits for at least 1 minute
-    const hasCredits = await CreditSystem.hasCredits(businessId, CreditCost.VOICE_CALL_INBOUND)
-    if (!hasCredits) {
-      console.warn(`[PhoneEmployeeWebhook] Business ${businessId} out of credits, ending call ${callId}`)
+    // Check if business has minutes for at least 1 minute
+    const hasEnoughMinutes = await hasMinutes(businessId, 1)
+    if (!hasEnoughMinutes) {
+      console.warn(`[PhoneEmployeeWebhook] Business ${businessId} out of minutes, ending call ${callId}`)
       // End the call via VAPI - business has no credits
       if (process.env.VAPI_API_KEY) {
         fetch(`https://api.vapi.ai/call/${callId}`, {
@@ -3290,39 +3290,32 @@ async function handleCallEnd(message: any, employee: any, businessId: string) {
       }).catch(err => console.error('[CallSummaryEmail] error:', err))
     }
 
-    // Paid tiers (Starter + Pro): deduct credits
+    // Paid tiers (Starter + Pro): deduct minutes
     if (!isTrialCall) {
       const durationMinutes = Math.ceil(durationSeconds / 60)
-      const isOutbound = message.call?.type === 'outboundPhoneCall' ||
-        message.type === 'outboundPhoneCall'
-      const costPerMinute = isOutbound ? CreditCost.VOICE_CALL_OUTBOUND : CreditCost.VOICE_CALL_INBOUND
-      const totalCredits = durationMinutes * costPerMinute
 
-      CreditSystem.deductCredits(
+      deductMinutes(
         businessId,
-        totalCredits,
-        isOutbound ? 'voice_call_outbound' : 'voice_call_inbound',
+        durationMinutes,
         {
           callId,
           durationSeconds,
-          durationMinutes,
           employeeId: employee.id,
-          costPerMinute,
         }
       ).then(result => {
         if (!result.success) {
-          console.warn(`[Credits] Deduction failed for call ${callId}: ${result.error}`)
+          console.warn(`[Minutes] Deduction failed for call ${callId}: ${result.error}`)
         } else {
-          console.log(`[Credits] Deducted ${totalCredits} credits (${durationMinutes} min) for business ${businessId}. Remaining: ${result.balance?.total_credits}`)
+          console.log(`[Minutes] Deducted ${durationMinutes} min for business ${businessId}. Remaining: ${result.balance?.minutes_remaining}`)
 
-          // Low-credit warning: fire once when usage crosses the 80% threshold
+          // Low-minutes warning: fire once when usage crosses the 80% threshold
           if (result.balance) {
             const bal = result.balance
-            const allotted = bal.monthly_credits + bal.credits_used_this_month
+            const allotted = bal.total_allocation
             if (allotted > 0) {
-              const previousUsed = bal.credits_used_this_month - totalCredits
+              const previousUsed = bal.minutes_used_this_month - durationMinutes
               const threshold = allotted * 0.8
-              if (previousUsed < threshold && bal.credits_used_this_month >= threshold) {
+              if (previousUsed < threshold && bal.minutes_used_this_month >= threshold) {
                 ;(async () => {
                   const ownerEmail = await getOwnerEmail(businessId)
                   const { data: bizRow } = await supabase.from('businesses').select('name').eq('id', businessId).single()

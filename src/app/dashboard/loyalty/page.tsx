@@ -285,13 +285,13 @@ export default function LoyaltyPage() {
       <Layout business={business}>
         <div className="p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="h-8 bg-surface-highest rounded w-1/4 mb-6"></div>
             <div className="space-y-6">
-              <div className="h-32 bg-gray-200 rounded"></div>
+              <div className="h-32 bg-surface-highest rounded"></div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="h-64 bg-gray-200 rounded"></div>
-                <div className="h-64 bg-gray-200 rounded"></div>
-                <div className="h-64 bg-gray-200 rounded"></div>
+                <div className="h-64 bg-surface-highest rounded"></div>
+                <div className="h-64 bg-surface-highest rounded"></div>
+                <div className="h-64 bg-surface-highest rounded"></div>
               </div>
             </div>
           </div>
@@ -306,8 +306,8 @@ export default function LoyaltyPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Loyalty Program</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-text-primary">Loyalty Program</h1>
+            <p className="text-text-secondary mt-1">
               Reward your customers and build lasting relationships
             </p>
           </div>
@@ -330,7 +330,7 @@ export default function LoyaltyPage() {
               <>
                 <button 
                   onClick={() => window.location.href = '/dashboard/loyalty/customers'}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="inline-flex items-center px-4 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-sm font-medium text-text-primary hover:bg-surface"
                 >
                   <UserGroupIcon className="w-4 h-4 mr-2" />
                   View Customers
@@ -340,14 +340,14 @@ export default function LoyaltyPage() {
                     <button 
                       onClick={handleSaveSettings}
                       disabled={isLoading}
-                      className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50"
+                      className="inline-flex items-center px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50"
                     >
                       {isLoading ? 'Saving...' : 'Save Changes'}
                     </button>
                     <button 
                       onClick={handleCancelEdit}
                       disabled={isLoading}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 disabled:opacity-50"
+                      className="inline-flex items-center px-4 py-2 border border-[rgba(65,71,84,0.2)] text-text-primary text-sm font-medium rounded-md hover:bg-surface disabled:opacity-50"
                     >
                       Cancel
                     </button>
@@ -376,8 +376,8 @@ export default function LoyaltyPage() {
           {/* Location Selector for Business Plan */}
           {locations.length > 1 && (
             <div className="mb-8">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Select Location</h3>
+              <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
+                <h3 className="text-lg font-medium text-text-primary mb-4">Select Location</h3>
                 <div className="max-w-md">
                   <LocationSelector
                     locations={locations}
@@ -387,7 +387,7 @@ export default function LoyaltyPage() {
                     includeAllOption={false}
                   />
                 </div>
-                <p className="text-sm text-gray-500 mt-2">
+                <p className="text-sm text-text-secondary mt-2">
                   Loyalty programs can be configured per location or globally.
                 </p>
               </div>
@@ -396,11 +396,11 @@ export default function LoyaltyPage() {
 
           {/* Error Message */}
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-red-600 text-sm">{error}</p>
+            <div className="mb-6 p-4 bg-[#93000a]/5 border border-red-200 rounded-md">
+              <p className="text-[#ffb4ab] text-sm">{error}</p>
               <button 
                 onClick={() => setError(null)} 
-                className="text-red-600 hover:text-red-700 underline text-sm mt-1"
+                className="text-[#ffb4ab] hover:text-[#ffb4ab] underline text-sm mt-1"
               >
                 Dismiss
               </button>
@@ -410,9 +410,9 @@ export default function LoyaltyPage() {
           {!loyaltyProgram ? (
             // No Program Created State
             <div className="text-center py-12">
-              <GiftIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No Loyalty Program</h3>
-              <p className="mt-1 text-sm text-gray-500 max-w-md mx-auto">
+              <GiftIcon className="mx-auto h-12 w-12 text-text-muted" />
+              <h3 className="mt-2 text-sm font-medium text-text-primary">No Loyalty Program</h3>
+              <p className="mt-1 text-sm text-text-secondary max-w-md mx-auto">
                 Create a loyalty program to reward your customers with points, tiers, and exclusive benefits.
               </p>
               <div className="mt-6">
@@ -433,46 +433,46 @@ export default function LoyaltyPage() {
           ) : (
             <div className="space-y-8">
               {/* Program Overview */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex-1">
                     {isEditing ? (
                       <div className="space-y-3">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Program Name</label>
+                          <label className="block text-sm font-medium text-text-primary mb-1">Program Name</label>
                           <input
                             type="text"
                             value={editableProgram.name}
                             onChange={(e) => setEditableProgram({...editableProgram, name: e.target.value})}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-lg font-semibold text-gray-900 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                            className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-lg font-semibold text-text-primary focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                             disabled={isLoading}
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                          <label className="block text-sm font-medium text-text-primary mb-1">Description</label>
                           <textarea
                             value={editableProgram.description}
                             onChange={(e) => setEditableProgram({...editableProgram, description: e.target.value})}
                             rows={2}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-gray-600 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                            className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-text-secondary focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                             disabled={isLoading}
                           />
                         </div>
                       </div>
                     ) : (
                       <div>
-                        <h2 className="text-xl font-semibold text-gray-900">{loyaltyProgram.name}</h2>
-                        <p className="text-gray-600 mt-1">{loyaltyProgram.description}</p>
+                        <h2 className="text-xl font-semibold text-text-primary">{loyaltyProgram.name}</h2>
+                        <p className="text-text-secondary mt-1">{loyaltyProgram.description}</p>
                       </div>
                     )}
                   </div>
                   <div className="flex items-center space-x-2">
                     {loyaltyProgram.is_active ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-green-800">
                         Active
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#93000a]/10 text-red-800">
                         Inactive
                       </span>
                     )}
@@ -481,27 +481,27 @@ export default function LoyaltyPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-purple-600">{loyaltyProgram.points_per_dollar}x</div>
-                    <div className="text-sm text-gray-600">Points per $1</div>
+                    <div className="text-2xl font-bold text-purple-400">{loyaltyProgram.points_per_dollar}x</div>
+                    <div className="text-sm text-text-secondary">Points per $1</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">{getTotalCustomers()}</div>
-                    <div className="text-sm text-gray-600">Total Members</div>
+                    <div className="text-2xl font-bold text-brand-primary">{getTotalCustomers()}</div>
+                    <div className="text-sm text-text-secondary">Total Members</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">{getActiveCustomers()}</div>
-                    <div className="text-sm text-gray-600">Active Members</div>
+                    <div className="text-2xl font-bold text-emerald-500">{getActiveCustomers()}</div>
+                    <div className="text-sm text-text-secondary">Active Members</div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-orange-600">{getAveragePoints()}</div>
-                    <div className="text-sm text-gray-600">Avg Points</div>
+                    <div className="text-sm text-text-secondary">Avg Points</div>
                   </div>
                 </div>
               </div>
 
               {/* Loyalty Tiers */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-6">Loyalty Tiers</h3>
+              <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
+                <h3 className="text-lg font-medium text-text-primary mb-6">Loyalty Tiers</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {loyaltyProgram.tiers?.map((tier, index) => (
@@ -516,14 +516,14 @@ export default function LoyaltyPage() {
               </div>
 
               {/* Program Settings */}
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-6">Program Settings</h3>
+              <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
+                <h3 className="text-lg font-medium text-text-primary mb-6">Program Settings</h3>
                 
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Program Status</label>
-                      <p className="text-xs text-gray-500">Enable or disable the entire loyalty program</p>
+                      <label className="text-sm font-medium text-text-primary">Program Status</label>
+                      <p className="text-xs text-text-secondary">Enable or disable the entire loyalty program</p>
                     </div>
                     <input
                       type="checkbox"
@@ -533,15 +533,15 @@ export default function LoyaltyPage() {
                           setEditableProgram({...editableProgram, is_active: e.target.checked})
                         }
                       }}
-                      className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-purple-400 focus:ring-purple-500 border-[rgba(65,71,84,0.2)] rounded"
                       disabled={!isEditing || isLoading}
                     />
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Points per Dollar</label>
-                      <p className="text-xs text-gray-500">How many points customers earn per dollar spent</p>
+                      <label className="text-sm font-medium text-text-primary">Points per Dollar</label>
+                      <p className="text-xs text-text-secondary">How many points customers earn per dollar spent</p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <input
@@ -554,17 +554,17 @@ export default function LoyaltyPage() {
                         }}
                         min="0.1"
                         step="0.1"
-                        className="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        className="w-20 px-2 py-1 text-sm border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                         disabled={!isEditing || isLoading}
                       />
-                      <span className="text-sm text-gray-500">points</span>
+                      <span className="text-sm text-text-secondary">points</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Referral Bonus</label>
-                      <p className="text-xs text-gray-500">Points awarded for successful referrals</p>
+                      <label className="text-sm font-medium text-text-primary">Referral Bonus</label>
+                      <p className="text-xs text-text-secondary">Points awarded for successful referrals</p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <input
@@ -576,17 +576,17 @@ export default function LoyaltyPage() {
                           }
                         }}
                         min="0"
-                        className="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        className="w-20 px-2 py-1 text-sm border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                         disabled={!isEditing || isLoading}
                       />
-                      <span className="text-sm text-gray-500">points</span>
+                      <span className="text-sm text-text-secondary">points</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className="text-sm font-medium text-gray-700">Birthday Bonus</label>
-                      <p className="text-xs text-gray-500">Extra points awarded during birthday month</p>
+                      <label className="text-sm font-medium text-text-primary">Birthday Bonus</label>
+                      <p className="text-xs text-text-secondary">Extra points awarded during birthday month</p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <input
@@ -598,28 +598,28 @@ export default function LoyaltyPage() {
                           }
                         }}
                         min="0"
-                        className="w-20 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        className="w-20 px-2 py-1 text-sm border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                         disabled={!isEditing || isLoading}
                       />
-                      <span className="text-sm text-gray-500">points</span>
+                      <span className="text-sm text-text-secondary">points</span>
                     </div>
                   </div>
                 </div>
 
                 {isEditing && (
-                  <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="mt-6 pt-6 border-t border-[rgba(65,71,84,0.15)]">
                     <div className="flex items-center space-x-3">
                       <button 
                         onClick={handleSaveSettings}
                         disabled={isLoading}
-                        className="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50"
+                        className="inline-flex items-center px-4 py-2 bg-emerald-500 text-white text-sm font-medium rounded-md hover:bg-green-700 disabled:opacity-50"
                       >
                         {isLoading ? 'Saving...' : 'Save Settings'}
                       </button>
                       <button 
                         onClick={handleCancelEdit}
                         disabled={isLoading}
-                        className="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 disabled:opacity-50"
+                        className="inline-flex items-center px-4 py-2 border border-[rgba(65,71,84,0.2)] text-text-primary text-sm font-medium rounded-md hover:bg-surface disabled:opacity-50"
                       >
                         Cancel
                       </button>

@@ -1,148 +1,155 @@
 import Link from 'next/link'
+import { Phone } from 'lucide-react'
 
 export default function PrivacyPolicy() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-sm p-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Privacy Policy</h1>
-          <p className="text-sm text-gray-600 mb-8">Last Updated: March 3, 2026</p>
+    <div className="min-h-screen bg-surface font-[family-name:var(--font-inter)]">
+      {/* Header */}
+      <header className="glass sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <Phone className="h-5 w-5 text-brand-primary" />
+            <span className="text-lg font-bold text-text-primary font-[family-name:var(--font-manrope)]">VoiceFly</span>
+          </Link>
+          <Link href="/signup" className="text-sm font-medium text-brand-on bg-brand-primary px-4 py-2 rounded-md hover:bg-[#0060d0] transition-colors">
+            Start Free Trial
+          </Link>
+        </div>
+      </header>
 
-          <div className="prose prose-blue max-w-none">
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">1. Information We Collect</h2>
-            <p className="text-gray-700 mb-4">
-              VoiceFly collects information that you provide directly to us, including:
-            </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-6">
-              <li>Account information (name, email, company name)</li>
-              <li>Business information for service delivery</li>
-              <li>Phone numbers provided for SMS and voice communication</li>
-              <li>SMS message content sent to and from our platform</li>
-              <li>Voice call data and transcripts</li>
-              <li>Usage data and analytics</li>
-              <li>Payment information (processed securely via Stripe)</li>
-            </ul>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h1 className="text-4xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight mb-2">Privacy Policy</h1>
+        <p className="text-sm text-text-muted mb-12">Last Updated: March 3, 2026</p>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">2. How We Use Your Information</h2>
-            <p className="text-gray-700 mb-4">
-              We use the information we collect to:
-            </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-6">
-              <li>Provide, maintain, and improve our services</li>
-              <li>Process your transactions and send related information</li>
-              <li>Send technical notices and support messages</li>
-              <li>Respond to your comments and questions</li>
-              <li>Monitor and analyze trends, usage, and activities</li>
-            </ul>
+        <div className="space-y-10">
+          <Section title="1. Information We Collect">
+            <p>VoiceFly collects information that you provide directly to us, including:</p>
+            <List items={[
+              'Account information (name, email, company name)',
+              'Business information for service delivery',
+              'Phone numbers provided for SMS and voice communication',
+              'SMS message content sent to and from our platform',
+              'Voice call data and transcripts',
+              'Usage data and analytics',
+              'Payment information (processed securely via Stripe)',
+            ]} />
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">3. SMS and Messaging Data</h2>
-            <p className="text-gray-700 mb-4">
-              When you or your customers interact with VoiceFly via SMS:
-            </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-6">
-              <li>We collect phone numbers and message content to deliver AI-powered responses</li>
-              <li>Message data is used solely to provide the requested service and improve response quality</li>
-              <li>We do not sell, share, or use SMS opt-in data or phone numbers for marketing purposes unrelated to the service</li>
-              <li>SMS data is not shared with third parties for their marketing or promotional purposes</li>
-              <li>Message logs are retained for service delivery, analytics, and compliance purposes</li>
-              <li>End users may opt out of SMS messages at any time by replying <strong>STOP</strong></li>
-            </ul>
+          <Section title="2. How We Use Your Information">
+            <p>We use the information we collect to:</p>
+            <List items={[
+              'Provide, maintain, and improve our services',
+              'Process your transactions and send related information',
+              'Send technical notices and support messages',
+              'Respond to your comments and questions',
+              'Monitor and analyze trends, usage, and activities',
+            ]} />
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">4. Information Sharing</h2>
-            <p className="text-gray-700 mb-4">
-              We do not sell or share your personal information with third parties except:
-            </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-6">
-              <li>With your consent</li>
-              <li>To comply with legal obligations</li>
-              <li>With service providers who assist in our operations (all under strict confidentiality agreements)</li>
-              <li>To protect the rights and safety of VoiceFly and our users</li>
-            </ul>
+          <Section title="3. SMS and Messaging Data">
+            <p>When you or your customers interact with VoiceFly via SMS:</p>
+            <List items={[
+              'We collect phone numbers and message content to deliver AI-powered responses',
+              'Message data is used solely to provide the requested service and improve response quality',
+              'We do not sell, share, or use SMS opt-in data or phone numbers for marketing purposes unrelated to the service',
+              'SMS data is not shared with third parties for their marketing or promotional purposes',
+              'Message logs are retained for service delivery, analytics, and compliance purposes',
+              'End users may opt out of SMS messages at any time by replying STOP',
+            ]} />
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">5. Data Security</h2>
-            <p className="text-gray-700 mb-6">
-              We implement industry-standard security measures to protect your information, including:
-            </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-6">
-              <li>Encryption of data in transit and at rest</li>
-              <li>Regular security audits and updates</li>
-              <li>Access controls and authentication measures</li>
-              <li>SOC 2 and HIPAA compliance standards</li>
-            </ul>
+          <Section title="4. Information Sharing">
+            <p>We do not sell or share your personal information with third parties except:</p>
+            <List items={[
+              'With your consent',
+              'To comply with legal obligations',
+              'With service providers who assist in our operations (all under strict confidentiality agreements)',
+              'To protect the rights and safety of VoiceFly and our users',
+            ]} />
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">6. Your Rights</h2>
-            <p className="text-gray-700 mb-4">
-              You have the right to:
-            </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-6">
-              <li>Access and receive a copy of your personal data</li>
-              <li>Correct inaccurate or incomplete data</li>
-              <li>Request deletion of your data</li>
-              <li>Object to or restrict processing of your data</li>
-              <li>Data portability</li>
-            </ul>
+          <Section title="5. Data Security">
+            <p>We implement industry-standard security measures to protect your information, including:</p>
+            <List items={[
+              'Encryption of data in transit and at rest',
+              'Regular security audits and updates',
+              'Access controls and authentication measures',
+              'SOC 2 and HIPAA compliance standards',
+            ]} />
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">7. Data Retention</h2>
-            <p className="text-gray-700 mb-6">
-              We retain your information for as long as your account is active or as needed to provide services.
-              We will delete or anonymize your information upon account closure, subject to legal retention requirements.
-            </p>
+          <Section title="6. Your Rights">
+            <p>You have the right to:</p>
+            <List items={[
+              'Access and receive a copy of your personal data',
+              'Correct inaccurate or incomplete data',
+              'Request deletion of your data',
+              'Object to or restrict processing of your data',
+              'Data portability',
+            ]} />
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">8. Cookies and Tracking</h2>
-            <p className="text-gray-700 mb-6">
-              We use cookies and similar technologies to collect usage data and improve our services. You can control
-              cookies through your browser settings.
-            </p>
+          <Section title="7. Data Retention">
+            <p>We retain your information for as long as your account is active or as needed to provide services. We will delete or anonymize your information upon account closure, subject to legal retention requirements.</p>
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">9. Contact Us</h2>
-            <p className="text-gray-700 mb-6">
-              If you have any questions about this Privacy Policy, please contact us at:
-              <br />
-              <strong>Email:</strong> support@voiceflyai.com
-            </p>
+          <Section title="8. Cookies and Tracking">
+            <p>We use cookies and similar technologies to collect usage data and improve our services. You can control cookies through your browser settings.</p>
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">10. Changes to This Policy</h2>
-            <p className="text-gray-700 mb-6">
-              We may update this Privacy Policy from time to time. We will notify you of any material changes by
-              posting the new policy on this page and updating the "Last Updated" date.
-            </p>
-          </div>
+          <Section title="9. Contact Us">
+            <p>If you have any questions about this Privacy Policy, please contact us at:</p>
+            <p className="mt-2"><span className="text-text-primary font-medium">Email:</span> tony@dropfly.io</p>
+          </Section>
 
-          <div className="mt-12 pt-6 border-t border-gray-200">
-            <Link href="/" className="text-blue-600 hover:text-blue-500 font-semibold">
-              ← Back to Home
-            </Link>
-          </div>
+          <Section title="10. Changes to This Policy">
+            <p>We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on this page and updating the &ldquo;Last Updated&rdquo; date.</p>
+          </Section>
+        </div>
+
+        <div className="mt-14 pt-6 border-t border-[rgba(65,71,84,0.15)]">
+          <Link href="/" className="text-brand-light hover:text-brand-primary font-medium transition-colors">
+            &larr; Back to Home
+          </Link>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8 mt-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <footer className="bg-surface-lowest py-10">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center space-y-4">
             <nav className="flex flex-wrap justify-center gap-6 text-sm">
-              <Link href="/" className="text-gray-400 hover:text-white transition-colors">
-                Home
-              </Link>
-              <Link href="/features" className="text-gray-400 hover:text-white transition-colors">
-                Features
-              </Link>
-              <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">
-                Pricing
-              </Link>
-              <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
-                Privacy
-              </Link>
-              <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">
-                Terms
-              </Link>
+              <Link href="/" className="text-text-muted hover:text-text-primary transition-colors">Home</Link>
+              <Link href="/pricing" className="text-text-muted hover:text-text-primary transition-colors">Pricing</Link>
+              <Link href="/privacy" className="text-text-muted hover:text-text-primary transition-colors">Privacy</Link>
+              <Link href="/terms" className="text-text-muted hover:text-text-primary transition-colors">Terms</Link>
             </nav>
-            <p className="text-gray-400 text-sm">
-              © 2026 VoiceFly. All rights reserved.
-            </p>
+            <p className="text-text-muted text-sm">&copy; 2026 VoiceFly. All rights reserved.</p>
           </div>
         </div>
       </footer>
     </div>
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h2 className="text-xl font-semibold text-text-primary font-[family-name:var(--font-manrope)] mb-3">{title}</h2>
+      <div className="text-text-secondary leading-relaxed space-y-3">{children}</div>
+    </div>
+  )
+}
+
+function List({ items }: { items: string[] }) {
+  return (
+    <ul className="mt-2 space-y-2">
+      {items.map(item => (
+        <li key={item} className="flex items-start gap-2 text-text-secondary">
+          <span className="text-brand-primary mt-1.5 text-xs">&#9679;</span>
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
   )
 }

@@ -49,15 +49,15 @@ function formatDuration(seconds?: number): string {
 
 function getCallOutcome(call: EmployeeCall): { label: string; color: string; bg: string } {
   if (call.status === 'in-progress') {
-    return { label: 'Live', color: 'text-blue-700', bg: 'bg-blue-100' }
+    return { label: 'Live', color: 'text-brand-primary', bg: 'bg-brand-primary/10' }
   }
   if (call.status === 'completed' && call.duration && call.duration > 30) {
-    return { label: 'Completed', color: 'text-green-700', bg: 'bg-green-100' }
+    return { label: 'Completed', color: 'text-emerald-500', bg: 'bg-emerald-500/10' }
   }
   if (call.status === 'completed' && (!call.duration || call.duration <= 30)) {
-    return { label: 'Short', color: 'text-yellow-700', bg: 'bg-yellow-100' }
+    return { label: 'Short', color: 'text-accent', bg: 'bg-accent/10' }
   }
-  return { label: call.status || 'Unknown', color: 'text-gray-700', bg: 'bg-gray-100' }
+  return { label: call.status || 'Unknown', color: 'text-text-primary', bg: 'bg-surface-high' }
 }
 
 function CallLogPage() {
@@ -134,11 +134,11 @@ function CallLogPage() {
       <Layout business={business}>
         <div className="p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="h-10 bg-gray-200 rounded w-48 mb-6"></div>
+            <div className="h-8 bg-surface-highest rounded w-1/4 mb-6"></div>
+            <div className="h-10 bg-surface-highest rounded w-48 mb-6"></div>
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} className="h-16 bg-gray-200 rounded-lg"></div>
+                <div key={i} className="h-16 bg-surface-highest rounded-lg"></div>
               ))}
             </div>
           </div>
@@ -151,8 +151,8 @@ function CallLogPage() {
     return (
       <Layout business={business}>
         <div className="p-8 text-center">
-          <p className="text-red-600 font-medium mb-4">{error}</p>
-          <button onClick={loadData} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+          <p className="text-[#ffb4ab] font-medium mb-4">{error}</p>
+          <button onClick={loadData} className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] transition-colors text-sm font-medium">
             Try Again
           </button>
         </div>
@@ -162,96 +162,121 @@ function CallLogPage() {
 
   return (
     <Layout business={business}>
-      <div className="p-8">
+      <div className="p-8 space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Call Log</h1>
-            <p className="text-gray-600 mt-1">
-              {filteredCalls.length} call{filteredCalls.length !== 1 ? 's' : ''} recorded
+            <h1 className="text-3xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight">Call Log</h1>
+            <p className="text-text-secondary mt-1">
+              Real-time logs of all AI-handled conversations.
             </p>
           </div>
 
-          {/* Employee filter */}
           {employees.length > 0 && (
-            <div className="flex items-center gap-2">
-              <FunnelIcon className="h-4 w-4 text-gray-400" />
-              <select
-                value={filterEmployeeId}
-                onChange={(e) => setFilterEmployeeId(e.target.value)}
-                className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="all">All Employees</option>
-                {employees.map(emp => (
-                  <option key={emp.id} value={emp.id}>{emp.name}</option>
-                ))}
-              </select>
-            </div>
+            <select
+              value={filterEmployeeId}
+              onChange={(e) => setFilterEmployeeId(e.target.value)}
+              className="text-sm px-3 py-2 bg-surface-low text-text-primary rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-primary/50 border-none"
+            >
+              <option value="all">All Employees</option>
+              {employees.map(emp => (
+                <option key={emp.id} value={emp.id}>{emp.name}</option>
+              ))}
+            </select>
           )}
         </div>
 
-        {/* Call list */}
-        <div className="bg-white rounded-lg border border-gray-200">
+        {/* Stats Bar */}
+        {(() => {
+          const completed = calls.filter(c => c.status === 'completed')
+          const missed = calls.filter(c => c.status === 'missed' || c.status === 'no-answer')
+          const avgDur = completed.length > 0 ? Math.round(completed.reduce((s, c) => s + (c.duration || 0), 0) / completed.length) : 0
+          const completionRate = calls.length > 0 ? Math.round((completed.length / calls.length) * 100) : 0
+          return (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-surface-low p-6 rounded-2xl">
+                <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Total Calls</p>
+                <p className="text-3xl font-extrabold text-text-primary font-[family-name:var(--font-manrope)]">{calls.length.toLocaleString()}</p>
+              </div>
+              <div className="bg-surface-low p-6 rounded-2xl">
+                <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Avg Duration</p>
+                <p className="text-3xl font-extrabold text-text-primary font-[family-name:var(--font-manrope)]">{avgDur > 0 ? `${Math.floor(avgDur/60)}m ${avgDur%60}s` : '--'}</p>
+              </div>
+              <div className="bg-surface-low p-6 rounded-2xl">
+                <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Completion</p>
+                <p className="text-3xl font-extrabold text-text-primary font-[family-name:var(--font-manrope)]">{completionRate}%</p>
+              </div>
+              <div className="bg-surface-low p-6 rounded-2xl">
+                <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Missed</p>
+                <p className="text-3xl font-extrabold text-[#ffb4ab] font-[family-name:var(--font-manrope)]">{missed.length}</p>
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* Call Table — Stitch Style */}
+        <div className="bg-surface-low rounded-2xl overflow-hidden">
           {filteredCalls.length === 0 ? (
             <div className="p-12 text-center">
-              <PhoneIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 font-medium">No calls yet</p>
-              <p className="text-gray-400 text-sm mt-1">
+              <PhoneIcon className="h-12 w-12 text-text-muted mx-auto mb-4" />
+              <p className="text-text-secondary font-medium">No calls yet</p>
+              <p className="text-text-muted text-sm mt-1">
                 {filterEmployeeId !== 'all'
                   ? 'No calls for this employee. Try selecting a different filter.'
                   : 'Once someone calls your AI employee, call details will appear here.'}
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-gray-100">
-              {filteredCalls.map(call => {
-                const outcome = getCallOutcome(call)
-                return (
-                  <button
-                    key={call.id || call.call_id}
-                    onClick={() => setSelectedCall(call)}
-                    className="w-full text-left p-4 hover:bg-gray-50 transition-colors flex items-center gap-4"
-                  >
-                    {/* Direction icon */}
-                    <div className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center ${
-                      call.direction === 'outbound' ? 'bg-purple-50' : 'bg-blue-50'
-                    }`}>
-                      {call.direction === 'outbound' ? (
-                        <PhoneArrowUpRightIcon className="h-4 w-4 text-purple-600" />
-                      ) : (
-                        <PhoneArrowDownLeftIcon className="h-4 w-4 text-blue-600" />
-                      )}
-                    </div>
-
-                    {/* Call info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-900">
-                          {call.customer_phone || 'Unknown Caller'}
-                        </span>
-                        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${outcome.bg} ${outcome.color}`}>
-                          {outcome.label}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">
-                        {getEmployeeName(call.employee_id)}
-                        {call.summary ? ` — ${call.summary}` : ''}
-                      </p>
-                    </div>
-
-                    {/* Duration & time */}
-                    <div className="flex-shrink-0 text-right">
-                      <p className="text-sm text-gray-900">{formatDuration(call.duration)}</p>
-                      <p className="text-xs text-gray-500">
-                        {call.started_at
-                          ? formatDistanceToNow(new Date(call.started_at), { addSuffix: true })
-                          : '--'}
-                      </p>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
+            <>
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-surface-highest/30">
+                    <th className="px-6 py-4 text-xs uppercase tracking-widest text-text-muted font-bold">Caller</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-widest text-text-muted font-bold">Employee</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-widest text-text-muted font-bold">Duration</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-widest text-text-muted font-bold">Outcome</th>
+                    <th className="px-6 py-4 text-xs uppercase tracking-widest text-text-muted font-bold">When</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[rgba(65,71,84,0.1)]">
+                  {filteredCalls.map(call => {
+                    const outcome = getCallOutcome(call)
+                    const initials = (call.customer_phone || '??').slice(-2).toUpperCase()
+                    return (
+                      <tr
+                        key={call.id || call.call_id}
+                        onClick={() => setSelectedCall(call)}
+                        className="hover:bg-surface-med transition-colors cursor-pointer group"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-surface-highest flex items-center justify-center text-xs font-bold text-brand-primary">{initials}</div>
+                            <div>
+                              <span className="font-medium text-text-primary text-sm">{call.customer_phone || 'Unknown'}</span>
+                              {call.summary && <p className="text-xs text-text-muted truncate max-w-[200px]">{call.summary}</p>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-text-secondary">{getEmployeeName(call.employee_id)}</td>
+                        <td className="px-6 py-4 text-sm text-text-secondary font-medium">{formatDuration(call.duration)}</td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${outcome.bg} ${outcome.color}`}>
+                            <span className={`w-1 h-1 rounded-full mr-2 ${outcome.color.replace('text-', 'bg-')}`}></span>
+                            {outcome.label}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-text-muted">
+                          {call.started_at ? formatDistanceToNow(new Date(call.started_at), { addSuffix: true }) : '--'}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              <div className="px-6 py-3 bg-surface-highest/20 text-center">
+                <span className="text-xs text-text-muted">Showing {filteredCalls.length} of {calls.length} calls</span>
+              </div>
+            </>
           )}
         </div>
       </div>
@@ -268,7 +293,7 @@ function CallLogPage() {
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-50 transition-opacity" />
+            <div className="fixed inset-0 bg-surface0 bg-opacity-50 transition-opacity" />
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-hidden">
@@ -284,16 +309,16 @@ function CallLogPage() {
                   leaveTo="translate-x-full"
                 >
                   <Dialog.Panel className="pointer-events-auto w-screen max-w-md">
-                    <div className="flex h-full flex-col overflow-y-auto bg-white shadow-xl">
+                    <div className="flex h-full flex-col overflow-y-auto bg-surface-low shadow-xl">
                       {/* Header */}
-                      <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
+                      <div className="sticky top-0 bg-surface-low border-b border-[rgba(65,71,84,0.15)] px-6 py-4 z-10">
                         <div className="flex items-center justify-between">
-                          <Dialog.Title className="text-lg font-semibold text-gray-900">
+                          <Dialog.Title className="text-lg font-semibold text-text-primary">
                             Call Details
                           </Dialog.Title>
                           <button
                             onClick={() => setSelectedCall(null)}
-                            className="rounded-md text-gray-400 hover:text-gray-600 transition-colors"
+                            className="rounded-md text-text-muted hover:text-text-secondary transition-colors"
                           >
                             <XMarkIcon className="h-6 w-6" />
                           </button>
@@ -304,16 +329,16 @@ function CallLogPage() {
                         <div className="flex-1 px-6 py-5 space-y-5">
                           {/* Caller */}
                           <div>
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Caller</p>
-                            <p className="mt-1 text-sm text-gray-900 font-medium">
+                            <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Caller</p>
+                            <p className="mt-1 text-sm text-text-primary font-medium">
                               {selectedCall.customer_phone || 'Unknown'}
                             </p>
                           </div>
 
                           {/* Employee */}
                           <div>
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Handled By</p>
-                            <p className="mt-1 text-sm text-gray-900">
+                            <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Handled By</p>
+                            <p className="mt-1 text-sm text-text-primary">
                               {getEmployeeName(selectedCall.employee_id)}
                             </p>
                           </div>
@@ -321,15 +346,15 @@ function CallLogPage() {
                           {/* Meta row */}
                           <div className="grid grid-cols-3 gap-4">
                             <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Direction</p>
+                              <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Direction</p>
                               <span className={`mt-1 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                selectedCall.direction === 'inbound' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                                selectedCall.direction === 'inbound' ? 'bg-brand-primary/10 text-brand-primary' : 'bg-purple-500/10 text-purple-400'
                               }`}>
                                 {selectedCall.direction || 'inbound'}
                               </span>
                             </div>
                             <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Status</p>
+                              <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Status</p>
                               {(() => {
                                 const o = getCallOutcome(selectedCall)
                                 return (
@@ -340,15 +365,15 @@ function CallLogPage() {
                               })()}
                             </div>
                             <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Duration</p>
-                              <p className="mt-1 text-sm text-gray-900">{formatDuration(selectedCall.duration)}</p>
+                              <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Duration</p>
+                              <p className="mt-1 text-sm text-text-primary">{formatDuration(selectedCall.duration)}</p>
                             </div>
                           </div>
 
                           {/* Timestamp */}
                           <div>
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">When</p>
-                            <p className="mt-1 text-sm text-gray-900">
+                            <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">When</p>
+                            <p className="mt-1 text-sm text-text-primary">
                               {selectedCall.started_at
                                 ? new Date(selectedCall.started_at).toLocaleString()
                                 : '--'}
@@ -358,20 +383,20 @@ function CallLogPage() {
                           {/* Cost */}
                           {selectedCall.cost != null && selectedCall.cost > 0 && (
                             <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Cost</p>
-                              <p className="mt-1 text-sm text-gray-900">${selectedCall.cost.toFixed(4)}</p>
+                              <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Cost</p>
+                              <p className="mt-1 text-sm text-text-primary">${selectedCall.cost.toFixed(4)}</p>
                             </div>
                           )}
 
                           {/* Recording */}
                           {selectedCall.recording_url && (
                             <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Recording</p>
+                              <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Recording</p>
                               <a
                                 href={selectedCall.recording_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="mt-1 inline-flex items-center text-sm text-blue-600 hover:text-blue-700 font-medium"
+                                className="mt-1 inline-flex items-center text-sm text-brand-primary hover:text-brand-primary font-medium"
                               >
                                 Listen to recording &rarr;
                               </a>
@@ -381,20 +406,20 @@ function CallLogPage() {
                           {/* Summary */}
                           {selectedCall.summary && (
                             <div>
-                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Summary</p>
-                              <p className="mt-1 text-sm text-gray-700 leading-relaxed">{selectedCall.summary}</p>
+                              <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Summary</p>
+                              <p className="mt-1 text-sm text-text-primary leading-relaxed">{selectedCall.summary}</p>
                             </div>
                           )}
 
                           {/* Transcript */}
                           <div>
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Transcript</p>
+                            <p className="text-xs font-medium text-text-secondary uppercase tracking-wide">Transcript</p>
                             {selectedCall.transcript ? (
-                              <pre className="mt-2 text-sm text-gray-700 whitespace-pre-wrap font-mono bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto leading-relaxed">
+                              <pre className="mt-2 text-sm text-text-primary whitespace-pre-wrap font-mono bg-surface rounded-lg p-4 max-h-96 overflow-y-auto leading-relaxed">
                                 {selectedCall.transcript}
                               </pre>
                             ) : (
-                              <p className="mt-1 text-sm text-gray-400 italic">No transcript available</p>
+                              <p className="mt-1 text-sm text-text-muted italic">No transcript available</p>
                             )}
                           </div>
                         </div>

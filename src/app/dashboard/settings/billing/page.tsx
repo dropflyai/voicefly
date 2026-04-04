@@ -142,14 +142,14 @@ function BillingContent() {
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      active: 'bg-green-100 text-green-800 border-green-200',
-      canceled: 'bg-red-100 text-red-800 border-red-200',
-      past_due: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      trialing: 'bg-blue-100 text-blue-800 border-blue-200'
+      active: 'bg-emerald-500/10 text-green-800 border-green-200',
+      canceled: 'bg-[#93000a]/10 text-red-800 border-red-200',
+      past_due: 'bg-accent/10 text-yellow-800 border-yellow-200',
+      trialing: 'bg-brand-primary/10 text-blue-800 border-blue-200'
     }
     
     return (
-      <span className={`px-2 py-1 text-xs font-medium rounded-full border ${styles[status as keyof typeof styles] || 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+      <span className={`px-2 py-1 text-xs font-medium rounded-full border ${styles[status as keyof typeof styles] || 'bg-surface-high text-text-primary border-[rgba(65,71,84,0.15)]'}`}>
         {status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')}
       </span>
     )
@@ -162,7 +162,7 @@ function BillingContent() {
       case 'pending':
         return <ArrowPathIcon className="w-5 h-5 text-yellow-500" />
       case 'failed':
-        return <ExclamationTriangleIcon className="w-5 h-5 text-red-500" />
+        return <ExclamationTriangleIcon className="w-5 h-5 text-[#ffb4ab]" />
       default:
         return null
     }
@@ -180,16 +180,16 @@ function BillingContent() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Billing & Subscription</h1>
-        <p className="text-gray-600">Manage your subscription, payment method, and billing history</p>
+        <h1 className="text-3xl font-bold text-text-primary">Billing & Subscription</h1>
+        <p className="text-text-secondary">Manage your subscription, payment method, and billing history</p>
       </div>
 
       {/* Current Subscription */}
       {billingInfo && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
+        <div className="bg-surface-low rounded-xl shadow-sm border border-[rgba(65,71,84,0.15)]">
+          <div className="p-6 border-b border-[rgba(65,71,84,0.15)]">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Current Subscription</h2>
+              <h2 className="text-lg font-semibold text-text-primary">Current Subscription</h2>
               {getStatusBadge(billingInfo.subscriptionStatus)}
             </div>
           </div>
@@ -197,38 +197,38 @@ function BillingContent() {
           <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Current Plan</label>
-                <div className="text-xl font-bold text-gray-900 capitalize">
+                <label className="block text-sm font-medium text-text-secondary mb-1">Current Plan</label>
+                <div className="text-xl font-bold text-text-primary capitalize">
                   {billingInfo.currentPlan}
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-text-secondary">
                   ${billingInfo.amount}/{billingInfo.billingCycle === 'monthly' ? 'month' : 'year'}
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Billing Cycle</label>
-                <div className="text-lg font-medium text-gray-900 capitalize">
+                <label className="block text-sm font-medium text-text-secondary mb-1">Billing Cycle</label>
+                <div className="text-lg font-medium text-text-primary capitalize">
                   {billingInfo.billingCycle}
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Next Billing Date</label>
-                <div className="text-lg font-medium text-gray-900">
+                <label className="block text-sm font-medium text-text-secondary mb-1">Next Billing Date</label>
+                <div className="text-lg font-medium text-text-primary">
                   {new Date(billingInfo.nextBillingDate).toLocaleDateString()}
                 </div>
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Next Amount</label>
-                <div className="text-lg font-bold text-green-600">
+                <label className="block text-sm font-medium text-text-secondary mb-1">Next Amount</label>
+                <div className="text-lg font-bold text-emerald-500">
                   ${billingInfo.amount}
                 </div>
               </div>
             </div>
             
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="mt-6 pt-6 border-t border-[rgba(65,71,84,0.15)]">
               <div className="flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => setShowPlanComparison(true)}
@@ -238,7 +238,7 @@ function BillingContent() {
                 </button>
                 <button 
                   onClick={() => setShowCancellationModal(true)}
-                  className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                  className="px-4 py-2 bg-surface-high text-text-primary font-medium rounded-lg hover:bg-surface-highest transition-colors"
                 >
                   Cancel Subscription
                 </button>
@@ -250,30 +250,30 @@ function BillingContent() {
 
       {/* Payment Method */}
       {billingInfo?.paymentMethod && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Payment Method</h2>
+        <div className="bg-surface-low rounded-xl shadow-sm border border-[rgba(65,71,84,0.15)]">
+          <div className="p-6 border-b border-[rgba(65,71,84,0.15)]">
+            <h2 className="text-lg font-semibold text-text-primary">Payment Method</h2>
           </div>
           
           <div className="p-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="p-3 bg-gray-100 rounded-lg">
-                  <CreditCardIcon className="w-6 h-6 text-gray-600" />
+                <div className="p-3 bg-surface-high rounded-lg">
+                  <CreditCardIcon className="w-6 h-6 text-text-secondary" />
                 </div>
                 <div>
-                  <div className="font-medium text-gray-900">
+                  <div className="font-medium text-text-primary">
                     {billingInfo.paymentMethod.brand?.toUpperCase()} •••• {billingInfo.paymentMethod.last4}
                   </div>
                   {billingInfo.paymentMethod.expiryMonth && billingInfo.paymentMethod.expiryYear && (
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-text-secondary">
                       Expires {billingInfo.paymentMethod.expiryMonth}/{billingInfo.paymentMethod.expiryYear}
                     </div>
                   )}
                 </div>
               </div>
               
-              <button className="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors">
+              <button className="px-4 py-2 bg-surface-high text-text-primary font-medium rounded-lg hover:bg-surface-highest transition-colors">
                 Update Payment Method
               </button>
             </div>
@@ -282,48 +282,48 @@ function BillingContent() {
       )}
 
       {/* Billing History */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Billing History</h2>
+      <div className="bg-surface-low rounded-xl shadow-sm border border-[rgba(65,71,84,0.15)]">
+        <div className="p-6 border-b border-[rgba(65,71,84,0.15)]">
+          <h2 className="text-lg font-semibold text-text-primary">Billing History</h2>
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-surface">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Description
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Amount
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Invoice
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-surface-low divide-y divide-[rgba(65,71,84,0.15)]">
               {invoiceHistory.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-gray-50">
+                <tr key={invoice.id} className="hover:bg-surface">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <CalendarIcon className="w-4 h-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900">
+                      <CalendarIcon className="w-4 h-4 text-text-muted mr-2" />
+                      <span className="text-sm text-text-primary">
                         {new Date(invoice.date).toLocaleDateString()}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{invoice.description}</div>
+                    <div className="text-sm text-text-primary">{invoice.description}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-text-primary">
                       ${invoice.amount}
                     </div>
                   </td>
@@ -331,16 +331,16 @@ function BillingContent() {
                     <div className="flex items-center">
                       {getInvoiceStatusIcon(invoice.status)}
                       <span className={`ml-2 text-sm font-medium ${
-                        invoice.status === 'paid' ? 'text-green-700' :
-                        invoice.status === 'pending' ? 'text-yellow-700' :
-                        'text-red-700'
+                        invoice.status === 'paid' ? 'text-emerald-500' :
+                        invoice.status === 'pending' ? 'text-accent' :
+                        'text-[#ffb4ab]'
                       }`}>
                         {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <button className="inline-flex items-center text-purple-600 hover:text-purple-800 font-medium text-sm">
+                    <button className="inline-flex items-center text-purple-400 hover:text-purple-800 font-medium text-sm">
                       <DocumentTextIcon className="w-4 h-4 mr-1" />
                       Download
                     </button>
@@ -353,9 +353,9 @@ function BillingContent() {
         
         {invoiceHistory.length === 0 && (
           <div className="text-center py-12">
-            <DocumentTextIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No billing history</h3>
-            <p className="text-gray-500">Your invoices will appear here once billing begins.</p>
+            <DocumentTextIcon className="w-12 h-12 text-text-muted mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-text-primary mb-2">No billing history</h3>
+            <p className="text-text-secondary">Your invoices will appear here once billing begins.</p>
           </div>
         )}
       </div>
@@ -413,7 +413,7 @@ export default function BillingPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading billing information...</p>
+          <p className="mt-2 text-text-secondary">Loading billing information...</p>
         </div>
       </div>
     }>

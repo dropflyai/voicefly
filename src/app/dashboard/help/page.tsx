@@ -153,10 +153,10 @@ function HelpPage() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-2.5 mb-1">
-            <QuestionMarkCircleIcon className="h-7 w-7 text-blue-500" />
-            <h1 className="text-2xl font-bold text-gray-900">Help Center</h1>
+            <QuestionMarkCircleIcon className="h-7 w-7 text-brand-primary" />
+            <h1 className="text-2xl font-bold text-text-primary">Help Center</h1>
           </div>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-text-secondary">
             Learn how to get the most out of VoiceFly
           </p>
         </div>
@@ -169,24 +169,24 @@ function HelpPage() {
               const isExpanded = expandedSection === section.id
 
               return (
-                <div key={section.id} className="bg-white rounded-lg border border-gray-200">
+                <div key={section.id} className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)]">
                   <button
                     onClick={() => setExpandedSection(isExpanded ? null : section.id)}
-                    className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                    className="w-full px-5 py-4 flex items-center justify-between hover:bg-surface transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-50 rounded-lg">
-                        <Icon className="h-5 w-5 text-blue-600" />
+                      <div className="p-2 bg-brand-primary/5 rounded-lg">
+                        <Icon className="h-5 w-5 text-brand-primary" />
                       </div>
                       <div className="text-left">
-                        <h2 className="text-sm font-semibold text-gray-900">{section.title}</h2>
-                        <p className="text-xs text-gray-500">{section.articles.length} articles</p>
+                        <h2 className="text-sm font-semibold text-text-primary">{section.title}</h2>
+                        <p className="text-xs text-text-secondary">{section.articles.length} articles</p>
                       </div>
                     </div>
                     {isExpanded ? (
-                      <ChevronDownIcon className="h-4 w-4 text-gray-400" />
+                      <ChevronDownIcon className="h-4 w-4 text-text-muted" />
                     ) : (
-                      <ChevronRightIcon className="h-4 w-4 text-gray-400" />
+                      <ChevronRightIcon className="h-4 w-4 text-text-muted" />
                     )}
                   </button>
 
@@ -195,10 +195,10 @@ function HelpPage() {
                       {section.articles.map((article, index) => (
                         <div
                           key={index}
-                          className="p-3 rounded-lg bg-gray-50 border border-gray-100"
+                          className="p-3 rounded-lg bg-surface border border-[rgba(65,71,84,0.1)]"
                         >
-                          <h3 className="text-sm font-medium text-gray-900 mb-1">{article.title}</h3>
-                          <p className="text-xs text-gray-600 leading-relaxed">{article.content}</p>
+                          <h3 className="text-sm font-medium text-text-primary mb-1">{article.title}</h3>
+                          <p className="text-xs text-text-secondary leading-relaxed">{article.content}</p>
                         </div>
                       ))}
                     </div>
@@ -212,23 +212,23 @@ function HelpPage() {
           <div className="space-y-4">
             <SupportAgent businessId={business?.id || null} />
 
-            <div className="bg-white rounded-lg border border-gray-200 p-5">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Still need help?</h3>
+            <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-5">
+              <h3 className="text-sm font-semibold text-text-primary mb-3">Still need help?</h3>
               <a
                 href="mailto:support@voiceflyai.com"
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100"
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-surface transition-colors border border-[rgba(65,71,84,0.1)]"
               >
-                <EnvelopeIcon className="h-5 w-5 text-blue-600" />
+                <EnvelopeIcon className="h-5 w-5 text-brand-primary" />
                 <div>
-                  <span className="text-sm font-medium text-gray-900 block">Email Support</span>
-                  <span className="text-xs text-gray-500">support@voiceflyai.com</span>
+                  <span className="text-sm font-medium text-text-primary block">Email Support</span>
+                  <span className="text-xs text-text-secondary">support@voiceflyai.com</span>
                 </div>
               </a>
             </div>
 
-            <div className="bg-blue-50 rounded-lg p-5 border border-blue-100">
-              <h3 className="text-sm font-semibold text-gray-900 mb-2">Quick Tips</h3>
-              <ul className="space-y-2 text-xs text-gray-700">
+            <div className="bg-brand-primary/5 rounded-lg p-5 border border-blue-100">
+              <h3 className="text-sm font-semibold text-text-primary mb-2">Quick Tips</h3>
+              <ul className="space-y-2 text-xs text-text-primary">
                 <li>Start with a Receptionist employee to handle general calls</li>
                 <li>Connect Google Calendar so your AI can book real appointments</li>
                 <li>Check the Call Log daily to review how your AI is performing</li>

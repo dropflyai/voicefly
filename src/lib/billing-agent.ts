@@ -12,13 +12,8 @@
 import { supabase } from './supabase-client'
 import { EmployeeProvisioningService } from './phone-employees/employee-provisioning'
 import CreditSystem, {
-  CreditCost,
-  CREDITS_PER_MINUTE,
-  MonthlyCredits,
-  TIER_PRICING,
-  OVERAGE_PRICING_PER_CREDIT,
-  OVERAGE_PRICING_PER_MINUTE,
-} from './credit-system'
+// Credit system removed — using minutes system
+import { TIER_MINUTES, getMinutesBalance } from './minutes'
 import AuditLogger, { AuditEventType } from './audit-logger'
 
 // Feature name -> service_type mapping for usage aggregation
@@ -72,7 +67,7 @@ export class BillingAgent {
         processed++
 
         // Check credit levels
-        const balance = await CreditSystem.getBalance(biz.id)
+        const balance = await import("@/lib/minutes").then(m => m.getMinutesBalance(biz.id)
         if (!balance) continue
 
         const allocation = getMonthlyAllocation(biz.subscription_tier)
@@ -1306,7 +1301,7 @@ export class BillingAgent {
     willNeedTopUp: boolean
   } | null> {
     try {
-      const balance = await CreditSystem.getBalance(businessId)
+      const balance = await import("@/lib/minutes").then(m => m.getMinutesBalance(businessId)
       if (!balance) return null
 
       // Get last 7 days of deductions

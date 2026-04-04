@@ -213,10 +213,10 @@ export default function PaymentsPage() {
       <Layout business={business}>
         <div className="p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="h-8 bg-surface-highest rounded w-1/4 mb-6"></div>
             <div className="space-y-4">
-              <div className="h-16 bg-gray-200 rounded"></div>
-              <div className="h-96 bg-gray-200 rounded"></div>
+              <div className="h-16 bg-surface-highest rounded"></div>
+              <div className="h-96 bg-surface-highest rounded"></div>
             </div>
           </div>
         </div>
@@ -232,8 +232,8 @@ export default function PaymentsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-text-primary">Payments</h1>
+            <p className="text-text-secondary mt-1">
               Track and manage all payment transactions
             </p>
           </div>
@@ -241,7 +241,7 @@ export default function PaymentsPage() {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center px-4 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-sm font-medium text-text-primary hover:bg-surface"
             >
               <FunnelIcon className="w-4 h-4 mr-2" />
               Filters
@@ -256,47 +256,47 @@ export default function PaymentsPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
             <div className="flex items-center">
               <div className="flex-1">
-                <p className="text-sm text-gray-600">Total Revenue</p>
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-sm text-text-secondary">Total Revenue</p>
+                <p className="text-2xl font-semibold text-text-primary">
                   {formatCurrency(stats.totalAmount)}
                 </p>
               </div>
-              <CreditCardIcon className="h-8 w-8 text-green-600" />
+              <CreditCardIcon className="h-8 w-8 text-emerald-500" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
             <div className="flex items-center">
               <div className="flex-1">
-                <p className="text-sm text-gray-600">Total Transactions</p>
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-sm text-text-secondary">Total Transactions</p>
+                <p className="text-2xl font-semibold text-text-primary">
                   {stats.totalCount}
                 </p>
               </div>
-              <CreditCardIcon className="h-8 w-8 text-blue-600" />
+              <CreditCardIcon className="h-8 w-8 text-brand-primary" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
             <div className="flex items-center">
               <div className="flex-1">
-                <p className="text-sm text-gray-600">Average Transaction</p>
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-sm text-text-secondary">Average Transaction</p>
+                <p className="text-2xl font-semibold text-text-primary">
                   {stats.totalCount > 0 ? formatCurrency(stats.totalAmount / stats.totalCount) : '$0.00'}
                 </p>
               </div>
-              <CreditCardIcon className="h-8 w-8 text-purple-600" />
+              <CreditCardIcon className="h-8 w-8 text-purple-400" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
             <div className="flex items-center">
               <div className="flex-1">
-                <p className="text-sm text-gray-600">Success Rate</p>
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-sm text-text-secondary">Success Rate</p>
+                <p className="text-2xl font-semibold text-text-primary">
                   {payments.length > 0 ? 
                     Math.round((payments.filter(p => p.status === 'paid').length / payments.length) * 100) : 0
                   }%
@@ -309,19 +309,19 @@ export default function PaymentsPage() {
 
         {/* Filters */}
         {showFilters && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-text-primary mb-1">
                   Search
                 </label>
                 <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text-muted" />
                   <input
                     type="text"
                     value={filters.search}
                     onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                    className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="pl-10 w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-sm"
                     placeholder="Search customers, IDs..."
                   />
                 </div>
@@ -329,7 +329,7 @@ export default function PaymentsPage() {
 
               {locations.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-text-primary mb-1">
                     Location
                   </label>
                   <LocationSelector
@@ -343,13 +343,13 @@ export default function PaymentsPage() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-text-primary mb-1">
                   Status
                 </label>
                 <select
                   value={filters.status}
                   onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-sm"
                 >
                   <option value="">All statuses</option>
                   <option value="pending">Pending</option>
@@ -361,13 +361,13 @@ export default function PaymentsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-text-primary mb-1">
                   Date Range
                 </label>
                 <select
                   value={filters.date_range}
                   onChange={(e) => setFilters({ ...filters, date_range: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-sm"
                 >
                   <option value="today">Today</option>
                   <option value="last_7_days">Last 7 days</option>
@@ -377,13 +377,13 @@ export default function PaymentsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-text-primary mb-1">
                   Payment Method
                 </label>
                 <select
                   value={filters.payment_method}
                   onChange={(e) => setFilters({ ...filters, payment_method: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-sm"
                 >
                   <option value="">All methods</option>
                   <option value="square">Square</option>
@@ -397,11 +397,11 @@ export default function PaymentsPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-600 text-sm">{error}</p>
+          <div className="mb-6 p-4 bg-[#93000a]/5 border border-red-200 rounded-md">
+            <p className="text-[#ffb4ab] text-sm">{error}</p>
             <button 
               onClick={() => setError(null)} 
-              className="text-red-600 hover:text-red-700 underline text-sm mt-1"
+              className="text-[#ffb4ab] hover:text-[#ffb4ab] underline text-sm mt-1"
             >
               Dismiss
             </button>
@@ -409,21 +409,21 @@ export default function PaymentsPage() {
         )}
 
         {/* Payments Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Recent Payments</h3>
+        <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] overflow-hidden">
+          <div className="px-6 py-4 border-b border-[rgba(65,71,84,0.15)]">
+            <h3 className="text-lg font-medium text-text-primary">Recent Payments</h3>
           </div>
 
           {isLoading ? (
             <div className="p-8 text-center">
-              <ArrowPathIcon className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
-              <p className="text-gray-500">Loading payments...</p>
+              <ArrowPathIcon className="h-8 w-8 text-text-muted animate-spin mx-auto mb-4" />
+              <p className="text-text-secondary">Loading payments...</p>
             </div>
           ) : payments.length === 0 ? (
             <div className="p-8 text-center">
-              <CreditCardIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No payments found</h3>
-              <p className="text-gray-500">
+              <CreditCardIcon className="h-12 w-12 text-text-muted mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-text-primary mb-2">No payments found</h3>
+              <p className="text-text-secondary">
                 {filters.search || filters.status || selectedLocation ? 
                   'Try adjusting your filters to see more results.' :
                   'Payments will appear here once customers start making purchases.'
@@ -432,55 +432,55 @@ export default function PaymentsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-[rgba(65,71,84,0.15)]">
+                <thead className="bg-surface">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Customer
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Amount
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Method
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Date
                     </th>
                     {locations.length > 1 && (
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                         Location
                       </th>
                     )}
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-surface-low divide-y divide-[rgba(65,71,84,0.15)]">
                   {payments.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-gray-50">
+                    <tr key={payment.id} className="hover:bg-surface">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-text-primary">
                           {payment.customer ? 
                             `${payment.customer.first_name} ${payment.customer.last_name}` :
                             'Unknown Customer'
                           }
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-text-secondary">
                           {payment.customer?.email || payment.customer?.phone || 'No contact info'}
                         </div>
                       </td>
                       
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-text-primary">
                           {formatCurrency(payment.total_amount)}
                         </div>
                         {payment.tip_amount > 0 && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-text-secondary">
                             +{formatCurrency(payment.tip_amount)} tip
                           </div>
                         )}
@@ -490,27 +490,27 @@ export default function PaymentsPage() {
                         <PaymentStatusBadge status={payment.status} size="sm" />
                       </td>
                       
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary capitalize">
                         {payment.processor_type}
                         {payment.payment_method_details?.last_four && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-text-secondary">
                             •••• {payment.payment_method_details.last_four}
                           </div>
                         )}
                       </td>
                       
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
                         {formatDate(payment.created_at)}
                       </td>
                       
                       {locations.length > 1 && (
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
                           {payment.location?.name || 'N/A'}
                         </td>
                       )}
                       
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                        <button className="text-purple-600 hover:text-purple-700">
+                        <button className="text-purple-400 hover:text-purple-400">
                           <EyeIcon className="h-4 w-4" />
                         </button>
                         
@@ -518,7 +518,7 @@ export default function PaymentsPage() {
                           <button
                             onClick={() => handleRefund(payment.id)}
                             disabled={isLoading}
-                            className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                            className="text-[#ffb4ab] hover:text-[#ffb4ab] disabled:opacity-50"
                           >
                             <ArrowPathIcon className="h-4 w-4" />
                           </button>

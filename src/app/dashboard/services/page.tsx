@@ -82,60 +82,60 @@ const isHighValueService = (price: number) => price >= 50
 // Helper function to get categories based on business type
 const getBusinessTypeCategories = (businessType: string) => {
   const baseCategories = [
-    { name: 'All Categories', value: 'all', color: 'bg-gray-100 text-gray-800' }
+    { name: 'All Categories', value: 'all', color: 'bg-surface-high text-text-primary' }
   ]
   
   switch (businessType) {
     case 'medical_practice':
       return [
         ...baseCategories,
-        { name: 'Consultations', value: 'consultations', color: 'bg-blue-100 text-blue-800' },
-        { name: 'Preventive Care', value: 'preventive-care', color: 'bg-green-100 text-green-800' },
-        { name: 'Procedures', value: 'procedures', color: 'bg-purple-100 text-purple-800' },
-        { name: 'Follow-up Care', value: 'follow-up-care', color: 'bg-amber-100 text-amber-800' },
-        { name: 'Urgent & Emergency', value: 'urgent-emergency', color: 'bg-red-100 text-red-800' }
+        { name: 'Consultations', value: 'consultations', color: 'bg-brand-primary/10 text-blue-800' },
+        { name: 'Preventive Care', value: 'preventive-care', color: 'bg-emerald-500/10 text-green-800' },
+        { name: 'Procedures', value: 'procedures', color: 'bg-purple-500/10 text-purple-800' },
+        { name: 'Follow-up Care', value: 'follow-up-care', color: 'bg-accent/10 text-amber-800' },
+        { name: 'Urgent & Emergency', value: 'urgent-emergency', color: 'bg-[#93000a]/10 text-red-800' }
       ]
     case 'dental_practice':
       return [
         ...baseCategories,
-        { name: 'Preventive Care', value: 'preventive', color: 'bg-green-100 text-green-800' },
-        { name: 'Restorative Care', value: 'restorative', color: 'bg-blue-100 text-blue-800' },
-        { name: 'Cosmetic Dentistry', value: 'cosmetic', color: 'bg-purple-100 text-purple-800' },
-        { name: 'Oral Surgery', value: 'surgical', color: 'bg-red-100 text-red-800' },
-        { name: 'Emergency Care', value: 'emergency', color: 'bg-orange-100 text-orange-800' },
-        { name: 'Consultations', value: 'consultation', color: 'bg-gray-100 text-gray-800' }
+        { name: 'Preventive Care', value: 'preventive', color: 'bg-emerald-500/10 text-green-800' },
+        { name: 'Restorative Care', value: 'restorative', color: 'bg-brand-primary/10 text-blue-800' },
+        { name: 'Cosmetic Dentistry', value: 'cosmetic', color: 'bg-purple-500/10 text-purple-800' },
+        { name: 'Oral Surgery', value: 'surgical', color: 'bg-[#93000a]/10 text-red-800' },
+        { name: 'Emergency Care', value: 'emergency', color: 'bg-accent/10 text-orange-800' },
+        { name: 'Consultations', value: 'consultation', color: 'bg-surface-high text-text-primary' }
       ]
     case 'Medical Spa':
       return [
         ...baseCategories,
-        { name: 'Injectables', value: 'Injectables', color: 'bg-blue-100 text-blue-800' },
+        { name: 'Injectables', value: 'Injectables', color: 'bg-brand-primary/10 text-blue-800' },
         { name: 'Laser Treatments', value: 'Laser Treatments', color: 'bg-beauty-100 text-beauty-800' },
-        { name: 'Skin Treatments', value: 'Skin Treatments', color: 'bg-purple-100 text-purple-800' },
-        { name: 'Body Contouring', value: 'Body Contouring', color: 'bg-green-100 text-green-800' }
+        { name: 'Skin Treatments', value: 'Skin Treatments', color: 'bg-purple-500/10 text-purple-800' },
+        { name: 'Body Contouring', value: 'Body Contouring', color: 'bg-emerald-500/10 text-green-800' }
       ]
     case 'Day Spa':
       return [
         ...baseCategories,
-        { name: 'Massages', value: 'Massages', color: 'bg-blue-100 text-blue-800' },
+        { name: 'Massages', value: 'Massages', color: 'bg-brand-primary/10 text-blue-800' },
         { name: 'Facials', value: 'Facials', color: 'bg-beauty-100 text-beauty-800' },
-        { name: 'Body Treatments', value: 'Body Treatments', color: 'bg-purple-100 text-purple-800' },
-        { name: 'Specialty Services', value: 'Specialty Services', color: 'bg-green-100 text-green-800' }
+        { name: 'Body Treatments', value: 'Body Treatments', color: 'bg-purple-500/10 text-purple-800' },
+        { name: 'Specialty Services', value: 'Specialty Services', color: 'bg-emerald-500/10 text-green-800' }
       ]
     case 'Wellness Center':
       return [
         ...baseCategories,
-        { name: 'Alternative Medicine', value: 'Alternative Medicine', color: 'bg-blue-100 text-blue-800' },
+        { name: 'Alternative Medicine', value: 'Alternative Medicine', color: 'bg-brand-primary/10 text-blue-800' },
         { name: 'Energy Healing', value: 'Energy Healing', color: 'bg-beauty-100 text-beauty-800' },
-        { name: 'Wellness Consultations', value: 'Wellness Consultations', color: 'bg-purple-100 text-purple-800' },
-        { name: 'Therapeutic Services', value: 'Therapeutic Services', color: 'bg-green-100 text-green-800' }
+        { name: 'Wellness Consultations', value: 'Wellness Consultations', color: 'bg-purple-500/10 text-purple-800' },
+        { name: 'Therapeutic Services', value: 'Therapeutic Services', color: 'bg-emerald-500/10 text-green-800' }
       ]
     default:
       return [
         ...baseCategories,
-        { name: 'Manicures', value: 'Manicures', color: 'bg-blue-100 text-blue-800' },
+        { name: 'Manicures', value: 'Manicures', color: 'bg-brand-primary/10 text-blue-800' },
         { name: 'Pedicures', value: 'Pedicures', color: 'bg-beauty-100 text-beauty-800' },
-        { name: 'Enhancements', value: 'Enhancements', color: 'bg-purple-100 text-purple-800' },
-        { name: 'Spa Services', value: 'Spa Services', color: 'bg-green-100 text-green-800' }
+        { name: 'Enhancements', value: 'Enhancements', color: 'bg-purple-500/10 text-purple-800' },
+        { name: 'Spa Services', value: 'Spa Services', color: 'bg-emerald-500/10 text-green-800' }
       ]
   }
 }
@@ -246,11 +246,11 @@ export default function ServicesPage() {
       <Layout>
         <div className="p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+            <div className="h-8 bg-surface-highest rounded w-1/4 mb-4"></div>
+            <div className="h-4 bg-surface-highest rounded w-1/2 mb-8"></div>
             <div className="space-y-4">
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-24 bg-gray-200 rounded"></div>
+                <div key={i} className="h-24 bg-surface-highest rounded"></div>
               ))}
             </div>
           </div>
@@ -265,10 +265,10 @@ export default function ServicesPage() {
         {/* Header */}
         <div className="sm:flex sm:items-center sm:justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-text-primary">
               {terminology.plural}
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-text-secondary mt-1">
               {services.length === 0
                 ? `No ${terminology.plural.toLowerCase()} yet - Add your first ${terminology.singular.toLowerCase()} to get started!`
                 : `Managing ${services.length} ${terminology.plural.toLowerCase()} for your business`
@@ -278,7 +278,7 @@ export default function ServicesPage() {
           <div className="mt-4 sm:mt-0">
             <button
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] transition-colors"
             >
               <PlusIcon className="h-4 w-4 mr-2" />
               Add {terminology.singular}
@@ -290,13 +290,13 @@ export default function ServicesPage() {
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="flex-1">
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text-muted" />
               <input
                 type="text"
                 placeholder={`Search ${terminology.plural.toLowerCase()}...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
               />
             </div>
           </div>
@@ -309,7 +309,7 @@ export default function ServicesPage() {
                   'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                   categoryFilter === category.value
                     ? category.color
-                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                    : 'bg-surface-low text-text-primary border border-[rgba(65,71,84,0.2)] hover:bg-surface'
                 )}
               >
                 {category.name}
@@ -322,14 +322,14 @@ export default function ServicesPage() {
         <div className="space-y-4">
           {filteredServices.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-gray-400 text-6xl mb-4">💅</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <div className="text-text-muted text-6xl mb-4">💅</div>
+              <h3 className="text-lg font-medium text-text-primary mb-2">
                 {services.length === 0
                   ? `No ${terminology.plural.toLowerCase()} yet`
                   : `No matching ${terminology.plural.toLowerCase()}`
                 }
               </h3>
-              <p className="text-gray-500 mb-6">
+              <p className="text-text-secondary mb-6">
                 {services.length === 0
                   ? `Add your first ${terminology.singular.toLowerCase()} to get started with bookings`
                   : 'Try adjusting your search or filters'
@@ -338,7 +338,7 @@ export default function ServicesPage() {
               {services.length === 0 && (
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] transition-colors"
                 >
                   <PlusIcon className="h-4 w-4 mr-2" />
                   Add Your First {terminology.singular}
@@ -353,7 +353,7 @@ export default function ServicesPage() {
                     <div className="flex-shrink-0">
                       <div className={clsx(
                         'h-12 w-12 rounded-lg flex items-center justify-center',
-                        service.isActive ? 'bg-blue-100' : 'bg-gray-100'
+                        service.isActive ? 'bg-brand-primary/10' : 'bg-surface-high'
                       )}>
                         <span className="text-lg">
                           {getServiceIcon(service.category, businessType)}
@@ -362,22 +362,22 @@ export default function ServicesPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="text-lg font-medium text-gray-900 truncate">
+                        <h3 className="text-lg font-medium text-text-primary truncate">
                           {service.name}
                         </h3>
                         {service.isFeatured && (
                           <StarIconSolid className="h-4 w-4 text-yellow-400" />
                         )}
                         {!service.isActive && (
-                          <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded">
+                          <span className="px-2 py-1 text-xs font-medium bg-[#93000a]/10 text-red-800 rounded">
                             Inactive
                           </span>
                         )}
                       </div>
-                      <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+                      <p className="text-text-secondary text-sm mb-2 line-clamp-2">
                         {service.description}
                       </p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center space-x-4 text-sm text-text-secondary">
                         <div className="flex items-center">
                           <ClockIcon className="h-4 w-4 mr-1" />
                           {service.duration} min
@@ -392,12 +392,12 @@ export default function ServicesPage() {
                           )} />
                           ${service.price.toFixed(2)}
                           {isHighValueService(service.price) && (
-                            <span className="ml-1 text-xs bg-yellow-100 text-yellow-800 px-1 rounded font-medium">
+                            <span className="ml-1 text-xs bg-accent/10 text-yellow-800 px-1 rounded font-medium">
                               PREMIUM
                             </span>
                           )}
                         </div>
-                        <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">
+                        <span className="px-2 py-1 bg-surface-high text-text-primary rounded text-xs">
                           {service.category}
                         </span>
                       </div>
@@ -409,13 +409,13 @@ export default function ServicesPage() {
                         setSelectedService(service)
                         setShowModal(true)
                       }}
-                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="p-2 text-text-muted hover:text-text-secondary transition-colors"
                       title="Edit service"
                     >
                       <PencilIcon className="h-4 w-4" />
                     </button>
                     <button
-                      className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                      className="p-2 text-text-muted hover:text-[#ffb4ab] transition-colors"
                       title="Delete service"
                     >
                       <TrashIcon className="h-4 w-4" />
@@ -496,19 +496,19 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
+        <div className="fixed inset-0 bg-surface0 bg-opacity-75 transition-opacity" onClick={onClose} />
         
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div className="inline-block align-bottom bg-surface-low rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <form onSubmit={handleSubmit}>
-            <div className="bg-white px-6 py-6">
+            <div className="bg-surface-low px-6 py-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-medium text-gray-900">
+                <h3 className="text-lg font-medium text-text-primary">
                   Add New {terminology.singular}
                 </h3>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-text-muted hover:text-text-secondary"
                 >
                   <XMarkIcon className="h-6 w-6" />
                 </button>
@@ -516,7 +516,7 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-text-primary mb-1">
                     {terminology.singular} Name *
                   </label>
                   <input
@@ -524,7 +524,7 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder={`e.g., ${businessType === 'medical_practice' ? 'Annual Physical Exam' :
                                 businessType === 'dental_practice' ? 'Routine Cleaning' :
                                 'Classic Manicure'}`}
@@ -532,27 +532,27 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-text-primary mb-1">
                     Description
                   </label>
                   <textarea
                     rows={3}
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder={`Brief description of the ${terminology.singular.toLowerCase()}...`}
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-text-primary mb-1">
                       Category
                     </label>
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData({...formData, category: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     >
                       {modalCategories.map(category => (
                         <option key={category.value} value={category.value}>
@@ -563,7 +563,7 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-text-primary mb-1">
                       Duration (minutes)
                     </label>
                     <input
@@ -573,13 +573,13 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
                       step="15"
                       value={formData.duration}
                       onChange={(e) => setFormData({...formData, duration: parseInt(e.target.value) || 30})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-text-primary mb-1">
                     Price ($)
                   </label>
                   <input
@@ -588,7 +588,7 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
                     step="0.01"
                     value={formData.price}
                     onChange={(e) => setFormData({...formData, price: parseFloat(e.target.value) || 0})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   />
                 </div>
 
@@ -598,16 +598,16 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
                     id="requiresDeposit"
                     checked={formData.requiresDeposit}
                     onChange={(e) => setFormData({...formData, requiresDeposit: e.target.checked})}
-                    className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-purple-400 focus:ring-purple-500 border-[rgba(65,71,84,0.2)] rounded"
                   />
-                  <label htmlFor="requiresDeposit" className="ml-2 block text-sm text-gray-900">
+                  <label htmlFor="requiresDeposit" className="ml-2 block text-sm text-text-primary">
                     Requires deposit
                   </label>
                 </div>
 
                 {formData.requiresDeposit && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-text-primary mb-1">
                       Deposit Amount ($)
                     </label>
                     <input
@@ -616,14 +616,14 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
                       step="0.01"
                       value={formData.depositAmount}
                       onChange={(e) => setFormData({...formData, depositAmount: parseFloat(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     />
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="bg-gray-50 px-6 py-3 sm:flex sm:flex-row-reverse">
+            <div className="bg-surface px-6 py-3 sm:flex sm:flex-row-reverse">
               <button
                 type="submit"
                 disabled={isSubmitting || !formData.name}
@@ -634,7 +634,7 @@ function AddServiceModal({ isOpen, onClose, onSubmit, businessType }: AddService
               <button
                 type="button"
                 onClick={onClose}
-                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                className="mt-3 w-full inline-flex justify-center rounded-md border border-[rgba(65,71,84,0.2)] shadow-sm px-4 py-2 bg-surface-low text-base font-medium text-text-primary hover:bg-surface focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
               >
                 Cancel
               </button>

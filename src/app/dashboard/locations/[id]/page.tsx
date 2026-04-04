@@ -148,8 +148,8 @@ export default function LocationPage({ params }: LocationPageProps) {
       <Layout business={business}>
         <div className="p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="h-8 bg-surface-highest rounded w-1/4 mb-6"></div>
+            <div className="h-64 bg-surface-highest rounded"></div>
           </div>
         </div>
       </Layout>
@@ -162,8 +162,8 @@ export default function LocationPage({ params }: LocationPageProps) {
         <div className="p-6 max-w-7xl mx-auto">
           <div className="text-center py-12">
             <XCircleIcon className="mx-auto h-12 w-12 text-red-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Location Not Found</h3>
-            <p className="mt-1 text-sm text-gray-500">{error}</p>
+            <h3 className="mt-2 text-sm font-medium text-text-primary">Location Not Found</h3>
+            <p className="mt-1 text-sm text-text-secondary">{error}</p>
             <div className="mt-6">
               <button
                 onClick={() => router.push('/dashboard/locations')}
@@ -191,31 +191,31 @@ export default function LocationPage({ params }: LocationPageProps) {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => router.push('/dashboard/locations')}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-md"
+              className="p-2 text-text-muted hover:text-text-secondary rounded-md"
             >
               <ArrowLeftIcon className="h-5 w-5" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+              <h1 className="text-2xl font-bold text-text-primary flex items-center">
                 {location.name}
                 {location.is_primary && (
-                  <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  <span className="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/10 text-purple-800">
                     Primary
                   </span>
                 )}
                 {location.is_active ? (
-                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-green-800">
                     <CheckCircleIcon className="w-3 h-3 mr-1" />
                     Active
                   </span>
                 ) : (
-                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#93000a]/10 text-red-800">
                     <XCircleIcon className="w-3 h-3 mr-1" />
                     Inactive
                   </span>
                 )}
               </h1>
-              <p className="text-gray-600 mt-1">Location details and management</p>
+              <p className="text-text-secondary mt-1">Location details and management</p>
             </div>
           </div>
 
@@ -224,7 +224,7 @@ export default function LocationPage({ params }: LocationPageProps) {
               <button
                 onClick={handleSetPrimary}
                 disabled={isLoading}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                className="inline-flex items-center px-3 py-2 border border-[rgba(65,71,84,0.2)] text-sm font-medium rounded-md text-text-primary bg-surface-low hover:bg-surface disabled:opacity-50"
               >
                 Set as Primary
               </button>
@@ -242,11 +242,11 @@ export default function LocationPage({ params }: LocationPageProps) {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-600 text-sm">{error}</p>
+          <div className="mb-6 p-4 bg-[#93000a]/5 border border-red-200 rounded-md">
+            <p className="text-[#ffb4ab] text-sm">{error}</p>
             <button 
               onClick={() => setError(null)} 
-              className="text-red-600 hover:text-red-700 underline text-sm mt-1"
+              className="text-[#ffb4ab] hover:text-[#ffb4ab] underline text-sm mt-1"
             >
               Dismiss
             </button>
@@ -257,97 +257,97 @@ export default function LocationPage({ params }: LocationPageProps) {
           {/* Main Info */}
           <div className="lg:col-span-2 space-y-6">
             {/* Basic Information */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h2>
+            <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
+              <h2 className="text-lg font-medium text-text-primary mb-4">Basic Information</h2>
               
               <div className="space-y-4">
                 <div className="flex items-start space-x-3">
-                  <BuildingStorefrontIcon className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <BuildingStorefrontIcon className="h-5 w-5 text-text-muted mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Location Name</p>
-                    <p className="text-gray-900">{location.name}</p>
+                    <p className="text-sm font-medium text-text-primary">Location Name</p>
+                    <p className="text-text-primary">{location.name}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-3">
-                  <MapPinIcon className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <MapPinIcon className="h-5 w-5 text-text-muted mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Address</p>
-                    <p className="text-gray-900">{formatAddress(location)}</p>
+                    <p className="text-sm font-medium text-text-primary">Address</p>
+                    <p className="text-text-primary">{formatAddress(location)}</p>
                   </div>
                 </div>
 
                 {location.phone && (
                   <div className="flex items-start space-x-3">
-                    <PhoneIcon className="h-5 w-5 text-gray-400 mt-0.5" />
+                    <PhoneIcon className="h-5 w-5 text-text-muted mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Phone</p>
-                      <p className="text-gray-900">{location.phone}</p>
+                      <p className="text-sm font-medium text-text-primary">Phone</p>
+                      <p className="text-text-primary">{location.phone}</p>
                     </div>
                   </div>
                 )}
 
                 {location.email && (
                   <div className="flex items-start space-x-3">
-                    <EnvelopeIcon className="h-5 w-5 text-gray-400 mt-0.5" />
+                    <EnvelopeIcon className="h-5 w-5 text-text-muted mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-gray-700">Email</p>
-                      <p className="text-gray-900">{location.email}</p>
+                      <p className="text-sm font-medium text-text-primary">Email</p>
+                      <p className="text-text-primary">{location.email}</p>
                     </div>
                   </div>
                 )}
 
                 <div className="flex items-start space-x-3">
-                  <ClockIcon className="h-5 w-5 text-gray-400 mt-0.5" />
+                  <ClockIcon className="h-5 w-5 text-text-muted mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Timezone</p>
-                    <p className="text-gray-900">{location.timezone}</p>
+                    <p className="text-sm font-medium text-text-primary">Timezone</p>
+                    <p className="text-text-primary">{location.timezone}</p>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Integration Status */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Integration Status</h2>
+            <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
+              <h2 className="text-lg font-medium text-text-primary mb-4">Integration Status</h2>
               
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                <div className="flex items-center justify-between p-3 border border-[rgba(65,71,84,0.15)] rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <CreditCardIcon className="h-5 w-5 text-blue-600" />
+                    <CreditCardIcon className="h-5 w-5 text-brand-primary" />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Square</p>
-                      <p className="text-xs text-gray-500">Payment processing</p>
+                      <p className="text-sm font-medium text-text-primary">Square</p>
+                      <p className="text-xs text-text-secondary">Payment processing</p>
                     </div>
                   </div>
                   <div>
                     {location.square_location_id ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-green-800">
                         Connected
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-high text-text-primary">
                         Not Connected
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                <div className="flex items-center justify-between p-3 border border-[rgba(65,71,84,0.15)] rounded-lg">
                   <div className="flex items-center space-x-3">
-                    <CreditCardIcon className="h-5 w-5 text-indigo-600" />
+                    <CreditCardIcon className="h-5 w-5 text-indigo-400" />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Stripe</p>
-                      <p className="text-xs text-gray-500">Payment processing</p>
+                      <p className="text-sm font-medium text-text-primary">Stripe</p>
+                      <p className="text-xs text-text-secondary">Payment processing</p>
                     </div>
                   </div>
                   <div>
                     {location.stripe_account_id ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-green-800">
                         Connected
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface-high text-text-primary">
                         Not Connected
                       </span>
                     )}
@@ -360,40 +360,40 @@ export default function LocationPage({ params }: LocationPageProps) {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Quick Stats */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Stats</h3>
+            <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
+              <h3 className="text-lg font-medium text-text-primary mb-4">Quick Stats</h3>
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Total Staff</span>
-                  <span className="text-sm font-medium text-gray-900">-</span>
+                  <span className="text-sm text-text-secondary">Total Staff</span>
+                  <span className="text-sm font-medium text-text-primary">-</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">This Month's Appointments</span>
-                  <span className="text-sm font-medium text-gray-900">-</span>
+                  <span className="text-sm text-text-secondary">This Month's Appointments</span>
+                  <span className="text-sm font-medium text-text-primary">-</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">This Month's Revenue</span>
-                  <span className="text-sm font-medium text-gray-900">-</span>
+                  <span className="text-sm text-text-secondary">This Month's Revenue</span>
+                  <span className="text-sm font-medium text-text-primary">-</span>
                 </div>
               </div>
               
-              <p className="text-xs text-gray-500 mt-4">
+              <p className="text-xs text-text-secondary mt-4">
                 Location-specific analytics coming soon
               </p>
             </div>
 
             {/* Actions */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Actions</h3>
+            <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
+              <h3 className="text-lg font-medium text-text-primary mb-4">Actions</h3>
               
               <div className="space-y-3">
                 <button
                   onClick={() => setIsEditFormOpen(true)}
                   disabled={isLoading}
-                  className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                  className="w-full inline-flex items-center justify-center px-4 py-2 border border-[rgba(65,71,84,0.2)] text-sm font-medium rounded-md text-text-primary bg-surface-low hover:bg-surface disabled:opacity-50"
                 >
                   Edit Location Details
                 </button>
@@ -411,7 +411,7 @@ export default function LocationPage({ params }: LocationPageProps) {
                     <button
                       onClick={handleDeleteLocation}
                       disabled={isLoading}
-                      className="w-full inline-flex items-center justify-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 disabled:opacity-50"
+                      className="w-full inline-flex items-center justify-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-[#ffb4ab] bg-surface-low hover:bg-[#93000a]/5 disabled:opacity-50"
                     >
                       Delete Location
                     </button>

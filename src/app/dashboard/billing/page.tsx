@@ -226,9 +226,9 @@ function BillingPageContent() {
       <Layout business={business}>
         <div className="p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-8"></div>
-            <div className="h-64 bg-gray-200 rounded mb-6"></div>
-            <div className="h-96 bg-gray-200 rounded"></div>
+            <div className="h-8 bg-surface-highest rounded w-1/3 mb-8"></div>
+            <div className="h-64 bg-surface-highest rounded mb-6"></div>
+            <div className="h-96 bg-surface-highest rounded"></div>
           </div>
         </div>
       </Layout>
@@ -240,8 +240,8 @@ function BillingPageContent() {
       <Layout business={business}>
         <div className="p-8">
           <div className="text-center">
-            <div className="text-red-600 text-lg font-medium mb-4">{error}</div>
-            <button onClick={loadBillingData} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+            <div className="text-[#ffb4ab] text-lg font-medium mb-4">{error}</div>
+            <button onClick={loadBillingData} className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] transition-colors text-sm font-medium">
               Try Again
             </button>
           </div>
@@ -252,15 +252,15 @@ function BillingPageContent() {
 
   return (
     <Layout business={business}>
-      <div className="p-8 max-w-4xl">
+      <div className="p-8 space-y-8">
         {/* Test Mode Warning */}
         {isTestMode && (
-          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+          <div className="bg-accent/5 rounded-2xl p-4">
             <div className="flex items-center">
-              <ShieldCheckIcon className="h-5 w-5 text-yellow-600 mr-3 flex-shrink-0" />
+              <ShieldCheckIcon className="h-5 w-5 text-accent mr-3 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-yellow-800">Test Mode Active</p>
-                <p className="text-yellow-700 text-xs mt-0.5">
+                <p className="text-sm font-medium text-accent">Test Mode Active</p>
+                <p className="text-text-muted text-xs mt-0.5">
                   Use card 4242 4242 4242 4242 for testing. No real charges.
                 </p>
               </div>
@@ -268,133 +268,213 @@ function BillingPageContent() {
           </div>
         )}
 
-        {/* Success Banner */}
         {success && (
-          <div className="mb-4 px-4 py-3 rounded-lg text-sm font-medium bg-green-50 text-green-700 border border-green-200 flex items-center">
+          <div className="px-4 py-3 rounded-2xl text-sm font-medium bg-emerald-500/5 text-emerald-500 flex items-center">
             <CheckCircleIcon className="h-5 w-5 mr-2 flex-shrink-0" />
             {success}
           </div>
         )}
 
-        {/* Error Banner */}
         {error && (
-          <div className="mb-4 px-4 py-3 rounded-lg text-sm font-medium bg-red-50 text-red-700 border border-red-200">
+          <div className="px-4 py-3 rounded-2xl text-sm font-medium bg-[#93000a]/5 text-[#ffb4ab]">
             {error}
           </div>
         )}
 
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Billing & Subscription</h1>
-          <p className="text-gray-600 mt-1">
-            Manage your plan and billing
-          </p>
+        <div>
+          <h1 className="text-3xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight">Billing & Subscription</h1>
+          <p className="text-text-secondary mt-1">Manage your plan, usage, and payment methods.</p>
         </div>
 
-        {/* Current Plan */}
-        <div className="bg-white rounded-xl border border-gray-200 mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Current Plan</h2>
-          </div>
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <div className="flex items-center gap-3 mb-1">
-                  <h3 className="text-2xl font-bold text-gray-900 capitalize">
-                    {isOnTrial ? 'Free Trial' : currentTier === 'pro' ? 'Pro' : currentTier === 'growth' ? 'Growth' : 'Starter'}
-                  </h3>
-                  <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full ${
-                    business?.subscription_status === 'active' ? 'bg-green-100 text-green-700' :
-                    business?.subscription_status === 'cancelled' ? 'bg-red-100 text-red-700' :
-                    isOnTrial ? 'bg-blue-100 text-blue-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
-                    {business?.subscription_status === 'cancelled' ? 'Cancelled' :
-                     isOnTrial ? 'Trial' :
-                     business?.subscription_status === 'active' ? 'Active' :
-                     business?.subscription_status || 'Trial'}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-500">
-                  {isOnTrial ? '10 free calls, shared phone number, basic AI receptionist'
-                    : currentTier === 'pro' ? '750 voice minutes/month, 5 AI employees, 5 phone numbers, fully custom AI agent'
-                    : currentTier === 'growth' ? '250 voice minutes/month, 3 AI employees, 3 phone numbers, custom greetings & routing'
-                    : '60 voice minutes/month, 1 AI employee, 1 phone number, 24/7 call answering'}
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-gray-900">
-                  {isOnTrial ? 'Free' : `$${PLAN_PRICES[currentTier] || 49}`}
-                </div>
-                <p className="text-xs text-gray-500">
-                  {isOnTrial ? 'during trial' : 'per month'}
-                </p>
-              </div>
-            </div>
-
-            {/* Current plan features */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-              {(SUBSCRIPTION_PRODUCTS[currentTier as keyof typeof SUBSCRIPTION_PRODUCTS]?.features || SUBSCRIPTION_PRODUCTS.starter.features).slice(0, 6).map((feature, i) => (
-                <div key={i} className="flex items-center">
-                  <CheckCircleIcon className="h-4 w-4 text-green-600 mr-2 flex-shrink-0" />
-                  <span className="text-sm text-gray-700">{feature}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Next billing date & Payment method */}
-            {(billingInfo?.nextBillingDate || billingInfo?.paymentMethod) && (
-              <div className="border-t border-gray-200 pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {billingInfo.nextBillingDate && !isOnTrial && (
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CalendarDaysIcon className="h-4 w-4 mr-2 text-gray-400" />
-                    <span>Next billing: {new Date(billingInfo.nextBillingDate).toLocaleDateString()}</span>
-                  </div>
-                )}
-                {billingInfo.paymentMethod && (
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CreditCardIcon className="h-4 w-4 mr-2 text-gray-400" />
-                    <span className="capitalize">{billingInfo.paymentMethod.brand}</span>
-                    <span className="ml-1">&bull;&bull;&bull;&bull; {billingInfo.paymentMethod.last4}</span>
-                    <span className="ml-2 text-gray-400">
-                      {billingInfo.paymentMethod.expiryMonth}/{billingInfo.paymentMethod.expiryYear}
+        {/* Two-Column Layout — Stitch Style */}
+        <div className="flex gap-8">
+          {/* Left Column — Plan & Usage */}
+          <div className="flex-1 space-y-6">
+            {/* Current Plan Card */}
+            <div className="bg-surface-low rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full uppercase ${
+                      business?.subscription_status === 'active' ? 'bg-emerald-500/10 text-emerald-500' :
+                      business?.subscription_status === 'cancelled' ? 'bg-[#93000a]/10 text-[#ffb4ab]' :
+                      'bg-brand-primary/10 text-brand-primary'
+                    }`}>
+                      {business?.subscription_status === 'cancelled' ? 'Cancelled' : isOnTrial ? 'Trial' : 'Active'}
                     </span>
                   </div>
-                )}
+                  <h3 className="text-3xl font-extrabold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight">
+                    {isOnTrial ? 'Free Trial' : currentTier === 'pro' ? 'Pro Plan' : currentTier === 'growth' ? 'Growth Plan' : 'Starter Plan'}
+                  </h3>
+                  <p className="text-text-secondary text-sm mt-1">
+                    {isOnTrial ? 'Free' : `$${PLAN_PRICES[currentTier] || 49}`}
+                    {!isOnTrial && <span className="text-text-muted">/mo</span>}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  {canUpgrade && (
+                    <button onClick={() => {}} className="px-4 py-2 bg-brand-primary text-brand-on text-sm font-medium rounded-lg hover:bg-[#0060d0] transition-colors">
+                      Change Plan
+                    </button>
+                  )}
+                  {isPaidPlan && (
+                    <button onClick={handleCancelSubscription} disabled={cancelling} className="px-4 py-2 text-sm font-medium text-text-secondary bg-surface-high rounded-lg hover:bg-surface-highest transition-colors disabled:opacity-50">
+                      {cancelling ? 'Cancelling...' : 'Cancel Subscription'}
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
 
-            {/* Trial info */}
-            {isOnTrial && business?.trial_ends_at && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-                <div className="flex items-center">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-blue-600 mr-2 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-blue-800 font-medium">
-                      Trial ends {new Date(business.trial_ends_at).toLocaleDateString()}
-                    </p>
-                    <p className="text-xs text-blue-700 mt-0.5">
-                      Upgrade to keep your AI employees running
+              {/* Monthly Usage Bar */}
+              {businessId && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-text-primary">Monthly Usage</span>
+                    <span className="text-sm text-text-muted">
+                      {business?.credits_used_this_month || 0} / {(business?.monthly_credits || 0) + (business?.purchased_credits || 0)} <span className="text-xs">mins</span>
+                    </span>
+                  </div>
+                  <div className="w-full h-2.5 bg-surface-highest rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-brand-primary rounded-full transition-all"
+                      style={{ width: `${Math.min(100, ((business?.credits_used_this_month || 0) / Math.max(1, (business?.monthly_credits || 1) + (business?.purchased_credits || 0))) * 100)}%` }}
+                    />
+                  </div>
+                  {billingInfo?.nextBillingDate && !isOnTrial && (
+                    <p className="text-xs text-text-muted mt-2">Next billing cycle starts on {new Date(billingInfo.nextBillingDate).toLocaleDateString()}</p>
+                  )}
+                </div>
+              )}
+
+              {isOnTrial && business?.trial_ends_at && (
+                <div className="bg-brand-primary/5 rounded-lg p-4 mt-2">
+                  <div className="flex items-center">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-brand-primary mr-2 flex-shrink-0" />
+                    <p className="text-sm text-brand-light font-medium">
+                      Trial ends {new Date(business.trial_ends_at).toLocaleDateString()} — upgrade to keep your AI employees running
                     </p>
                   </div>
                 </div>
+              )}
+            </div>
+
+            {/* Usage Breakdown */}
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-text-primary font-[family-name:var(--font-manrope)]">Usage Breakdown</h3>
               </div>
-            )}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-surface-low rounded-2xl p-5">
+                  <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Voice Minutes</p>
+                  <p className="text-2xl font-extrabold text-text-primary font-[family-name:var(--font-manrope)]">
+                    {business?.credits_used_this_month || 0}<span className="text-sm font-normal text-text-muted"> / {business?.monthly_credits || 0}</span>
+                  </p>
+                </div>
+                <div className="bg-surface-low rounded-2xl p-5">
+                  <p className="text-xs uppercase tracking-widest text-text-muted mb-1">SMS Sent</p>
+                  <p className="text-2xl font-extrabold text-text-primary font-[family-name:var(--font-manrope)]">--</p>
+                </div>
+                <div className="bg-surface-low rounded-2xl p-5">
+                  <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Employees</p>
+                  <p className="text-2xl font-extrabold text-text-primary font-[family-name:var(--font-manrope)]">--</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Invoice History */}
+            <div>
+              <h3 className="text-lg font-bold text-text-primary font-[family-name:var(--font-manrope)] mb-4">Invoice History</h3>
+              <div className="bg-surface-low rounded-2xl overflow-hidden">
+                {invoices.length > 0 ? (
+                  <table className="w-full text-left">
+                    <thead>
+                      <tr className="bg-surface-highest/30">
+                        <th className="px-6 py-3 text-xs uppercase tracking-widest text-text-muted font-bold">Date</th>
+                        <th className="px-6 py-3 text-xs uppercase tracking-widest text-text-muted font-bold">Amount</th>
+                        <th className="px-6 py-3 text-xs uppercase tracking-widest text-text-muted font-bold">Status</th>
+                        <th className="px-6 py-3 text-xs uppercase tracking-widest text-text-muted font-bold text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[rgba(65,71,84,0.1)]">
+                      {invoices.map(invoice => (
+                        <tr key={invoice.id} className="hover:bg-surface-med transition-colors">
+                          <td className="px-6 py-4 text-sm text-text-primary">{new Date(invoice.date).toLocaleDateString()}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-text-primary">${invoice.amount.toFixed(2)}</td>
+                          <td className="px-6 py-4">
+                            <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full ${
+                              invoice.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500' :
+                              invoice.status === 'pending' ? 'bg-accent/10 text-accent' :
+                              'bg-[#93000a]/10 text-[#ffb4ab]'
+                            }`}>
+                              {invoice.status === 'paid' ? 'Paid' : invoice.status === 'pending' ? 'Pending' : 'Failed'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            {invoice.downloadUrl && (
+                              <a href={invoice.downloadUrl} target="_blank" rel="noopener noreferrer" className="text-brand-light hover:text-brand-primary text-sm font-medium inline-flex items-center">
+                                <ArrowDownTrayIcon className="h-4 w-4 mr-1" /> Download PDF
+                              </a>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="text-center py-10">
+                    <DocumentTextIcon className="h-10 w-10 text-text-muted mx-auto mb-3" />
+                    <p className="text-sm text-text-secondary">
+                      {isPaidPlan ? 'Invoices appear after your first billing cycle.' : 'Subscribe to a plan to see billing history.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column — Minutes Balance & Payment */}
+          <div className="hidden lg:block w-72 flex-shrink-0 space-y-6">
+            {/* Minutes Balance */}
+            <div className="bg-surface-low rounded-2xl p-6 space-y-4">
+              <h4 className="text-xs uppercase tracking-widest text-text-muted font-bold">Minutes Balance</h4>
+              <div className="text-center">
+                <div className="text-5xl font-extrabold text-brand-primary font-[family-name:var(--font-manrope)]">
+                  {Math.max(0, (business?.monthly_credits || 0) + (business?.purchased_credits || 0) - (business?.credits_used_this_month || 0)).toLocaleString()}
+                </div>
+                <div className="text-sm text-text-secondary mt-1">Minutes remaining</div>
+              </div>
+              <button className="w-full px-4 py-2.5 text-sm font-medium text-text-primary bg-surface-high rounded-lg hover:bg-surface-highest transition-colors">
+                + Purchase More
+              </button>
+            </div>
+
+            {/* Payment Method */}
+            <div className="bg-surface-low rounded-2xl p-6 space-y-4">
+              <h4 className="text-xs uppercase tracking-widest text-text-muted font-bold">Payment Method</h4>
+              {billingInfo?.paymentMethod ? (
+                <div>
+                  <div className="bg-surface-lowest rounded-xl p-4 mb-3">
+                    <p className="text-sm text-text-primary font-medium capitalize">{billingInfo.paymentMethod.brand} ending in</p>
+                    <p className="text-xl font-bold text-text-primary font-[family-name:var(--font-manrope)]">{billingInfo.paymentMethod.last4}</p>
+                    <p className="text-xs text-text-muted mt-1">Expires {billingInfo.paymentMethod.expiryMonth}/{billingInfo.paymentMethod.expiryYear}</p>
+                  </div>
+                  <button className="w-full px-4 py-2 text-sm font-medium text-text-primary bg-surface-high rounded-lg hover:bg-surface-highest transition-colors">
+                    Update
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm text-text-muted">No payment method on file</p>
+              )}
+            </div>
           </div>
         </div>
-
-        {/* Voice Minutes */}
-        {businessId && (
-          <div className="mb-8">
-            <CreditMeter businessId={businessId} showPurchaseButton={false} />
-          </div>
-        )}
 
         {/* Upgrade Options */}
         {canUpgrade && (
-          <div className="bg-white rounded-xl border border-gray-200 mb-8">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">
+          <div className="bg-surface-low rounded-xl border border-[rgba(65,71,84,0.15)] mb-8">
+            <div className="px-6 py-4 border-b border-[rgba(65,71,84,0.15)]">
+              <h2 className="text-lg font-semibold text-text-primary">
                 {isOnTrial ? 'Choose a Plan' : 'Upgrade'}
               </h2>
             </div>
@@ -402,25 +482,25 @@ function BillingPageContent() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 {/* Trial / Free */}
                 <div className={`border-2 rounded-xl p-6 transition-colors ${
-                  isOnTrial ? 'border-gray-300 bg-gray-50' : 'border-gray-200'
+                  isOnTrial ? 'border-[rgba(65,71,84,0.2)] bg-surface' : 'border-[rgba(65,71,84,0.15)]'
                 }`}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-900">Trial</h3>
-                    <div className="text-2xl font-bold text-gray-500">Free</div>
+                    <h3 className="text-xl font-bold text-text-primary">Trial</h3>
+                    <div className="text-2xl font-bold text-text-secondary">Free</div>
                   </div>
                   <ul className="space-y-2 mb-6">
-                    <li className="flex items-center text-sm text-gray-600"><CheckCircleIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />10 free calls</li>
-                    <li className="flex items-center text-sm text-gray-600"><CheckCircleIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />Shared phone number</li>
-                    <li className="flex items-center text-sm text-gray-600"><CheckCircleIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />Basic AI receptionist</li>
-                    <li className="flex items-center text-sm text-gray-600"><CheckCircleIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />Appointment booking</li>
-                    <li className="flex items-center text-sm text-gray-600"><CheckCircleIcon className="h-4 w-4 text-gray-400 mr-2 flex-shrink-0" />Email notifications</li>
+                    <li className="flex items-center text-sm text-text-secondary"><CheckCircleIcon className="h-4 w-4 text-text-muted mr-2 flex-shrink-0" />10 free calls</li>
+                    <li className="flex items-center text-sm text-text-secondary"><CheckCircleIcon className="h-4 w-4 text-text-muted mr-2 flex-shrink-0" />Shared phone number</li>
+                    <li className="flex items-center text-sm text-text-secondary"><CheckCircleIcon className="h-4 w-4 text-text-muted mr-2 flex-shrink-0" />Basic AI receptionist</li>
+                    <li className="flex items-center text-sm text-text-secondary"><CheckCircleIcon className="h-4 w-4 text-text-muted mr-2 flex-shrink-0" />Appointment booking</li>
+                    <li className="flex items-center text-sm text-text-secondary"><CheckCircleIcon className="h-4 w-4 text-text-muted mr-2 flex-shrink-0" />Email notifications</li>
                   </ul>
                   {isOnTrial ? (
-                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium bg-gray-100 text-gray-700">
+                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium bg-surface-high text-text-primary">
                       Current Plan
                     </div>
                   ) : (
-                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium text-gray-400">
+                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium text-text-muted">
                       Trial expired
                     </div>
                   )}
@@ -428,32 +508,32 @@ function BillingPageContent() {
 
                 {/* Starter Plan */}
                 <div className={`border-2 rounded-xl p-6 transition-colors ${
-                  isStarter ? 'border-blue-300 bg-blue-50' : 'border-gray-200 hover:border-blue-200'
+                  isStarter ? 'border-blue-300 bg-brand-primary/5' : 'border-[rgba(65,71,84,0.15)] hover:border-blue-200'
                 }`}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-900">Starter</h3>
-                    <div className="text-2xl font-bold text-blue-600">$49<span className="text-sm font-normal text-gray-500">/mo</span></div>
+                    <h3 className="text-xl font-bold text-text-primary">Starter</h3>
+                    <div className="text-2xl font-bold text-brand-primary">$49<span className="text-sm font-normal text-text-secondary">/mo</span></div>
                   </div>
                   <ul className="space-y-2 mb-6">
                     {SUBSCRIPTION_PRODUCTS.starter.features.slice(0, 8).map((f, i) => (
-                      <li key={i} className="flex items-center text-sm text-gray-700">
-                        <SparklesIcon className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                      <li key={i} className="flex items-center text-sm text-text-primary">
+                        <SparklesIcon className="h-4 w-4 text-brand-primary mr-2 flex-shrink-0" />
                         {f}
                       </li>
                     ))}
                   </ul>
                   {isStarter ? (
-                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium bg-blue-100 text-blue-700">
+                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium bg-brand-primary/10 text-brand-primary">
                       Current Plan
                     </div>
                   ) : (
                     <button
                       onClick={() => handleUpgrade('starter')}
                       disabled={upgrading === 'starter'}
-                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      className="w-full bg-brand-primary text-white py-3 px-4 rounded-lg hover:bg-[#0060d0] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     >
                       {upgrading === 'starter' ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-surface"></div>
                       ) : (
                         <>
                           Get Starter
@@ -466,37 +546,37 @@ function BillingPageContent() {
 
                 {/* Growth Plan */}
                 <div className={`border-2 rounded-xl p-6 transition-colors relative ${
-                  isGrowth ? 'border-blue-300 bg-blue-50' : 'border-blue-200 hover:border-blue-300'
+                  isGrowth ? 'border-blue-300 bg-brand-primary/5' : 'border-blue-200 hover:border-blue-300'
                 }`}>
                   <div className="absolute -top-3 left-6">
-                    <span className="bg-blue-600 text-white px-3 py-0.5 rounded-full text-xs font-medium">
+                    <span className="bg-brand-primary text-white px-3 py-0.5 rounded-full text-xs font-medium">
                       Most Popular
                     </span>
                   </div>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-900">Growth</h3>
-                    <div className="text-2xl font-bold text-blue-600">$129<span className="text-sm font-normal text-gray-500">/mo</span></div>
+                    <h3 className="text-xl font-bold text-text-primary">Growth</h3>
+                    <div className="text-2xl font-bold text-brand-primary">$129<span className="text-sm font-normal text-text-secondary">/mo</span></div>
                   </div>
                   <ul className="space-y-2 mb-6">
                     {SUBSCRIPTION_PRODUCTS.growth.features.slice(0, 7).map((f, i) => (
-                      <li key={i} className="flex items-center text-sm text-gray-700">
-                        <SparklesIcon className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
+                      <li key={i} className="flex items-center text-sm text-text-primary">
+                        <SparklesIcon className="h-4 w-4 text-brand-primary mr-2 flex-shrink-0" />
                         {f}
                       </li>
                     ))}
                   </ul>
                   {isGrowth ? (
-                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium bg-blue-100 text-blue-700">
+                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium bg-brand-primary/10 text-brand-primary">
                       Current Plan
                     </div>
                   ) : (
                     <button
                       onClick={() => handleUpgrade('growth')}
                       disabled={upgrading === 'growth'}
-                      className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                      className="w-full bg-brand-primary text-white py-3 px-4 rounded-lg hover:bg-[#0060d0] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     >
                       {upgrading === 'growth' ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-surface"></div>
                       ) : (
                         <>
                           {isStarter ? 'Upgrade to Growth' : 'Get Growth'}
@@ -512,19 +592,19 @@ function BillingPageContent() {
                   isPro ? 'border-indigo-300 bg-indigo-50' : 'border-indigo-200 hover:border-indigo-300'
                 }`}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-gray-900">Pro</h3>
-                    <div className="text-2xl font-bold text-indigo-600">$249<span className="text-sm font-normal text-gray-500">/mo</span></div>
+                    <h3 className="text-xl font-bold text-text-primary">Pro</h3>
+                    <div className="text-2xl font-bold text-indigo-400">$249<span className="text-sm font-normal text-text-secondary">/mo</span></div>
                   </div>
                   <ul className="space-y-2 mb-6">
                     {SUBSCRIPTION_PRODUCTS.pro.features.slice(0, 7).map((f, i) => (
-                      <li key={i} className="flex items-center text-sm text-gray-700">
+                      <li key={i} className="flex items-center text-sm text-text-primary">
                         <SparklesIcon className="h-4 w-4 text-indigo-500 mr-2 flex-shrink-0" />
                         {f}
                       </li>
                     ))}
                   </ul>
                   {isPro ? (
-                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium bg-indigo-100 text-indigo-700">
+                    <div className="w-full py-3 px-4 rounded-lg text-center text-sm font-medium bg-indigo-500/10 text-indigo-400">
                       Current Plan
                     </div>
                   ) : (
@@ -534,7 +614,7 @@ function BillingPageContent() {
                       className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                     >
                       {upgrading === 'pro' ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-surface"></div>
                       ) : (
                         <>
                           Upgrade to Pro
@@ -550,40 +630,40 @@ function BillingPageContent() {
         )}
 
         {/* Billing History */}
-        <div className="bg-white rounded-xl border border-gray-200 mb-8">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Billing History</h2>
+        <div className="bg-surface-low rounded-xl border border-[rgba(65,71,84,0.15)] mb-8">
+          <div className="px-6 py-4 border-b border-[rgba(65,71,84,0.15)]">
+            <h2 className="text-lg font-semibold text-text-primary">Billing History</h2>
           </div>
           <div className="p-6">
             {invoices.length > 0 ? (
               <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
+                <table className="min-w-full divide-y divide-[rgba(65,71,84,0.15)]">
                   <thead>
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Date</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Description</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">Status</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-[rgba(65,71,84,0.1)]">
                     {invoices.map((invoice) => (
                       <tr key={invoice.id}>
-                        <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">
+                        <td className="px-4 py-3 text-sm text-text-primary whitespace-nowrap">
                           {new Date(invoice.date).toLocaleDateString()}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-700">
+                        <td className="px-4 py-3 text-sm text-text-primary">
                           {invoice.description}
                         </td>
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900 whitespace-nowrap">
+                        <td className="px-4 py-3 text-sm font-medium text-text-primary whitespace-nowrap">
                           ${invoice.amount.toFixed(2)}
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
                           <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
-                            invoice.status === 'paid' ? 'bg-green-100 text-green-700' :
-                            invoice.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
+                            invoice.status === 'paid' ? 'bg-emerald-500/10 text-emerald-500' :
+                            invoice.status === 'pending' ? 'bg-accent/10 text-accent' :
+                            'bg-[#93000a]/10 text-[#ffb4ab]'
                           }`}>
                             {invoice.status === 'paid' ? 'Paid' :
                              invoice.status === 'pending' ? 'Pending' : 'Failed'}
@@ -595,7 +675,7 @@ function BillingPageContent() {
                               href={invoice.downloadUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-700 text-sm font-medium inline-flex items-center"
+                              className="text-brand-primary hover:text-brand-primary text-sm font-medium inline-flex items-center"
                             >
                               <ArrowDownTrayIcon className="h-4 w-4 mr-1" />
                               PDF
@@ -609,8 +689,8 @@ function BillingPageContent() {
               </div>
             ) : (
               <div className="text-center py-6">
-                <DocumentTextIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                <p className="text-sm text-gray-500">
+                <DocumentTextIcon className="h-10 w-10 text-text-muted mx-auto mb-3" />
+                <p className="text-sm text-text-secondary">
                   {isPaidPlan
                     ? 'Your invoices will appear here after your first billing cycle.'
                     : 'Billing history will appear here once you subscribe to a plan.'}
@@ -620,31 +700,6 @@ function BillingPageContent() {
           </div>
         </div>
 
-        {/* Cancel Subscription */}
-        {isPaidPlan && (
-          <div className="bg-white rounded-xl border border-gray-200">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Subscription Management</h2>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-700 font-medium">Cancel your subscription</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    You&apos;ll retain access until the end of your billing period.
-                  </p>
-                </div>
-                <button
-                  onClick={handleCancelSubscription}
-                  disabled={cancelling}
-                  className="px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
-                >
-                  {cancelling ? 'Cancelling...' : 'Cancel Subscription'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </Layout>
   )
@@ -657,9 +712,9 @@ function ProtectedBillingPage() {
         <Layout business={null}>
           <div className="p-8">
             <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 rounded w-1/3 mb-8"></div>
-              <div className="h-64 bg-gray-200 rounded mb-6"></div>
-              <div className="h-96 bg-gray-200 rounded"></div>
+              <div className="h-8 bg-surface-highest rounded w-1/3 mb-8"></div>
+              <div className="h-64 bg-surface-highest rounded mb-6"></div>
+              <div className="h-96 bg-surface-highest rounded"></div>
             </div>
           </div>
         </Layout>

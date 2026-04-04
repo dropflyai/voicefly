@@ -167,13 +167,13 @@ export default function MultiLocationAnalytics() {
       <Layout business={business}>
         <div className="p-6">
           <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-8 bg-surface-highest rounded w-1/3"></div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-24 bg-gray-200 rounded"></div>
+                <div key={i} className="h-24 bg-surface-highest rounded"></div>
               ))}
             </div>
-            <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="h-64 bg-surface-highest rounded"></div>
           </div>
         </div>
       </Layout>
@@ -187,11 +187,11 @@ export default function MultiLocationAnalytics() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center">
-                <BuildingOffice2Icon className="h-8 w-8 mr-3 text-purple-600" />
+              <h1 className="text-3xl font-bold text-text-primary flex items-center">
+                <BuildingOffice2Icon className="h-8 w-8 mr-3 text-purple-400" />
                 Multi-Location Analytics
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-text-secondary mt-2">
                 Compare performance across all your business locations
               </p>
             </div>
@@ -200,7 +200,7 @@ export default function MultiLocationAnalytics() {
               <select 
                 value={dateRange}
                 onChange={(e) => setDateRange(e.target.value as any)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500"
+                className="px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-sm focus:ring-2 focus:ring-purple-500"
               >
                 <option value="week">This Week</option>
                 <option value="month">This Month</option>
@@ -218,10 +218,10 @@ export default function MultiLocationAnalytics() {
               <div>
                 <p className="text-sm font-medium text-green-800">Total Revenue</p>
                 <p className="text-2xl font-bold text-green-900">${totalMetrics.totalRevenue.toLocaleString()}</p>
-                <p className="text-sm text-green-700">{locations.length} locations</p>
+                <p className="text-sm text-emerald-500">{locations.length} locations</p>
               </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <CurrencyDollarIcon className="h-6 w-6 text-green-600" />
+              <div className="p-3 bg-emerald-500/10 rounded-full">
+                <CurrencyDollarIcon className="h-6 w-6 text-emerald-500" />
               </div>
             </div>
           </div>
@@ -231,10 +231,10 @@ export default function MultiLocationAnalytics() {
               <div>
                 <p className="text-sm font-medium text-blue-800">Total Appointments</p>
                 <p className="text-2xl font-bold text-blue-900">{totalMetrics.totalAppointments}</p>
-                <p className="text-sm text-blue-700">Across all locations</p>
+                <p className="text-sm text-brand-primary">Across all locations</p>
               </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <CalendarIcon className="h-6 w-6 text-blue-600" />
+              <div className="p-3 bg-brand-primary/10 rounded-full">
+                <CalendarIcon className="h-6 w-6 text-brand-primary" />
               </div>
             </div>
           </div>
@@ -244,10 +244,10 @@ export default function MultiLocationAnalytics() {
               <div>
                 <p className="text-sm font-medium text-purple-800">Total Customers</p>
                 <p className="text-2xl font-bold text-purple-900">{totalMetrics.totalCustomers}</p>
-                <p className="text-sm text-purple-700">Unique customers</p>
+                <p className="text-sm text-purple-400">Unique customers</p>
               </div>
-              <div className="p-3 bg-purple-100 rounded-full">
-                <UserGroupIcon className="h-6 w-6 text-purple-600" />
+              <div className="p-3 bg-purple-500/10 rounded-full">
+                <UserGroupIcon className="h-6 w-6 text-purple-400" />
               </div>
             </div>
           </div>
@@ -257,9 +257,9 @@ export default function MultiLocationAnalytics() {
               <div>
                 <p className="text-sm font-medium text-orange-800">Avg Utilization</p>
                 <p className="text-2xl font-bold text-orange-900">{totalMetrics.avgUtilization.toFixed(1)}%</p>
-                <p className="text-sm text-orange-700">{totalMetrics.totalStaff} total staff</p>
+                <p className="text-sm text-accent">{totalMetrics.totalStaff} total staff</p>
               </div>
-              <div className="p-3 bg-orange-100 rounded-full">
+              <div className="p-3 bg-accent/10 rounded-full">
                 <ChartBarIcon className="h-6 w-6 text-orange-600" />
               </div>
             </div>
@@ -267,15 +267,15 @@ export default function MultiLocationAnalytics() {
         </div>
 
         {/* Location Comparison Chart */}
-        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <div className="bg-surface-low rounded-xl shadow-sm p-6 mb-8">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Location Performance Comparison</h3>
+            <h3 className="text-lg font-semibold text-text-primary">Location Performance Comparison</h3>
             <div className="flex items-center space-x-4">
-              <label className="text-sm font-medium text-gray-700">Compare by:</label>
+              <label className="text-sm font-medium text-text-primary">Compare by:</label>
               <select 
                 value={selectedMetric}
                 onChange={(e) => setSelectedMetric(e.target.value as any)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-purple-500"
+                className="px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-sm focus:ring-2 focus:ring-purple-500"
               >
                 <option value="revenue">Revenue</option>
                 <option value="appointments">Appointments</option>
@@ -319,26 +319,26 @@ export default function MultiLocationAnalytics() {
         {/* Individual Location Cards */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {locations.map((location) => (
-            <div key={location.locationId} className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+            <div key={location.locationId} className="bg-surface-low rounded-xl shadow-sm border border-[rgba(65,71,84,0.15)] hover:shadow-md transition-shadow">
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="font-semibold text-gray-900 flex items-center">
-                      <MapPinIcon className="h-4 w-4 mr-2 text-gray-500" />
+                    <h3 className="font-semibold text-text-primary flex items-center">
+                      <MapPinIcon className="h-4 w-4 mr-2 text-text-secondary" />
                       {location.locationName}
                     </h3>
-                    <p className="text-sm text-gray-600">{location.address}</p>
+                    <p className="text-sm text-text-secondary">{location.address}</p>
                   </div>
                   <div className="flex items-center space-x-1">
                     {location.trend === 'up' ? (
                       <ArrowTrendingUpIcon className="h-4 w-4 text-green-500" />
                     ) : location.trend === 'down' ? (
-                      <ArrowTrendingDownIcon className="h-4 w-4 text-red-500" />
+                      <ArrowTrendingDownIcon className="h-4 w-4 text-[#ffb4ab]" />
                     ) : null}
                     <span className={`text-sm font-medium ${
-                      location.trend === 'up' ? 'text-green-600' :
-                      location.trend === 'down' ? 'text-red-600' :
-                      'text-gray-600'
+                      location.trend === 'up' ? 'text-emerald-500' :
+                      location.trend === 'down' ? 'text-[#ffb4ab]' :
+                      'text-text-secondary'
                     }`}>
                       {location.trendPercentage > 0 ? '+' : ''}{location.trendPercentage}%
                     </span>
@@ -348,47 +348,47 @@ export default function MultiLocationAnalytics() {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">Revenue</p>
-                      <p className="text-xl font-bold text-green-600">${location.revenue.toLocaleString()}</p>
+                      <p className="text-sm text-text-secondary">Revenue</p>
+                      <p className="text-xl font-bold text-emerald-500">${location.revenue.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Appointments</p>
-                      <p className="text-xl font-bold text-blue-600">{location.appointments}</p>
+                      <p className="text-sm text-text-secondary">Appointments</p>
+                      <p className="text-xl font-bold text-brand-primary">{location.appointments}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600">Customers</p>
+                      <p className="text-sm text-text-secondary">Customers</p>
                       <p className="text-lg font-semibold">{location.customers}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Avg Ticket</p>
+                      <p className="text-sm text-text-secondary">Avg Ticket</p>
                       <p className="text-lg font-semibold">${location.averageTicket}</p>
                     </div>
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm text-gray-600">Utilization</span>
+                      <span className="text-sm text-text-secondary">Utilization</span>
                       <span className="text-sm font-medium">{location.utilizationRate}%</span>
                     </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div className="w-full bg-surface-highest rounded-full h-2">
                       <div 
                         className={`h-2 rounded-full transition-all duration-300 ${
-                          location.utilizationRate >= 80 ? 'bg-green-500' :
+                          location.utilizationRate >= 80 ? 'bg-emerald-500' :
                           location.utilizationRate >= 70 ? 'bg-yellow-500' :
-                          'bg-red-500'
+                          'bg-[#93000a]/50'
                         }`}
                         style={{ width: `${location.utilizationRate}%` }}
                       />
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-200 pt-3">
-                    <p className="text-sm text-gray-600">Top Service</p>
-                    <p className="font-medium text-gray-900">{location.topService}</p>
-                    <p className="text-xs text-gray-500">{location.staffCount} staff members</p>
+                  <div className="border-t border-[rgba(65,71,84,0.15)] pt-3">
+                    <p className="text-sm text-text-secondary">Top Service</p>
+                    <p className="font-medium text-text-primary">{location.topService}</p>
+                    <p className="text-xs text-text-secondary">{location.staffCount} staff members</p>
                   </div>
                 </div>
               </div>
@@ -397,31 +397,31 @@ export default function MultiLocationAnalytics() {
         </div>
 
         {/* Performance Insights */}
-        <div className="bg-white rounded-xl shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Location Insights</h3>
+        <div className="bg-surface-low rounded-xl shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-text-primary mb-6">Location Insights</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div className="flex items-start space-x-3">
-                  <TrophyIcon className="h-5 w-5 text-green-600 mt-0.5" />
+                  <TrophyIcon className="h-5 w-5 text-emerald-500 mt-0.5" />
                   <div>
                     <h4 className="font-medium text-green-900">Top Performer</h4>
                     <p className="text-sm text-green-800">{bestPerformer?.locationName}</p>
-                    <p className="text-sm text-green-700">
+                    <p className="text-sm text-emerald-500">
                       ${bestPerformer?.revenue.toLocaleString()} revenue with {bestPerformer?.utilizationRate}% utilization
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-brand-primary/5 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-start space-x-3">
-                  <ChartBarIcon className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <ChartBarIcon className="h-5 w-5 text-brand-primary mt-0.5" />
                   <div>
                     <h4 className="font-medium text-blue-900">Growth Opportunity</h4>
                     <p className="text-sm text-blue-800">Average utilization could improve</p>
-                    <p className="text-sm text-blue-700">
+                    <p className="text-sm text-brand-primary">
                       Current: {totalMetrics.avgUtilization.toFixed(1)}% | Target: 85%
                     </p>
                   </div>
@@ -436,7 +436,7 @@ export default function MultiLocationAnalytics() {
                   <div>
                     <h4 className="font-medium text-yellow-900">Needs Attention</h4>
                     <p className="text-sm text-yellow-800">{worstPerformer?.locationName}</p>
-                    <p className="text-sm text-yellow-700">
+                    <p className="text-sm text-accent">
                       {worstPerformer?.utilizationRate}% utilization - consider staff training or marketing boost
                     </p>
                   </div>
@@ -445,11 +445,11 @@ export default function MultiLocationAnalytics() {
 
               <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
                 <div className="flex items-start space-x-3">
-                  <BuildingOffice2Icon className="h-5 w-5 text-purple-600 mt-0.5" />
+                  <BuildingOffice2Icon className="h-5 w-5 text-purple-400 mt-0.5" />
                   <div>
                     <h4 className="font-medium text-purple-900">Network Performance</h4>
                     <p className="text-sm text-purple-800">Strong multi-location presence</p>
-                    <p className="text-sm text-purple-700">
+                    <p className="text-sm text-purple-400">
                       ${(totalMetrics.totalRevenue / locations.length).toLocaleString()} average per location
                     </p>
                   </div>
