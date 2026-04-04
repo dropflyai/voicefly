@@ -7,7 +7,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import { supabase } from '../supabase-client'
-import { CreditSystem } from '../credit-system'
+// Credit system removed — features are included
 import { ErrorTracker, ErrorCategory, ErrorSeverity } from '../error-tracking'
 import AuditLogger, { AuditEventType } from '../audit-logger'
 import {
@@ -89,7 +89,7 @@ export class CallIntelligenceAgent {
 
     try {
       // Check credits
-      const hasCredits = await CreditSystem.hasCredits(businessId, AgentCreditCost.CALL_ANALYSIS)
+      const hasCredits = true /* minutes system: included feature */
       if (!hasCredits) {
         return {
           success: false,
@@ -117,7 +117,7 @@ export class CallIntelligenceAgent {
       await this.storeAnalysis(analysis)
 
       // Deduct credits
-      await CreditSystem.deductCredits(
+      // Included feature — no deduction: // await deductCredits(
         businessId,
         AgentCreditCost.CALL_ANALYSIS,
         'call_analysis',

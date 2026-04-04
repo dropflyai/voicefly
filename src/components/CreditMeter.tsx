@@ -1,26 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Clock, Battery, BatteryLow, BatteryWarning, Plus, TrendingUp } from 'lucide-react'
+import { Clock } from 'lucide-react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase-client'
 
-interface CreditBalance {
-  monthly_credits: number
-  purchased_credits: number
-  total_credits: number
-  credits_used_this_month: number
-  credits_reset_date: string
-  // Minute equivalents (from API)
-  monthly_minutes?: number
-  purchased_minutes?: number
-  total_minutes?: number
-  minutes_used_this_month?: number
+interface MinutesBalance {
+  monthly_minutes: number
+  purchased_minutes: number
+  minutes_used_this_month: number
+  minutes_remaining: number
+  total_allocation: number
 }
-
-// Fallback conversion if API doesn't provide minutes
-const CREDITS_PER_MINUTE = 5
-const toMinutes = (credits: number) => Math.floor(credits / CREDITS_PER_MINUTE)
 
 interface CreditMeterProps {
   businessId: string
@@ -33,13 +24,11 @@ export default function CreditMeter({
   compact = false,
   showPurchaseButton = true
 }: CreditMeterProps) {
-  const [balance, setBalance] = useState<CreditBalance | null>(null)
+  const [balance, setBalance] = useState<MinutesBalance | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchBalance()
-    // Refresh balance every 30 seconds
     const interval = setInterval(fetchBalance, 30000)
     return () => clearInterval(interval)
   }, [businessId])
@@ -51,220 +40,101 @@ export default function CreditMeter({
       if (session?.access_token) {
         headers['Authorization'] = `Bearer ${session.access_token}`
       }
-      const response = await fetch(`/api/credits/balance?business_id=${businessId}`, { headers })
-      if (!response.ok) throw new Error('Failed to fetch balance')
 
-      const data = await response.json()
-      setBalance(data.balance)
-      setError(null)
+      const res = await fetch(`/api/credits/balance?business_id=${businessId}`, { headers })
+      if (!res.ok) return
+
+      const data = await res.json()
+      if (data.success && data.balance) {
+        setBalance({
+          monthly_minutes: data.balance.monthly_minutes ?? data.balance.monthly_credits ?? 0,
+          purchased_minutes: data.balance.purchased_minutes ?? data.balance.purchased_credits ?? 0,
+          minutes_used_this_month: data.balance.minutes_used_this_month ?? data.balance.credits_used_this_month ?? 0,
+          minutes_remaining: data.balance.minutes_remaining ?? data.balance.total_credits ?? 0,
+          total_allocation: data.balance.total_allocation ?? ((data.balance.monthly_credits ?? 0) + (data.balance.purchased_credits ?? 0)),
+        })
+      }
     } catch (err) {
-      console.error('Error fetching credit balance:', err)
-      setError('Failed to load credits')
+      console.error('Failed to fetch minutes balance:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  if (loading) {
+  if (loading || !balance) {
     return (
-      <div className="flex items-center space-x-2 text-gray-400 animate-pulse">
-        <Battery className="h-5 w-5" />
-        <span className="text-sm">Loading...</span>
+      <div className="bg-surface-low rounded-2xl p-6 animate-pulse">
+        <div className="h-4 bg-surface-highest rounded w-1/3 mb-3"></div>
+        <div className="h-8 bg-surface-highest rounded w-1/2"></div>
       </div>
     )
   }
 
-  if (error || !balance) {
-    return (
-      <div className="flex items-center space-x-2 text-red-500">
-        <BatteryWarning className="h-5 w-5" />
-        <span className="text-sm">{error || 'Error'}</span>
-      </div>
-    )
-  }
+  const { monthly_minutes, purchased_minutes, minutes_used_this_month, minutes_remaining, total_allocation } = balance
+  const percentUsed = total_allocation > 0 ? Math.min(100, (minutes_used_this_month / total_allocation) * 100) : 0
+  const isLow = percentUsed >= 80
+  const isDepleted = minutes_remaining <= 0
 
-  const { total_credits, monthly_credits, purchased_credits } = balance
-
-  // Use API-provided minutes or calculate from credits
-  const total_minutes = balance.total_minutes ?? toMinutes(total_credits)
-  const monthly_minutes = balance.monthly_minutes ?? toMinutes(monthly_credits)
-  const purchased_minutes = balance.purchased_minutes ?? toMinutes(purchased_credits)
-  const minutes_used = balance.minutes_used_this_month ?? toMinutes(balance.credits_used_this_month)
-
-  const percentageRemaining = Math.max(0, Math.min(100, (total_credits / Math.max(monthly_credits + purchased_credits, 1)) * 100))
-
-  // Determine status color
-  let statusColor = 'text-green-600'
-  let bgColor = 'bg-green-100'
-  let Icon = Battery
-
-  if (percentageRemaining <= 10) {
-    statusColor = 'text-red-600'
-    bgColor = 'bg-red-100'
-    Icon = BatteryWarning
-  } else if (percentageRemaining <= 20) {
-    statusColor = 'text-yellow-600'
-    bgColor = 'bg-yellow-100'
-    Icon = BatteryLow
-  }
-
-  // Compact view (for header)
   if (compact) {
     return (
-      <div className="flex items-center space-x-2">
-        <div className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg ${bgColor}`}>
-          <Clock className={`h-4 w-4 ${statusColor}`} />
-          <span className={`text-sm font-semibold ${statusColor}`}>
-            {total_minutes.toLocaleString()} min
-          </span>
-        </div>
-
-        {showPurchaseButton && (
-          <Link
-            href="/dashboard/billing/credits"
-            className="flex items-center space-x-1 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
-          >
-            <Plus className="h-3.5 w-3.5" />
-            <span>Buy</span>
-          </Link>
-        )}
+      <div className="flex items-center gap-2 text-sm">
+        <Clock className="h-4 w-4 text-text-muted" />
+        <span className={`font-medium ${isDepleted ? 'text-[#ffb4ab]' : isLow ? 'text-accent' : 'text-text-primary'}`}>
+          {minutes_remaining} min remaining
+        </span>
       </div>
     )
   }
 
-  // Full view (for billing page)
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-          <Clock className={`h-5 w-5 mr-2 ${statusColor}`} />
+    <div className="bg-surface-low rounded-2xl p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-bold text-text-primary font-[family-name:var(--font-manrope)] flex items-center gap-2">
+          <Clock className="h-4 w-4 text-text-muted" />
           Voice Minutes
         </h3>
-        {showPurchaseButton && (
-          <Link
-            href="/dashboard/billing/credits"
-            className="flex items-center space-x-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Purchase Minutes</span>
-          </Link>
+        <span className="text-sm text-text-muted">
+          {minutes_used_this_month} / {total_allocation} used
+        </span>
+      </div>
+
+      {/* Usage bar */}
+      <div className="w-full h-2.5 bg-surface-highest rounded-full overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all ${
+            isDepleted ? 'bg-[#ffb4ab]' : isLow ? 'bg-accent' : 'bg-brand-primary'
+          }`}
+          style={{ width: `${percentUsed}%` }}
+        />
+      </div>
+
+      <div className="flex items-center justify-between text-xs text-text-muted">
+        <span>{minutes_remaining} minutes remaining</span>
+        {purchased_minutes > 0 && (
+          <span>({purchased_minutes} purchased)</span>
         )}
       </div>
 
-      <div className="space-y-4">
-        {/* Total Minutes */}
-        <div>
-          <div className="flex items-baseline justify-between mb-2">
-            <span className="text-3xl font-bold text-gray-900">
-              {total_minutes.toLocaleString()}
-            </span>
-            <span className="text-sm text-gray-500">
-              minutes remaining
-            </span>
-          </div>
+      {isDepleted && (
+        <p className="text-xs text-[#ffb4ab] font-medium">
+          You&apos;ve used all your minutes this month. Upgrade or purchase more to continue receiving calls.
+        </p>
+      )}
 
-          {/* Progress bar */}
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div
-              className={`h-2.5 rounded-full transition-all ${
-                percentageRemaining <= 10 ? 'bg-red-500' :
-                percentageRemaining <= 20 ? 'bg-yellow-500' :
-                'bg-green-500'
-              }`}
-              style={{ width: `${percentageRemaining}%` }}
-            />
-          </div>
-        </div>
+      {isLow && !isDepleted && (
+        <p className="text-xs text-accent">
+          Running low on minutes. Consider upgrading your plan.
+        </p>
+      )}
 
-        {/* Breakdown */}
-        <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-          <div>
-            <div className="text-sm text-gray-500 mb-1">Monthly Allocation</div>
-            <div className="text-xl font-semibold text-gray-900">
-              {monthly_minutes.toLocaleString()} min
-            </div>
-            <div className="text-xs text-gray-400 mt-1">
-              Resets {new Date(balance.credits_reset_date).toLocaleDateString()}
-            </div>
-          </div>
-
-          <div>
-            <div className="text-sm text-gray-500 mb-1">Purchased Minutes</div>
-            <div className="text-xl font-semibold text-blue-600">
-              {purchased_minutes.toLocaleString()} min
-            </div>
-            <div className="text-xs text-gray-400 mt-1">
-              Never expire
-            </div>
-          </div>
-        </div>
-
-        {/* Usage this month */}
-        <div className="pt-4 border-t border-gray-200">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">Used this month</span>
-            <span className="font-semibold text-gray-900">
-              {minutes_used.toLocaleString()} minutes
-            </span>
-          </div>
-        </div>
-
-        {/* Low minutes warning */}
-        {percentageRemaining <= 20 && total_minutes > 0 && (
-          <div className={`${bgColor} border ${percentageRemaining <= 10 ? 'border-red-300' : 'border-yellow-300'} rounded-lg p-4`}>
-            <div className="flex items-start">
-              <BatteryWarning className={`h-5 w-5 ${statusColor} mt-0.5 mr-3 flex-shrink-0`} />
-              <div>
-                <h4 className={`font-semibold ${statusColor} mb-1`}>
-                  {percentageRemaining <= 10 ? 'Critical: Low Minutes' : 'Warning: Low Minutes'}
-                </h4>
-                <p className="text-sm text-gray-700 mb-3">
-                  You have {total_minutes} minutes remaining ({percentageRemaining.toFixed(0)}%).
-                  {percentageRemaining <= 10 && ' Your account will be limited when you run out.'}
-                </p>
-                <div className="flex space-x-3">
-                  <Link
-                    href="/dashboard/billing/credits"
-                    className="text-sm font-medium text-blue-600 hover:text-blue-700"
-                  >
-                    Purchase Minutes →
-                  </Link>
-                  <Link
-                    href="/dashboard/billing"
-                    className="text-sm font-medium text-gray-600 hover:text-gray-700"
-                  >
-                    Upgrade Plan →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Out of minutes */}
-        {total_minutes === 0 && (
-          <div className="bg-red-50 border border-red-300 rounded-lg p-4">
-            <div className="flex items-start">
-              <BatteryWarning className="h-5 w-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
-              <div>
-                <h4 className="font-semibold text-red-600 mb-1">
-                  Out of Minutes
-                </h4>
-                <p className="text-sm text-gray-700 mb-3">
-                  You've used all your voice minutes. Purchase more to continue using VoiceFly.
-                </p>
-                <Link
-                  href="/dashboard/billing/credits"
-                  className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm font-medium"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Purchase Minutes Now
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      {showPurchaseButton && (
+        <Link
+          href="/dashboard/billing"
+          className="block text-center text-sm font-medium text-text-primary bg-surface-high hover:bg-surface-highest rounded-lg py-2 transition-colors"
+        >
+          {isDepleted ? 'Upgrade Plan' : 'Manage Plan'}
+        </Link>
+      )}
     </div>
   )
 }

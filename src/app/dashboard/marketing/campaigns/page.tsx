@@ -127,10 +127,10 @@ export default function CampaignsPage() {
 
   const getStatusBadge = (status: Campaign['status']) => {
     const styles = {
-      draft: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      scheduled: 'bg-blue-100 text-blue-800 border-blue-200',
-      sent: 'bg-green-100 text-green-800 border-green-200',
-      paused: 'bg-gray-100 text-gray-800 border-gray-200'
+      draft: 'bg-accent/10 text-yellow-800 border-yellow-200',
+      scheduled: 'bg-brand-primary/10 text-blue-800 border-blue-200',
+      sent: 'bg-emerald-500/10 text-green-800 border-green-200',
+      paused: 'bg-surface-high text-text-primary border-[rgba(65,71,84,0.15)]'
     }
     
     return (
@@ -188,8 +188,8 @@ export default function CampaignsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Email Campaigns</h1>
-          <p className="text-sm text-gray-600">Manage and track your email marketing campaigns</p>
+          <h1 className="text-2xl font-bold text-text-primary">Email Campaigns</h1>
+          <p className="text-sm text-text-secondary">Manage and track your email marketing campaigns</p>
         </div>
         <Link
           href="/dashboard/marketing/campaigns/new"
@@ -201,15 +201,15 @@ export default function CampaignsPage() {
       </div>
 
       {/* Filters and Search */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
         <div className="flex flex-col sm:flex-row gap-4">
           {/* Search */}
           <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <MagnifyingGlassIcon className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted" />
             <input
               type="text"
               placeholder="Search campaigns..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-brand-primary"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -220,7 +220,7 @@ export default function CampaignsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="appearance-none bg-surface-low border border-[rgba(65,71,84,0.2)] rounded-lg px-4 py-2 pr-8 focus:ring-2 focus:ring-purple-500 focus:border-brand-primary"
             >
               <option value="all">All Status</option>
               <option value="draft">Draft</option>
@@ -228,25 +228,25 @@ export default function CampaignsPage() {
               <option value="sent">Sent</option>
               <option value="paused">Paused</option>
             </select>
-            <FunnelIcon className="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <FunnelIcon className="w-4 h-4 absolute right-2 top-1/2 transform -translate-y-1/2 text-text-muted pointer-events-none" />
           </div>
         </div>
 
         {/* Bulk Actions */}
         {selectedCampaigns.length > 0 && (
           <div className="mt-4 flex items-center gap-3 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-            <span className="text-sm text-purple-700">
+            <span className="text-sm text-purple-400">
               {selectedCampaigns.length} campaign{selectedCampaigns.length !== 1 ? 's' : ''} selected
             </span>
             <button
               onClick={() => handleBulkAction('duplicate')}
-              className="text-sm text-purple-600 hover:text-purple-800 font-medium"
+              className="text-sm text-purple-400 hover:text-purple-800 font-medium"
             >
               Duplicate
             </button>
             <button
               onClick={() => handleBulkAction('delete')}
-              className="text-sm text-red-600 hover:text-red-800 font-medium"
+              className="text-sm text-[#ffb4ab] hover:text-red-800 font-medium"
             >
               Delete
             </button>
@@ -255,56 +255,56 @@ export default function CampaignsPage() {
       </div>
 
       {/* Campaigns Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-surface">
               <tr>
                 <th className="px-4 py-3 text-left">
                   <input
                     type="checkbox"
                     checked={selectedCampaigns.length === filteredCampaigns.length && filteredCampaigns.length > 0}
                     onChange={selectAllCampaigns}
-                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                    className="rounded border-[rgba(65,71,84,0.2)] text-purple-400 focus:ring-purple-500"
                   />
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Campaign
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Recipients
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Performance
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Created
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-surface-low divide-y divide-[rgba(65,71,84,0.15)]">
               {filteredCampaigns.map((campaign) => (
-                <tr key={campaign.id} className="hover:bg-gray-50">
+                <tr key={campaign.id} className="hover:bg-surface">
                   <td className="px-4 py-4">
                     <input
                       type="checkbox"
                       checked={selectedCampaigns.includes(campaign.id)}
                       onChange={() => toggleCampaignSelection(campaign.id)}
-                      className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      className="rounded border-[rgba(65,71,84,0.2)] text-purple-400 focus:ring-purple-500"
                     />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center">
                       <span className="text-lg mr-3">{getTemplateIcon(campaign.template_type)}</span>
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{campaign.name}</div>
-                        <div className="text-sm text-gray-500 truncate max-w-xs">{campaign.subject}</div>
+                        <div className="text-sm font-medium text-text-primary">{campaign.name}</div>
+                        <div className="text-sm text-text-secondary truncate max-w-xs">{campaign.subject}</div>
                       </div>
                     </div>
                   </td>
@@ -312,28 +312,28 @@ export default function CampaignsPage() {
                     {getStatusBadge(campaign.status)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{campaign.recipient_count.toLocaleString()}</div>
-                    <div className="text-xs text-gray-500">recipients</div>
+                    <div className="text-sm text-text-primary">{campaign.recipient_count.toLocaleString()}</div>
+                    <div className="text-xs text-text-secondary">recipients</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {campaign.status === 'sent' && campaign.open_rate ? (
                       <div>
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-text-primary">
                           {campaign.open_rate}% open
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-text-secondary">
                           {campaign.click_rate}% click
                         </div>
                       </div>
                     ) : (
-                      <span className="text-sm text-gray-400">—</span>
+                      <span className="text-sm text-text-muted">—</span>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-text-primary">
                       {new Date(campaign.created_at).toLocaleDateString()}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-text-secondary">
                       {new Date(campaign.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </td>
@@ -341,7 +341,7 @@ export default function CampaignsPage() {
                     <div className="flex items-center justify-end space-x-2">
                       <Link
                         href={`/dashboard/marketing/campaigns/${campaign.id}`}
-                        className="text-purple-600 hover:text-purple-900 text-sm font-medium"
+                        className="text-purple-400 hover:text-purple-900 text-sm font-medium"
                       >
                         View
                       </Link>
@@ -349,16 +349,16 @@ export default function CampaignsPage() {
                         <>
                           <Link
                             href={`/dashboard/marketing/campaigns/${campaign.id}/edit`}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-brand-primary hover:text-blue-900"
                           >
                             <PencilIcon className="w-4 h-4" />
                           </Link>
-                          <button className="text-green-600 hover:text-green-900">
+                          <button className="text-emerald-500 hover:text-green-900">
                             <PaperAirplaneIcon className="w-4 h-4" />
                           </button>
                         </>
                       )}
-                      <button className="text-gray-400 hover:text-gray-600">
+                      <button className="text-text-muted hover:text-text-secondary">
                         <EllipsisVerticalIcon className="w-4 h-4" />
                       </button>
                     </div>
@@ -371,11 +371,11 @@ export default function CampaignsPage() {
         
         {filteredCampaigns.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">
+            <div className="text-text-muted mb-4">
               <PaperAirplaneIcon className="w-16 h-16 mx-auto" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No campaigns found</h3>
-            <p className="text-gray-500 mb-6">
+            <h3 className="text-lg font-medium text-text-primary mb-2">No campaigns found</h3>
+            <p className="text-text-secondary mb-6">
               {searchTerm || statusFilter !== 'all' 
                 ? 'Try adjusting your filters or search terms'
                 : 'Create your first email campaign to get started'
@@ -395,32 +395,32 @@ export default function CampaignsPage() {
       </div>
 
       {/* Summary Stats */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Campaign Summary</h3>
+      <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
+        <h3 className="text-lg font-medium text-text-primary mb-4">Campaign Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900">
+            <div className="text-2xl font-bold text-text-primary">
               {campaigns.length}
             </div>
-            <div className="text-sm text-gray-500">Total Campaigns</div>
+            <div className="text-sm text-text-secondary">Total Campaigns</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-emerald-500">
               {campaigns.filter(c => c.status === 'sent').length}
             </div>
-            <div className="text-sm text-gray-500">Sent</div>
+            <div className="text-sm text-text-secondary">Sent</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">
+            <div className="text-2xl font-bold text-brand-primary">
               {campaigns.filter(c => c.status === 'scheduled').length}
             </div>
-            <div className="text-sm text-gray-500">Scheduled</div>
+            <div className="text-sm text-text-secondary">Scheduled</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-yellow-600">
               {campaigns.filter(c => c.status === 'draft').length}
             </div>
-            <div className="text-sm text-gray-500">Drafts</div>
+            <div className="text-sm text-text-secondary">Drafts</div>
           </div>
         </div>
       </div>

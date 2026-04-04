@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { ResearchAPI } from '@/lib/research-api'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
 import AuditLogger, { AuditEventType } from '@/lib/audit-logger'
-import CreditSystem, { CreditCost } from '@/lib/credit-system'
+// Credit system removed — feature is included
 import { validateAuth, validateBusinessAccess } from '@/lib/api-auth'
 
 export const runtime = 'nodejs'
@@ -501,42 +501,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check credits before performing research (businessId is now guaranteed)
-    if (businessId) {
-      const creditCost = mode === 'deep' ? CreditCost.MAYA_DEEP_RESEARCH : CreditCost.MAYA_QUICK_RESEARCH
-
-      const hasCredits = await CreditSystem.hasCredits(businessId, creditCost)
-      if (!hasCredits) {
-        const balance = await CreditSystem.getBalance(businessId)
-        return NextResponse.json(
-          {
-            error: 'Insufficient credits',
-            required: creditCost,
-            available: balance?.total_credits || 0,
-            upgrade_url: '/dashboard/billing',
-            purchase_url: '/dashboard/billing/credits'
-          },
-          { status: 402 } // Payment Required
-        )
-      }
-
-      // Deduct credits
-      const deductResult = await CreditSystem.deductCredits(
-        businessId,
-        creditCost,
-        `maya_research_${mode}`,
-        { query, mode }
-      )
-
-      if (!deductResult.success) {
-        return NextResponse.json(
-          { error: deductResult.error || 'Failed to deduct credits' },
-          { status: 500 }
-        )
-      }
-
-      console.log(`✅ Deducted ${creditCost} credits for ${mode} research. Balance: ${deductResult.balance?.total_credits}`)
-    }
+    // Research is an included feature — no minute deduction
 
     // Perform web searches
     const searchResults = await performWebSearch(query)

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateAuth } from '@/lib/api-auth'
 import { createServerClient } from '@/lib/supabase'
-import { TIER_PRICING } from '@/lib/credit-system'
+import { TIER_MINUTES } from '@/lib/minutes'
 import Stripe from 'stripe'
 
 const getStripe = () => { if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY not configured'); return new Stripe(process.env.STRIPE_SECRET_KEY, {

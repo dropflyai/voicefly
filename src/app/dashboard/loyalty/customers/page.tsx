@@ -193,10 +193,10 @@ export default function LoyaltyCustomersPage() {
       <Layout business={business}>
         <div className="p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="h-8 bg-surface-highest rounded w-1/4 mb-6"></div>
             <div className="space-y-4">
-              <div className="h-16 bg-gray-200 rounded"></div>
-              <div className="h-96 bg-gray-200 rounded"></div>
+              <div className="h-16 bg-surface-highest rounded"></div>
+              <div className="h-96 bg-surface-highest rounded"></div>
             </div>
           </div>
         </div>
@@ -210,9 +210,9 @@ export default function LoyaltyCustomersPage() {
       <Layout business={business}>
         <div className="p-6 max-w-7xl mx-auto">
           <div className="text-center py-12">
-            <UserGroupIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Loyalty Customers Unavailable</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <UserGroupIcon className="mx-auto h-12 w-12 text-text-muted" />
+            <h3 className="mt-2 text-sm font-medium text-text-primary">Loyalty Customers Unavailable</h3>
+            <p className="mt-1 text-sm text-text-secondary">
               Upgrade to Professional or Business plan to access loyalty customer management.
             </p>
           </div>
@@ -226,9 +226,9 @@ export default function LoyaltyCustomersPage() {
       <Layout business={business}>
         <div className="p-6 max-w-7xl mx-auto">
           <div className="text-center py-12">
-            <GiftIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No Loyalty Program</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <GiftIcon className="mx-auto h-12 w-12 text-text-muted" />
+            <h3 className="mt-2 text-sm font-medium text-text-primary">No Loyalty Program</h3>
+            <p className="mt-1 text-sm text-text-secondary">
               Create a loyalty program first to manage customer points.
             </p>
             <div className="mt-6">
@@ -253,8 +253,8 @@ export default function LoyaltyCustomersPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Loyalty Customers</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-text-primary">Loyalty Customers</h1>
+            <p className="text-text-secondary mt-1">
               Manage customer points and loyalty program participation
             </p>
           </div>
@@ -262,7 +262,7 @@ export default function LoyaltyCustomersPage() {
           <div className="flex items-center space-x-3">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center px-4 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-sm font-medium text-text-primary hover:bg-surface"
             >
               <FunnelIcon className="w-4 h-4 mr-2" />
               Filters
@@ -280,35 +280,35 @@ export default function LoyaltyCustomersPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
             <div className="flex items-center">
               <div className="flex-1">
-                <p className="text-sm text-gray-600">Total Customers</p>
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-sm text-text-secondary">Total Customers</p>
+                <p className="text-2xl font-semibold text-text-primary">
                   {stats.totalCustomers}
                 </p>
               </div>
-              <UserGroupIcon className="h-8 w-8 text-blue-600" />
+              <UserGroupIcon className="h-8 w-8 text-brand-primary" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
             <div className="flex items-center">
               <div className="flex-1">
-                <p className="text-sm text-gray-600">Active Members</p>
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-sm text-text-secondary">Active Members</p>
+                <p className="text-2xl font-semibold text-text-primary">
                   {stats.activeCustomers}
                 </p>
               </div>
-              <StarIcon className="h-8 w-8 text-green-600" />
+              <StarIcon className="h-8 w-8 text-emerald-500" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
             <div className="flex items-center">
               <div className="flex-1">
-                <p className="text-sm text-gray-600">Average Points</p>
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-sm text-text-secondary">Average Points</p>
+                <p className="text-2xl font-semibold text-text-primary">
                   {stats.averagePoints}
                 </p>
               </div>
@@ -316,15 +316,15 @@ export default function LoyaltyCustomersPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
             <div className="flex items-center">
               <div className="flex-1">
-                <p className="text-sm text-gray-600">Total Points Issued</p>
-                <p className="text-2xl font-semibold text-gray-900">
+                <p className="text-sm text-text-secondary">Total Points Issued</p>
+                <p className="text-2xl font-semibold text-text-primary">
                   {stats.totalPointsIssued.toLocaleString()}
                 </p>
               </div>
-              <StarIcon className="h-8 w-8 text-purple-600" />
+              <StarIcon className="h-8 w-8 text-purple-400" />
             </div>
           </div>
         </div>
@@ -332,8 +332,8 @@ export default function LoyaltyCustomersPage() {
         {/* Location Selector */}
         {locations.length > 1 && (
           <div className="mb-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Select Location</h3>
+            <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
+              <h3 className="text-lg font-medium text-text-primary mb-4">Select Location</h3>
               <div className="max-w-md">
                 <LocationSelector
                   locations={locations}
@@ -349,32 +349,32 @@ export default function LoyaltyCustomersPage() {
 
         {/* Filters */}
         {showFilters && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+          <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-text-primary mb-1">
                   Search
                 </label>
                 <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text-muted" />
                   <input
                     type="text"
                     value={filters.search}
                     onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                    className="pl-10 w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                    className="pl-10 w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-sm"
                     placeholder="Search customers..."
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-text-primary mb-1">
                   Tier
                 </label>
                 <select
                   value={filters.tier}
                   onChange={(e) => setFilters({ ...filters, tier: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-sm"
                 >
                   <option value="">All tiers</option>
                   {loyaltyProgram.tiers?.map((tier) => (
@@ -386,13 +386,13 @@ export default function LoyaltyCustomersPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-text-primary mb-1">
                   Status
                 </label>
                 <select
                   value={filters.status}
                   onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md text-sm"
                 >
                   <option value="">All statuses</option>
                   <option value="active">Active</option>
@@ -405,11 +405,11 @@ export default function LoyaltyCustomersPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-600 text-sm">{error}</p>
+          <div className="mb-6 p-4 bg-[#93000a]/5 border border-red-200 rounded-md">
+            <p className="text-[#ffb4ab] text-sm">{error}</p>
             <button 
               onClick={() => setError(null)} 
-              className="text-red-600 hover:text-red-700 underline text-sm mt-1"
+              className="text-[#ffb4ab] hover:text-[#ffb4ab] underline text-sm mt-1"
             >
               Dismiss
             </button>
@@ -417,21 +417,21 @@ export default function LoyaltyCustomersPage() {
         )}
 
         {/* Customers Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Loyalty Members</h3>
+        <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] overflow-hidden">
+          <div className="px-6 py-4 border-b border-[rgba(65,71,84,0.15)]">
+            <h3 className="text-lg font-medium text-text-primary">Loyalty Members</h3>
           </div>
 
           {isLoading ? (
             <div className="p-8 text-center">
-              <ArrowPathIcon className="h-8 w-8 text-gray-400 animate-spin mx-auto mb-4" />
-              <p className="text-gray-500">Loading customers...</p>
+              <ArrowPathIcon className="h-8 w-8 text-text-muted animate-spin mx-auto mb-4" />
+              <p className="text-text-secondary">Loading customers...</p>
             </div>
           ) : customers.length === 0 ? (
             <div className="p-8 text-center">
-              <UserGroupIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No loyalty customers found</h3>
-              <p className="text-gray-500">
+              <UserGroupIcon className="h-12 w-12 text-text-muted mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-text-primary mb-2">No loyalty customers found</h3>
+              <p className="text-text-secondary">
                 {filters.search || filters.tier || filters.status !== 'active' ? 
                   'Try adjusting your filters to see more results.' :
                   'Customers will appear here once they join your loyalty program.'
@@ -440,40 +440,40 @@ export default function LoyaltyCustomersPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-[rgba(65,71,84,0.15)]">
+                <thead className="bg-surface">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Customer
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Tier
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Points
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Lifetime Spent
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Joined
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-text-secondary uppercase tracking-wider">
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-surface-low divide-y divide-[rgba(65,71,84,0.15)]">
                   {customers.map((customer) => (
-                    <tr key={customer.id} className="hover:bg-gray-50">
+                    <tr key={customer.id} className="hover:bg-surface">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-text-primary">
                           {customer.customer.first_name} {customer.customer.last_name}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-text-secondary">
                           {customer.customer.email || customer.customer.phone || 'No contact info'}
                         </div>
                       </td>
@@ -489,29 +489,29 @@ export default function LoyaltyCustomersPage() {
                       </td>
                       
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-text-primary">
                           {customer.total_points.toLocaleString()}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-text-secondary">
                           {customer.points_earned - customer.points_redeemed} available
                         </div>
                       </td>
                       
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary">
                         ${(customer.lifetime_spent / 100).toFixed(2)}
                       </td>
                       
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
                         {formatDate(customer.joined_at)}
                       </td>
                       
                       <td className="px-6 py-4 whitespace-nowrap">
                         {customer.is_active ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-green-800">
                             Active
                           </span>
                         ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#93000a]/10 text-red-800">
                             Inactive
                           </span>
                         )}
@@ -519,7 +519,7 @@ export default function LoyaltyCustomersPage() {
                       
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         <button 
-                          className="text-purple-600 hover:text-purple-700"
+                          className="text-purple-400 hover:text-purple-400"
                           onClick={() => {
                             // View customer details
                             console.log('View customer:', customer.id)
@@ -534,7 +534,7 @@ export default function LoyaltyCustomersPage() {
                             setShowPointsModal(true)
                           }}
                           disabled={isLoading}
-                          className="text-green-600 hover:text-green-700 disabled:opacity-50"
+                          className="text-emerald-500 hover:text-emerald-500 disabled:opacity-50"
                         >
                           <PencilIcon className="h-4 w-4" />
                         </button>

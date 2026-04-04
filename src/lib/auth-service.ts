@@ -3,7 +3,7 @@ import { supabase } from './supabase-client'
 import { BusinessAPI } from './supabase'
 import { getServicesForIndustry } from './industry-service-templates'
 import AuditLogger, { AuditEventType } from './audit-logger'
-import CreditSystem from './credit-system'
+import { initializeMinutes } from './minutes'
 import { sendWelcomeEmail } from '@/lib/notifications/email-notifications'
 
 export interface SignupData {
@@ -89,9 +89,8 @@ export class AuthService {
 
     // Business created via secure function
 
-    // Initialize credits for new business (trial tier gets 50 credits)
-    await CreditSystem.initializeCredits(business.id, 'trial')
-    // Credits initialized for trial
+    // Initialize minutes for new business (trial = 10 minutes)
+    await initializeMinutes(business.id, 'trial')
 
     // Signup complete
 

@@ -107,12 +107,7 @@ export async function POST(request: NextRequest) {
       metadata: { trigger: 'manual', twilioSid: result.sid },
     })
 
-    // Deduct SMS credit
-    const { default: CreditSystem, CreditCost } = await import('@/lib/credit-system')
-    CreditSystem.deductCredits(businessId, CreditCost.SMS_OUTBOUND, 'sms_outbound', {
-      to,
-      twilioSid: result.sid,
-    }).catch(err => console.error('[SMS Send] Credit deduction error:', err))
+    // SMS is an included feature — no minute deduction
 
     return NextResponse.json({
       success: true,

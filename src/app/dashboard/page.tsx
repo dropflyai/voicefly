@@ -21,13 +21,10 @@ import {
   ShoppingBagIcon,
   BoltIcon,
   ExclamationTriangleIcon,
+  StarIcon,
 } from '@heroicons/react/24/outline'
 import { Dialog, Transition } from '@headlessui/react'
 import { formatDistanceToNow } from 'date-fns'
-
-// ============================================
-// TYPES
-// ============================================
 
 interface PhoneEmployee {
   id: string
@@ -82,15 +79,8 @@ interface DashboardData {
   isTrial: boolean
 }
 
-// ============================================
-// HELPERS
-// ============================================
-
 function formatJobType(jobType: string): string {
-  return jobType
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
+  return jobType.split('-').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
 }
 
 function formatDuration(seconds?: number): string {
@@ -106,53 +96,30 @@ function formatPhoneNumber(phone?: string): string {
   return phone
 }
 
-function getCallOutcome(call: EmployeeCall): { label: string; color: string; bg: string } {
-  if (call.status === 'in-progress') {
-    return { label: 'Live', color: 'text-blue-700', bg: 'bg-blue-100' }
-  }
-  if (call.status === 'completed' && call.duration && call.duration > 30) {
-    return { label: 'Completed', color: 'text-green-700', bg: 'bg-green-100' }
-  }
-  if (call.status === 'completed' && (!call.duration || call.duration <= 30)) {
-    return { label: 'Short', color: 'text-yellow-700', bg: 'bg-yellow-100' }
-  }
-  return { label: call.status || 'Unknown', color: 'text-gray-700', bg: 'bg-gray-100' }
+function getCallOutcome(call: EmployeeCall): { label: string; color: string; dotColor: string } {
+  if (call.status === 'in-progress') return { label: 'Live', color: 'text-blue-400 bg-blue-400/10', dotColor: 'bg-blue-400' }
+  if (call.status === 'completed' && call.duration && call.duration > 30) return { label: 'Completed', color: 'text-emerald-500 bg-emerald-500/10', dotColor: 'bg-emerald-500' }
+  if (call.status === 'completed' && (!call.duration || call.duration <= 30)) return { label: 'Short', color: 'text-accent bg-accent/10', dotColor: 'bg-accent' }
+  return { label: call.status || 'Unknown', color: 'text-text-muted bg-surface-high', dotColor: 'bg-text-muted' }
 }
-
-// ============================================
-// MAIN DASHBOARD COMPONENT
-// ============================================
 
 function DashboardPage() {
   const [business, setBusiness] = useState<Business | null>(null)
   const [data, setData] = useState<DashboardData>({
-    employees: [],
-    recentCalls: [],
-    recentMessages: [],
-    totalCalls: 0,
-    totalMessages: 0,
-    callsToday: 0,
-    messagesToday: 0,
-    avgCallDuration: 0,
-    totalOrders: 0,
-    ordersToday: 0,
-    creditsRemaining: 0,
-    creditsUsed: 0,
-    isTrial: false,
+    employees: [], recentCalls: [], recentMessages: [],
+    totalCalls: 0, totalMessages: 0, callsToday: 0, messagesToday: 0,
+    avgCallDuration: 0, totalOrders: 0, ordersToday: 0,
+    creditsRemaining: 0, creditsUsed: 0, isTrial: false,
   })
   const [employeeCount, setEmployeeCount] = useState<number>(0)
   const [selectedCall, setSelectedCall] = useState<EmployeeCall | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadDashboardData()
-  }, [])
+  useEffect(() => { loadDashboardData() }, [])
 
   const getAuthHeaders = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
+    const { data: { session } } = await supabase.auth.getSession()
     if (!session?.access_token) return null
     return { Authorization: `Bearer ${session.access_token}` }
   }
@@ -161,52 +128,28 @@ function DashboardPage() {
     try {
       setLoading(true)
       setError(null)
-
-      if (redirectToLoginIfUnauthenticated()) {
-        return
-      }
+      if (redirectToLoginIfUnauthenticated()) return
 
       const businessId = getSecureBusinessId()
-      if (!businessId) {
-        setError('Authentication required. Please log in.')
-        setLoading(false)
-        return
-      }
+      if (!businessId) { setError('Authentication required. Please log in.'); setLoading(false); return }
 
-      // Fetch business
       const businessData = await BusinessAPI.getBusiness(businessId)
-      if (!businessData) {
-        setError('Business not found. Please check your configuration.')
-        return
-      }
+      if (!businessData) { setError('Business not found.'); return }
       setBusiness(businessData)
 
-      // Fetch employees via API (business-existence fallback handles expired JWT)
       const headers = await getAuthHeaders()
       let employees: PhoneEmployee[] = []
-
       try {
-        const empRes = await fetch(
-          `/api/phone-employees?businessId=${businessId}`,
-          { headers: headers || {} }
-        )
-        if (empRes.ok) {
-          const empData = await empRes.json()
-          employees = empData.employees || []
-        }
-      } catch (e) {
-        console.error('Failed to fetch employees:', e)
-      }
+        const empRes = await fetch(`/api/phone-employees?businessId=${businessId}`, { headers: headers || {} })
+        if (empRes.ok) { const empData = await empRes.json(); employees = empData.employees || [] }
+      } catch (e) { console.error('Failed to fetch employees:', e) }
 
       setEmployeeCount(employees.length)
 
-      // Today's date at midnight (local timezone)
       const todayStart = new Date()
       todayStart.setHours(0, 0, 0, 0)
       const todayISO = todayStart.toISOString()
 
-      // Fetch recent calls, messages, and orders in parallel
-      // Credit/subscription data comes from businessData (already fetched via /api/business)
       const [
         { data: callsData, count: callsCount },
         { count: callsTodayCount },
@@ -215,65 +158,28 @@ function DashboardPage() {
         { count: ordersCount },
         { count: ordersTodayCount },
       ] = await Promise.all([
-        supabase
-          .from('employee_calls')
-          .select('*', { count: 'exact' })
-          .eq('business_id', businessId)
-          .order('started_at', { ascending: false })
-          .limit(10),
-        supabase
-          .from('employee_calls')
-          .select('*', { count: 'exact', head: true })
-          .eq('business_id', businessId)
-          .gte('started_at', todayISO),
-        supabase
-          .from('phone_messages')
-          .select('*', { count: 'exact' })
-          .eq('business_id', businessId)
-          .order('created_at', { ascending: false })
-          .limit(10),
-        supabase
-          .from('phone_messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('business_id', businessId)
-          .gte('created_at', todayISO),
-        supabase
-          .from('phone_orders')
-          .select('*', { count: 'exact', head: true })
-          .eq('business_id', businessId),
-        supabase
-          .from('phone_orders')
-          .select('*', { count: 'exact', head: true })
-          .eq('business_id', businessId)
-          .gte('created_at', todayISO),
+        supabase.from('employee_calls').select('*', { count: 'exact' }).eq('business_id', businessId).order('started_at', { ascending: false }).limit(10),
+        supabase.from('employee_calls').select('*', { count: 'exact', head: true }).eq('business_id', businessId).gte('started_at', todayISO),
+        supabase.from('phone_messages').select('*', { count: 'exact' }).eq('business_id', businessId).order('created_at', { ascending: false }).limit(10),
+        supabase.from('phone_messages').select('*', { count: 'exact', head: true }).eq('business_id', businessId).gte('created_at', todayISO),
+        supabase.from('phone_orders').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
+        supabase.from('phone_orders').select('*', { count: 'exact', head: true }).eq('business_id', businessId).gte('created_at', todayISO),
       ])
+
       const creditData = businessData
-
-      // Calculate avg call duration from recent calls
       const completedCalls = (callsData || []).filter(c => c.status === 'completed' && c.duration)
-      const avgDuration = completedCalls.length > 0
-        ? Math.round(completedCalls.reduce((sum, c) => sum + (c.duration || 0), 0) / completedCalls.length)
-        : 0
-
+      const avgDuration = completedCalls.length > 0 ? Math.round(completedCalls.reduce((sum, c) => sum + (c.duration || 0), 0) / completedCalls.length) : 0
       const monthly = creditData?.monthly_credits || 0
       const purchased = creditData?.purchased_credits || 0
       const used = creditData?.credits_used_this_month || 0
       const isTrial = creditData?.subscription_status === 'trial'
 
       setData({
-        employees,
-        recentCalls: callsData || [],
-        recentMessages: messagesData || [],
-        totalCalls: callsCount || 0,
-        totalMessages: messagesCount || 0,
-        callsToday: callsTodayCount || 0,
-        messagesToday: messagesTodayCount || 0,
-        avgCallDuration: avgDuration,
-        totalOrders: ordersCount || 0,
-        ordersToday: ordersTodayCount || 0,
-        creditsRemaining: Math.max(0, monthly + purchased - used),
-        creditsUsed: used,
-        isTrial,
+        employees, recentCalls: callsData || [], recentMessages: messagesData || [],
+        totalCalls: callsCount || 0, totalMessages: messagesCount || 0,
+        callsToday: callsTodayCount || 0, messagesToday: messagesTodayCount || 0,
+        avgCallDuration: avgDuration, totalOrders: ordersCount || 0, ordersToday: ordersTodayCount || 0,
+        creditsRemaining: Math.max(0, monthly + purchased - used), creditsUsed: used, isTrial,
       })
     } catch (err) {
       console.error('Error loading dashboard data:', err)
@@ -283,141 +189,67 @@ function DashboardPage() {
     }
   }
 
-  // ============================================
-  // LOADING STATE
-  // ============================================
-
+  // Loading
   if (loading) {
     return (
       <Layout business={business || undefined}>
         <div className="p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+            <div className="h-8 bg-surface-high rounded w-1/4 mb-8"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
-              ))}
+              {[1, 2, 3, 4].map((i) => (<div key={i} className="h-28 bg-surface-low rounded-2xl"></div>))}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 h-64 bg-gray-200 rounded-lg"></div>
-              <div className="h-64 bg-gray-200 rounded-lg"></div>
-            </div>
+            <div className="h-40 bg-surface-lowest rounded-3xl mb-8"></div>
+            <div className="h-64 bg-surface-low rounded-2xl"></div>
           </div>
         </div>
       </Layout>
     )
   }
 
-  // ============================================
-  // ERROR STATE
-  // ============================================
-
+  // Error
   if (error) {
     return (
       <Layout business={business || undefined}>
-        <div className="p-8">
-          <div className="text-center">
-            <div className="text-red-600 text-lg font-medium mb-4">
-              {error}
-            </div>
-            <button
-              onClick={() => loadDashboardData()}
-              className="btn-primary"
-            >
-              Try Again
-            </button>
-            <div className="mt-4 text-sm text-gray-500">
-              Make sure you have configured your Supabase credentials in
-              .env.local
-            </div>
-          </div>
+        <div className="p-8 text-center">
+          <div className="text-[#ffb4ab] text-lg font-medium mb-4">{error}</div>
+          <button onClick={() => loadDashboardData()} className="bg-brand-primary text-brand-on px-6 py-2 rounded-md font-medium hover:bg-[#0060d0] transition-colors">Try Again</button>
         </div>
       </Layout>
     )
   }
 
-  // ============================================
-  // EMPTY STATE: No employees yet
-  // ============================================
-
+  // Empty state
   if (employeeCount === 0) {
     return (
       <Layout business={business || undefined}>
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-8">
-          <div className="max-w-5xl mx-auto">
-            {/* Hero Section */}
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 mb-6">
-                <PhoneIcon className="h-10 w-10 text-white" />
-              </div>
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Welcome to VoiceFly!
-              </h1>
-              <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-                Let's create your first AI employee and start capturing calls
-                24/7
-              </p>
-
-              <a
-                href="/dashboard/employees"
-                className="inline-flex items-center px-8 py-4 text-lg font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
-              >
-                Create Your First Employee
-                <ArrowRightIcon className="ml-3 h-6 w-6" />
-              </a>
+        <div className="min-h-screen bg-surface p-8">
+          <div className="max-w-5xl mx-auto text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-brand-primary/10 mb-6">
+              <PhoneIcon className="h-10 w-10 text-brand-primary" />
             </div>
+            <h1 className="text-4xl md:text-5xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight mb-4">
+              Welcome to VoiceFly!
+            </h1>
+            <p className="text-xl text-text-secondary mb-8 max-w-2xl mx-auto">
+              Let&apos;s create your first AI employee and start capturing calls 24/7
+            </p>
+            <a href="/dashboard/employees" className="inline-flex items-center px-8 py-4 text-lg font-semibold text-brand-on bg-brand-primary rounded-lg hover:bg-[#0060d0] transition-all">
+              Create Your First Employee <ArrowRightIcon className="ml-3 h-6 w-6" />
+            </a>
 
-            {/* 3-Step Visual */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600 font-bold text-xl mb-4">
-                  1
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-12 max-w-3xl mx-auto">
+              {[
+                { step: '1', title: 'Pick a Type', desc: 'Receptionist, Order Taker, Customer Service, and more' },
+                { step: '2', title: 'Configure', desc: 'Set up name, voice, and capabilities in minutes' },
+                { step: '3', title: 'Go Live', desc: 'Get a phone number and start answering calls' },
+              ].map(s => (
+                <div key={s.step} className="bg-surface-low rounded-xl p-6 text-center">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-brand-primary/10 text-brand-primary font-bold text-xl mb-4 font-[family-name:var(--font-manrope)]">{s.step}</div>
+                  <h3 className="text-lg font-semibold text-text-primary mb-2">{s.title}</h3>
+                  <p className="text-text-secondary text-sm">{s.desc}</p>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Pick a Type
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  Choose from Receptionist, Order Taker, Customer Service, and
-                  more
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-purple-100 text-purple-600 font-bold text-xl mb-4">
-                  2
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Configure
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  Set up your employee's name, voice, and capabilities in
-                  minutes
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-100 text-green-600 font-bold text-xl mb-4">
-                  3
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Go Live
-                </h3>
-                <p className="text-gray-600 text-sm">
-                  Get a phone number and start answering calls immediately
-                </p>
-              </div>
-            </div>
-
-            {/* Bottom CTA */}
-            <div className="text-center mt-8">
-              <p className="text-gray-600 mb-4">Ready to get started?</p>
-              <a
-                href="/dashboard/employees"
-                className="inline-flex items-center px-6 py-3 text-base font-semibold text-white bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
-              >
-                Create Your First Employee
-                <ArrowRightIcon className="ml-2 h-5 w-5" />
-              </a>
+              ))}
             </div>
           </div>
         </div>
@@ -425,614 +257,175 @@ function DashboardPage() {
     )
   }
 
-  // ============================================
-  // MAIN DASHBOARD (has employees)
-  // ============================================
-
+  // Main dashboard
   const activeEmployees = data.employees.filter((e) => e.isActive)
   const totalCredits = data.creditsRemaining + data.creditsUsed
   const creditWarning = totalCredits > 0 && data.creditsUsed >= totalCredits * 0.8
 
   return (
     <Layout business={business || undefined}>
-      <div className="p-8">
-        {/* Low credit warning banner */}
+      <div className="p-8 space-y-10">
+        {/* Low credit warning */}
         {creditWarning && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-center justify-between mb-4">
+          <div className="bg-accent/10 rounded-lg px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0" />
-              <p className="text-sm text-amber-800">
-                <strong>Running low on minutes</strong> — {data.creditsRemaining} minutes remaining this month.
-              </p>
+              <ExclamationTriangleIcon className="h-5 w-5 text-accent flex-shrink-0" />
+              <p className="text-sm text-accent"><strong>Running low on minutes</strong> — {data.creditsRemaining} minutes remaining this month.</p>
             </div>
-            <a href="/dashboard/billing" className="text-xs font-medium text-amber-700 underline whitespace-nowrap ml-4">Add more</a>
+            <a href="/dashboard/billing" className="text-xs font-medium text-accent underline whitespace-nowrap ml-4">Add more</a>
           </div>
         )}
 
         {/* Welcome Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Welcome back{business?.name ? `, ${business.name}` : ''}
-          </h1>
-          <p className="text-gray-600 mt-1">
-            {activeEmployees.length} active employee
-            {activeEmployees.length !== 1 ? 's' : ''} ready to take calls
+        <section className="space-y-2">
+          <h2 className="text-3xl sm:text-4xl font-[family-name:var(--font-manrope)] font-extrabold tracking-tight text-text-primary">
+            Welcome back, <span className="text-brand-primary">{business?.name || 'there'}</span>!
+          </h2>
+          <p className="text-text-secondary font-medium text-lg">
+            {activeEmployees.length} active employee{activeEmployees.length !== 1 ? 's' : ''} ready to take calls.
+            <span className="text-text-primary font-bold ml-1">{data.totalCalls} total calls</span> handled.
           </p>
-        </div>
+        </section>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <PhoneIcon className="h-5 w-5 text-blue-600" />
+        {/* Metric Cards — Bento Grid */}
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MetricCard icon={PhoneIcon} label="Calls Today" value={data.callsToday} trend={data.totalCalls > 0 ? `${data.totalCalls} all time` : undefined} />
+          <MetricCard icon={ChatBubbleLeftIcon} label="Messages Sent" value={data.messagesToday} trend={data.totalMessages > 0 ? `${data.totalMessages} all time` : undefined} />
+          <MetricCard icon={ShoppingBagIcon} label="Orders" value={data.ordersToday} trend={data.totalOrders > 0 ? `${data.totalOrders} all time` : undefined} />
+          <MetricCard icon={StarIcon} label="Avg Duration" value={formatDuration(data.avgCallDuration)} trend="per completed call" />
+        </section>
+
+        {/* Sonic Health Overview */}
+        <section className="bg-surface-lowest rounded-3xl p-10 relative overflow-hidden">
+          <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="space-y-4 max-w-lg">
+              <h4 className="text-2xl font-[family-name:var(--font-manrope)] font-bold text-text-primary">Sonic Health Overview</h4>
+              <p className="text-text-secondary">
+                {activeEmployees.length > 0
+                  ? `Your AI employees are operating normally. ${data.callsToday > 0 ? `${data.callsToday} calls handled today so far.` : 'Waiting for incoming calls.'}`
+                  : 'No active employees. Create one to get started.'}
+              </p>
+              <div className="flex gap-4">
+                <a href="/dashboard/voice-ai" className="px-6 py-2 bg-text-primary text-surface font-bold rounded-lg hover:bg-text-secondary transition-colors text-sm">View Deep Insights</a>
+                <a href="/dashboard/employees" className="px-6 py-2 border border-[rgba(65,71,84,0.3)] text-text-primary font-bold rounded-lg hover:bg-surface-low transition-colors text-sm">Manage Employees</a>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
-                  Calls Today
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {data.callsToday}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {data.totalCalls} all time
-                </p>
-              </div>
+            </div>
+            {/* Waveform visualization */}
+            <div className="w-full md:w-1/2 h-32 flex items-center justify-center gap-1">
+              {[8, 16, 24, 32, 20, 28, 12, 24, 32, 16, 8, 20].map((h, i) => (
+                <div key={i} className="w-1 bg-brand-primary rounded-full" style={{ height: `${h * 4}px`, opacity: 0.3 + (h / 32) * 0.7 }} />
+              ))}
             </div>
           </div>
+          <div className="absolute -top-24 -right-24 w-64 h-64 bg-brand-primary/20 blur-[100px] rounded-full" />
+        </section>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                <ChatBubbleLeftIcon className="h-5 w-5 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
-                  Messages Today
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {data.messagesToday}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {data.totalMessages} all time
-                </p>
-              </div>
+        {/* Recent Conversations Table */}
+        <section className="space-y-6">
+          <div className="flex justify-between items-end">
+            <div>
+              <h3 className="text-2xl font-[family-name:var(--font-manrope)] font-bold text-text-primary">Recent Conversations</h3>
+              <p className="text-text-secondary text-sm">Real-time logs of your AI&apos;s interactions.</p>
             </div>
+            <a href="/dashboard/voice-ai" className="text-brand-light font-bold flex items-center gap-2 text-sm hover:underline">
+              View All
+            </a>
           </div>
 
-          <div className="bg-white rounded-lg border border-gray-200 p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-                <ShoppingBagIcon className="h-5 w-5 text-indigo-600" />
+          <div className="bg-surface-low rounded-2xl overflow-hidden">
+            {data.recentCalls.length === 0 ? (
+              <div className="p-12 text-center">
+                <PhoneIcon className="h-10 w-10 text-text-muted mx-auto mb-3" />
+                <p className="text-text-secondary font-medium">No calls yet</p>
+                <p className="text-text-muted text-sm mt-1">Your AI employees are ready and waiting!</p>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
-                  Orders
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {data.ordersToday}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {data.totalOrders} all time
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                <ClockIcon className="h-5 w-5 text-orange-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
-                  Avg Duration
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {formatDuration(data.avgCallDuration)}
-                </p>
-                <p className="text-xs text-gray-400">
-                  per completed call
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                <UserGroupIcon className="h-5 w-5 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
-                  Active Employees
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {activeEmployees.length}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {data.employees.length} total
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg border border-gray-200 p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                <BoltIcon className="h-5 w-5 text-amber-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">
-                  Credits
-                </p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {data.isTrial ? 'Free' : data.creditsRemaining.toLocaleString()}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {data.isTrial ? 'trial plan' : `${data.creditsUsed.toLocaleString()} used this month`}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Employees + Calls + Messages */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Employee Cards */}
-            <div className="bg-white rounded-lg border border-gray-200">
-              <div className="p-5 border-b border-gray-200 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Your Employees
-                </h2>
-                <a
-                  href="/dashboard/employees"
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Manage
-                </a>
-              </div>
-              <div className="divide-y divide-gray-100">
-                {data.employees.map((employee) => (
-                  <div
-                    key={employee.id}
-                    className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center min-w-0">
-                      <div
-                        className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                          employee.isActive
-                            ? 'bg-green-100'
-                            : 'bg-gray-100'
-                        }`}
-                      >
-                        <PhoneIcon
-                          className={`h-5 w-5 ${
-                            employee.isActive
-                              ? 'text-green-600'
-                              : 'text-gray-400'
-                          }`}
-                        />
-                      </div>
-                      <div className="ml-3 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {employee.name}
-                          </p>
-                          <span
-                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                              employee.isActive
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-600'
-                            }`}
-                          >
-                            {employee.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-500">
-                          {formatJobType(employee.jobType)}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 text-right ml-4">
-                      <p className="text-sm text-gray-700">
-                        {formatPhoneNumber(employee.phoneNumber)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Calls */}
-            <div className="bg-white rounded-lg border border-gray-200">
-              <div className="p-5 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Recent Calls
-                </h2>
-              </div>
-              <div>
-                {data.recentCalls.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <PhoneIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium">No calls yet</p>
-                    <p className="text-gray-400 text-sm mt-1">
-                      Your AI employee is ready and waiting!
-                    </p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-100">
+            ) : (
+              <>
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="bg-surface-highest/30">
+                      <th className="px-8 py-4 text-xs uppercase tracking-widest text-text-muted font-bold">Caller</th>
+                      <th className="px-8 py-4 text-xs uppercase tracking-widest text-text-muted font-bold">Duration</th>
+                      <th className="px-8 py-4 text-xs uppercase tracking-widest text-text-muted font-bold">Outcome</th>
+                      <th className="px-8 py-4 text-xs uppercase tracking-widest text-text-muted font-bold">When</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[rgba(65,71,84,0.1)]">
                     {data.recentCalls.map((call) => {
                       const outcome = getCallOutcome(call)
+                      const initials = (call.customer_phone || '??').slice(-2).toUpperCase()
                       return (
-                        <button
-                          key={call.call_id}
-                          onClick={() => setSelectedCall(call)}
-                          className="w-full p-4 hover:bg-gray-50 transition-colors text-left"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center min-w-0">
-                              <div
-                                className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                                  call.direction === 'inbound'
-                                    ? 'bg-blue-100'
-                                    : 'bg-purple-100'
-                                }`}
-                              >
-                                <PhoneIcon
-                                  className={`h-4 w-4 ${
-                                    call.direction === 'inbound'
-                                      ? 'text-blue-600'
-                                      : 'text-purple-600'
-                                  }`}
-                                />
-                              </div>
-                              <div className="ml-3 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
-                                    {call.customer_phone || 'Unknown caller'}
-                                  </p>
-                                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${outcome.bg} ${outcome.color}`}>
-                                    {outcome.label}
-                                  </span>
-                                </div>
-                                {call.summary && (
-                                  <p className="text-sm text-gray-500 truncate">
-                                    {call.summary}
-                                  </p>
-                                )}
-                              </div>
+                        <tr key={call.call_id} onClick={() => setSelectedCall(call)} className="hover:bg-surface-med transition-colors cursor-pointer group">
+                          <td className="px-8 py-5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-surface-highest flex items-center justify-center text-xs font-bold text-brand-primary">{initials}</div>
+                              <span className="font-bold text-text-primary">{call.customer_phone || 'Unknown'}</span>
                             </div>
-                            <div className="flex-shrink-0 text-right ml-4">
-                              <p className="text-xs text-gray-500">
-                                {formatDistanceToNow(new Date(call.started_at), {
-                                  addSuffix: true,
-                                })}
-                              </p>
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                {formatDuration(call.duration)}
-                              </p>
-                            </div>
-                          </div>
-                        </button>
+                          </td>
+                          <td className="px-8 py-5 text-text-secondary font-medium">{formatDuration(call.duration)}</td>
+                          <td className="px-8 py-5">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${outcome.color}`}>
+                              <span className={`w-1 h-1 ${outcome.dotColor} rounded-full mr-2`}></span>
+                              {outcome.label}
+                            </span>
+                          </td>
+                          <td className="px-8 py-5 text-text-secondary text-sm">
+                            {formatDistanceToNow(new Date(call.started_at), { addSuffix: true })}
+                          </td>
+                        </tr>
                       )
                     })}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Recent Messages */}
-            <div className="bg-white rounded-lg border border-gray-200">
-              <div className="p-5 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Recent Messages
-                </h2>
-              </div>
-              <div>
-                {data.recentMessages.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <ChatBubbleLeftIcon className="h-10 w-10 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium">
-                      No messages yet
-                    </p>
-                    <p className="text-gray-400 text-sm mt-1">
-                      Messages from callers will appear here.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-100">
-                    {data.recentMessages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className="p-4 hover:bg-gray-50 transition-colors"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium text-gray-900">
-                                {msg.caller_name || msg.caller_phone || 'Unknown'}
-                              </p>
-                              {msg.urgency && (
-                                <span
-                                  className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${
-                                    msg.urgency === 'high'
-                                      ? 'bg-red-100 text-red-700'
-                                      : msg.urgency === 'medium'
-                                        ? 'bg-yellow-100 text-yellow-700'
-                                        : 'bg-gray-100 text-gray-600'
-                                  }`}
-                                >
-                                  {msg.urgency}
-                                </span>
-                              )}
-                            </div>
-                            {msg.reason && (
-                              <p className="text-sm text-gray-600 mt-0.5">
-                                {msg.reason}
-                              </p>
-                            )}
-                            {msg.full_message && (
-                              <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                                {msg.full_message}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex-shrink-0 text-right ml-4">
-                            <p className="text-xs text-gray-500">
-                              {formatDistanceToNow(
-                                new Date(msg.created_at),
-                                { addSuffix: true }
-                              )}
-                            </p>
-                            {msg.status && (
-                              <span
-                                className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs mt-1 ${
-                                  msg.status === 'read'
-                                    ? 'bg-green-100 text-green-700'
-                                    : 'bg-blue-100 text-blue-700'
-                                }`}
-                              >
-                                {msg.status}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Right Column: Quick Actions */}
-          <div className="space-y-6">
-            {/* Quick Actions */}
-            <div className="bg-white rounded-lg border border-gray-200 p-5">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Quick Actions
-              </h2>
-              <div className="space-y-3">
-                <a
-                  href="/dashboard/employees"
-                  className="flex items-center p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors group"
-                >
-                  <UserGroupIcon className="h-5 w-5 text-blue-600 mr-3" />
-                  <span className="text-sm font-medium text-blue-700 group-hover:text-blue-800">
-                    Manage Employees
-                  </span>
-                </a>
-
-                <a
-                  href="/dashboard/settings"
-                  className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group"
-                >
-                  <Cog6ToothIcon className="h-5 w-5 text-gray-600 mr-3" />
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-gray-800">
-                    Settings
-                  </span>
-                </a>
-
-                <a
-                  href="/dashboard/billing"
-                  className="flex items-center p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors group"
-                >
-                  <CreditCardIcon className="h-5 w-5 text-purple-600 mr-3" />
-                  <span className="text-sm font-medium text-purple-700 group-hover:text-purple-800">
-                    Billing
-                  </span>
-                </a>
-              </div>
-            </div>
-
-            {/* Business Info */}
-            <div className="bg-white rounded-lg border border-gray-200 p-5">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                Business Info
-              </h2>
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Plan</span>
-                  <span className="font-medium text-gray-900 capitalize">
-                    {business?.subscription_tier || 'Starter'}
-                  </span>
+                  </tbody>
+                </table>
+                <div className="px-8 py-4 bg-surface-highest/20 flex justify-center">
+                  <a href="/dashboard/voice-ai" className="text-sm font-bold text-text-secondary hover:text-text-primary transition-colors">View All Conversation History</a>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Status</span>
-                  <span
-                    className={`font-medium capitalize ${
-                      business?.subscription_status === 'active'
-                        ? 'text-green-600'
-                        : business?.subscription_status === 'trial'
-                          ? 'text-blue-600'
-                          : 'text-gray-600'
-                    }`}
-                  >
-                    {business?.subscription_status || 'Unknown'}
-                  </span>
-                </div>
-                {business?.subscription_status === 'trial' &&
-                  business?.trial_ends_at && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Trial Ends</span>
-                      <span className="font-medium text-gray-900">
-                        {new Date(business.trial_ends_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
-                {business?.business_type && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Type</span>
-                    <span className="font-medium text-gray-900 capitalize">
-                      {business.business_type.replace(/_/g, ' ')}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
+              </>
+            )}
           </div>
-        </div>
+        </section>
       </div>
 
       {/* Call Detail Slide-over */}
       <Transition.Root show={!!selectedCall} as={Fragment}>
         <Dialog as="div" className="relative z-50" onClose={() => setSelectedCall(null)}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-in-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in-out duration-300"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-50 transition-opacity" />
+          <Transition.Child as={Fragment} enter="ease-in-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in-out duration-300" leaveFrom="opacity-100" leaveTo="opacity-0">
+            <div className="fixed inset-0 bg-black/50 transition-opacity" />
           </Transition.Child>
-
           <div className="fixed inset-0 overflow-hidden">
             <div className="absolute inset-0 overflow-hidden">
               <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
-                <Transition.Child
-                  as={Fragment}
-                  enter="transform transition ease-in-out duration-300"
-                  enterFrom="translate-x-full"
-                  enterTo="translate-x-0"
-                  leave="transform transition ease-in-out duration-300"
-                  leaveFrom="translate-x-0"
-                  leaveTo="translate-x-full"
-                >
+                <Transition.Child as={Fragment} enter="transform transition ease-in-out duration-300" enterFrom="translate-x-full" enterTo="translate-x-0" leave="transform transition ease-in-out duration-300" leaveFrom="translate-x-0" leaveTo="translate-x-full">
                   <Dialog.Panel className="pointer-events-auto w-screen max-w-md">
-                    <div className="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
-                      {/* Header */}
-                      <div className="px-6 py-5 border-b border-gray-200">
+                    <div className="flex h-full flex-col overflow-y-scroll bg-surface-med sonic-shadow">
+                      <div className="px-6 py-5 border-b border-[rgba(65,71,84,0.15)]">
                         <div className="flex items-center justify-between">
-                          <Dialog.Title className="text-lg font-semibold text-gray-900">
-                            Call Details
-                          </Dialog.Title>
-                          <button
-                            onClick={() => setSelectedCall(null)}
-                            className="rounded-md text-gray-400 hover:text-gray-500"
-                          >
-                            <XMarkIcon className="h-6 w-6" />
-                          </button>
+                          <Dialog.Title className="text-lg font-semibold text-text-primary font-[family-name:var(--font-manrope)]">Call Details</Dialog.Title>
+                          <button onClick={() => setSelectedCall(null)} className="rounded-md text-text-muted hover:text-text-primary"><XMarkIcon className="h-6 w-6" /></button>
                         </div>
                       </div>
-
                       {selectedCall && (() => {
                         const outcome = getCallOutcome(selectedCall)
                         return (
                           <div className="flex-1 px-6 py-5 space-y-6">
-                            {/* Call Info Grid */}
                             <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-xs font-medium text-gray-500 uppercase">Caller</p>
-                                <p className="mt-1 text-sm font-medium text-gray-900">
-                                  {selectedCall.customer_phone || 'Unknown'}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium text-gray-500 uppercase">Direction</p>
-                                <p className="mt-1 text-sm font-medium text-gray-900 capitalize">
-                                  {selectedCall.direction || 'inbound'}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium text-gray-500 uppercase">Status</p>
-                                <span className={`mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${outcome.bg} ${outcome.color}`}>
-                                  {outcome.label}
-                                </span>
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium text-gray-500 uppercase">Duration</p>
-                                <p className="mt-1 text-sm font-medium text-gray-900">
-                                  {formatDuration(selectedCall.duration)}
-                                </p>
-                              </div>
-                              <div>
-                                <p className="text-xs font-medium text-gray-500 uppercase">When</p>
-                                <p className="mt-1 text-sm text-gray-900">
-                                  {selectedCall.started_at
-                                    ? new Date(selectedCall.started_at).toLocaleString()
-                                    : '--'}
-                                </p>
-                              </div>
-                              {selectedCall.cost != null && (
-                                <div>
-                                  <p className="text-xs font-medium text-gray-500 uppercase">Cost</p>
-                                  <p className="mt-1 text-sm font-medium text-gray-900">
-                                    ${selectedCall.cost.toFixed(2)}
-                                  </p>
-                                </div>
-                              )}
+                              <div><p className="text-xs font-medium text-text-muted uppercase">Caller</p><p className="mt-1 text-sm font-medium text-text-primary">{selectedCall.customer_phone || 'Unknown'}</p></div>
+                              <div><p className="text-xs font-medium text-text-muted uppercase">Direction</p><p className="mt-1 text-sm font-medium text-text-primary capitalize">{selectedCall.direction || 'inbound'}</p></div>
+                              <div><p className="text-xs font-medium text-text-muted uppercase">Status</p><span className={`mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${outcome.color}`}>{outcome.label}</span></div>
+                              <div><p className="text-xs font-medium text-text-muted uppercase">Duration</p><p className="mt-1 text-sm font-medium text-text-primary">{formatDuration(selectedCall.duration)}</p></div>
+                              <div><p className="text-xs font-medium text-text-muted uppercase">When</p><p className="mt-1 text-sm text-text-primary">{selectedCall.started_at ? new Date(selectedCall.started_at).toLocaleString() : '--'}</p></div>
+                              {selectedCall.cost != null && (<div><p className="text-xs font-medium text-text-muted uppercase">Cost</p><p className="mt-1 text-sm font-medium text-text-primary">${selectedCall.cost.toFixed(2)}</p></div>)}
                             </div>
-
-                            {/* Recording */}
                             {selectedCall.recording_url && (
-                              <div>
-                                <p className="text-xs font-medium text-gray-500 uppercase mb-2">Recording</p>
-                                <a
-                                  href={selectedCall.recording_url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                                >
-                                  Listen to Recording
-                                </a>
-                              </div>
+                              <div><p className="text-xs font-medium text-text-muted uppercase mb-2">Recording</p><a href={selectedCall.recording_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-2 text-sm font-medium text-brand-light bg-brand-primary/10 rounded-lg hover:bg-brand-primary/20 transition-colors">Listen to Recording</a></div>
                             )}
-
-                            {/* Summary */}
                             {selectedCall.summary && (
-                              <div>
-                                <p className="text-xs font-medium text-gray-500 uppercase mb-2">Summary</p>
-                                <div className="bg-gray-50 rounded-lg p-4">
-                                  <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                                    {selectedCall.summary}
-                                  </p>
-                                </div>
-                              </div>
+                              <div><p className="text-xs font-medium text-text-muted uppercase mb-2">Summary</p><div className="bg-surface-low rounded-lg p-4"><p className="text-sm text-text-secondary whitespace-pre-wrap">{selectedCall.summary}</p></div></div>
                             )}
-
-                            {/* Transcript */}
                             {selectedCall.transcript ? (
-                              <div>
-                                <p className="text-xs font-medium text-gray-500 uppercase mb-2">Transcript</p>
-                                <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
-                                  <p className="text-sm text-gray-700 whitespace-pre-wrap font-mono leading-relaxed">
-                                    {selectedCall.transcript}
-                                  </p>
-                                </div>
-                              </div>
+                              <div><p className="text-xs font-medium text-text-muted uppercase mb-2">Transcript</p><div className="bg-surface-low rounded-lg p-4 max-h-96 overflow-y-auto"><p className="text-sm text-text-secondary whitespace-pre-wrap font-mono leading-relaxed">{selectedCall.transcript}</p></div></div>
                             ) : (
-                              <div>
-                                <p className="text-xs font-medium text-gray-500 uppercase mb-2">Transcript</p>
-                                <div className="bg-gray-50 rounded-lg p-4 text-center">
-                                  <p className="text-sm text-gray-400">No transcript available</p>
-                                </div>
-                              </div>
+                              <div><p className="text-xs font-medium text-text-muted uppercase mb-2">Transcript</p><div className="bg-surface-low rounded-lg p-4 text-center"><p className="text-sm text-text-muted">No transcript available</p></div></div>
                             )}
                           </div>
                         )
@@ -1049,27 +442,31 @@ function DashboardPage() {
   )
 }
 
-// ============================================
-// WRAPPED EXPORT
-// ============================================
+function MetricCard({ icon: Icon, label, value, trend }: { icon: any; label: string; value: string | number; trend?: string }) {
+  return (
+    <div className="bg-surface-low p-8 rounded-2xl space-y-4 hover:bg-surface-med transition-all duration-300 group">
+      <div className="flex justify-between items-start">
+        <div className="p-3 bg-brand-primary/10 rounded-xl group-hover:bg-brand-primary/20 transition-colors">
+          <Icon className="h-5 w-5 text-brand-primary" />
+        </div>
+      </div>
+      <div>
+        <p className="text-text-secondary text-sm font-medium">{label}</p>
+        <h3 className="text-4xl font-[family-name:var(--font-manrope)] font-extrabold text-text-primary">{value}</h3>
+        {trend && <p className="text-xs text-text-muted mt-1">{trend}</p>}
+      </div>
+    </div>
+  )
+}
 
 function ProtectedDashboardPage() {
   return (
     <ProtectedRoute>
-      <Suspense
-        fallback={
-          <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-            <div className="animate-pulse">
-              <div className="h-8 bg-gray-200 rounded w-48 mb-8"></div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
-                ))}
-              </div>
-            </div>
-          </div>
-        }
-      >
+      <Suspense fallback={
+        <div className="min-h-screen bg-surface flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-surface-highest border-t-brand-primary rounded-full animate-spin" />
+        </div>
+      }>
         <DashboardPage />
       </Suspense>
     </ProtectedRoute>

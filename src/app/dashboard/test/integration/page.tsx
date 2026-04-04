@@ -435,20 +435,20 @@ export default function IntegrationTestPage() {
       case 'passed':
         return <CheckCircleIcon className="h-5 w-5 text-green-500" />
       case 'failed':
-        return <XCircleIcon className="h-5 w-5 text-red-500" />
+        return <XCircleIcon className="h-5 w-5 text-[#ffb4ab]" />
       case 'running':
-        return <ClockIcon className="h-5 w-5 text-blue-500 animate-spin" />
+        return <ClockIcon className="h-5 w-5 text-brand-primary animate-spin" />
       default:
-        return <div className="h-5 w-5 rounded-full bg-gray-300" />
+        return <div className="h-5 w-5 rounded-full bg-surface-highest" />
     }
   }
 
   const getStatusColor = (status: TestResult['status']) => {
     switch (status) {
-      case 'passed': return 'text-green-700 bg-green-50'
-      case 'failed': return 'text-red-700 bg-red-50'
-      case 'running': return 'text-blue-700 bg-blue-50'
-      default: return 'text-gray-700 bg-gray-50'
+      case 'passed': return 'text-emerald-500 bg-green-50'
+      case 'failed': return 'text-[#ffb4ab] bg-[#93000a]/5'
+      case 'running': return 'text-brand-primary bg-brand-primary/5'
+      default: return 'text-text-primary bg-surface'
     }
   }
 
@@ -462,8 +462,8 @@ export default function IntegrationTestPage() {
       <div className="mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dev 3 Integration Test Suite</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-text-primary">Dev 3 Integration Test Suite</h1>
+            <p className="text-text-secondary mt-2">
               Testing Business Features integration with Dev 1 (SMS/Email) and Dev 2 (Analytics)
             </p>
           </div>
@@ -472,7 +472,7 @@ export default function IntegrationTestPage() {
             disabled={isRunning}
             className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium ${
               isRunning 
-                ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                ? 'bg-surface-high text-text-secondary cursor-not-allowed'
                 : 'bg-purple-600 text-white hover:bg-purple-700'
             }`}
           >
@@ -485,42 +485,42 @@ export default function IntegrationTestPage() {
       {/* Test Results Summary */}
       {overallStatus !== 'idle' && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-4">
             <div className="flex items-center">
               <CheckCircleIcon className="h-8 w-8 text-green-500 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600">Passed</p>
-                <p className="text-2xl font-bold text-green-600">{passedCount}</p>
+                <p className="text-sm font-medium text-text-secondary">Passed</p>
+                <p className="text-2xl font-bold text-emerald-500">{passedCount}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-4">
             <div className="flex items-center">
-              <XCircleIcon className="h-8 w-8 text-red-500 mr-3" />
+              <XCircleIcon className="h-8 w-8 text-[#ffb4ab] mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600">Failed</p>
-                <p className="text-2xl font-bold text-red-600">{failedCount}</p>
+                <p className="text-sm font-medium text-text-secondary">Failed</p>
+                <p className="text-2xl font-bold text-[#ffb4ab]">{failedCount}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-4">
             <div className="flex items-center">
-              <DocumentTextIcon className="h-8 w-8 text-blue-500 mr-3" />
+              <DocumentTextIcon className="h-8 w-8 text-brand-primary mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-blue-600">{tests.length}</p>
+                <p className="text-sm font-medium text-text-secondary">Total</p>
+                <p className="text-2xl font-bold text-brand-primary">{tests.length}</p>
               </div>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-4">
             <div className="flex items-center">
               <ClockIcon className="h-8 w-8 text-purple-500 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-600">Duration</p>
-                <p className="text-2xl font-bold text-purple-600">{(totalDuration / 1000).toFixed(1)}s</p>
+                <p className="text-sm font-medium text-text-secondary">Duration</p>
+                <p className="text-2xl font-bold text-purple-400">{(totalDuration / 1000).toFixed(1)}s</p>
               </div>
             </div>
           </div>
@@ -528,28 +528,28 @@ export default function IntegrationTestPage() {
       )}
 
       {/* Test Results */}
-      <div className="bg-white rounded-lg border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Test Results</h2>
+      <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)]">
+        <div className="px-6 py-4 border-b border-[rgba(65,71,84,0.15)]">
+          <h2 className="text-xl font-semibold text-text-primary">Test Results</h2>
         </div>
         
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-[rgba(65,71,84,0.15)]">
           {tests.map((test, index) => (
             <div key={index} className="px-6 py-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3 flex-1">
                   {getStatusIcon(test.status)}
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{test.name}</h3>
+                    <h3 className="font-medium text-text-primary">{test.name}</h3>
                     {test.details && (
-                      <p className="text-sm text-gray-600 mt-1">{test.details}</p>
+                      <p className="text-sm text-text-secondary mt-1">{test.details}</p>
                     )}
                   </div>
                 </div>
                 
                 <div className="flex items-center space-x-3">
                   {test.duration && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-text-secondary">
                       {test.duration}ms
                     </span>
                   )}
@@ -596,27 +596,27 @@ export default function IntegrationTestPage() {
 
       {/* BrandedAnalytics Component Demo */}
       <div className="mt-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <h2 className="text-xl font-semibold text-text-primary mb-4">
           Live Component Demo - BrandedAnalytics
         </h2>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
           {/* <BrandedAnalytics businessId={DEMO_BUSINESS_ID}> */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-purple-900">Total Revenue</h3>
-                <p className="text-2xl font-bold text-purple-600">$12,500</p>
+                <p className="text-2xl font-bold text-purple-400">$12,500</p>
               </div>
               <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-blue-900">Appointments</h3>
-                <p className="text-2xl font-bold text-blue-600">156</p>
+                <p className="text-2xl font-bold text-brand-primary">156</p>
               </div>
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-green-900">Customers</h3>
-                <p className="text-2xl font-bold text-green-600">89</p>
+                <p className="text-2xl font-bold text-emerald-500">89</p>
               </div>
             </div>
           {/* </BrandedAnalytics> */}
-          <p className="text-sm text-gray-600 mt-4">
+          <p className="text-sm text-text-secondary mt-4">
             This component automatically applies custom branding from the business configuration.
           </p>
         </div>

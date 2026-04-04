@@ -244,7 +244,7 @@ const INTEGRATION_CATALOG: Record<string, IntegrationDef> = {
     description: 'Live availability checks and booking during calls',
     category: 'Calendar',
     abbrev: 'GC',
-    color: 'bg-blue-100 text-blue-700',
+    color: 'bg-brand-primary/10 text-brand-primary',
     fields: [
       { name: 'calendarId', label: 'Calendar ID', placeholder: 'your-email@gmail.com', hint: 'Share your calendar with our service account first, then paste your Google Calendar ID here.' },
     ],
@@ -257,7 +257,7 @@ const INTEGRATION_CATALOG: Record<string, IntegrationDef> = {
     description: 'Import your event types as appointment types',
     category: 'Scheduling',
     abbrev: 'CL',
-    color: 'bg-indigo-100 text-indigo-700',
+    color: 'bg-indigo-500/10 text-indigo-400',
     fields: [
       { name: 'accessToken', label: 'Personal Access Token', placeholder: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', type: 'password' },
     ],
@@ -270,7 +270,7 @@ const INTEGRATION_CATALOG: Record<string, IntegrationDef> = {
     description: 'Auto-import your menu (categories, items, prices, modifiers)',
     category: 'POS',
     abbrev: 'TP',
-    color: 'bg-orange-100 text-orange-700',
+    color: 'bg-accent/10 text-accent',
     fields: [
       { name: 'clientId', label: 'Client ID', placeholder: '' },
       { name: 'clientSecret', label: 'Client Secret', placeholder: '', type: 'password' },
@@ -285,7 +285,7 @@ const INTEGRATION_CATALOG: Record<string, IntegrationDef> = {
     description: 'Auto-import your catalog and items',
     category: 'POS',
     abbrev: 'SQ',
-    color: 'bg-gray-100 text-gray-700',
+    color: 'bg-surface-high text-text-primary',
     fields: [
       { name: 'accessToken', label: 'Access Token', placeholder: 'EAAAxxxxxxxx', type: 'password' },
       { name: 'locationId', label: 'Location ID', placeholder: 'Lxxxxxxxxxx', optional: true },
@@ -299,7 +299,7 @@ const INTEGRATION_CATALOG: Record<string, IntegrationDef> = {
     description: 'Auto-import your menu from Clover',
     category: 'POS',
     abbrev: 'CV',
-    color: 'bg-green-100 text-green-700',
+    color: 'bg-emerald-500/10 text-emerald-500',
     fields: [
       { name: 'accessToken', label: 'Access Token', placeholder: '', type: 'password' },
       { name: 'merchantId', label: 'Merchant ID', placeholder: '' },
@@ -313,7 +313,7 @@ const INTEGRATION_CATALOG: Record<string, IntegrationDef> = {
     description: 'Sync your product catalog as menu items',
     category: 'E-commerce',
     abbrev: 'SH',
-    color: 'bg-green-100 text-green-800',
+    color: 'bg-emerald-500/10 text-green-800',
     fields: [
       { name: 'shopDomain', label: 'Store Domain', placeholder: 'your-store.myshopify.com' },
       { name: 'accessToken', label: 'Admin API Access Token', placeholder: 'shpat_xxxxxxxx', type: 'password' },
@@ -327,7 +327,7 @@ const INTEGRATION_CATALOG: Record<string, IntegrationDef> = {
     description: 'Push leads and contacts to your CRM after calls',
     category: 'CRM',
     abbrev: 'HS',
-    color: 'bg-orange-100 text-orange-800',
+    color: 'bg-accent/10 text-orange-800',
     fields: [
       { name: 'token', label: 'Private App Token', placeholder: 'pat-na1-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', type: 'password' },
     ],
@@ -340,7 +340,7 @@ const INTEGRATION_CATALOG: Record<string, IntegrationDef> = {
     description: 'Live reservation management through OpenTable',
     category: 'Reservations',
     abbrev: 'OT',
-    color: 'bg-red-100 text-red-700',
+    color: 'bg-[#93000a]/10 text-[#ffb4ab]',
     fields: [],
     connectUrl: '',
     syncUrl: null,
@@ -352,7 +352,7 @@ const INTEGRATION_CATALOG: Record<string, IntegrationDef> = {
     description: 'Live reservation management through Resy',
     category: 'Reservations',
     abbrev: 'RS',
-    color: 'bg-purple-100 text-purple-700',
+    color: 'bg-purple-500/10 text-purple-400',
     fields: [],
     connectUrl: '',
     syncUrl: null,
@@ -364,7 +364,7 @@ const INTEGRATION_CATALOG: Record<string, IntegrationDef> = {
     description: 'Push leads to your GHL account after calls',
     category: 'CRM',
     abbrev: 'GHL',
-    color: 'bg-blue-100 text-blue-800',
+    color: 'bg-brand-primary/10 text-brand-primary',
     fields: [],
     connectUrl: '',
     syncUrl: null,
@@ -376,7 +376,7 @@ const INTEGRATION_CATALOG: Record<string, IntegrationDef> = {
     description: 'Look up account balances during collection calls',
     category: 'Payments',
     abbrev: 'ST',
-    color: 'bg-purple-100 text-purple-700',
+    color: 'bg-purple-500/10 text-purple-400',
     fields: [],
     connectUrl: '',
     syncUrl: null,
@@ -404,20 +404,20 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
                     isCompleted
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-brand-primary text-white'
                       : isCurrent
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-500'
+                      ? 'bg-brand-primary text-white'
+                      : 'bg-surface-highest text-text-secondary'
                   }`}
                 >
                   {isCompleted ? <CheckIcon className="h-4 w-4" /> : step}
                 </div>
-                <span className={`text-xs mt-1 ${isCurrent ? 'text-blue-600 font-medium' : 'text-gray-400'}`}>
+                <span className={`text-xs mt-1 ${isCurrent ? 'text-brand-primary font-medium' : 'text-text-muted'}`}>
                   {label}
                 </span>
               </div>
               {step < totalSteps && (
-                <div className={`h-0.5 w-full mx-1 mb-5 ${isCompleted ? 'bg-blue-600' : 'bg-gray-200'}`} />
+                <div className={`h-0.5 w-full mx-1 mb-5 ${isCompleted ? 'bg-brand-primary' : 'bg-surface-highest'}`} />
               )}
             </div>
           )
@@ -455,14 +455,14 @@ function BusinessHoursEditor({
         const isClosed = dayHours === null
         return (
           <div key={day} className="flex items-center gap-3">
-            <span className="w-24 text-sm font-medium text-gray-700 capitalize">{day}</span>
+            <span className="w-24 text-sm font-medium text-text-primary capitalize">{day}</span>
             <button
               type="button"
               onClick={() => toggleDay(day)}
               className={`px-3 py-1 text-xs rounded-full font-medium transition-colors ${
                 isClosed
-                  ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                  : 'bg-green-100 text-green-700 hover:bg-green-200'
+                  ? 'bg-[#93000a]/10 text-[#ffb4ab] hover:bg-red-200'
+                  : 'bg-emerald-500/10 text-emerald-500 hover:bg-green-200'
               }`}
             >
               {isClosed ? 'Closed' : 'Open'}
@@ -473,14 +473,14 @@ function BusinessHoursEditor({
                   type="time"
                   value={dayHours.start}
                   onChange={e => updateTime(day, 'start', e.target.value)}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-2 py-1 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
-                <span className="text-gray-400 text-sm">to</span>
+                <span className="text-text-muted text-sm">to</span>
                 <input
                   type="time"
                   value={dayHours.end}
                   onChange={e => updateTime(day, 'end', e.target.value)}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="px-2 py-1 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </>
             )}
@@ -508,7 +508,7 @@ function WizardStep1({
     <div className="space-y-6">
       {/* Job Type Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">What role should this employee fill?</label>
+        <label className="block text-sm font-medium text-text-primary mb-3">What role should this employee fill?</label>
         <div className="grid grid-cols-1 gap-3">
           {hireableRoles.map(type => {
             const info = JOB_TYPE_INFO[type]
@@ -521,20 +521,20 @@ function WizardStep1({
                 onClick={() => setWizardData(prev => ({ ...prev, jobType: type }))}
                 className={`flex items-center p-4 rounded-lg border-2 text-left transition-all ${
                   isSelected
-                    ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
-                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                    ? 'border-blue-500 bg-brand-primary/5 ring-1 ring-brand-primary/50'
+                    : 'border-[rgba(65,71,84,0.15)] hover:border-[rgba(65,71,84,0.2)] bg-surface-low'
                 }`}
               >
                 <div
                   className={`h-10 w-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                    isSelected ? `bg-blue-100` : `bg-gray-100`
+                    isSelected ? `bg-brand-primary/10` : `bg-surface-high`
                   }`}
                 >
-                  <Icon className={`h-5 w-5 ${isSelected ? 'text-blue-600' : 'text-gray-500'}`} />
+                  <Icon className={`h-5 w-5 ${isSelected ? 'text-brand-primary' : 'text-text-secondary'}`} />
                 </div>
                 <div className="ml-3">
-                  <p className={`font-medium ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>{info.label}</p>
-                  <p className={`text-sm ${isSelected ? 'text-blue-600' : 'text-gray-500'}`}>{info.description}</p>
+                  <p className={`font-medium ${isSelected ? 'text-blue-900' : 'text-text-primary'}`}>{info.label}</p>
+                  <p className={`text-sm ${isSelected ? 'text-brand-primary' : 'text-text-secondary'}`}>{info.description}</p>
                 </div>
               </button>
             )
@@ -545,7 +545,7 @@ function WizardStep1({
       {/* Personal Assistant — Owner Role */}
       {wizardData.jobType === 'personal-assistant' && (
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">What type of professional is this assistant for?</label>
+          <label className="block text-sm font-medium text-text-primary mb-3">What type of professional is this assistant for?</label>
           <div className="grid grid-cols-2 gap-2">
             {[
               { value: 'general', label: 'General', description: 'Scheduling & messages' },
@@ -564,17 +564,17 @@ function WizardStep1({
                   onClick={() => setWizardData(prev => ({ ...prev, ownerRole: role.value }))}
                   className={`flex flex-col p-3 rounded-lg border-2 text-left transition-all ${
                     isSelected
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                      ? 'border-blue-500 bg-brand-primary/5'
+                      : 'border-[rgba(65,71,84,0.15)] hover:border-[rgba(65,71,84,0.2)] bg-surface-low'
                   }`}
                 >
-                  <span className={`font-medium text-sm ${isSelected ? 'text-blue-900' : 'text-gray-900'}`}>{role.label}</span>
-                  <span className={`text-xs mt-0.5 ${isSelected ? 'text-blue-600' : 'text-gray-500'}`}>{role.description}</span>
+                  <span className={`font-medium text-sm ${isSelected ? 'text-blue-900' : 'text-text-primary'}`}>{role.label}</span>
+                  <span className={`text-xs mt-0.5 ${isSelected ? 'text-brand-primary' : 'text-text-secondary'}`}>{role.description}</span>
                 </button>
               )
             })}
           </div>
-          <p className="mt-2 text-xs text-gray-400">
+          <p className="mt-2 text-xs text-text-muted">
             This adds industry-specific guidance to your assistant so it handles calls appropriately for your field.
           </p>
         </div>
@@ -582,20 +582,20 @@ function WizardStep1({
 
       {/* Employee Name */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Employee Name</label>
+        <label className="block text-sm font-medium text-text-primary mb-1">Employee Name</label>
         <input
           type="text"
           value={wizardData.name}
           onChange={e => setWizardData(prev => ({ ...prev, name: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
           placeholder="Maya"
         />
-        <p className="mt-1 text-xs text-gray-400">This is the name your employee will use when answering calls.</p>
+        <p className="mt-1 text-xs text-text-muted">This is the name your employee will use when answering calls.</p>
       </div>
 
       {/* Tone Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">Personality Tone</label>
+        <label className="block text-sm font-medium text-text-primary mb-3">Personality Tone</label>
         <div className="flex flex-wrap gap-2">
           {TONE_OPTIONS.map(tone => {
             const isSelected = wizardData.tone === tone.value
@@ -606,8 +606,8 @@ function WizardStep1({
                 onClick={() => setWizardData(prev => ({ ...prev, tone: tone.value }))}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   isSelected
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-brand-primary text-white shadow-sm'
+                    : 'bg-surface-high text-text-primary hover:bg-surface-highest'
                 }`}
               >
                 {tone.label}
@@ -615,14 +615,14 @@ function WizardStep1({
             )
           })}
         </div>
-        <p className="mt-2 text-xs text-gray-400">
+        <p className="mt-2 text-xs text-text-muted">
           {TONE_OPTIONS.find(t => t.value === wizardData.tone)?.description}
         </p>
       </div>
 
       {/* Voice Selection */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Voice</label>
+        <label className="block text-sm font-medium text-text-primary mb-2">Voice</label>
         <VoicePicker
           voiceId={wizardData.voiceId}
           voiceName={wizardData.voiceName || wizardData.voiceId}
@@ -631,7 +631,7 @@ function WizardStep1({
             setWizardData(prev => ({ ...prev, voiceId, voiceName, voicePreviewUrl: voicePreviewUrl ?? null }))
           }
         />
-        <p className="mt-1 text-xs text-gray-400">Browse ElevenLabs voices — click ▶ to preview before selecting.</p>
+        <p className="mt-1 text-xs text-text-muted">Browse ElevenLabs voices — click ▶ to preview before selecting.</p>
       </div>
     </div>
   )
@@ -815,7 +815,7 @@ function WizardStep2({
     <div className="space-y-5">
       {/* Mode selector — 4 cards in a 2x2 grid */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+        <label className="block text-sm font-medium text-text-primary mb-3">
           How would you like to set up {wizardData.name || 'this employee'}?
         </label>
         <div className="grid grid-cols-2 gap-2">
@@ -826,16 +826,16 @@ function WizardStep2({
               onClick={() => switchMode(mode)}
               className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
                 inputMode === mode
-                  ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
-                  : 'border-gray-200 bg-white hover:border-gray-300'
+                  ? 'border-blue-500 bg-brand-primary/5 ring-1 ring-brand-primary/50'
+                  : 'border-[rgba(65,71,84,0.15)] bg-surface-low hover:border-[rgba(65,71,84,0.2)]'
               }`}
             >
-              <Icon className={`h-5 w-5 flex-shrink-0 ${inputMode === mode ? 'text-blue-600' : 'text-gray-400'}`} />
+              <Icon className={`h-5 w-5 flex-shrink-0 ${inputMode === mode ? 'text-brand-primary' : 'text-text-muted'}`} />
               <div className="min-w-0">
-                <p className={`text-sm font-medium truncate ${inputMode === mode ? 'text-blue-900' : 'text-gray-700'}`}>
+                <p className={`text-sm font-medium truncate ${inputMode === mode ? 'text-blue-900' : 'text-text-primary'}`}>
                   {title}
                 </p>
-                <p className="text-xs text-gray-400 truncate">{subtitle}</p>
+                <p className="text-xs text-text-muted truncate">{subtitle}</p>
               </div>
             </button>
           ))}
@@ -851,32 +851,32 @@ function WizardStep2({
               value={wizardData.websiteUrl}
               onChange={e => setWizardData(prev => ({ ...prev, websiteUrl: e.target.value }))}
               placeholder="https://yourbusiness.com"
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="flex-1 px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
             <button
               type="button"
               onClick={handleWebsiteExtract}
               disabled={!wizardData.websiteUrl || isExtracting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium whitespace-nowrap"
+              className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium whitespace-nowrap"
             >
               {isExtracting ? 'Extracting...' : 'Pull Info'}
             </button>
           </div>
-          {extractError && <p className="text-sm text-red-600">{extractError}</p>}
+          {extractError && <p className="text-sm text-[#ffb4ab]">{extractError}</p>}
           {extractSuccess && (
             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircleIcon className="h-4 w-4 text-green-600 flex-shrink-0" />
-              <p className="text-sm text-green-700">{extractSuccess}</p>
+              <CheckCircleIcon className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+              <p className="text-sm text-emerald-500">{extractSuccess}</p>
             </div>
           )}
-          <p className="text-xs text-gray-400">We'll read your website and pre-fill your employee's knowledge base.</p>
+          <p className="text-xs text-text-muted">We'll read your website and pre-fill your employee's knowledge base.</p>
         </div>
       )}
 
       {/* Document panel */}
       {inputMode === 'document' && (
         <div className="space-y-3">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+          <div className="border-2 border-dashed border-[rgba(65,71,84,0.2)] rounded-lg p-6 text-center">
             <input
               type="file"
               id="doc-upload"
@@ -886,18 +886,18 @@ function WizardStep2({
               disabled={isExtracting}
             />
             <label htmlFor="doc-upload" className="cursor-pointer">
-              <DocumentArrowUpIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm font-medium text-gray-700">
+              <DocumentArrowUpIcon className="h-8 w-8 text-text-muted mx-auto mb-2" />
+              <p className="text-sm font-medium text-text-primary">
                 {isExtracting ? 'Extracting...' : 'Click to upload'}
               </p>
-              <p className="text-xs text-gray-400 mt-1">PDF, Word (.docx), or text file — max 10MB</p>
+              <p className="text-xs text-text-muted mt-1">PDF, Word (.docx), or text file — max 10MB</p>
             </label>
           </div>
-          {extractError && <p className="text-sm text-red-600">{extractError}</p>}
+          {extractError && <p className="text-sm text-[#ffb4ab]">{extractError}</p>}
           {extractSuccess && (
             <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <CheckCircleIcon className="h-4 w-4 text-green-600 flex-shrink-0" />
-              <p className="text-sm text-green-700">{extractSuccess}</p>
+              <CheckCircleIcon className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+              <p className="text-sm text-emerald-500">{extractSuccess}</p>
             </div>
           )}
         </div>
@@ -909,7 +909,7 @@ function WizardStep2({
           {isLoadingConfig ? (
             <div className="flex flex-col items-center py-8">
               <div className="h-8 w-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-              <p className="mt-3 text-sm text-gray-500">Preparing voice interview...</p>
+              <p className="mt-3 text-sm text-text-secondary">Preparing voice interview...</p>
             </div>
           ) : interviewConfig ? (
             <>
@@ -917,10 +917,10 @@ function WizardStep2({
                 <div className="flex flex-col items-center py-8">
                   <div className="relative">
                     <div className="h-12 w-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
-                    <SparklesIcon className="h-5 w-5 text-blue-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                    <SparklesIcon className="h-5 w-5 text-brand-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
                   </div>
-                  <p className="mt-4 text-sm font-medium text-gray-700">AI is configuring your employee from the interview...</p>
-                  <p className="text-xs text-gray-400 mt-1">This usually takes 5-10 seconds</p>
+                  <p className="mt-4 text-sm font-medium text-text-primary">AI is configuring your employee from the interview...</p>
+                  <p className="text-xs text-text-muted mt-1">This usually takes 5-10 seconds</p>
                 </div>
               ) : (
                 <VoiceInterview
@@ -932,7 +932,7 @@ function WizardStep2({
             </>
           ) : (
             <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-700">
+              <p className="text-sm text-accent">
                 Voice interview could not be loaded.{' '}
                 <button
                   type="button"
@@ -946,8 +946,8 @@ function WizardStep2({
           )}
 
           {wizardData.generateError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700">{wizardData.generateError}</p>
+            <div className="p-3 bg-[#93000a]/5 border border-red-200 rounded-lg">
+              <p className="text-sm text-[#ffb4ab]">{wizardData.generateError}</p>
             </div>
           )}
         </>
@@ -957,24 +957,24 @@ function WizardStep2({
       {inputMode === 'text' && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-text-primary mb-1">
               Describe your business
             </label>
-            <p className="text-sm text-gray-500 mb-3">
+            <p className="text-sm text-text-secondary mb-3">
               Include what you do, services you offer, hours, location, and anything else your phone employee should know.
             </p>
             <textarea
               value={wizardData.businessDescription}
               onChange={e => setWizardData(prev => ({ ...prev, businessDescription: e.target.value }))}
               rows={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary resize-none"
               placeholder="e.g., We are a family-owned Italian restaurant in downtown Portland. We offer dine-in, takeout, and delivery. Our hours are Tuesday through Sunday, 11am to 10pm. We specialize in handmade pasta, wood-fired pizza, and seasonal Italian dishes..."
             />
           </div>
 
           {wizardData.generateError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-700">{wizardData.generateError}</p>
+            <div className="p-3 bg-[#93000a]/5 border border-red-200 rounded-lg">
+              <p className="text-sm text-[#ffb4ab]">{wizardData.generateError}</p>
             </div>
           )}
 
@@ -982,17 +982,17 @@ function WizardStep2({
             <div className="flex flex-col items-center py-8">
               <div className="relative">
                 <div className="h-12 w-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
-                <SparklesIcon className="h-5 w-5 text-blue-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                <SparklesIcon className="h-5 w-5 text-brand-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
               </div>
-              <p className="mt-4 text-sm font-medium text-gray-700">AI is configuring your employee...</p>
-              <p className="text-xs text-gray-400 mt-1">This usually takes 5-10 seconds</p>
+              <p className="mt-4 text-sm font-medium text-text-primary">AI is configuring your employee...</p>
+              <p className="text-xs text-text-muted mt-1">This usually takes 5-10 seconds</p>
             </div>
           ) : (
             <button
               type="button"
               onClick={onGenerate}
               disabled={!wizardData.businessDescription.trim()}
-              className="w-full inline-flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               <SparklesIcon className="h-5 w-5 mr-2" />
               Generate Configuration
@@ -1016,7 +1016,7 @@ function WizardStep3({
   setWizardData: React.Dispatch<React.SetStateAction<WizardData>>
 }) {
   const config = wizardData.generatedConfig
-  if (!config) return <p className="text-gray-500">No configuration generated yet.</p>
+  if (!config) return <p className="text-text-secondary">No configuration generated yet.</p>
 
   const updateConfig = (path: string, value: any) => {
     setWizardData(prev => {
@@ -1035,18 +1035,18 @@ function WizardStep3({
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-text-secondary">
         Review and customize the AI-generated configuration. All fields are editable.
       </p>
 
       {/* Greeting - common to all types */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Greeting</label>
+        <label className="block text-sm font-medium text-text-primary mb-1">Greeting</label>
         <textarea
           value={config.greeting || ''}
           onChange={e => updateConfig('greeting', e.target.value)}
           rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-sm"
+          className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary resize-none text-sm"
         />
       </div>
 
@@ -1054,19 +1054,19 @@ function WizardStep3({
       {jobType === 'receptionist' && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Business Description</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Business Description</label>
             <textarea
               value={config.businessDescription || ''}
               onChange={e => updateConfig('businessDescription', e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary resize-none text-sm"
             />
           </div>
 
           {/* Services */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">Services</label>
+              <label className="block text-sm font-medium text-text-primary">Services</label>
               <button
                 type="button"
                 onClick={() => {
@@ -1074,7 +1074,7 @@ function WizardStep3({
                   services.push({ name: '', duration: 30 })
                   updateConfig('services', services)
                 }}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                className="text-xs text-brand-primary hover:text-brand-primary font-medium"
               >
                 + Add Service
               </button>
@@ -1090,7 +1090,7 @@ function WizardStep3({
                     updateConfig('services', services)
                   }}
                   placeholder="Service name"
-                  className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
                 <input
                   type="number"
@@ -1101,16 +1101,16 @@ function WizardStep3({
                     updateConfig('services', services)
                   }}
                   placeholder="Min"
-                  className="w-20 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-20 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
-                <span className="text-xs text-gray-400">min</span>
+                <span className="text-xs text-text-muted">min</span>
                 <button
                   type="button"
                   onClick={() => {
                     const services = config.services.filter((_: any, i: number) => i !== idx)
                     updateConfig('services', services)
                   }}
-                  className="p-1 text-gray-400 hover:text-red-500"
+                  className="p-1 text-text-muted hover:text-[#ffb4ab]"
                 >
                   <XMarkIcon className="h-4 w-4" />
                 </button>
@@ -1121,7 +1121,7 @@ function WizardStep3({
           {/* FAQs */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">FAQs</label>
+              <label className="block text-sm font-medium text-text-primary">FAQs</label>
               <button
                 type="button"
                 onClick={() => {
@@ -1129,13 +1129,13 @@ function WizardStep3({
                   faqs.push({ question: '', answer: '', keywords: [] })
                   updateConfig('faqs', faqs)
                 }}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                className="text-xs text-brand-primary hover:text-brand-primary font-medium"
               >
                 + Add FAQ
               </button>
             </div>
             {(config.faqs || []).map((faq: any, idx: number) => (
-              <div key={idx} className="p-3 bg-gray-50 rounded-lg mb-2">
+              <div key={idx} className="p-3 bg-surface rounded-lg mb-2">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 space-y-2">
                     <input
@@ -1147,7 +1147,7 @@ function WizardStep3({
                         updateConfig('faqs', faqs)
                       }}
                       placeholder="Question"
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                     />
                     <textarea
                       value={faq.answer}
@@ -1158,7 +1158,7 @@ function WizardStep3({
                       }}
                       placeholder="Answer"
                       rows={2}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                      className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary resize-none"
                     />
                   </div>
                   <button
@@ -1167,7 +1167,7 @@ function WizardStep3({
                       const faqs = config.faqs.filter((_: any, i: number) => i !== idx)
                       updateConfig('faqs', faqs)
                     }}
-                    className="ml-2 p-1 text-gray-400 hover:text-red-500"
+                    className="ml-2 p-1 text-text-muted hover:text-[#ffb4ab]"
                   >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
@@ -1184,7 +1184,7 @@ function WizardStep3({
           {/* Menu Categories */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium text-gray-700">Menu Categories</label>
+              <label className="block text-sm font-medium text-text-primary">Menu Categories</label>
               <button
                 type="button"
                 onClick={() => {
@@ -1192,13 +1192,13 @@ function WizardStep3({
                   categories.push({ name: '', items: [] })
                   updateConfig('menu', { ...config.menu, categories })
                 }}
-                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                className="text-xs text-brand-primary hover:text-brand-primary font-medium"
               >
                 + Add Category
               </button>
             </div>
             {(config.menu?.categories || []).map((category: any, catIdx: number) => (
-              <div key={catIdx} className="p-3 bg-gray-50 rounded-lg mb-3">
+              <div key={catIdx} className="p-3 bg-surface rounded-lg mb-3">
                 <div className="flex items-center gap-2 mb-2">
                   <input
                     type="text"
@@ -1209,7 +1209,7 @@ function WizardStep3({
                       updateConfig('menu', { ...config.menu, categories })
                     }}
                     placeholder="Category name (e.g., Appetizers)"
-                    className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="flex-1 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm font-medium focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                   />
                   <button
                     type="button"
@@ -1217,7 +1217,7 @@ function WizardStep3({
                       const categories = config.menu.categories.filter((_: any, i: number) => i !== catIdx)
                       updateConfig('menu', { ...config.menu, categories })
                     }}
-                    className="p-1 text-gray-400 hover:text-red-500"
+                    className="p-1 text-text-muted hover:text-[#ffb4ab]"
                   >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
@@ -1234,10 +1234,10 @@ function WizardStep3({
                         updateConfig('menu', { ...config.menu, categories })
                       }}
                       placeholder="Item name"
-                      className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="flex-1 px-2 py-1 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                     />
                     <div className="flex items-center">
-                      <span className="text-sm text-gray-400 mr-1">$</span>
+                      <span className="text-sm text-text-muted mr-1">$</span>
                       <input
                         type="number"
                         step="0.01"
@@ -1248,7 +1248,7 @@ function WizardStep3({
                           updateConfig('menu', { ...config.menu, categories })
                         }}
                         placeholder="0.00"
-                        className="w-20 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-20 px-2 py-1 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                       />
                     </div>
                     <input
@@ -1260,7 +1260,7 @@ function WizardStep3({
                         updateConfig('menu', { ...config.menu, categories })
                       }}
                       placeholder="Description (optional)"
-                      className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="flex-1 px-2 py-1 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                     />
                     <button
                       type="button"
@@ -1269,7 +1269,7 @@ function WizardStep3({
                         categories[catIdx].items.splice(itemIdx, 1)
                         updateConfig('menu', { ...config.menu, categories })
                       }}
-                      className="p-1 text-gray-400 hover:text-red-500"
+                      className="p-1 text-text-muted hover:text-[#ffb4ab]"
                     >
                       <XMarkIcon className="h-3 w-3" />
                     </button>
@@ -1282,7 +1282,7 @@ function WizardStep3({
                     categories[catIdx].items.push({ name: '', price: 0, description: '' })
                     updateConfig('menu', { ...config.menu, categories })
                   }}
-                  className="ml-4 mt-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
+                  className="ml-4 mt-1 text-xs text-brand-primary hover:text-brand-primary font-medium"
                 >
                   + Add Item
                 </button>
@@ -1292,30 +1292,30 @@ function WizardStep3({
 
           {/* Order Settings */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Order Settings</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Order Settings</label>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Min Order ($)</label>
+                <label className="block text-xs text-text-secondary mb-1">Min Order ($)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={config.orderSettings?.minimumOrder || 0}
                   onChange={e => updateConfig('orderSettings', { ...config.orderSettings, minimumOrder: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Delivery Fee ($)</label>
+                <label className="block text-xs text-text-secondary mb-1">Delivery Fee ($)</label>
                 <input
                   type="number"
                   step="0.01"
                   value={config.orderSettings?.deliveryFee || 0}
                   onChange={e => updateConfig('orderSettings', { ...config.orderSettings, deliveryFee: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Pickup Time (min)</label>
+                <label className="block text-xs text-text-secondary mb-1">Pickup Time (min)</label>
                 <input
                   type="number"
                   value={config.orderSettings?.estimatedTime?.pickup || 20}
@@ -1323,11 +1323,11 @@ function WizardStep3({
                     ...config.orderSettings,
                     estimatedTime: { ...config.orderSettings?.estimatedTime, pickup: parseInt(e.target.value) || 0 },
                   })}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Delivery Time (min)</label>
+                <label className="block text-xs text-text-secondary mb-1">Delivery Time (min)</label>
                 <input
                   type="number"
                   value={config.orderSettings?.estimatedTime?.delivery || 45}
@@ -1335,7 +1335,7 @@ function WizardStep3({
                     ...config.orderSettings,
                     estimatedTime: { ...config.orderSettings?.estimatedTime, delivery: parseInt(e.target.value) || 0 },
                   })}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
             </div>
@@ -1347,44 +1347,44 @@ function WizardStep3({
       {jobType === 'personal-assistant' && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Owner Name</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Owner Name</label>
             <input
               type="text"
               value={config.ownerName || ''}
               onChange={e => updateConfig('ownerName', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
               placeholder="Your name"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Scheduling Rules</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Scheduling Rules</label>
             <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Min Notice (min)</label>
+                <label className="block text-xs text-text-secondary mb-1">Min Notice (min)</label>
                 <input
                   type="number"
                   value={config.schedulingRules?.minNotice || 60}
                   onChange={e => updateConfig('schedulingRules', { ...config.schedulingRules, minNotice: parseInt(e.target.value) || 0 })}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Max Advance (days)</label>
+                <label className="block text-xs text-text-secondary mb-1">Max Advance (days)</label>
                 <input
                   type="number"
                   value={config.schedulingRules?.maxAdvance || 30}
                   onChange={e => updateConfig('schedulingRules', { ...config.schedulingRules, maxAdvance: parseInt(e.target.value) || 0 })}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Buffer (min)</label>
+                <label className="block text-xs text-text-secondary mb-1">Buffer (min)</label>
                 <input
                   type="number"
                   value={config.schedulingRules?.bufferBetween || 15}
                   onChange={e => updateConfig('schedulingRules', { ...config.schedulingRules, bufferBetween: parseInt(e.target.value) || 0 })}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
             </div>
@@ -1395,17 +1395,17 @@ function WizardStep3({
       {jobType === 'appointment-scheduler' && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Business Description</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Business Description</label>
             <textarea
               rows={3}
               value={config.businessDescription || ''}
               onChange={e => updateConfig('businessDescription', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Appointment Types</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Appointment Types</label>
             {(config.appointmentTypes || []).map((appt: { name: string; duration: number; price: number }, idx: number) => (
               <div key={idx} className="flex items-center gap-2 mb-2">
                 <input
@@ -1417,7 +1417,7 @@ function WizardStep3({
                     updateConfig('appointmentTypes', updated);
                   }}
                   placeholder="Appointment name"
-                  className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
                 <input
                   type="number"
@@ -1427,10 +1427,10 @@ function WizardStep3({
                     updated[idx] = { ...updated[idx], duration: parseInt(e.target.value) || 0 };
                     updateConfig('appointmentTypes', updated);
                   }}
-                  className="w-20 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-20 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
-                <span className="text-xs text-gray-500">min</span>
-                <span className="text-xs text-gray-500">$</span>
+                <span className="text-xs text-text-secondary">min</span>
+                <span className="text-xs text-text-secondary">$</span>
                 <input
                   type="number"
                   value={appt.price}
@@ -1440,7 +1440,7 @@ function WizardStep3({
                     updateConfig('appointmentTypes', updated);
                   }}
                   placeholder="0"
-                  className="w-24 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-24 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
                 <button
                   onClick={() => {
@@ -1448,7 +1448,7 @@ function WizardStep3({
                     updated.splice(idx, 1);
                     updateConfig('appointmentTypes', updated);
                   }}
-                  className="p-1 text-gray-400 hover:text-red-500"
+                  className="p-1 text-text-muted hover:text-[#ffb4ab]"
                 >
                   <XMarkIcon className="h-4 w-4" />
                 </button>
@@ -1456,40 +1456,40 @@ function WizardStep3({
             ))}
             <button
               onClick={() => updateConfig('appointmentTypes', [...(config.appointmentTypes || []), { name: '', duration: 30, price: 0 }])}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="text-xs text-brand-primary hover:text-brand-primary font-medium"
             >
               + Add Type
             </button>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Booking Rules</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Booking Rules</label>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Min Notice (hours)</label>
+                <label className="block text-xs text-text-secondary mb-1">Min Notice (hours)</label>
                 <input
                   type="number"
                   value={config.bookingRules?.minNoticeHours ?? 2}
                   onChange={e => updateConfig('bookingRules', { ...config.bookingRules, minNoticeHours: parseInt(e.target.value) || 0 })}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Max Advance (days)</label>
+                <label className="block text-xs text-text-secondary mb-1">Max Advance (days)</label>
                 <input
                   type="number"
                   value={config.bookingRules?.maxAdvanceDays ?? 30}
                   onChange={e => updateConfig('bookingRules', { ...config.bookingRules, maxAdvanceDays: parseInt(e.target.value) || 0 })}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Buffer Between (min)</label>
+                <label className="block text-xs text-text-secondary mb-1">Buffer Between (min)</label>
                 <input
                   type="number"
                   value={config.bookingRules?.bufferMinutes ?? 15}
                   onChange={e => updateConfig('bookingRules', { ...config.bookingRules, bufferMinutes: parseInt(e.target.value) || 0 })}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
               <div className="flex items-center gap-2 mt-4">
@@ -1497,9 +1497,9 @@ function WizardStep3({
                   type="checkbox"
                   checked={!!config.bookingRules?.sameDayBooking}
                   onChange={e => updateConfig('bookingRules', { ...config.bookingRules, sameDayBooking: e.target.checked })}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
                 />
-                <label className="text-sm text-gray-700">Same-Day Booking</label>
+                <label className="text-sm text-text-primary">Same-Day Booking</label>
               </div>
             </div>
           </div>
@@ -1509,29 +1509,29 @@ function WizardStep3({
       {jobType === 'customer-service' && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Business Description</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Business Description</label>
             <textarea
               rows={3}
               value={config.businessDescription || ''}
               onChange={e => updateConfig('businessDescription', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Return Policy</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Return Policy</label>
             <textarea
               rows={2}
               value={config.returnPolicy || ''}
               onChange={e => updateConfig('returnPolicy', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Common Issues</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Common Issues</label>
             {(config.commonIssues || []).map((item: { issue: string; resolution: string }, idx: number) => (
-              <div key={idx} className="p-3 bg-gray-50 rounded-lg mb-2">
+              <div key={idx} className="p-3 bg-surface rounded-lg mb-2">
                 <div className="flex items-start gap-2">
                   <div className="flex-1 space-y-2">
                     <input
@@ -1543,7 +1543,7 @@ function WizardStep3({
                         updateConfig('commonIssues', updated);
                       }}
                       placeholder="Issue / complaint"
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                     />
                     <textarea
                       rows={2}
@@ -1554,7 +1554,7 @@ function WizardStep3({
                         updateConfig('commonIssues', updated);
                       }}
                       placeholder="Resolution / response"
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                     />
                   </div>
                   <button
@@ -1563,7 +1563,7 @@ function WizardStep3({
                       updated.splice(idx, 1);
                       updateConfig('commonIssues', updated);
                     }}
-                    className="p-1 text-gray-400 hover:text-red-500"
+                    className="p-1 text-text-muted hover:text-[#ffb4ab]"
                   >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
@@ -1572,49 +1572,49 @@ function WizardStep3({
             ))}
             <button
               onClick={() => updateConfig('commonIssues', [...(config.commonIssues || []), { issue: '', resolution: '' }])}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="text-xs text-brand-primary hover:text-brand-primary font-medium"
             >
               + Add Issue
             </button>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Resolution Authority</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Resolution Authority</label>
             <div className="grid grid-cols-2 gap-3">
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={!!config.resolutionAuthority?.canRefund}
                   onChange={e => updateConfig('resolutionAuthority', { ...config.resolutionAuthority, canRefund: e.target.checked })}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
                 />
-                <label className="text-sm text-gray-700">Can issue refunds</label>
+                <label className="text-sm text-text-primary">Can issue refunds</label>
               </div>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={!!config.resolutionAuthority?.canOfferDiscount}
                   onChange={e => updateConfig('resolutionAuthority', { ...config.resolutionAuthority, canOfferDiscount: e.target.checked })}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
                 />
-                <label className="text-sm text-gray-700">Can offer discounts</label>
+                <label className="text-sm text-text-primary">Can offer discounts</label>
               </div>
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={!!config.resolutionAuthority?.canScheduleCallback}
                   onChange={e => updateConfig('resolutionAuthority', { ...config.resolutionAuthority, canScheduleCallback: e.target.checked })}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
                 />
-                <label className="text-sm text-gray-700">Can schedule callbacks</label>
+                <label className="text-sm text-text-primary">Can schedule callbacks</label>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Max Refund Amount ($)</label>
+                <label className="block text-xs text-text-secondary mb-1">Max Refund Amount ($)</label>
                 <input
                   type="number"
                   value={config.resolutionAuthority?.maxRefundAmount ?? 0}
                   onChange={e => updateConfig('resolutionAuthority', { ...config.resolutionAuthority, maxRefundAmount: parseFloat(e.target.value) || 0 })}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
             </div>
@@ -1625,11 +1625,11 @@ function WizardStep3({
       {jobType === 'after-hours-emergency' && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Business Type</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Business Type</label>
             <select
               value={config.businessType || 'general'}
               onChange={e => updateConfig('businessType', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             >
               <option value="property-management">Property Management</option>
               <option value="medical">Medical / Healthcare</option>
@@ -1640,7 +1640,7 @@ function WizardStep3({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">On-Call Contacts</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">On-Call Contacts</label>
             {(config.onCallContacts || []).map((contact: { name: string; phone: string; role: string }, idx: number) => (
               <div key={idx} className="flex items-center gap-2 mb-2">
                 <input
@@ -1652,7 +1652,7 @@ function WizardStep3({
                     updateConfig('onCallContacts', updated);
                   }}
                   placeholder="Name"
-                  className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
                 <input
                   type="text"
@@ -1663,7 +1663,7 @@ function WizardStep3({
                     updateConfig('onCallContacts', updated);
                   }}
                   placeholder="+1 555-000-0000"
-                  className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
                 <input
                   type="text"
@@ -1674,7 +1674,7 @@ function WizardStep3({
                     updateConfig('onCallContacts', updated);
                   }}
                   placeholder="Role (optional)"
-                  className="w-32 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-32 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
                 <button
                   onClick={() => {
@@ -1682,7 +1682,7 @@ function WizardStep3({
                     updated.splice(idx, 1);
                     updateConfig('onCallContacts', updated);
                   }}
-                  className="p-1 text-gray-400 hover:text-red-500"
+                  className="p-1 text-text-muted hover:text-[#ffb4ab]"
                 >
                   <XMarkIcon className="h-4 w-4" />
                 </button>
@@ -1690,41 +1690,41 @@ function WizardStep3({
             ))}
             <button
               onClick={() => updateConfig('onCallContacts', [...(config.onCallContacts || []), { name: '', phone: '', role: '' }])}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="text-xs text-brand-primary hover:text-brand-primary font-medium"
             >
               + Add Contact
             </button>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Emergency Keywords</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Emergency Keywords</label>
             <textarea
               rows={2}
               value={(config.emergencyKeywords || []).join(', ')}
               onChange={e => updateConfig('emergencyKeywords', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
-            <p className="mt-1 text-xs text-gray-400">Comma-separated (e.g. fire, flood, gas leak)</p>
+            <p className="mt-1 text-xs text-text-muted">Comma-separated (e.g. fire, flood, gas leak)</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Urgent Keywords</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Urgent Keywords</label>
             <textarea
               rows={2}
               value={(config.urgentKeywords || []).join(', ')}
               onChange={e => updateConfig('urgentKeywords', e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
-            <p className="mt-1 text-xs text-gray-400">Comma-separated (e.g. fire, flood, gas leak)</p>
+            <p className="mt-1 text-xs text-text-muted">Comma-separated (e.g. fire, flood, gas leak)</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Non-Emergency Response</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Non-Emergency Response</label>
             <textarea
               rows={2}
               value={config.nonEmergencyResponse || ''}
               onChange={e => updateConfig('nonEmergencyResponse', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
         </>
@@ -1733,34 +1733,34 @@ function WizardStep3({
       {jobType === 'restaurant-host' && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Restaurant Name</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Restaurant Name</label>
             <input
               type="text"
               value={config.restaurantName || ''}
               onChange={e => updateConfig('restaurantName', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Capacity</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Capacity</label>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Total Seats</label>
+                <label className="block text-xs text-text-secondary mb-1">Total Seats</label>
                 <input
                   type="number"
                   value={config.tableCapacity ?? 50}
                   onChange={e => updateConfig('tableCapacity', parseInt(e.target.value) || 0)}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Max Party Size</label>
+                <label className="block text-xs text-text-secondary mb-1">Max Party Size</label>
                 <input
                   type="number"
                   value={config.partyMaxSize ?? 8}
                   onChange={e => updateConfig('partyMaxSize', parseInt(e.target.value) || 0)}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
             </div>
@@ -1772,25 +1772,25 @@ function WizardStep3({
                 type="checkbox"
                 checked={!!config.waitlistEnabled}
                 onChange={e => updateConfig('waitlistEnabled', e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
               />
-              <label className="text-sm text-gray-700">Waitlist enabled</label>
+              <label className="text-sm text-text-primary">Waitlist enabled</label>
             </div>
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={!!config.specialOccasionsEnabled}
                 onChange={e => updateConfig('specialOccasionsEnabled', e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
               />
-              <label className="text-sm text-gray-700">Special occasions</label>
+              <label className="text-sm text-text-primary">Special occasions</label>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Reservation Slots</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Reservation Slots</label>
             {(config.reservationSlots || []).map((slot: { day: string; openTime: string; closeTime: string; slotIntervalMinutes: number }, idx: number) => (
-              <div key={idx} className="p-3 bg-gray-50 rounded-lg mb-2">
+              <div key={idx} className="p-3 bg-surface rounded-lg mb-2">
                 <div className="flex items-center gap-2">
                   <select
                     value={slot.day}
@@ -1799,7 +1799,7 @@ function WizardStep3({
                       updated[idx] = { ...updated[idx], day: e.target.value };
                       updateConfig('reservationSlots', updated);
                     }}
-                    className="px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                   >
                     {['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map(d => (
                       <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
@@ -1814,9 +1814,9 @@ function WizardStep3({
                       updateConfig('reservationSlots', updated);
                     }}
                     placeholder="17:00"
-                    className="w-20 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-20 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                   />
-                  <span className="text-xs text-gray-500">to</span>
+                  <span className="text-xs text-text-secondary">to</span>
                   <input
                     type="text"
                     value={slot.closeTime}
@@ -1826,7 +1826,7 @@ function WizardStep3({
                       updateConfig('reservationSlots', updated);
                     }}
                     placeholder="22:00"
-                    className="w-20 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-20 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                   />
                   <select
                     value={slot.slotIntervalMinutes}
@@ -1835,7 +1835,7 @@ function WizardStep3({
                       updated[idx] = { ...updated[idx], slotIntervalMinutes: parseInt(e.target.value) };
                       updateConfig('reservationSlots', updated);
                     }}
-                    className="px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                   >
                     <option value={15}>15 min</option>
                     <option value={30}>30 min</option>
@@ -1847,7 +1847,7 @@ function WizardStep3({
                       updated.splice(idx, 1);
                       updateConfig('reservationSlots', updated);
                     }}
-                    className="p-1 text-gray-400 hover:text-red-500"
+                    className="p-1 text-text-muted hover:text-[#ffb4ab]"
                   >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
@@ -1856,7 +1856,7 @@ function WizardStep3({
             ))}
             <button
               onClick={() => updateConfig('reservationSlots', [...(config.reservationSlots || []), { day: 'monday', openTime: '17:00', closeTime: '22:00', slotIntervalMinutes: 30 }])}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="text-xs text-brand-primary hover:text-brand-primary font-medium"
             >
               + Add Slot
             </button>
@@ -1868,28 +1868,28 @@ function WizardStep3({
                 type="checkbox"
                 checked={!!config.depositRequired}
                 onChange={e => updateConfig('depositRequired', e.target.checked ? { partySize: 6, amount: 25 } : undefined)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
               />
-              <label className="text-sm text-gray-700">Require deposit for large parties</label>
+              <label className="text-sm text-text-primary">Require deposit for large parties</label>
             </div>
             {config.depositRequired && (
               <div className="grid grid-cols-2 gap-3 mt-2">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Party Size &ge;</label>
+                  <label className="block text-xs text-text-secondary mb-1">Party Size &ge;</label>
                   <input
                     type="number"
                     value={config.depositRequired.partySize ?? 6}
                     onChange={e => updateConfig('depositRequired', { ...config.depositRequired, partySize: parseInt(e.target.value) || 0 })}
-                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Deposit Amount ($)</label>
+                  <label className="block text-xs text-text-secondary mb-1">Deposit Amount ($)</label>
                   <input
                     type="number"
                     value={config.depositRequired.amount ?? 25}
                     onChange={e => updateConfig('depositRequired', { ...config.depositRequired, amount: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                   />
                 </div>
               </div>
@@ -1901,21 +1901,21 @@ function WizardStep3({
       {jobType === 'survey-caller' && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Survey Name</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Survey Name</label>
             <input
               type="text"
               value={config.surveyName || ''}
               onChange={e => updateConfig('surveyName', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Call Trigger</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Call Trigger</label>
             <select
               value={config.callTrigger || 'post_appointment'}
               onChange={e => updateConfig('callTrigger', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             >
               <option value="post_appointment">After Appointment</option>
               <option value="post_order">After Order</option>
@@ -1924,19 +1924,19 @@ function WizardStep3({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hours after trigger to call</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Hours after trigger to call</label>
             <input
               type="number"
               value={config.triggerDelayHours ?? 2}
               onChange={e => updateConfig('triggerDelayHours', parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Questions</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Questions</label>
             {(config.questions || []).map((q: { id: string; question: string; type: string; required: boolean }, idx: number) => (
-              <div key={q.id || idx} className="p-3 bg-gray-50 rounded-lg mb-2">
+              <div key={q.id || idx} className="p-3 bg-surface rounded-lg mb-2">
                 <div className="flex items-start gap-2">
                   <div className="flex-1 space-y-2">
                     <textarea
@@ -1948,7 +1948,7 @@ function WizardStep3({
                         updateConfig('questions', updated);
                       }}
                       placeholder="Question text"
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                     />
                     <div className="flex items-center gap-3">
                       <select
@@ -1958,7 +1958,7 @@ function WizardStep3({
                           updated[idx] = { ...updated[idx], type: e.target.value };
                           updateConfig('questions', updated);
                         }}
-                        className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="flex-1 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                       >
                         <option value="rating">1–10 Rating</option>
                         <option value="yes_no">Yes / No</option>
@@ -1974,9 +1974,9 @@ function WizardStep3({
                             updated[idx] = { ...updated[idx], required: e.target.checked };
                             updateConfig('questions', updated);
                           }}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
                         />
-                        <label className="text-sm text-gray-700">Required</label>
+                        <label className="text-sm text-text-primary">Required</label>
                       </div>
                     </div>
                   </div>
@@ -1986,7 +1986,7 @@ function WizardStep3({
                       updated.splice(idx, 1);
                       updateConfig('questions', updated);
                     }}
-                    className="p-1 text-gray-400 hover:text-red-500"
+                    className="p-1 text-text-muted hover:text-[#ffb4ab]"
                   >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
@@ -1995,40 +1995,40 @@ function WizardStep3({
             ))}
             <button
               onClick={() => updateConfig('questions', [...(config.questions || []), { id: Date.now().toString(), question: '', type: 'rating', required: true }])}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="text-xs text-brand-primary hover:text-brand-primary font-medium"
             >
               + Add Question
             </button>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Incentive Offer (optional)</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Incentive Offer (optional)</label>
             <input
               type="text"
               value={config.offerIncentive || ''}
               onChange={e => updateConfig('offerIncentive', e.target.value)}
               placeholder="e.g. 10% off your next visit (leave blank for none)"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Closing (positive response)</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Closing (positive response)</label>
             <textarea
               rows={1}
               value={config.positiveOutro || ''}
               onChange={e => updateConfig('positiveOutro', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Closing (needs improvement)</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Closing (needs improvement)</label>
             <textarea
               rows={1}
               value={config.negativeOutro || ''}
               onChange={e => updateConfig('negativeOutro', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
         </>
@@ -2037,19 +2037,19 @@ function WizardStep3({
       {jobType === 'lead-qualifier' && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Business Description</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Business Description</label>
             <textarea
               rows={3}
               value={config.businessDescription || ''}
               onChange={e => updateConfig('businessDescription', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Qualifying Questions</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Qualifying Questions</label>
             {(config.qualifyingQuestions || []).map((q: { id: string; question: string; field: string; required: boolean }, idx: number) => (
-              <div key={q.id || idx} className="p-3 bg-gray-50 rounded-lg mb-2">
+              <div key={q.id || idx} className="p-3 bg-surface rounded-lg mb-2">
                 <div className="flex items-start gap-2">
                   <div className="flex-1 space-y-2">
                     <textarea
@@ -2061,7 +2061,7 @@ function WizardStep3({
                         updateConfig('qualifyingQuestions', updated);
                       }}
                       placeholder="Question text"
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                     />
                     <div className="flex items-center gap-3">
                       <select
@@ -2071,7 +2071,7 @@ function WizardStep3({
                           updated[idx] = { ...updated[idx], field: e.target.value };
                           updateConfig('qualifyingQuestions', updated);
                         }}
-                        className="flex-1 px-2 py-1.5 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="flex-1 px-2 py-1.5 border border-[rgba(65,71,84,0.2)] rounded text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                       >
                         <option value="interest">Interest Level</option>
                         <option value="timeline">Timeline</option>
@@ -2088,9 +2088,9 @@ function WizardStep3({
                             updated[idx] = { ...updated[idx], required: e.target.checked };
                             updateConfig('qualifyingQuestions', updated);
                           }}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
                         />
-                        <label className="text-sm text-gray-700">Required</label>
+                        <label className="text-sm text-text-primary">Required</label>
                       </div>
                     </div>
                   </div>
@@ -2100,7 +2100,7 @@ function WizardStep3({
                       updated.splice(idx, 1);
                       updateConfig('qualifyingQuestions', updated);
                     }}
-                    className="p-1 text-gray-400 hover:text-red-500"
+                    className="p-1 text-text-muted hover:text-[#ffb4ab]"
                   >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
@@ -2109,18 +2109,18 @@ function WizardStep3({
             ))}
             <button
               onClick={() => updateConfig('qualifyingQuestions', [...(config.qualifyingQuestions || []), { id: Date.now().toString(), question: '', field: 'interest', required: true }])}
-              className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+              className="text-xs text-brand-primary hover:text-brand-primary font-medium"
             >
               + Add Question
             </button>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">When a hot lead is identified...</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">When a hot lead is identified...</label>
             <select
               value={config.hotLeadAction || 'callback'}
               onChange={e => updateConfig('hotLeadAction', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             >
               <option value="transfer">Transfer to Human</option>
               <option value="book">Book a Meeting</option>
@@ -2130,34 +2130,34 @@ function WizardStep3({
 
           {config.hotLeadAction === 'transfer' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Transfer Number</label>
+              <label className="block text-sm font-medium text-text-primary mb-1">Transfer Number</label>
               <input
                 type="text"
                 value={config.transferNumber || ''}
                 onChange={e => updateConfig('transferNumber', e.target.value)}
                 placeholder="Transfer phone number"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Response for warm leads</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Response for warm leads</label>
             <textarea
               rows={2}
               value={config.warmLeadResponse || ''}
               onChange={e => updateConfig('warmLeadResponse', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Response for cold/unqualified leads</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Response for cold/unqualified leads</label>
             <textarea
               rows={2}
               value={config.coldLeadResponse || ''}
               onChange={e => updateConfig('coldLeadResponse', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
         </>
@@ -2166,14 +2166,14 @@ function WizardStep3({
       {jobType === 'appointment-reminder' && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Hours before appointment to call</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Hours before appointment to call</label>
             <input
               type="number"
               value={config.reminderLeadTimeHours ?? 24}
               onChange={e => updateConfig('reminderLeadTimeHours', parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
-            <p className="mt-1 text-xs text-gray-400">e.g. 24 = call the day before</p>
+            <p className="mt-1 text-xs text-text-muted">e.g. 24 = call the day before</p>
           </div>
 
           <div className="space-y-3">
@@ -2183,11 +2183,11 @@ function WizardStep3({
                   type="checkbox"
                   checked={!!config.confirmationRequired}
                   onChange={e => updateConfig('confirmationRequired', e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
                 />
-                <label className="text-sm text-gray-700">Ask for confirmation</label>
+                <label className="text-sm text-text-primary">Ask for confirmation</label>
               </div>
-              <p className="mt-1 text-xs text-gray-400 ml-6">If enabled, ask caller to confirm they&apos;ll attend.</p>
+              <p className="mt-1 text-xs text-text-muted ml-6">If enabled, ask caller to confirm they&apos;ll attend.</p>
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -2195,11 +2195,11 @@ function WizardStep3({
                   type="checkbox"
                   checked={!!config.rescheduleEnabled}
                   onChange={e => updateConfig('rescheduleEnabled', e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
                 />
-                <label className="text-sm text-gray-700">Offer rescheduling</label>
+                <label className="text-sm text-text-primary">Offer rescheduling</label>
               </div>
-              <p className="mt-1 text-xs text-gray-400 ml-6">If they can&apos;t make it, offer to reschedule.</p>
+              <p className="mt-1 text-xs text-text-muted ml-6">If they can&apos;t make it, offer to reschedule.</p>
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -2207,22 +2207,22 @@ function WizardStep3({
                   type="checkbox"
                   checked={!!config.sendConfirmationSms}
                   onChange={e => updateConfig('sendConfirmationSms', e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
                 />
-                <label className="text-sm text-gray-700">Send SMS after call</label>
+                <label className="text-sm text-text-primary">Send SMS after call</label>
               </div>
-              <p className="mt-1 text-xs text-gray-400 ml-6">Send a text summary after the reminder call.</p>
+              <p className="mt-1 text-xs text-text-muted ml-6">Send a text summary after the reminder call.</p>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Cancellation Policy (read to caller if they want to cancel)</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Cancellation Policy (read to caller if they want to cancel)</label>
             <textarea
               rows={2}
               value={config.cancellationPolicy || ''}
               onChange={e => updateConfig('cancellationPolicy', e.target.value)}
               placeholder="e.g. Cancellations within 24 hours incur a $25 fee"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
         </>
@@ -2231,18 +2231,18 @@ function WizardStep3({
       {jobType === 'collections' && (
         <>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">FDCPA Compliance Disclaimer</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">FDCPA Compliance Disclaimer</label>
             <textarea
               rows={2}
               value={config.complianceDisclaimer || ''}
               onChange={e => updateConfig('complianceDisclaimer', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
-            <p className="mt-1 text-xs text-gray-400">Read at the start of every call. Required by law.</p>
+            <p className="mt-1 text-xs text-text-muted">Read at the start of every call. Required by law.</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Payment Options</label>
+            <label className="block text-sm font-medium text-text-primary mb-2">Payment Options</label>
             <div className="flex gap-4">
               {[
                 { value: 'full', label: 'Full Payment' },
@@ -2260,42 +2260,42 @@ function WizardStep3({
                         : current.filter((v: string) => v !== opt.value);
                       updateConfig('paymentOptions', updated);
                     }}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-[rgba(65,71,84,0.2)] text-brand-primary focus:ring-brand-primary/50"
                   />
-                  <label className="text-sm text-gray-700">{opt.label}</label>
+                  <label className="text-sm text-text-primary">{opt.label}</label>
                 </div>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Max Payment Plan Length (months)</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Max Payment Plan Length (months)</label>
             <input
               type="number"
               value={config.maxPaymentPlanMonths ?? 6}
               onChange={e => updateConfig('maxPaymentPlanMonths', parseInt(e.target.value) || 0)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
 
           {(config.paymentOptions || []).includes('settlement') && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Settlement Percentage (%)</label>
+              <label className="block text-sm font-medium text-text-primary mb-1">Settlement Percentage (%)</label>
               <input
                 type="number"
                 value={config.settlementPercentage ?? 70}
                 onChange={e => updateConfig('settlementPercentage', parseInt(e.target.value) || 0)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Communication Tone</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Communication Tone</label>
             <select
               value={config.escalationPolicy || 'empathetic'}
               onChange={e => updateConfig('escalationPolicy', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             >
               <option value="empathetic">Empathetic</option>
               <option value="neutral">Neutral</option>
@@ -2304,13 +2304,13 @@ function WizardStep3({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Dispute Contact</label>
+            <label className="block text-sm font-medium text-text-primary mb-1">Dispute Contact</label>
             <input
               type="text"
               value={config.disputeContact || ''}
               onChange={e => updateConfig('disputeContact', e.target.value)}
               placeholder="Phone number or email for disputes"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
             />
           </div>
         </>
@@ -2319,7 +2319,7 @@ function WizardStep3({
       {/* Business Hours - common to all types */}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Business Hours</label>
+        <label className="block text-sm font-medium text-text-primary mb-2">Business Hours</label>
         <BusinessHoursEditor
           hours={config.businessHours || DEFAULT_BUSINESS_HOURS}
           onChange={hours => updateConfig('businessHours', hours)}
@@ -2327,17 +2327,17 @@ function WizardStep3({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Timezone</label>
+        <label className="block text-sm font-medium text-text-primary mb-1">Timezone</label>
         <select
           value={config.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
           onChange={e => updateConfig('timezone', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+          className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary text-sm"
         >
           {TIMEZONE_OPTIONS.map(tz => (
             <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-gray-400">Used to determine when your employee is "after hours".</p>
+        <p className="mt-1 text-xs text-text-muted">Used to determine when your employee is "after hours".</p>
       </div>
     </div>
   )
@@ -2394,11 +2394,11 @@ function WizardStep4({
     return (
       <div className="space-y-5">
         <div className="flex flex-col items-center py-4">
-          <div className="h-14 w-14 bg-green-100 rounded-full flex items-center justify-center mb-3">
-            <CheckIcon className="h-7 w-7 text-green-600" />
+          <div className="h-14 w-14 bg-emerald-500/10 rounded-full flex items-center justify-center mb-3">
+            <CheckIcon className="h-7 w-7 text-emerald-500" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">Employee Created!</h3>
-          <p className="text-sm text-gray-500 text-center">
+          <h3 className="text-lg font-semibold text-text-primary mb-1">Employee Created!</h3>
+          <p className="text-sm text-text-secondary text-center">
             {wizardData.name} is ready to start handling calls as your {jobInfo.label.toLowerCase()}.
           </p>
         </div>
@@ -2406,10 +2406,10 @@ function WizardStep4({
         {/* Phone result */}
         {phoneStep.provisionedNumber ? (
           <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <CheckIcon className="h-5 w-5 text-green-600 flex-shrink-0" />
+            <CheckIcon className="h-5 w-5 text-emerald-500 flex-shrink-0" />
             <div>
               <p className="text-sm font-medium text-green-800">Phone number assigned</p>
-              <p className="text-sm text-green-700">{phoneStep.provisionedNumber}</p>
+              <p className="text-sm text-emerald-500">{phoneStep.provisionedNumber}</p>
             </div>
           </div>
         ) : phoneStep.error ? (
@@ -2418,8 +2418,8 @@ function WizardStep4({
               <ExclamationTriangleIcon className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-amber-800">Phone setup needs attention</p>
-                <p className="text-xs text-amber-700 mt-1">{friendlyProvisioningError(phoneStep.error)}</p>
-                <p className="text-xs text-gray-500 mt-1">You can retry from the employee card on the main page.</p>
+                <p className="text-xs text-accent mt-1">{friendlyProvisioningError(phoneStep.error)}</p>
+                <p className="text-xs text-text-secondary mt-1">You can retry from the employee card on the main page.</p>
               </div>
             </div>
           </div>
@@ -2429,7 +2429,7 @@ function WizardStep4({
         {onTrainEmployee && (
           <button
             onClick={onTrainEmployee}
-            className="w-full py-3 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 bg-brand-primary text-white text-sm font-medium rounded-lg hover:bg-[#0060d0] transition-colors flex items-center justify-center gap-2"
           >
             <SparklesIcon className="h-4 w-4" />
             Train Your Employee
@@ -2441,78 +2441,78 @@ function WizardStep4({
 
   return (
     <div className="space-y-6">
-      <p className="text-sm text-gray-500">Review the summary below and create your new employee.</p>
+      <p className="text-sm text-text-secondary">Review the summary below and create your new employee.</p>
 
       {/* Summary Card */}
-      <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+      <div className="bg-surface rounded-lg p-4 space-y-3">
         <div className="flex items-center">
-          <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <Icon className="h-5 w-5 text-blue-600" />
+          <div className="h-10 w-10 bg-brand-primary/10 rounded-lg flex items-center justify-center">
+            <Icon className="h-5 w-5 text-brand-primary" />
           </div>
           <div className="ml-3">
-            <p className="font-semibold text-gray-900">{wizardData.name}</p>
-            <p className="text-sm text-blue-600">{jobInfo.label}</p>
+            <p className="font-semibold text-text-primary">{wizardData.name}</p>
+            <p className="text-sm text-brand-primary">{jobInfo.label}</p>
           </div>
         </div>
 
-        <div className="border-t border-gray-200 pt-3 space-y-2">
+        <div className="border-t border-[rgba(65,71,84,0.15)] pt-3 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-500">Tone</span>
-            <span className="text-gray-900 capitalize">{wizardData.tone}</span>
+            <span className="text-text-secondary">Tone</span>
+            <span className="text-text-primary capitalize">{wizardData.tone}</span>
           </div>
 
           {config?.greeting && (
             <div className="text-sm">
-              <span className="text-gray-500">Greeting:</span>
-              <p className="text-gray-700 mt-1 italic text-xs">"{config.greeting}"</p>
+              <span className="text-text-secondary">Greeting:</span>
+              <p className="text-text-primary mt-1 italic text-xs">"{config.greeting}"</p>
             </div>
           )}
 
           {wizardData.jobType === 'receptionist' && config?.services?.length > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Services</span>
-              <span className="text-gray-900">{config.services.length} configured</span>
+              <span className="text-text-secondary">Services</span>
+              <span className="text-text-primary">{config.services.length} configured</span>
             </div>
           )}
 
           {wizardData.jobType === 'receptionist' && config?.faqs?.length > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">FAQs</span>
-              <span className="text-gray-900">{config.faqs.length} configured</span>
+              <span className="text-text-secondary">FAQs</span>
+              <span className="text-text-primary">{config.faqs.length} configured</span>
             </div>
           )}
 
           {wizardData.jobType === 'order-taker' && config?.menu?.categories?.length > 0 && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Menu Categories</span>
-              <span className="text-gray-900">{config.menu.categories.length} categories</span>
+              <span className="text-text-secondary">Menu Categories</span>
+              <span className="text-text-primary">{config.menu.categories.length} categories</span>
             </div>
           )}
 
           {wizardData.jobType === 'personal-assistant' && config?.ownerName && (
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Assistant for</span>
-              <span className="text-gray-900">{config.ownerName}</span>
+              <span className="text-text-secondary">Assistant for</span>
+              <span className="text-text-primary">{config.ownerName}</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Phone provisioning options (before creation) */}
-      <div className="border border-gray-200 rounded-lg p-4 space-y-4">
+      <div className="border border-[rgba(65,71,84,0.15)] rounded-lg p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-gray-900">Add a dedicated phone number?</p>
-            <p className="text-xs text-gray-500 mt-0.5">Customers can call this employee directly</p>
+            <p className="text-sm font-medium text-text-primary">Add a dedicated phone number?</p>
+            <p className="text-xs text-text-secondary mt-0.5">Customers can call this employee directly</p>
           </div>
           <button
             type="button"
             onClick={() => setPhoneStep((prev: any) => ({ ...prev, wantsPhone: !prev.wantsPhone }))}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              phoneStep.wantsPhone ? 'bg-blue-600' : 'bg-gray-200'
+              phoneStep.wantsPhone ? 'bg-brand-primary' : 'bg-surface-highest'
             }`}
           >
-            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            <span className={`inline-block h-4 w-4 transform rounded-full bg-surface-low transition-transform ${
               phoneStep.wantsPhone ? 'translate-x-6' : 'translate-x-1'
             }`} />
           </button>
@@ -2521,50 +2521,50 @@ function WizardStep4({
         {phoneStep.wantsPhone && (
           <div className="space-y-3">
             {isTrial ? (
-              <div className="p-3 rounded-lg border border-blue-400 bg-blue-50">
-                <p className="text-sm font-medium text-gray-900">Calls only (Trial)</p>
-                <p className="text-xs text-gray-500 mt-0.5">Voice calls included during trial. Upgrade to add SMS conversations.</p>
+              <div className="p-3 rounded-lg border border-blue-400 bg-brand-primary/5">
+                <p className="text-sm font-medium text-text-primary">Calls only (Trial)</p>
+                <p className="text-xs text-text-secondary mt-0.5">Voice calls included during trial. Upgrade to add SMS conversations.</p>
               </div>
             ) : (
               <div>
-                <p className="text-xs font-medium text-gray-700 mb-2">Phone type</p>
+                <p className="text-xs font-medium text-text-primary mb-2">Phone type</p>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'twilio-vapi' }))}
                     className={`p-3 rounded-lg border text-left transition-all ${
                       phoneStep.phoneMode === 'twilio-vapi'
-                        ? 'border-blue-400 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-blue-400 bg-brand-primary/5'
+                        : 'border-[rgba(65,71,84,0.15)] hover:border-[rgba(65,71,84,0.2)]'
                     }`}
                   >
-                    <p className="text-sm font-medium text-gray-900">Calls + SMS (Recommended)</p>
-                    <p className="text-xs text-gray-500 mt-0.5">AI answers calls and texts customers</p>
+                    <p className="text-sm font-medium text-text-primary">Calls + SMS (Recommended)</p>
+                    <p className="text-xs text-text-secondary mt-0.5">AI answers calls and texts customers</p>
                   </button>
                   <button
                     type="button"
                     onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'vapi-only' }))}
                     className={`p-3 rounded-lg border text-left transition-all ${
                       phoneStep.phoneMode === 'vapi-only'
-                        ? 'border-blue-400 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-blue-400 bg-brand-primary/5'
+                        : 'border-[rgba(65,71,84,0.15)] hover:border-[rgba(65,71,84,0.2)]'
                     }`}
                   >
-                    <p className="text-sm font-medium text-gray-900">Calls only</p>
-                    <p className="text-xs text-gray-500 mt-0.5">Voice calls only, no SMS</p>
+                    <p className="text-sm font-medium text-text-primary">Calls only</p>
+                    <p className="text-xs text-text-secondary mt-0.5">Voice calls only, no SMS</p>
                   </button>
                 </div>
               </div>
             )}
 
             <div>
-              <label className="text-xs font-medium text-gray-700">Area code (optional)</label>
+              <label className="text-xs font-medium text-text-primary">Area code (optional)</label>
               <input
                 type="text"
                 value={phoneStep.areaCode}
                 onChange={e => setPhoneStep((prev: any) => ({ ...prev, areaCode: e.target.value.replace(/\D/g, '').slice(0, 3) }))}
                 placeholder="e.g. 415"
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="mt-1 w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg text-sm focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 maxLength={3}
               />
             </div>
@@ -2573,8 +2573,8 @@ function WizardStep4({
       </div>
 
       {createError && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-700">{createError}</p>
+        <div className="p-3 bg-[#93000a]/5 border border-red-200 rounded-lg">
+          <p className="text-sm text-[#ffb4ab]">{createError}</p>
         </div>
       )}
 
@@ -2582,11 +2582,11 @@ function WizardStep4({
         type="button"
         onClick={onConfirm}
         disabled={isCreating}
-        className="w-full inline-flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+        className="w-full inline-flex items-center justify-center px-4 py-3 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] disabled:opacity-50 transition-colors font-medium"
       >
         {isCreating ? (
           <>
-            <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+            <div className="h-4 w-4 border-2 border-surface border-t-transparent rounded-full animate-spin mr-2" />
             {phoneStep.wantsPhone ? 'Creating Employee & Setting Up Phone...' : 'Creating Employee...'}
           </>
         ) : (
@@ -2673,8 +2673,8 @@ function WizardStepDataSources({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900">Live Caller Lookup</h3>
-        <p className="text-sm text-gray-500 mt-1">
+        <h3 className="text-lg font-semibold text-text-primary">Live Caller Lookup</h3>
+        <p className="text-sm text-text-secondary mt-1">
           Give this employee real-time access to caller account data at the start of every call.
           This is optional — skip if you don&apos;t need caller lookup.
         </p>
@@ -2687,15 +2687,15 @@ function WizardStepDataSources({
           onClick={() => select(null)}
           className={`w-full flex items-start p-4 rounded-lg border-2 text-left transition-all ${
             selected === null
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-200 hover:border-gray-300'
+              ? 'border-blue-500 bg-brand-primary/5'
+              : 'border-[rgba(65,71,84,0.15)] hover:border-[rgba(65,71,84,0.2)]'
           }`}
         >
           <div className="flex-1">
-            <div className="font-medium text-gray-900">No lookup</div>
-            <div className="text-sm text-gray-500 mt-0.5">Employee starts fresh on every call</div>
+            <div className="font-medium text-text-primary">No lookup</div>
+            <div className="text-sm text-text-secondary mt-0.5">Employee starts fresh on every call</div>
           </div>
-          {selected === null && <div className="w-4 h-4 rounded-full bg-blue-600 mt-1 flex-shrink-0" />}
+          {selected === null && <div className="w-4 h-4 rounded-full bg-brand-primary mt-1 flex-shrink-0" />}
         </button>
 
         {/* VoiceFly Contacts */}
@@ -2704,18 +2704,18 @@ function WizardStepDataSources({
           onClick={() => select('voicefly-contacts')}
           className={`w-full flex items-start p-4 rounded-lg border-2 text-left transition-all ${
             selected === 'voicefly-contacts'
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-200 hover:border-gray-300'
+              ? 'border-blue-500 bg-brand-primary/5'
+              : 'border-[rgba(65,71,84,0.15)] hover:border-[rgba(65,71,84,0.2)]'
           }`}
         >
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-gray-900">VoiceFly Contacts</span>
-              <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">Built-in</span>
+              <span className="font-medium text-text-primary">VoiceFly Contacts</span>
+              <span className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full">Built-in</span>
             </div>
-            <div className="text-sm text-gray-500 mt-0.5">Look up callers in your VoiceFly contacts / customer list</div>
+            <div className="text-sm text-text-secondary mt-0.5">Look up callers in your VoiceFly contacts / customer list</div>
           </div>
-          {selected === 'voicefly-contacts' && <div className="w-4 h-4 rounded-full bg-blue-600 mt-1 flex-shrink-0" />}
+          {selected === 'voicefly-contacts' && <div className="w-4 h-4 rounded-full bg-brand-primary mt-1 flex-shrink-0" />}
         </button>
 
         {/* HubSpot */}
@@ -2725,32 +2725,32 @@ function WizardStepDataSources({
           disabled={!hubspotConnected}
           className={`w-full flex items-start p-4 rounded-lg border-2 text-left transition-all ${
             !hubspotConnected
-              ? 'border-gray-200 opacity-50 cursor-not-allowed'
+              ? 'border-[rgba(65,71,84,0.15)] opacity-50 cursor-not-allowed'
               : selected === 'hubspot'
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-200 hover:border-gray-300'
+              ? 'border-blue-500 bg-brand-primary/5'
+              : 'border-[rgba(65,71,84,0.15)] hover:border-[rgba(65,71,84,0.2)]'
           }`}
         >
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-gray-900">HubSpot CRM</span>
+              <span className="font-medium text-text-primary">HubSpot CRM</span>
               {!hubspotConnected && (
-                <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full">Not connected</span>
+                <span className="text-xs px-2 py-0.5 bg-surface-high text-text-secondary rounded-full">Not connected</span>
               )}
             </div>
-            <div className="text-sm text-gray-500 mt-0.5">
+            <div className="text-sm text-text-secondary mt-0.5">
               {hubspotConnected
                 ? 'Search HubSpot contacts by phone number at call start'
                 : 'Connect HubSpot in the previous Integrations step to enable'}
             </div>
           </div>
-          {selected === 'hubspot' && <div className="w-4 h-4 rounded-full bg-blue-600 mt-1 flex-shrink-0" />}
+          {selected === 'hubspot' && <div className="w-4 h-4 rounded-full bg-brand-primary mt-1 flex-shrink-0" />}
         </button>
 
         {/* Custom Webhook */}
         <div
           className={`rounded-lg border-2 transition-all ${
-            selected === 'custom-webhook' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+            selected === 'custom-webhook' ? 'border-blue-500 bg-brand-primary/5' : 'border-[rgba(65,71,84,0.15)]'
           }`}
         >
           <button
@@ -2760,62 +2760,62 @@ function WizardStepDataSources({
           >
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="font-medium text-gray-900">Custom Webhook</span>
-                <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">Any system</span>
+                <span className="font-medium text-text-primary">Custom Webhook</span>
+                <span className="text-xs px-2 py-0.5 bg-purple-500/10 text-purple-400 rounded-full">Any system</span>
               </div>
-              <div className="text-sm text-gray-500 mt-0.5">
+              <div className="text-sm text-text-secondary mt-0.5">
                 POST the caller&apos;s phone number to your own API — returns any JSON data
               </div>
             </div>
-            {selected === 'custom-webhook' && <div className="w-4 h-4 rounded-full bg-blue-600 mt-1 flex-shrink-0" />}
+            {selected === 'custom-webhook' && <div className="w-4 h-4 rounded-full bg-brand-primary mt-1 flex-shrink-0" />}
           </button>
 
           {selected === 'custom-webhook' && (
             <div className="px-4 pb-4 space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Webhook URL <span className="text-red-500">*</span></label>
+                <label className="block text-xs font-medium text-text-primary mb-1">Webhook URL <span className="text-[#ffb4ab]">*</span></label>
                 <input
                   type="url"
                   value={webhookUrl}
                   onChange={e => handleWebhookChange(e.target.value, webhookSecret)}
                   placeholder="https://your-api.com/caller-lookup"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 text-sm border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
-                <p className="text-xs text-gray-400 mt-1">VoiceFly will POST <code className="bg-gray-100 px-1 rounded">{'{"phone": "+15551234567"}'}</code> to this URL</p>
+                <p className="text-xs text-text-muted mt-1">VoiceFly will POST <code className="bg-surface-high px-1 rounded">{'{"phone": "+15551234567"}'}</code> to this URL</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">Secret header (optional)</label>
+                <label className="block text-xs font-medium text-text-primary mb-1">Secret header (optional)</label>
                 <input
                   type="text"
                   value={webhookSecret}
                   onChange={e => handleWebhookChange(webhookUrl, e.target.value)}
                   placeholder="my-secret-key"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 text-sm border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
-                <p className="text-xs text-gray-400 mt-1">Sent as <code className="bg-gray-100 px-1 rounded">X-Webhook-Secret</code> header</p>
+                <p className="text-xs text-text-muted mt-1">Sent as <code className="bg-surface-high px-1 rounded">X-Webhook-Secret</code> header</p>
               </div>
               <div className="flex items-end gap-2">
                 <div className="flex-1">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Test with phone number</label>
+                  <label className="block text-xs font-medium text-text-primary mb-1">Test with phone number</label>
                   <input
                     type="text"
                     value={testPhone}
                     onChange={e => setTestPhone(e.target.value)}
                     placeholder="+15551234567"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 text-sm border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={handleTest}
                   disabled={isTesting || !webhookUrl.trim()}
-                  className="px-3 py-2 text-sm bg-gray-800 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                  className="px-3 py-2 text-sm bg-surface-lowest text-white rounded-lg hover:bg-surface-high disabled:opacity-50 transition-colors"
                 >
                   {isTesting ? 'Testing...' : 'Test'}
                 </button>
               </div>
               {testResult && (
-                <div className={`text-xs rounded-lg p-3 font-mono overflow-auto max-h-32 ${testResult.error ? 'bg-red-50 text-red-700' : 'bg-gray-50 text-gray-700'}`}>
+                <div className={`text-xs rounded-lg p-3 font-mono overflow-auto max-h-32 ${testResult.error ? 'bg-[#93000a]/5 text-[#ffb4ab]' : 'bg-surface text-text-primary'}`}>
                   {JSON.stringify(testResult, null, 2)}
                 </div>
               )}
@@ -2956,7 +2956,7 @@ function WizardStepIntegrations({
   if (relevantPlatforms.length === 0) {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-text-secondary">
           {wizardData.name} works with VoiceFly's built-in system — no external connections are needed.
         </p>
         {builtin && (
@@ -2964,7 +2964,7 @@ function WizardStepIntegrations({
             <CheckCircleIcon className="h-5 w-5 text-green-500 flex-shrink-0" />
             <div>
               <p className="text-sm font-semibold text-green-900">{builtin.name}</p>
-              <p className="text-xs text-green-700 mt-0.5">{builtin.description}</p>
+              <p className="text-xs text-emerald-500 mt-0.5">{builtin.description}</p>
             </div>
           </div>
         )}
@@ -2977,15 +2977,15 @@ function WizardStepIntegrations({
       {/* VoiceFly built-in — always default */}
       {builtin && (
         <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Default (no setup required)</p>
-          <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0">VF</div>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Default (no setup required)</p>
+          <div className="flex items-center gap-3 p-3 bg-brand-primary/5 border border-blue-200 rounded-lg">
+            <div className="w-8 h-8 rounded-lg bg-brand-primary text-white flex items-center justify-center text-xs font-bold flex-shrink-0">VF</div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-blue-900">{builtin.name}</span>
-                <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">Active by default</span>
+                <span className="text-xs bg-brand-primary text-white px-2 py-0.5 rounded-full">Active by default</span>
               </div>
-              <p className="text-xs text-blue-700 mt-0.5">{builtin.description}</p>
+              <p className="text-xs text-brand-primary mt-0.5">{builtin.description}</p>
             </div>
           </div>
         </div>
@@ -2993,9 +2993,9 @@ function WizardStepIntegrations({
 
       {/* Third-party integrations */}
       <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Connect external platforms (optional)</p>
+        <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Connect external platforms (optional)</p>
         {loadingIntegrations ? (
-          <p className="text-xs text-gray-400 py-2">Loading...</p>
+          <p className="text-xs text-text-muted py-2">Loading...</p>
         ) : (
           <div className="space-y-2">
             {relevantPlatforms.map(platform => {
@@ -3008,35 +3008,35 @@ function WizardStepIntegrations({
 
               if (def.comingSoon) {
                 return (
-                  <div key={platform} className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg bg-gray-50 opacity-60">
+                  <div key={platform} className="flex items-center gap-3 p-3 border border-[rgba(65,71,84,0.1)] rounded-lg bg-surface opacity-60">
                     <div className={`w-8 h-8 rounded-lg ${def.color} flex items-center justify-center text-xs font-bold flex-shrink-0`}>{def.abbrev}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-gray-700">{def.name}</span>
-                        <span className="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full">Partnership coming soon</span>
+                        <span className="text-sm font-medium text-text-primary">{def.name}</span>
+                        <span className="text-xs bg-surface-highest text-text-secondary px-2 py-0.5 rounded-full">Partnership coming soon</span>
                       </div>
-                      <p className="text-xs text-gray-500">{def.description}</p>
+                      <p className="text-xs text-text-secondary">{def.description}</p>
                     </div>
                   </div>
                 )
               }
 
               return (
-                <div key={platform} className={`border rounded-lg overflow-hidden transition-all ${isConnected ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white'}`}>
+                <div key={platform} className={`border rounded-lg overflow-hidden transition-all ${isConnected ? 'border-green-200 bg-green-50' : 'border-[rgba(65,71,84,0.15)] bg-surface-low'}`}>
                   {/* Card header row */}
                   <div className="flex items-center gap-3 p-3">
                     <div className={`w-8 h-8 rounded-lg ${def.color} flex items-center justify-center text-xs font-bold flex-shrink-0`}>{def.abbrev}</div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium text-gray-900">{def.name}</span>
-                        <span className="text-xs text-gray-400">{def.category}</span>
+                        <span className="text-sm font-medium text-text-primary">{def.name}</span>
+                        <span className="text-xs text-text-muted">{def.category}</span>
                         {isConnected && (
-                          <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Connected</span>
+                          <span className="text-xs bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full font-medium">Connected</span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5">{def.description}</p>
+                      <p className="text-xs text-text-secondary mt-0.5">{def.description}</p>
                       {isConnected && summary && (
-                        <p className="text-xs text-green-600 font-medium mt-1">✓ {summary}</p>
+                        <p className="text-xs text-emerald-500 font-medium mt-1">✓ {summary}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -3045,7 +3045,7 @@ function WizardStepIntegrations({
                           type="button"
                           onClick={() => triggerSync(platform)}
                           disabled={syncing === platform}
-                          className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50 transition-colors"
+                          className="text-xs text-brand-primary hover:text-brand-primary disabled:opacity-50 transition-colors"
                         >
                           {syncing === platform ? 'Syncing…' : 'Re-sync'}
                         </button>
@@ -3055,10 +3055,10 @@ function WizardStepIntegrations({
                         onClick={() => handleExpand(platform)}
                         className={`px-3 py-1.5 text-xs rounded-lg transition-colors ${
                           isConnected
-                            ? 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                            ? 'text-text-muted hover:text-text-secondary hover:bg-surface-high'
                             : isExpanded
-                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                            ? 'bg-surface-high text-text-primary hover:bg-surface-highest'
+                            : 'bg-brand-primary text-white hover:bg-[#0060d0]'
                         }`}
                       >
                         {isExpanded ? 'Cancel' : isConnected ? '···' : 'Connect'}
@@ -3068,9 +3068,9 @@ function WizardStepIntegrations({
 
                   {/* Inline connect form */}
                   {isExpanded && (
-                    <div className="px-3 pb-4 pt-3 border-t border-gray-100 bg-gray-50">
+                    <div className="px-3 pb-4 pt-3 border-t border-[rgba(65,71,84,0.1)] bg-surface">
                       {platform === 'google-calendar' && (
-                        <div className="mb-3 p-2.5 bg-blue-50 border border-blue-100 rounded-lg text-xs text-blue-700">
+                        <div className="mb-3 p-2.5 bg-brand-primary/5 border border-blue-100 rounded-lg text-xs text-brand-primary">
                           First share your Google Calendar with our service account:<br />
                           <span className="font-mono font-semibold select-all">calendar@voicefly-ai.iam.gserviceaccount.com</span>
                         </div>
@@ -3078,23 +3078,23 @@ function WizardStepIntegrations({
                       <div className="space-y-3">
                         {def.fields.map(field => (
                           <div key={field.name}>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">
+                            <label className="block text-xs font-medium text-text-primary mb-1">
                               {field.label}
-                              {field.optional && <span className="text-gray-400 font-normal"> (optional)</span>}
+                              {field.optional && <span className="text-text-muted font-normal"> (optional)</span>}
                             </label>
                             <input
                               type={field.type || 'text'}
                               value={connectFields[field.name] || ''}
                               onChange={e => setConnectFields(prev => ({ ...prev, [field.name]: e.target.value }))}
                               placeholder={field.placeholder}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-full px-3 py-2 text-sm border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-1 focus:ring-brand-primary/50 focus:border-brand-primary"
                             />
-                            {field.hint && <p className="text-xs text-gray-500 mt-1">{field.hint}</p>}
+                            {field.hint && <p className="text-xs text-text-secondary mt-1">{field.hint}</p>}
                           </div>
                         ))}
                       </div>
                       {connectError && (
-                        <p className="text-xs text-red-600 mt-2 flex items-center gap-1">
+                        <p className="text-xs text-[#ffb4ab] mt-2 flex items-center gap-1">
                           <ExclamationTriangleIcon className="h-3 w-3 flex-shrink-0" />
                           {connectError}
                         </p>
@@ -3107,7 +3107,7 @@ function WizardStepIntegrations({
                             connecting ||
                             def.fields.filter(f => !f.optional).some(f => !connectFields[f.name]?.trim())
                           }
-                          className="px-4 py-2 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+                          className="px-4 py-2 text-xs bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] disabled:opacity-50 transition-colors font-medium"
                         >
                           {connecting ? 'Connecting…' : syncing === platform ? 'Importing data…' : `Connect ${def.name}`}
                         </button>
@@ -3690,10 +3690,10 @@ function EmployeesDashboard() {
       <Layout business={business}>
         <div className="p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
+            <div className="h-8 bg-surface-highest rounded w-1/4 mb-8"></div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[1, 2, 3].map(i => (
-                <div key={i} className="h-48 bg-gray-200 rounded-lg"></div>
+                <div key={i} className="h-48 bg-surface-highest rounded-lg"></div>
               ))}
             </div>
           </div>
@@ -3704,34 +3704,55 @@ function EmployeesDashboard() {
 
   return (
     <Layout business={business}>
-      <div className="p-8">
+      <div className="p-8 space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Phone Employees</h1>
-            <p className="text-gray-600 mt-1">
-              AI-powered phone staff that work 24/7
+            <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Dashboard &gt; Phone Employees</p>
+            <h1 className="text-3xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight">Phone Employees</h1>
+            <p className="text-text-secondary mt-1">
+              Manage your autonomous AI voice agents and monitor their active shifts across all departments.
             </p>
           </div>
           <button
             onClick={openWizard}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center px-5 py-2.5 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] transition-colors font-medium"
           >
             <PlusIcon className="h-5 w-5 mr-2" />
-            Hire Employee
+            Create Employee
           </button>
+        </div>
+
+        {/* Stats Bar — Stitch Bento */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-surface-low p-6 rounded-2xl">
+            <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Total Agents</p>
+            <p className="text-3xl font-extrabold text-text-primary font-[family-name:var(--font-manrope)]">{employees.length}</p>
+          </div>
+          <div className="bg-surface-low p-6 rounded-2xl">
+            <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Active Now</p>
+            <p className="text-3xl font-extrabold text-text-primary font-[family-name:var(--font-manrope)]">{employees.filter(e => e.isActive).length.toString().padStart(2, '0')}</p>
+          </div>
+          <div className="bg-surface-low p-6 rounded-2xl">
+            <p className="text-xs uppercase tracking-widest text-text-muted mb-1">With Phone</p>
+            <p className="text-3xl font-extrabold text-text-primary font-[family-name:var(--font-manrope)]">{employees.filter(e => e.phoneNumber).length}</p>
+          </div>
+          <div className="bg-surface-low p-6 rounded-2xl">
+            <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Total Calls</p>
+            <p className="text-3xl font-extrabold text-text-primary font-[family-name:var(--font-manrope)]">{Object.values(employeeStats).reduce((sum, s) => sum + s.totalCalls, 0).toLocaleString()}</p>
+          </div>
         </div>
 
         {/* Trial Banner */}
         {business?.subscription_status === 'trial' && (
-          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-5">
+          <div className="bg-accent/5 rounded-2xl p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center mb-2">
                   <SparklesIcon className="h-5 w-5 text-yellow-600 mr-2" />
                   <h3 className="text-lg font-semibold text-yellow-900">Trial Mode</h3>
                   {trialUsage && (
-                    <span className="ml-2 text-xs px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full">
+                    <span className="ml-2 text-xs px-2 py-0.5 bg-accent/10 text-accent rounded-full">
                       {trialUsage.daysRemaining} day{trialUsage.daysRemaining !== 1 ? 's' : ''} left
                     </span>
                   )}
@@ -3743,28 +3764,28 @@ function EmployeesDashboard() {
 
                 {/* Usage Meter */}
                 {trialUsage && (
-                  <div className="mb-4 p-3 bg-white border border-yellow-200 rounded-lg">
+                  <div className="mb-4 p-3 bg-surface-low border border-yellow-200 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Calls Used</span>
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm font-medium text-text-primary">Calls Used</span>
+                      <span className="text-sm font-semibold text-text-primary">
                         {trialUsage.callsUsed} / 10
                       </span>
                     </div>
-                    <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="w-full h-2.5 bg-surface-highest rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${
-                          trialUsage.limitReached ? 'bg-red-500' : trialUsage.callsUsed >= 7 ? 'bg-yellow-500' : 'bg-blue-500'
+                          trialUsage.limitReached ? 'bg-[#93000a]/50' : trialUsage.callsUsed >= 7 ? 'bg-yellow-500' : 'bg-brand-primary'
                         }`}
                         style={{ width: `${Math.min(100, (trialUsage.callsUsed / 10) * 100)}%` }}
                       />
                     </div>
                     {trialUsage.limitReached && (
-                      <p className="mt-2 text-xs text-red-600 font-medium">
+                      <p className="mt-2 text-xs text-[#ffb4ab] font-medium">
                         You&apos;ve used all 10 trial calls. Upgrade to continue receiving calls.
                       </p>
                     )}
                     {!trialUsage.limitReached && trialUsage.callsUsed >= 7 && (
-                      <p className="mt-2 text-xs text-yellow-700">
+                      <p className="mt-2 text-xs text-accent">
                         {trialUsage.callsRemaining} call{trialUsage.callsRemaining !== 1 ? 's' : ''} remaining — upgrade anytime for unlimited calls.
                       </p>
                     )}
@@ -3773,33 +3794,33 @@ function EmployeesDashboard() {
                     {(trialUsage.completedCalls > 0 || trialUsage.appointmentsBooked > 0 || trialUsage.messagesTaken > 0) && (
                       <div className="mt-3 pt-3 border-t border-yellow-100 grid grid-cols-3 gap-2 text-center">
                         <div>
-                          <p className="text-lg font-bold text-gray-900">{trialUsage.completedCalls}</p>
-                          <p className="text-xs text-gray-500">Calls Handled</p>
+                          <p className="text-lg font-bold text-text-primary">{trialUsage.completedCalls}</p>
+                          <p className="text-xs text-text-secondary">Calls Handled</p>
                         </div>
                         <div>
-                          <p className="text-lg font-bold text-gray-900">{trialUsage.appointmentsBooked}</p>
-                          <p className="text-xs text-gray-500">Appointments</p>
+                          <p className="text-lg font-bold text-text-primary">{trialUsage.appointmentsBooked}</p>
+                          <p className="text-xs text-text-secondary">Appointments</p>
                         </div>
                         <div>
-                          <p className="text-lg font-bold text-gray-900">{trialUsage.messagesTaken}</p>
-                          <p className="text-xs text-gray-500">Messages</p>
+                          <p className="text-lg font-bold text-text-primary">{trialUsage.messagesTaken}</p>
+                          <p className="text-xs text-text-secondary">Messages</p>
                         </div>
                       </div>
                     )}
 
                     {/* Upgrade hooks based on value */}
                     {trialUsage.appointmentsBooked > 0 && (
-                      <p className="mt-2 text-xs text-blue-700 bg-blue-50 px-2 py-1.5 rounded">
+                      <p className="mt-2 text-xs text-brand-primary bg-brand-primary/5 px-2 py-1.5 rounded">
                         {trialUsage.appointmentsBooked} appointment{trialUsage.appointmentsBooked !== 1 ? 's' : ''} booked — connect Google Calendar to auto-sync with your schedule.
                       </p>
                     )}
                     {trialUsage.messagesTaken >= 3 && (
-                      <p className="mt-2 text-xs text-blue-700 bg-blue-50 px-2 py-1.5 rounded">
+                      <p className="mt-2 text-xs text-brand-primary bg-brand-primary/5 px-2 py-1.5 rounded">
                         {trialUsage.messagesTaken} messages taken — upgrade to get SMS notifications and custom training.
                       </p>
                     )}
                     {trialUsage.totalMinutes >= 5 && !trialUsage.appointmentsBooked && !trialUsage.messagesTaken && (
-                      <p className="mt-2 text-xs text-blue-700 bg-blue-50 px-2 py-1.5 rounded">
+                      <p className="mt-2 text-xs text-brand-primary bg-brand-primary/5 px-2 py-1.5 rounded">
                         {trialUsage.totalMinutes} minutes of calls handled — upgrade for a custom voice, dedicated number, and unlimited calls.
                       </p>
                     )}
@@ -3807,8 +3828,8 @@ function EmployeesDashboard() {
                 )}
 
                 {trialPhoneNumber ? (
-                  <div className="flex items-center text-sm text-yellow-900 bg-yellow-100 px-3 py-2 rounded-lg inline-block mb-3">
-                    <PhoneIcon className="h-4 w-4 mr-2 text-yellow-700" />
+                  <div className="flex items-center text-sm text-yellow-900 bg-accent/10 px-3 py-2 rounded-lg inline-block mb-3">
+                    <PhoneIcon className="h-4 w-4 mr-2 text-accent" />
                     <span className="font-medium">Trial Number:</span>
                     <span className="ml-1 font-mono">{trialPhoneNumber}</span>
                   </div>
@@ -3817,7 +3838,7 @@ function EmployeesDashboard() {
                     <select
                       value={trialJobType}
                       onChange={(e) => setTrialJobType(e.target.value)}
-                      className="px-3 py-2 text-sm border border-yellow-300 bg-white text-yellow-900 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                      className="px-3 py-2 text-sm border border-yellow-300 bg-surface-low text-yellow-900 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
                     >
                       <option value="receptionist">Receptionist</option>
                       <option value="appointment-scheduler">Appointment Scheduler</option>
@@ -3845,7 +3866,7 @@ function EmployeesDashboard() {
                     </button>
                   </div>
                 )}
-                <p className="text-xs text-yellow-700">
+                <p className="text-xs text-accent">
                   Upgrade to Starter ($49/mo) for 60 minutes, a dedicated phone number, call transfers, and SMS notifications.
                 </p>
               </div>
@@ -3861,50 +3882,50 @@ function EmployeesDashboard() {
 
         {/* Starter Banner */}
         {business?.subscription_status === 'active' && business?.subscription_tier === 'starter' && (
-          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-xl p-5">
+          <div className="mb-6 bg-brand-primary/5 border border-blue-200 rounded-xl p-5">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center mb-2">
-                  <SparklesIcon className="h-5 w-5 text-blue-600 mr-2" />
+                  <SparklesIcon className="h-5 w-5 text-brand-primary mr-2" />
                   <h3 className="text-lg font-semibold text-blue-900">Starter Plan</h3>
-                  <span className="ml-2 text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">Maya AI</span>
+                  <span className="ml-2 text-xs px-2 py-0.5 bg-brand-primary/10 text-brand-primary rounded-full">Maya AI</span>
                 </div>
-                <p className="text-sm text-blue-800 mb-3">
+                <p className="text-sm text-brand-primary mb-3">
                   Your AI receptionist Maya is answering calls with a standard script. Upgrade to Pro for custom training, voice, and FAQs.
                 </p>
 
                 {starterUsage && (
-                  <div className="mb-3 p-3 bg-white border border-blue-200 rounded-lg">
+                  <div className="mb-3 p-3 bg-surface-low border border-blue-200 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Minutes Used</span>
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm font-medium text-text-primary">Minutes Used</span>
+                      <span className="text-sm font-semibold text-text-primary">
                         {starterUsage.minutesUsed} / {starterUsage.minutesTotal}
                       </span>
                     </div>
-                    <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="w-full h-2.5 bg-surface-highest rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${
-                          starterUsage.minutesUsed >= starterUsage.minutesTotal ? 'bg-red-500' :
-                          starterUsage.minutesUsed >= starterUsage.minutesTotal * 0.8 ? 'bg-yellow-500' : 'bg-blue-500'
+                          starterUsage.minutesUsed >= starterUsage.minutesTotal ? 'bg-[#93000a]/50' :
+                          starterUsage.minutesUsed >= starterUsage.minutesTotal * 0.8 ? 'bg-yellow-500' : 'bg-brand-primary'
                         }`}
                         style={{ width: `${Math.min(100, (starterUsage.minutesUsed / starterUsage.minutesTotal) * 100)}%` }}
                       />
                     </div>
                     {starterUsage.minutesUsed >= starterUsage.minutesTotal && (
-                      <p className="mt-2 text-xs text-red-600 font-medium">
+                      <p className="mt-2 text-xs text-[#ffb4ab] font-medium">
                         You&apos;ve used all included minutes. Overage at $0.25/min or upgrade to Growth ($129/mo) for 250 min.
                       </p>
                     )}
                   </div>
                 )}
 
-                <p className="text-xs text-blue-700">
+                <p className="text-xs text-brand-primary">
                   Upgrade to Pro ($249/mo) for custom AI training, voice customization, calendar integrations, and 750 minutes/month.
                 </p>
               </div>
               <button
                 onClick={() => router.push('/dashboard/billing')}
-                className="ml-4 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex-shrink-0"
+                className="ml-4 inline-flex items-center px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] transition-colors text-sm font-medium flex-shrink-0"
               >
                 Upgrade to Pro
               </button>
@@ -3912,148 +3933,119 @@ function EmployeesDashboard() {
           </div>
         )}
 
-        {/* Employee Grid */}
+        {/* Employee Grid — Stitch Card Style */}
         {employees.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
-            <UserCircleIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No employees yet</h3>
-            <p className="text-gray-600 mb-6">
-              Hire your first AI phone employee to start handling calls automatically.
-            </p>
-            <button
-              onClick={openWizard}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              <PlusIcon className="h-5 w-5 mr-2" />
-              Hire Your First Employee
-            </button>
+          <div className="text-center py-16">
+            <div className="bg-surface-lowest rounded-3xl p-12 max-w-lg mx-auto relative overflow-hidden">
+              <div className="absolute -top-16 -right-16 w-40 h-40 bg-brand-primary/10 blur-[60px] rounded-full pointer-events-none" />
+              <div className="relative z-10">
+                <UserCircleIcon className="h-16 w-16 text-text-muted mx-auto mb-4" />
+                <h3 className="text-xl font-bold text-text-primary font-[family-name:var(--font-manrope)] mb-2">No employees yet</h3>
+                <p className="text-text-secondary mb-6">
+                  Hire your first AI phone employee to start handling calls automatically.
+                </p>
+                <button
+                  onClick={openWizard}
+                  className="inline-flex items-center px-6 py-3 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] font-medium"
+                >
+                  <PlusIcon className="h-5 w-5 mr-2" />
+                  Add your first employee
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {employees.map(employee => {
               const jobInfo = JOB_TYPE_INFO[employee.jobType] || JOB_TYPE_INFO['receptionist']
               const Icon = jobInfo.icon
+              const stats = employeeStats[employee.id]
 
               return (
                 <div
                   key={employee.id}
-                  className={`bg-white rounded-xl border ${employee.isActive ? 'border-green-200' : 'border-gray-200'} overflow-hidden`}
+                  className="bg-surface-low rounded-2xl overflow-hidden hover:bg-surface-med transition-all duration-300 group cursor-pointer"
+                  onClick={() => router.push(`/dashboard/employees/${employee.id}`)}
                 >
-                  {/* Header */}
-                  <div
-                    className={`p-4 bg-${jobInfo.color}-50 border-b border-${jobInfo.color}-100 cursor-pointer hover:brightness-95 transition-all`}
-                    onClick={() => router.push(`/dashboard/employees/${employee.id}`)}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className={`h-10 w-10 bg-${jobInfo.color}-100 rounded-lg flex items-center justify-center`}>
-                          <Icon className={`h-5 w-5 text-${jobInfo.color}-600`} />
+                  {/* Card Header */}
+                  <div className="p-5">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-brand-primary/10 rounded-xl flex items-center justify-center group-hover:bg-brand-primary/20 transition-colors">
+                          <Icon className="h-6 w-6 text-brand-primary" />
                         </div>
-                        <div className="ml-3">
-                          <h3 className="font-semibold text-gray-900">{employee.name}</h3>
-                          <p className={`text-sm text-${jobInfo.color}-600`}>{jobInfo.label}</p>
+                        <div>
+                          <h3 className="font-bold text-text-primary font-[family-name:var(--font-manrope)]">{employee.name}</h3>
+                          <span className="text-xs text-text-muted">{jobInfo.label}</span>
                         </div>
                       </div>
-                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
                         employee.isActive
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-gray-100 text-gray-600'
+                          ? 'bg-emerald-500/10 text-emerald-500'
+                          : 'bg-surface-high text-text-muted'
                       }`}>
                         {employee.isActive ? 'Active' : 'Inactive'}
-                      </div>
+                      </span>
                     </div>
-                  </div>
 
-                  {/* Body */}
-                  <div className="p-4">
-                    <p className="text-sm text-gray-600 mb-3">{jobInfo.description}</p>
-
-                    {/* Phone status badge */}
+                    {/* Phone Number */}
                     {employee.provisioningStatus === 'active' && employee.phoneNumber ? (
-                      <div className="flex items-center text-sm text-green-700 mb-3 bg-green-50 px-2 py-1.5 rounded-lg">
-                        <PhoneIcon className="h-4 w-4 mr-2 text-green-500" />
-                        {employee.phoneNumber}
+                      <div className="text-sm font-mono text-text-secondary mb-3">
+                        Phone Number {employee.phoneNumber}
                       </div>
                     ) : employee.provisioningStatus === 'provisioning' ? (
-                      <div className="flex items-center text-sm text-blue-700 mb-3 bg-blue-50 px-2 py-1.5 rounded-lg">
-                        <div className="h-4 w-4 mr-2 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                      <div className="flex items-center text-sm text-brand-primary mb-3">
+                        <div className="h-3 w-3 mr-2 border-2 border-brand-primary border-t-transparent rounded-full animate-spin" />
                         Setting up phone...
                       </div>
                     ) : employee.provisioningStatus === 'failed' ? (
-                      <div className="mb-3">
-                        <div className="flex items-center justify-between text-sm text-red-700 bg-red-50 px-2 py-1.5 rounded-lg">
-                          <div className="flex items-center min-w-0">
-                            <ExclamationTriangleIcon className="h-4 w-4 mr-2 text-red-500 flex-shrink-0" />
-                            <span className="truncate">{friendlyProvisioningError(employee.provisioningError)}</span>
-                          </div>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); retryPhoneProvisioning(employee) }}
-                            className="ml-2 px-2 py-0.5 text-xs font-medium bg-red-100 hover:bg-red-200 text-red-800 rounded transition-colors flex-shrink-0"
-                          >
-                            Retry
-                          </button>
+                      <div className="flex items-center justify-between text-xs text-[#ffb4ab] bg-[#93000a]/5 px-2 py-1.5 rounded-lg mb-3">
+                        <div className="flex items-center min-w-0">
+                          <ExclamationTriangleIcon className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                          <span className="truncate">{friendlyProvisioningError(employee.provisioningError)}</span>
                         </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); retryPhoneProvisioning(employee) }}
+                          className="ml-2 px-2 py-0.5 text-xs font-medium hover:bg-[#93000a]/10 rounded transition-colors flex-shrink-0"
+                        >
+                          Retry
+                        </button>
                       </div>
                     ) : employee.phoneNumber ? (
-                      <div className="flex items-center text-sm text-gray-700 mb-3">
-                        <PhoneIcon className="h-4 w-4 mr-2 text-gray-400" />
-                        {employee.phoneNumber}
-                      </div>
-                    ) : employee.provisioningStatus === 'no_phone' ? (
-                      <div className="flex items-center text-sm text-gray-400 mb-3">
-                        <PhoneIcon className="h-4 w-4 mr-2" />
-                        No phone number
-                      </div>
+                      <div className="text-sm font-mono text-text-muted mb-3">{employee.phoneNumber}</div>
                     ) : null}
 
-                    {/* Stats */}
-                    <div className="flex items-center gap-4 text-sm text-gray-500 mt-3 pt-3 border-t border-gray-100">
-                      <span>{employeeStats[employee.id]?.totalCalls || 0} calls</span>
-                      <span className="text-gray-300">|</span>
-                      <span>
-                        {employeeStats[employee.id]?.lastCallAt
-                          ? `Last call ${formatDistanceToNow(new Date(employeeStats[employee.id].lastCallAt!), { addSuffix: true })}`
-                          : 'No calls yet'}
-                      </span>
+                    {/* Stats row */}
+                    <div className="text-xs text-text-muted">
+                      Last Call &middot; {stats?.lastCallAt
+                        ? formatDistanceToNow(new Date(stats.lastCallAt), { addSuffix: true })
+                        : 'No calls yet'}
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+                  {/* Card Footer */}
+                  <div className="px-5 py-3 bg-surface-lowest/50 flex items-center justify-between">
                     <button
-                      onClick={() => toggleEmployeeStatus(employee)}
-                      className={`inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                        employee.isActive
-                          ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                          : 'bg-green-100 text-green-700 hover:bg-green-200'
-                      }`}
+                      onClick={(e) => { e.stopPropagation(); router.push(`/dashboard/employees/${employee.id}`) }}
+                      className="text-sm font-medium text-brand-light hover:text-brand-primary transition-colors"
                     >
-                      {employee.isActive ? (
-                        <>
-                          <PauseIcon className="h-4 w-4 mr-1" />
-                          Pause
-                        </>
-                      ) : (
-                        <>
-                          <PlayIcon className="h-4 w-4 mr-1" />
-                          Activate
-                        </>
-                      )}
+                      Edit Agent
                     </button>
-
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => router.push(`/dashboard/employees/${employee.id}`)}
-                        className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-                        title="Edit employee"
+                        onClick={(e) => { e.stopPropagation(); toggleEmployeeStatus(employee) }}
+                        className={`p-1.5 rounded-lg transition-colors ${
+                          employee.isActive ? 'text-accent hover:bg-accent/10' : 'text-emerald-500 hover:bg-emerald-500/10'
+                        }`}
+                        title={employee.isActive ? 'Pause' : 'Activate'}
                       >
-                        <PencilSquareIcon className="h-5 w-5" />
+                        {employee.isActive ? <PauseIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
                       </button>
                       <button
-                        onClick={() => deleteEmployee(employee)}
-                        className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); deleteEmployee(employee) }}
+                        className="p-1.5 text-text-muted hover:text-[#ffb4ab] hover:bg-[#93000a]/5 rounded-lg transition-colors"
                       >
-                        <TrashIcon className="h-5 w-5" />
+                        <TrashIcon className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -4067,16 +4059,16 @@ function EmployeesDashboard() {
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div
-              className={`bg-white rounded-xl p-6 w-full mx-4 max-h-[90vh] overflow-y-auto transition-all ${
+              className={`bg-surface-low rounded-xl p-6 w-full mx-4 max-h-[90vh] overflow-y-auto transition-all ${
                 wizardStep >= 3 || (wizardStep === 2 && (wizardData.inputMode === 'voice' || wizardData.inputMode === 'document')) ? 'max-w-2xl' : 'max-w-md'
               }`}
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Hire New Employee</h2>
+                <h2 className="text-xl font-bold text-text-primary">Hire New Employee</h2>
                 <button
                   onClick={closeWizard}
-                  className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="p-1 text-text-muted hover:text-text-secondary transition-colors"
                 >
                   <XMarkIcon className="h-5 w-5" />
                 </button>
@@ -4133,14 +4125,14 @@ function EmployeesDashboard() {
               )}
 
               {/* Navigation Buttons */}
-              <div className="flex justify-between mt-6 pt-4 border-t border-gray-200">
+              <div className="flex justify-between mt-6 pt-4 border-t border-[rgba(65,71,84,0.15)]">
                 {/* Left side: Back or Cancel */}
                 <div>
                   {wizardStep > 1 && !createSuccess ? (
                     <button
                       onClick={goBack}
                       disabled={wizardData.isGenerating || creating}
-                      className="inline-flex items-center px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                      className="inline-flex items-center px-4 py-2 text-text-primary hover:bg-surface-high rounded-lg transition-colors disabled:opacity-50"
                     >
                       <ArrowLeftIcon className="h-4 w-4 mr-1" />
                       Back
@@ -4148,7 +4140,7 @@ function EmployeesDashboard() {
                   ) : (
                     <button
                       onClick={closeWizard}
-                      className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="px-4 py-2 text-text-primary hover:bg-surface-high rounded-lg transition-colors"
                     >
                       {createSuccess ? 'Done' : 'Cancel'}
                     </button>
@@ -4160,7 +4152,7 @@ function EmployeesDashboard() {
                   {createSuccess && (
                     <button
                       onClick={closeWizard}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] transition-colors"
                     >
                       Done
                     </button>
@@ -4169,7 +4161,7 @@ function EmployeesDashboard() {
                     <button
                       onClick={goNext}
                       disabled={!canGoNext()}
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] disabled:opacity-50 transition-colors"
                     >
                       Next
                       <ArrowRightIcon className="h-4 w-4 ml-1" />
@@ -4178,7 +4170,7 @@ function EmployeesDashboard() {
                   {wizardStep === 3 && (
                     <button
                       onClick={goNext}
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] transition-colors"
                     >
                       Continue
                       <ArrowRightIcon className="h-4 w-4 ml-1" />
@@ -4187,7 +4179,7 @@ function EmployeesDashboard() {
                   {wizardStep === 4 && (
                     <button
                       onClick={goNext}
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] transition-colors"
                     >
                       Continue
                       <ArrowRightIcon className="h-4 w-4 ml-1" />
@@ -4196,7 +4188,7 @@ function EmployeesDashboard() {
                   {wizardStep === 5 && (
                     <button
                       onClick={goNext}
-                      className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="inline-flex items-center px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] transition-colors"
                     >
                       Review & Create
                       <ArrowRightIcon className="h-4 w-4 ml-1" />

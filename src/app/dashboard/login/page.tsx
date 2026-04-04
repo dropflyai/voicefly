@@ -40,24 +40,24 @@ export default function BusinessLogin() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+      <div className="bg-surface-low rounded-2xl shadow-xl p-8 max-w-md w-full">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full mb-4">
             <SparklesIcon className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Business Dashboard</h1>
-          <p className="text-gray-600 mt-2">Sign in to manage your business</p>
+          <h1 className="text-2xl font-bold text-text-primary">Business Dashboard</h1>
+          <p className="text-text-secondary mt-2">Sign in to manage your business</p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="mb-4 p-3 bg-[#93000a]/5 border border-red-200 rounded-lg text-[#ffb4ab] text-sm">
             {error}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-text-primary mb-2">
               Email Address
             </label>
             <input
@@ -66,13 +66,13 @@ export default function BusinessLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your business email"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-brand-primary"
               required
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-text-primary mb-2">
               Password
             </label>
             <input
@@ -81,7 +81,7 @@ export default function BusinessLogin() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-brand-primary"
               required
             />
           </div>
@@ -96,9 +96,9 @@ export default function BusinessLogin() {
         </form>
 
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-text-secondary">
             Don&apos;t have an account?{' '}
-            <a href="/signup" className="text-purple-600 hover:text-purple-700 font-medium">
+            <a href="/signup" className="text-purple-400 hover:text-purple-400 font-medium">
               Sign up free
             </a>
           </p>

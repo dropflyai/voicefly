@@ -105,10 +105,10 @@ function CheckoutContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading appointment details...</p>
+          <p className="text-text-secondary">Loading appointment details...</p>
         </div>
       </div>
     )
@@ -116,13 +116,13 @@ function CheckoutContent() {
 
   if (error && !appointment) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center max-w-md">
-          <div className="bg-red-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-            <span className="text-red-600 text-2xl">⚠️</span>
+          <div className="bg-[#93000a]/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+            <span className="text-[#ffb4ab] text-2xl">⚠️</span>
           </div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Unable to Load Checkout</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h2 className="text-xl font-bold text-text-primary mb-2">Unable to Load Checkout</h2>
+          <p className="text-text-secondary mb-6">{error}</p>
           <button
             onClick={() => router.back()}
             className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
@@ -139,20 +139,20 @@ function CheckoutContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-surface-low border-b border-[rgba(65,71,84,0.15)]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center space-x-4 py-6">
             <button
               onClick={() => router.back()}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-surface-high rounded-lg transition-colors"
             >
-              <ArrowLeftIcon className="w-5 h-5 text-gray-600" />
+              <ArrowLeftIcon className="w-5 h-5 text-text-secondary" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Complete Payment</h1>
-              <p className="text-sm text-gray-600">Secure checkout for your appointment</p>
+              <h1 className="text-2xl font-bold text-text-primary">Complete Payment</h1>
+              <p className="text-sm text-text-secondary">Secure checkout for your appointment</p>
             </div>
           </div>
         </div>
@@ -161,54 +161,54 @@ function CheckoutContent() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Appointment Summary */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Appointment Summary</h2>
+          <div className="bg-surface-low rounded-xl shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
+            <h2 className="text-lg font-semibold text-text-primary mb-6">Appointment Summary</h2>
             
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Business:</span>
-                <span className="font-medium text-gray-900">{appointment.business_name}</span>
+                <span className="text-text-secondary">Business:</span>
+                <span className="font-medium text-text-primary">{appointment.business_name}</span>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Customer:</span>
-                <span className="font-medium text-gray-900">{appointment.customer_name}</span>
+                <span className="text-text-secondary">Customer:</span>
+                <span className="font-medium text-text-primary">{appointment.customer_name}</span>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Service:</span>
-                <span className="font-medium text-gray-900">{appointment.service_name}</span>
+                <span className="text-text-secondary">Service:</span>
+                <span className="font-medium text-text-primary">{appointment.service_name}</span>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Date:</span>
-                <span className="font-medium text-gray-900">
+                <span className="text-text-secondary">Date:</span>
+                <span className="font-medium text-text-primary">
                   {new Date(appointment.date).toLocaleDateString()}
                 </span>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Time:</span>
-                <span className="font-medium text-gray-900">{appointment.time}</span>
+                <span className="text-text-secondary">Time:</span>
+                <span className="font-medium text-text-primary">{appointment.time}</span>
               </div>
               
               <div className="flex justify-between items-center">
-                <span className="text-gray-600">Duration:</span>
-                <span className="font-medium text-gray-900">{appointment.duration} minutes</span>
+                <span className="text-text-secondary">Duration:</span>
+                <span className="font-medium text-text-primary">{appointment.duration} minutes</span>
               </div>
               
-              <hr className="border-gray-200" />
+              <hr className="border-[rgba(65,71,84,0.15)]" />
               
               <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-900">Total:</span>
-                <span className="text-2xl font-bold text-green-600">
+                <span className="text-lg font-semibold text-text-primary">Total:</span>
+                <span className="text-2xl font-bold text-emerald-500">
                   ${(appointment.total_amount / 100).toFixed(2)}
                 </span>
               </div>
             </div>
             
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-700">
+            <div className="mt-6 p-4 bg-brand-primary/5 rounded-lg">
+              <p className="text-sm text-brand-primary">
                 💡 <strong>Payment Security:</strong> Your payment information is encrypted and secure. 
                 We use industry-standard security measures to protect your data.
               </p>
@@ -228,7 +228,7 @@ function CheckoutContent() {
             
             {/* Security Badge */}
             <div className="mt-6 text-center">
-              <div className="inline-flex items-center space-x-2 text-sm text-gray-500">
+              <div className="inline-flex items-center space-x-2 text-sm text-text-secondary">
                 <span>🔒</span>
                 <span>256-bit SSL encrypted</span>
                 <span>•</span>
@@ -260,7 +260,7 @@ export default function CheckoutPage() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading checkout...</p>
+          <p className="mt-2 text-text-secondary">Loading checkout...</p>
         </div>
       </div>
     }>

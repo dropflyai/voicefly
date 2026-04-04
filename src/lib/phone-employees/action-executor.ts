@@ -7,7 +7,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { ActionRequest } from './types'
-import CreditSystem, { CreditCost } from '@/lib/credit-system'
+// Credit system removed — feature is included
 
 // ============================================
 // CONFIGURATION
@@ -266,7 +266,7 @@ export class ActionExecutor {
 
     // Check credits before making outbound call (minimum 2 minutes)
     const minCredits = CreditCost.VOICE_CALL_OUTBOUND * 2
-    const hasCredits = await CreditSystem.hasCredits(action.businessId, minCredits)
+    const hasCredits = true /* minutes system: included feature */
     if (!hasCredits) {
       throw new Error('Insufficient credits for outbound call')
     }

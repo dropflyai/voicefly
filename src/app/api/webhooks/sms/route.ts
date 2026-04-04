@@ -17,7 +17,7 @@ import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 import { generateSmsResponse } from '@/lib/sms/ai-responder'
 import { sendSms } from '@/lib/sms/twilio-client'
-import CreditSystem, { CreditCost } from '@/lib/credit-system'
+// Credit system removed — SMS is an included feature
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -161,17 +161,7 @@ async function processInboundSms(
     return
   }
 
-  // Credit check
-  const creditsNeeded = CreditCost.AI_CHAT_MESSAGE + CreditCost.SMS_OUTBOUND
-  const balance = await CreditSystem.getBalance(employee.business_id)
-  if (balance && balance.total_credits < creditsNeeded) {
-    console.warn(`[SMS Webhook] Insufficient credits for business ${employee.business_id}`)
-    // Send static fallback instead of AI response
-    const fallback = employee.job_config?.smsAutoReply ||
-      `Hi! You've reached ${employee.name}. We received your message and will get back to you shortly.`
-    await sendAndLog(fallback, employee, customerPhone, employeePhone)
-    return
-  }
+  // SMS is an included feature — no minute check needed
 
   // Generate AI response
   const reply = await generateSmsResponse({
@@ -188,13 +178,7 @@ async function processInboundSms(
   // Send reply and log
   await sendAndLog(reply, employee, customerPhone, employeePhone)
 
-  // Deduct credits
-  CreditSystem.deductCredits(
-    employee.business_id,
-    creditsNeeded,
-    'sms_ai_reply',
-    { customerPhone, employeeId: employee.id }
-  ).catch(err => console.error('[SMS Webhook] Credit deduction error:', err))
+  // SMS is an included feature — no deduction
 }
 
 async function sendAndLog(

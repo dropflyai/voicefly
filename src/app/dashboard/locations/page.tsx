@@ -220,10 +220,10 @@ export default function LocationsPage() {
       <Layout business={business}>
         <div className="p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="h-8 bg-surface-highest rounded w-1/4 mb-6"></div>
             <div className="space-y-4">
-              <div className="h-32 bg-gray-200 rounded"></div>
-              <div className="h-32 bg-gray-200 rounded"></div>
+              <div className="h-32 bg-surface-highest rounded"></div>
+              <div className="h-32 bg-surface-highest rounded"></div>
             </div>
           </div>
         </div>
@@ -237,8 +237,8 @@ export default function LocationsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Location Management</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-text-primary">Location Management</h1>
+            <p className="text-text-secondary mt-1">
               Manage your salon locations. Your plan allows {getMaxLocationsText()}.
             </p>
           </div>
@@ -257,11 +257,11 @@ export default function LocationsPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-600 text-sm">{error}</p>
+          <div className="mb-6 p-4 bg-[#93000a]/5 border border-red-200 rounded-md">
+            <p className="text-[#ffb4ab] text-sm">{error}</p>
             <button 
               onClick={() => setError(null)} 
-              className="text-red-600 hover:text-red-700 underline text-sm mt-1"
+              className="text-[#ffb4ab] hover:text-[#ffb4ab] underline text-sm mt-1"
             >
               Dismiss
             </button>
@@ -271,9 +271,9 @@ export default function LocationsPage() {
         {/* Locations List */}
         {locations.length === 0 ? (
           <div className="text-center py-12">
-            <BuildingStorefrontIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No locations</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <BuildingStorefrontIcon className="mx-auto h-12 w-12 text-text-muted" />
+            <h3 className="mt-2 text-sm font-medium text-text-primary">No locations</h3>
+            <p className="mt-1 text-sm text-text-secondary">
               Get started by adding your first location.
             </p>
             {canAddMoreLocations() && (
@@ -293,7 +293,7 @@ export default function LocationsPage() {
             {/* Primary Location */}
             {getPrimaryLocation() && (
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Primary Location</h2>
+                <h2 className="text-lg font-medium text-text-primary mb-4">Primary Location</h2>
                 <LocationCard
                   location={getPrimaryLocation()!}
                   isPrimary={true}
@@ -307,7 +307,7 @@ export default function LocationsPage() {
             {/* Secondary Locations */}
             {getSecondaryLocations().length > 0 && (
               <div>
-                <h2 className="text-lg font-medium text-gray-900 mb-4">Additional Locations</h2>
+                <h2 className="text-lg font-medium text-text-primary mb-4">Additional Locations</h2>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {getSecondaryLocations().map(location => (
                     <LocationCard
@@ -329,7 +329,7 @@ export default function LocationsPage() {
                 <button
                   onClick={handleAddLocation}
                   disabled={isLoading}
-                  className="inline-flex items-center px-6 py-3 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                  className="inline-flex items-center px-6 py-3 border border-[rgba(65,71,84,0.2)] text-sm font-medium rounded-md text-text-primary bg-surface-low hover:bg-surface focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
                 >
                   <PlusIcon className="w-5 h-5 mr-2" />
                   Add Another Location
@@ -348,7 +348,7 @@ export default function LocationsPage() {
                     <h3 className="text-sm font-medium text-yellow-800">
                       Location Limit Reached
                     </h3>
-                    <div className="mt-2 text-sm text-yellow-700">
+                    <div className="mt-2 text-sm text-accent">
                       <p>
                         Your {business?.subscription_tier} plan allows {getMaxLocationsText()}. 
                         Upgrade to add more locations.
@@ -358,7 +358,7 @@ export default function LocationsPage() {
                       <div className="-mx-2 -my-1.5 flex">
                         <button
                           type="button"
-                          className="bg-yellow-50 px-2 py-1.5 rounded-md text-sm font-medium text-yellow-800 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-600"
+                          className="bg-yellow-50 px-2 py-1.5 rounded-md text-sm font-medium text-yellow-800 hover:bg-accent/10 focus:outline-none focus:ring-2 focus:ring-yellow-600"
                         >
                           Upgrade Plan
                         </button>
