@@ -382,10 +382,10 @@ export default function CustomersPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'vip': return 'bg-yellow-100 text-yellow-800'
-      case 'active': return 'bg-green-100 text-green-800'
-      case 'inactive': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'vip': return 'bg-accent/10 text-yellow-800'
+      case 'active': return 'bg-emerald-500/10 text-green-800'
+      case 'inactive': return 'bg-[#93000a]/10 text-red-800'
+      default: return 'bg-surface-high text-text-primary'
     }
   }
 
@@ -402,7 +402,7 @@ export default function CustomersPage() {
       i < Math.floor(rating) ? (
         <StarIconSolid key={i} className="h-4 w-4 text-yellow-400" />
       ) : (
-        <StarIcon key={i} className="h-4 w-4 text-gray-300" />
+        <StarIcon key={i} className="h-4 w-4 text-text-muted" />
       )
     ))
   }
@@ -429,8 +429,8 @@ export default function CustomersPage() {
         {/* Header */}
         <div className="sm:flex sm:items-center sm:justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Customer Management</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-text-primary">Customer Management</h1>
+            <p className="text-text-secondary mt-1">
               Manage your customer relationships and loyalty program
             </p>
           </div>
@@ -451,11 +451,11 @@ export default function CustomersPage() {
             <div className="px-4 py-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <UserPlusIcon className="h-8 w-8 text-blue-600" />
+                  <UserPlusIcon className="h-8 w-8 text-brand-primary" />
                 </div>
                 <div className="ml-5">
-                  <div className="text-sm font-medium text-gray-500">Total Customers</div>
-                  <div className="text-2xl font-bold text-gray-900">{totalCustomers}</div>
+                  <div className="text-sm font-medium text-text-secondary">Total Customers</div>
+                  <div className="text-2xl font-bold text-text-primary">{totalCustomers}</div>
                 </div>
               </div>
             </div>
@@ -465,11 +465,11 @@ export default function CustomersPage() {
             <div className="px-4 py-5">
               <div className="flex items-center">
                 <div className="flex-shrink-0">
-                  <HeartIcon className="h-8 w-8 text-green-600" />
+                  <HeartIcon className="h-8 w-8 text-emerald-500" />
                 </div>
                 <div className="ml-5">
-                  <div className="text-sm font-medium text-gray-500">Active Customers</div>
-                  <div className="text-2xl font-bold text-green-600">{activeCustomers}</div>
+                  <div className="text-sm font-medium text-text-secondary">Active Customers</div>
+                  <div className="text-2xl font-bold text-emerald-500">{activeCustomers}</div>
                 </div>
               </div>
             </div>
@@ -482,7 +482,7 @@ export default function CustomersPage() {
                   <StarIcon className="h-8 w-8 text-yellow-600" />
                 </div>
                 <div className="ml-5">
-                  <div className="text-sm font-medium text-gray-500">VIP Customers</div>
+                  <div className="text-sm font-medium text-text-secondary">VIP Customers</div>
                   <div className="text-2xl font-bold text-yellow-600">{vipCustomers}</div>
                 </div>
               </div>
@@ -496,7 +496,7 @@ export default function CustomersPage() {
                   <CurrencyDollarIcon className="h-8 w-8 text-beauty-600" />
                 </div>
                 <div className="ml-5">
-                  <div className="text-sm font-medium text-gray-500">Total Revenue</div>
+                  <div className="text-sm font-medium text-text-secondary">Total Revenue</div>
                   <div className="text-2xl font-bold text-beauty-600">${totalRevenue.toLocaleString()}</div>
                 </div>
               </div>
@@ -510,11 +510,11 @@ export default function CustomersPage() {
                 <div className="px-4 py-5">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
-                      <StarIcon className="h-8 w-8 text-purple-600" />
+                      <StarIcon className="h-8 w-8 text-purple-400" />
                     </div>
                     <div className="ml-5">
-                      <div className="text-sm font-medium text-gray-500">Loyalty Members</div>
-                      <div className="text-2xl font-bold text-purple-600">{loyaltyMembers}</div>
+                      <div className="text-sm font-medium text-text-secondary">Loyalty Members</div>
+                      <div className="text-2xl font-bold text-purple-400">{loyaltyMembers}</div>
                     </div>
                   </div>
                 </div>
@@ -524,11 +524,11 @@ export default function CustomersPage() {
                 <div className="px-4 py-5">
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
-                      <GiftIcon className="h-8 w-8 text-indigo-600" />
+                      <GiftIcon className="h-8 w-8 text-indigo-400" />
                     </div>
                     <div className="ml-5">
-                      <div className="text-sm font-medium text-gray-500">Avg Points</div>
-                      <div className="text-2xl font-bold text-indigo-600">{averageLoyaltyPoints}</div>
+                      <div className="text-sm font-medium text-text-secondary">Avg Points</div>
+                      <div className="text-2xl font-bold text-indigo-400">{averageLoyaltyPoints}</div>
                     </div>
                   </div>
                 </div>
@@ -538,12 +538,12 @@ export default function CustomersPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white shadow rounded-lg p-6 mb-6">
+        <div className="bg-surface-low shadow rounded-lg p-6 mb-6">
           <div className={`grid grid-cols-1 gap-4 ${isBusinessTier ? 'md:grid-cols-4' : hasLoyaltyFeatures ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
             {/* Search */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                <MagnifyingGlassIcon className="h-5 w-5 text-text-muted" />
               </div>
               <input
                 type="text"
@@ -601,18 +601,18 @@ export default function CustomersPage() {
         </div>
 
         {/* Customers List */}
-        <div className="bg-white shadow rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-medium text-gray-900">
+        <div className="bg-surface-low shadow rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-b border-[rgba(65,71,84,0.15)]">
+            <h2 className="text-lg font-medium text-text-primary">
               {filteredCustomers.length} Customers
             </h2>
           </div>
 
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-[rgba(65,71,84,0.15)]">
             {filteredCustomers.map((customer) => (
               <div 
                 key={customer.id}
-                className="px-6 py-4 hover:bg-gray-50 cursor-pointer"
+                className="px-6 py-4 hover:bg-surface cursor-pointer"
                 onClick={() => {
                   setSelectedCustomer(customer)
                   setShowModal(true)
@@ -630,7 +630,7 @@ export default function CustomersPage() {
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-3">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-medium text-text-primary truncate">
                           {customer.firstName} {customer.lastName}
                         </p>
                         <span className={clsx(
@@ -641,7 +641,7 @@ export default function CustomersPage() {
                           <span className="ml-1 capitalize">{customer.status}</span>
                         </span>
                         {customer.upcomingAppointments > 0 && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-primary/10 text-blue-800">
                             {customer.upcomingAppointments} upcoming
                           </span>
                         )}
@@ -659,7 +659,7 @@ export default function CustomersPage() {
                         </div>
                       )}
                       
-                      <div className="flex items-center mt-1 space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center mt-1 space-x-4 text-sm text-text-secondary">
                         <div className="flex items-center">
                           <EnvelopeIcon className="h-4 w-4 mr-1" />
                           {customer.email}
@@ -670,7 +670,7 @@ export default function CustomersPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center mt-2 space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center mt-2 space-x-4 text-sm text-text-secondary">
                         <div className="flex items-center">
                           <CalendarIcon className="h-4 w-4 mr-1" />
                           {customer.totalVisits} visits
@@ -696,7 +696,7 @@ export default function CustomersPage() {
 
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <p className="text-sm font-medium text-gray-900">
+                      <p className="text-sm font-medium text-text-primary">
                         Last visit: {format(parseISO(customer.lastVisitDate), 'MMM d, yyyy')}
                       </p>
                       {/* Enhanced Loyalty Points Display */}
@@ -705,19 +705,19 @@ export default function CustomersPage() {
                           {customer.loyaltyPoints > 0 ? (
                             <div className="flex items-center space-x-2">
                               <StarIcon className="h-4 w-4 text-purple-500" />
-                              <span className="text-sm font-medium text-purple-600">
+                              <span className="text-sm font-medium text-purple-400">
                                 {customer.loyaltyPoints} points
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-text-secondary">
                                 ({customer.loyaltyTier})
                               </span>
                             </div>
                           ) : (
-                            <span className="text-xs text-gray-400">No points yet</span>
+                            <span className="text-xs text-text-muted">No points yet</span>
                           )}
                         </div>
                       ) : (
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-text-secondary">
                           {customer.loyaltyPoints} loyalty points
                         </p>
                       )}
@@ -730,9 +730,9 @@ export default function CustomersPage() {
 
           {filteredCustomers.length === 0 && (
             <div className="text-center py-12">
-              <UserPlusIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No customers found</h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <UserPlusIcon className="mx-auto h-12 w-12 text-text-muted" />
+              <h3 className="mt-2 text-sm font-medium text-text-primary">No customers found</h3>
+              <p className="mt-1 text-sm text-text-secondary">
                 Try adjusting your search terms or filters.
               </p>
             </div>
@@ -743,10 +743,10 @@ export default function CustomersPage() {
         {showModal && selectedCustomer && (
           <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+              <div className="fixed inset-0 bg-surface0 bg-opacity-75 transition-opacity" />
 
-              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-                <div className="bg-white px-6 py-6">
+              <div className="inline-block align-bottom bg-surface-low rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                <div className="bg-surface-low px-6 py-6">
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center">
                       <div className="h-16 w-16 bg-gradient-to-br from-beauty-400 to-blue-500 rounded-full flex items-center justify-center">
@@ -755,7 +755,7 @@ export default function CustomersPage() {
                         </span>
                       </div>
                       <div className="ml-4">
-                        <h3 className="text-xl font-medium text-gray-900">
+                        <h3 className="text-xl font-medium text-text-primary">
                           {selectedCustomer.firstName} {selectedCustomer.lastName}
                         </h3>
                         <div className="flex items-center mt-1">
@@ -768,14 +768,14 @@ export default function CustomersPage() {
                           </span>
                           <div className="flex items-center ml-3">
                             {renderStars(selectedCustomer.rating)}
-                            <span className="ml-2 text-sm text-gray-500">{selectedCustomer.rating}/5</span>
+                            <span className="ml-2 text-sm text-text-secondary">{selectedCustomer.rating}/5</span>
                           </div>
                         </div>
                       </div>
                     </div>
                     <button
                       onClick={() => setShowModal(false)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-text-muted hover:text-text-secondary"
                     >
                       <XMarkIcon className="h-6 w-6" />
                     </button>
@@ -784,40 +784,40 @@ export default function CustomersPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Contact & Stats */}
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900 mb-3">Contact Information</h4>
+                      <h4 className="text-sm font-medium text-text-primary mb-3">Contact Information</h4>
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center">
-                          <EnvelopeIcon className="h-4 w-4 text-gray-400 mr-2" />
+                          <EnvelopeIcon className="h-4 w-4 text-text-muted mr-2" />
                           {selectedCustomer.email}
                         </div>
                         <div className="flex items-center">
-                          <PhoneIcon className="h-4 w-4 text-gray-400 mr-2" />
+                          <PhoneIcon className="h-4 w-4 text-text-muted mr-2" />
                           {selectedCustomer.phone}
                         </div>
                         {selectedCustomer.birthday && (
                           <div>
-                            <span className="text-gray-500">Birthday: </span>
+                            <span className="text-text-secondary">Birthday: </span>
                             {format(parseISO(selectedCustomer.birthday), 'MMMM d')}
                           </div>
                         )}
                       </div>
 
-                      <h4 className="text-sm font-medium text-gray-900 mb-3 mt-6">Customer Stats</h4>
+                      <h4 className="text-sm font-medium text-text-primary mb-3 mt-6">Customer Stats</h4>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <span className="text-gray-500">Total Visits:</span>
+                          <span className="text-text-secondary">Total Visits:</span>
                           <p className="font-medium">{selectedCustomer.totalVisits}</p>
                         </div>
                         <div>
-                          <span className="text-gray-500">Total Spent:</span>
+                          <span className="text-text-secondary">Total Spent:</span>
                           <p className="font-medium">${selectedCustomer.totalSpent}</p>
                         </div>
                         <div>
-                          <span className="text-gray-500">Avg. per Visit:</span>
+                          <span className="text-text-secondary">Avg. per Visit:</span>
                           <p className="font-medium">${Math.round(selectedCustomer.totalSpent / selectedCustomer.totalVisits)}</p>
                         </div>
                         <div>
-                          <span className="text-gray-500">Loyalty Points:</span>
+                          <span className="text-text-secondary">Loyalty Points:</span>
                           <p className="font-medium flex items-center">
                             {selectedCustomer.loyaltyPoints}
                             {hasLoyaltyFeatures && selectedCustomer.loyaltyTier && (
@@ -833,11 +833,11 @@ export default function CustomersPage() {
                           </p>
                         </div>
                         <div>
-                          <span className="text-gray-500">First Visit:</span>
+                          <span className="text-text-secondary">First Visit:</span>
                           <p className="font-medium">{format(parseISO(selectedCustomer.firstVisitDate), 'MMM d, yyyy')}</p>
                         </div>
                         <div>
-                          <span className="text-gray-500">Last Visit:</span>
+                          <span className="text-text-secondary">Last Visit:</span>
                           <p className="font-medium">{format(parseISO(selectedCustomer.lastVisitDate), 'MMM d, yyyy')}</p>
                         </div>
                       </div>
@@ -845,22 +845,22 @@ export default function CustomersPage() {
 
                     {/* Preferences & Notes */}
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900 mb-3">Preferences</h4>
+                      <h4 className="text-sm font-medium text-text-primary mb-3">Preferences</h4>
                       
                       {selectedCustomer.preferredTechnician && (
                         <div className="mb-4">
-                          <span className="text-gray-500 text-sm">Preferred Technician:</span>
+                          <span className="text-text-secondary text-sm">Preferred Technician:</span>
                           <p className="font-medium">{selectedCustomer.preferredTechnician}</p>
                         </div>
                       )}
 
                       <div className="mb-4">
-                        <span className="text-gray-500 text-sm">Favorite Services:</span>
+                        <span className="text-text-secondary text-sm">Favorite Services:</span>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {selectedCustomer.favoriteServices.map((service, index) => (
                             <span
                               key={index}
-                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-primary/10 text-blue-800"
                             >
                               {service}
                             </span>
@@ -870,12 +870,12 @@ export default function CustomersPage() {
 
                       {selectedCustomer.allergies && selectedCustomer.allergies.length > 0 && (
                         <div className="mb-4">
-                          <span className="text-gray-500 text-sm">Allergies:</span>
+                          <span className="text-text-secondary text-sm">Allergies:</span>
                           <div className="flex flex-wrap gap-1 mt-1">
                             {selectedCustomer.allergies.map((allergy, index) => (
                               <span
                                 key={index}
-                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                                className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[#93000a]/10 text-red-800"
                               >
                                 {allergy}
                               </span>
@@ -886,8 +886,8 @@ export default function CustomersPage() {
 
                       {selectedCustomer.notes && (
                         <div>
-                          <span className="text-gray-500 text-sm">Notes:</span>
-                          <p className="text-sm text-gray-700 mt-1 p-3 bg-gray-50 rounded-lg">
+                          <span className="text-text-secondary text-sm">Notes:</span>
+                          <p className="text-sm text-text-primary mt-1 p-3 bg-surface rounded-lg">
                             {selectedCustomer.notes}
                           </p>
                         </div>
@@ -896,7 +896,7 @@ export default function CustomersPage() {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 px-6 py-3 sm:flex sm:flex-row-reverse">
+                <div className="bg-surface px-6 py-3 sm:flex sm:flex-row-reverse">
                   <button
                     type="button"
                     className="btn-primary sm:ml-3"
@@ -1006,17 +1006,17 @@ function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCustomerModalProps) 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
+        <div className="fixed inset-0 bg-surface0 bg-opacity-75 transition-opacity" onClick={onClose} />
         
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div className="inline-block align-bottom bg-surface-low rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <form onSubmit={handleSubmit}>
-            <div className="bg-white px-6 py-6">
+            <div className="bg-surface-low px-6 py-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-medium text-gray-900">Add New Customer</h3>
+                <h3 className="text-lg font-medium text-text-primary">Add New Customer</h3>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-text-muted hover:text-text-secondary"
                 >
                   <XMarkIcon className="h-6 w-6" />
                 </button>
@@ -1025,7 +1025,7 @@ function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCustomerModalProps) 
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-text-primary mb-1">
                       First Name *
                     </label>
                     <input
@@ -1033,13 +1033,13 @@ function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCustomerModalProps) 
                       required
                       value={formData.firstName}
                       onChange={(e) => setFormData({...formData, firstName: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                       placeholder="First name"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-text-primary mb-1">
                       Last Name *
                     </label>
                     <input
@@ -1047,14 +1047,14 @@ function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCustomerModalProps) 
                       required
                       value={formData.lastName}
                       onChange={(e) => setFormData({...formData, lastName: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                       placeholder="Last name"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-text-primary mb-1">
                     Phone *
                   </label>
                   <input
@@ -1062,52 +1062,52 @@ function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCustomerModalProps) 
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="(555) 123-4567"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-text-primary mb-1">
                     Email
                   </label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="customer@email.com"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-text-primary mb-1">
                     Date of Birth
                   </label>
                   <input
                     type="date"
                     value={formData.dateOfBirth}
                     onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-text-primary mb-1">
                     Notes
                   </label>
                   <textarea
                     rows={3}
                     value={formData.notes}
                     onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     placeholder="Customer preferences, allergies, etc..."
                   />
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-50 px-6 py-3 sm:flex sm:flex-row-reverse">
+            <div className="bg-surface px-6 py-3 sm:flex sm:flex-row-reverse">
               <button
                 type="submit"
                 disabled={isSubmitting || !formData.firstName || !formData.lastName || !formData.phone}
@@ -1118,7 +1118,7 @@ function AddCustomerModal({ isOpen, onClose, onSubmit }: AddCustomerModalProps) 
               <button
                 type="button"
                 onClick={onClose}
-                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                className="mt-3 w-full inline-flex justify-center rounded-md border border-[rgba(65,71,84,0.2)] shadow-sm px-4 py-2 bg-surface-low text-base font-medium text-text-primary hover:bg-surface focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
               >
                 Cancel
               </button>

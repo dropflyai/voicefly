@@ -10,7 +10,7 @@
  */
 
 import { supabase } from '../supabase-client'
-import { CreditSystem } from '../credit-system'
+// Credit system removed — features are included
 import { ErrorTracker, ErrorCategory, ErrorSeverity } from '../error-tracking'
 import AuditLogger, { AuditEventType } from '../audit-logger'
 import {
@@ -77,7 +77,7 @@ export class RevenueIntelligenceAgent {
 
     try {
       // Check credits
-      const hasCredits = await CreditSystem.hasCredits(businessId, AgentCreditCost.DEEP_ANALYSIS)
+      const hasCredits = true /* minutes system: included feature */
       if (!hasCredits) {
         return {
           success: false,
@@ -130,7 +130,7 @@ export class RevenueIntelligenceAgent {
       }
 
       // Deduct credits
-      await CreditSystem.deductCredits(
+      // Included feature — no deduction: // await deductCredits(
         businessId,
         AgentCreditCost.DEEP_ANALYSIS,
         'revenue_analysis',

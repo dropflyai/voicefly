@@ -191,18 +191,18 @@ export default function LeadsPage() {
 
   const getSegmentIcon = (segment: string) => {
     switch(segment) {
-      case 'hot': return <FireIcon className="h-5 w-5 text-red-500" />
+      case 'hot': return <FireIcon className="h-5 w-5 text-[#ffb4ab]" />
       case 'warm': return <BoltIcon className="h-5 w-5 text-orange-500" />
-      case 'cold': return <CloudIcon className="h-5 w-5 text-blue-500" />
+      case 'cold': return <CloudIcon className="h-5 w-5 text-brand-primary" />
       default: return null
     }
   }
 
   const getSegmentBadge = (segment: string) => {
     const classes = {
-      hot: 'bg-red-100 text-red-800',
-      warm: 'bg-orange-100 text-orange-800',
-      cold: 'bg-blue-100 text-blue-800'
+      hot: 'bg-[#93000a]/10 text-red-800',
+      warm: 'bg-accent/10 text-orange-800',
+      cold: 'bg-brand-primary/10 text-blue-800'
     }
 
     return (
@@ -215,12 +215,12 @@ export default function LeadsPage() {
 
   const getStatusBadge = (status: string) => {
     const classes = {
-      new: 'bg-gray-100 text-gray-800',
-      qualified: 'bg-green-100 text-green-800',
-      contacted: 'bg-blue-100 text-blue-800',
-      nurturing: 'bg-purple-100 text-purple-800',
+      new: 'bg-surface-high text-text-primary',
+      qualified: 'bg-emerald-500/10 text-green-800',
+      contacted: 'bg-brand-primary/10 text-blue-800',
+      nurturing: 'bg-purple-500/10 text-purple-800',
       converted: 'bg-emerald-100 text-emerald-800',
-      lost: 'bg-red-100 text-red-800'
+      lost: 'bg-[#93000a]/10 text-red-800'
     }
 
     return (
@@ -236,14 +236,14 @@ export default function LeadsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Lead Pipeline</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-text-primary">Lead Pipeline</h1>
+            <p className="mt-1 text-sm text-text-secondary">
               AI-researched leads with automated nurture campaigns
             </p>
           </div>
           <Link
             href="/dashboard/leads/request"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] transition-colors"
           >
             <PlusIcon className="h-5 w-5" />
             Request Leads
@@ -252,31 +252,31 @@ export default function LeadsPage() {
 
         {/* Pipeline Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-surface-low p-6 rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Total Leads</p>
-                <p className="mt-2 text-3xl font-semibold text-gray-900">{summary.total}</p>
+                <p className="text-sm font-medium text-text-secondary">Total Leads</p>
+                <p className="mt-2 text-3xl font-semibold text-text-primary">{summary.total}</p>
               </div>
-              <UserGroupIcon className="h-10 w-10 text-gray-400" />
+              <UserGroupIcon className="h-10 w-10 text-text-muted" />
             </div>
           </div>
 
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg shadow-sm border border-blue-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-700">Cold</p>
+                <p className="text-sm font-medium text-brand-primary">Cold</p>
                 <p className="mt-2 text-3xl font-semibold text-blue-900">{summary.cold}</p>
-                <p className="mt-1 text-xs text-blue-600">Email nurture</p>
+                <p className="mt-1 text-xs text-brand-primary">Email nurture</p>
               </div>
-              <CloudIcon className="h-10 w-10 text-blue-500" />
+              <CloudIcon className="h-10 w-10 text-brand-primary" />
             </div>
           </div>
 
           <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-6 rounded-lg shadow-sm border border-orange-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-700">Warm</p>
+                <p className="text-sm font-medium text-accent">Warm</p>
                 <p className="mt-2 text-3xl font-semibold text-orange-900">{summary.warm}</p>
                 <p className="mt-1 text-xs text-orange-600">Voice calls</p>
               </div>
@@ -287,22 +287,22 @@ export default function LeadsPage() {
           <div className="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-lg shadow-sm border border-red-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-red-700">Hot</p>
+                <p className="text-sm font-medium text-[#ffb4ab]">Hot</p>
                 <p className="mt-2 text-3xl font-semibold text-red-900">{summary.hot}</p>
-                <p className="mt-1 text-xs text-red-600">Ready to close</p>
+                <p className="mt-1 text-xs text-[#ffb4ab]">Ready to close</p>
               </div>
-              <FireIcon className="h-10 w-10 text-red-500" />
+              <FireIcon className="h-10 w-10 text-[#ffb4ab]" />
             </div>
           </div>
 
           <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg shadow-sm border border-green-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-green-700">Pipeline Value</p>
+                <p className="text-sm font-medium text-emerald-500">Pipeline Value</p>
                 <p className="mt-2 text-2xl font-semibold text-green-900">
                   ${(summary.totalValue / 1000).toFixed(0)}K
                 </p>
-                <p className="mt-1 text-xs text-green-600">Est. revenue</p>
+                <p className="mt-1 text-xs text-emerald-500">Est. revenue</p>
               </div>
               <CurrencyDollarIcon className="h-10 w-10 text-green-500" />
             </div>
@@ -310,29 +310,29 @@ export default function LeadsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-surface-low p-4 rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)]">
           <div className="flex flex-wrap items-center gap-4">
             {/* Search */}
             <div className="flex-1 min-w-[300px]">
               <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-muted" />
                 <input
                   type="text"
                   placeholder="Search leads..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
             </div>
 
             {/* Segment Filter */}
             <div className="flex items-center gap-2">
-              <FunnelIcon className="h-5 w-5 text-gray-400" />
+              <FunnelIcon className="h-5 w-5 text-text-muted" />
               <select
                 value={segmentFilter}
                 onChange={(e) => setSegmentFilter(e.target.value as any)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
               >
                 <option value="all">All Segments</option>
                 <option value="hot">🔥 Hot</option>
@@ -346,7 +346,7 @@ export default function LeadsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
               >
                 <option value="all">All Statuses</option>
                 <option value="new">New</option>
@@ -361,41 +361,41 @@ export default function LeadsPage() {
         </div>
 
         {/* Leads Table */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-surface-low shadow-sm rounded-lg border border-[rgba(65,71,84,0.15)] overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-[rgba(65,71,84,0.15)]">
+              <thead className="bg-surface">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                     Lead
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                     Company
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                     Segment
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                     Score
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                     Est. Value
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-text-secondary uppercase tracking-wider">
                     Next Action
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className="bg-surface-low divide-y divide-[rgba(65,71,84,0.15)]">
                 {filteredLeads.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
-                      <UserGroupIcon className="mx-auto h-12 w-12 text-gray-400" />
+                    <td colSpan={7} className="px-6 py-12 text-center text-text-secondary">
+                      <UserGroupIcon className="mx-auto h-12 w-12 text-text-muted" />
                       <p className="mt-2">No leads found</p>
-                      <Link href="/dashboard/leads/request" className="mt-2 text-blue-600 hover:text-blue-700 text-sm">
+                      <Link href="/dashboard/leads/request" className="mt-2 text-brand-primary hover:text-brand-primary text-sm">
                         Request your first batch of leads
                       </Link>
                     </td>
@@ -404,27 +404,27 @@ export default function LeadsPage() {
                   filteredLeads.map((lead) => (
                     <tr
                       key={lead.id}
-                      className="hover:bg-gray-50 cursor-pointer transition-colors"
+                      className="hover:bg-surface cursor-pointer transition-colors"
                       onClick={() => setSelectedLead(lead)}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-blue-600 rounded-full flex items-center justify-center">
+                          <div className="flex-shrink-0 h-10 w-10 bg-brand-primary rounded-full flex items-center justify-center">
                             <span className="text-white font-medium text-sm">
                               {lead.firstName[0]}{lead.lastName[0]}
                             </span>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-text-primary">
                               {lead.firstName} {lead.lastName}
                             </div>
-                            <div className="text-sm text-gray-500">{lead.jobTitle}</div>
+                            <div className="text-sm text-text-secondary">{lead.jobTitle}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{lead.companyName}</div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-text-primary">{lead.companyName}</div>
+                        <div className="text-sm text-text-secondary">
                           {lead.industry} • {lead.companySize}
                         </div>
                       </td>
@@ -436,32 +436,32 @@ export default function LeadsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <div className="flex-1 bg-gray-200 rounded-full h-2 mr-2">
+                          <div className="flex-1 bg-surface-highest rounded-full h-2 mr-2">
                             <div
                               className={clsx('h-2 rounded-full', {
-                                'bg-red-500': lead.qualificationScore >= 75,
+                                'bg-[#93000a]/50': lead.qualificationScore >= 75,
                                 'bg-orange-500': lead.qualificationScore >= 50 && lead.qualificationScore < 75,
-                                'bg-blue-500': lead.qualificationScore < 50
+                                'bg-brand-primary': lead.qualificationScore < 50
                               })}
                               style={{ width: `${lead.qualificationScore}%` }}
                             />
                           </div>
-                          <span className="text-sm font-medium text-gray-700">
+                          <span className="text-sm font-medium text-text-primary">
                             {lead.qualificationScore}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-primary">
                         ${(lead.estimatedDealValue || 0).toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-text-secondary">
                         {lead.nextFollowUpAt ? (
                           <div className="flex items-center gap-1">
                             <CalendarIcon className="h-4 w-4" />
                             {format(new Date(lead.nextFollowUpAt), 'MMM d')}
                           </div>
                         ) : (
-                          <span className="text-gray-400">Not scheduled</span>
+                          <span className="text-text-muted">Not scheduled</span>
                         )}
                       </td>
                     </tr>
@@ -475,92 +475,92 @@ export default function LeadsPage() {
         {/* Lead Detail Modal */}
         {selectedLead && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="bg-surface-low rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-4">
-                    <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
+                    <div className="h-16 w-16 bg-brand-primary rounded-full flex items-center justify-center">
                       <span className="text-white font-medium text-xl">
                         {selectedLead.firstName[0]}{selectedLead.lastName[0]}
                       </span>
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-900">
+                      <h2 className="text-2xl font-bold text-text-primary">
                         {selectedLead.firstName} {selectedLead.lastName}
                       </h2>
-                      <p className="text-gray-600">{selectedLead.jobTitle} at {selectedLead.companyName}</p>
+                      <p className="text-text-secondary">{selectedLead.jobTitle} at {selectedLead.companyName}</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedLead(null)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-text-muted hover:text-text-secondary"
                   >
                     <XMarkIcon className="h-6 w-6" />
                   </button>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <EnvelopeIcon className="h-5 w-5 text-gray-400" />
+                  <div className="flex items-center gap-3 p-3 bg-surface rounded-lg">
+                    <EnvelopeIcon className="h-5 w-5 text-text-muted" />
                     <div>
-                      <p className="text-xs text-gray-500">Email</p>
-                      <p className="text-sm font-medium text-gray-900">{selectedLead.email || 'N/A'}</p>
+                      <p className="text-xs text-text-secondary">Email</p>
+                      <p className="text-sm font-medium text-text-primary">{selectedLead.email || 'N/A'}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <PhoneIcon className="h-5 w-5 text-gray-400" />
+                  <div className="flex items-center gap-3 p-3 bg-surface rounded-lg">
+                    <PhoneIcon className="h-5 w-5 text-text-muted" />
                     <div>
-                      <p className="text-xs text-gray-500">Phone</p>
-                      <p className="text-sm font-medium text-gray-900">{selectedLead.phone || 'N/A'}</p>
+                      <p className="text-xs text-text-secondary">Phone</p>
+                      <p className="text-sm font-medium text-text-primary">{selectedLead.phone || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Company Info</h3>
+                    <h3 className="font-semibold text-text-primary mb-2">Company Info</h3>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div>
-                        <span className="text-gray-500">Industry:</span>
-                        <span className="ml-2 text-gray-900">{selectedLead.industry}</span>
+                        <span className="text-text-secondary">Industry:</span>
+                        <span className="ml-2 text-text-primary">{selectedLead.industry}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Size:</span>
-                        <span className="ml-2 text-gray-900">{selectedLead.companySize}</span>
+                        <span className="text-text-secondary">Size:</span>
+                        <span className="ml-2 text-text-primary">{selectedLead.companySize}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Location:</span>
-                        <span className="ml-2 text-gray-900">{selectedLead.location}</span>
+                        <span className="text-text-secondary">Location:</span>
+                        <span className="ml-2 text-text-primary">{selectedLead.location}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500">Source:</span>
-                        <span className="ml-2 text-gray-900 capitalize">{selectedLead.leadSource}</span>
+                        <span className="text-text-secondary">Source:</span>
+                        <span className="ml-2 text-text-primary capitalize">{selectedLead.leadSource}</span>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Lead Details</h3>
+                    <h3 className="font-semibold text-text-primary mb-2">Lead Details</h3>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Segment:</span>
+                        <span className="text-sm text-text-secondary">Segment:</span>
                         {getSegmentBadge(selectedLead.segment)}
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Status:</span>
+                        <span className="text-sm text-text-secondary">Status:</span>
                         {getStatusBadge(selectedLead.leadStatus)}
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Qualification Score:</span>
-                        <span className="font-medium text-gray-900">{selectedLead.qualificationScore}/100</span>
+                        <span className="text-sm text-text-secondary">Qualification Score:</span>
+                        <span className="font-medium text-text-primary">{selectedLead.qualificationScore}/100</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Est. Deal Value:</span>
-                        <span className="font-medium text-gray-900">${selectedLead.estimatedDealValue?.toLocaleString()}</span>
+                        <span className="text-sm text-text-secondary">Est. Deal Value:</span>
+                        <span className="font-medium text-text-primary">${selectedLead.estimatedDealValue?.toLocaleString()}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">Est. Close Date:</span>
-                        <span className="font-medium text-gray-900">
+                        <span className="text-sm text-text-secondary">Est. Close Date:</span>
+                        <span className="font-medium text-text-primary">
                           {selectedLead.estimatedCloseDate ? format(new Date(selectedLead.estimatedCloseDate), 'MMM d, yyyy') : 'TBD'}
                         </span>
                       </div>
@@ -569,18 +569,18 @@ export default function LeadsPage() {
 
                   {selectedLead.notes && (
                     <div>
-                      <h3 className="font-semibold text-gray-900 mb-2">AI Research Notes</h3>
-                      <p className="text-sm text-gray-700 bg-blue-50 p-3 rounded-lg">
+                      <h3 className="font-semibold text-text-primary mb-2">AI Research Notes</h3>
+                      <p className="text-sm text-text-primary bg-brand-primary/5 p-3 rounded-lg">
                         {selectedLead.notes}
                       </p>
                     </div>
                   )}
 
                   <div className="flex gap-3 pt-4 border-t">
-                    <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <button className="flex-1 px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] transition-colors">
                       Contact Lead
                     </button>
-                    <button className="flex-1 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    <button className="flex-1 px-4 py-2 bg-surface-low border border-[rgba(65,71,84,0.2)] text-text-primary rounded-lg hover:bg-surface transition-colors">
                       Schedule Follow-up
                     </button>
                   </div>

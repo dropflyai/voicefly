@@ -99,10 +99,10 @@ export default function CampaignsPage() {
 
   const getStatusBadge = (status: string) => {
     const classes = {
-      draft: 'bg-gray-100 text-gray-800',
-      active: 'bg-green-100 text-green-800',
-      paused: 'bg-yellow-100 text-yellow-800',
-      completed: 'bg-blue-100 text-blue-800'
+      draft: 'bg-surface-high text-text-primary',
+      active: 'bg-emerald-500/10 text-green-800',
+      paused: 'bg-accent/10 text-yellow-800',
+      completed: 'bg-brand-primary/10 text-blue-800'
     }
 
     const icons = {
@@ -140,8 +140,8 @@ export default function CampaignsPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Campaigns</h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-text-primary">Campaigns</h1>
+            <p className="mt-1 text-sm text-text-secondary">
               Auto-generated email & voice campaigns for lead nurturing
             </p>
           </div>
@@ -149,21 +149,21 @@ export default function CampaignsPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-surface-low p-6 rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Total Campaigns</p>
-                <p className="mt-2 text-3xl font-semibold text-gray-900">{campaigns.length}</p>
+                <p className="text-sm font-medium text-text-secondary">Total Campaigns</p>
+                <p className="mt-2 text-3xl font-semibold text-text-primary">{campaigns.length}</p>
               </div>
-              <ChartBarIcon className="h-10 w-10 text-gray-400" />
+              <ChartBarIcon className="h-10 w-10 text-text-muted" />
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-surface-low p-6 rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Active</p>
-                <p className="mt-2 text-3xl font-semibold text-green-600">
+                <p className="text-sm font-medium text-text-secondary">Active</p>
+                <p className="mt-2 text-3xl font-semibold text-emerald-500">
                   {campaigns.filter(c => c.status === 'active').length}
                 </p>
               </div>
@@ -171,23 +171,23 @@ export default function CampaignsPage() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-surface-low p-6 rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Total Booked</p>
-                <p className="mt-2 text-3xl font-semibold text-blue-600">
+                <p className="text-sm font-medium text-text-secondary">Total Booked</p>
+                <p className="mt-2 text-3xl font-semibold text-brand-primary">
                   {campaigns.reduce((sum, c) => sum + (c.booked || 0), 0)}
                 </p>
               </div>
-              <CalendarIcon className="h-10 w-10 text-blue-500" />
+              <CalendarIcon className="h-10 w-10 text-brand-primary" />
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <div className="bg-surface-low p-6 rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-500">Leads Reached</p>
-                <p className="mt-2 text-3xl font-semibold text-purple-600">
+                <p className="text-sm font-medium text-text-secondary">Leads Reached</p>
+                <p className="mt-2 text-3xl font-semibold text-purple-400">
                   {campaigns.reduce((sum, c) => sum + (c.sentCount || c.calls || 0), 0)}
                 </p>
               </div>
@@ -197,25 +197,25 @@ export default function CampaignsPage() {
         </div>
 
         {/* Filters */}
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-surface-low p-4 rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)]">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 border-r border-gray-200 pr-4">
+            <div className="flex items-center gap-2 border-r border-[rgba(65,71,84,0.15)] pr-4">
               <button
                 onClick={() => setFilter('all')}
-                className={clsx('px-4 py-2 rounded-lg text-sm font-medium transition-colors', filter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')}
+                className={clsx('px-4 py-2 rounded-lg text-sm font-medium transition-colors', filter === 'all' ? 'bg-brand-primary text-white' : 'bg-surface-high text-text-primary hover:bg-surface-highest')}
               >
                 All
               </button>
               <button
                 onClick={() => setFilter('email')}
-                className={clsx('px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2', filter === 'email' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')}
+                className={clsx('px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2', filter === 'email' ? 'bg-brand-primary text-white' : 'bg-surface-high text-text-primary hover:bg-surface-highest')}
               >
                 <EnvelopeIcon className="h-4 w-4" />
                 Email
               </button>
               <button
                 onClick={() => setFilter('voice')}
-                className={clsx('px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2', filter === 'voice' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')}
+                className={clsx('px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2', filter === 'voice' ? 'bg-brand-primary text-white' : 'bg-surface-high text-text-primary hover:bg-surface-highest')}
               >
                 <PhoneIcon className="h-4 w-4" />
                 Voice
@@ -225,7 +225,7 @@ export default function CampaignsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
             >
               <option value="all">All Statuses</option>
               <option value="draft">Draft</option>
@@ -242,24 +242,24 @@ export default function CampaignsPage() {
             const perf = calculatePerformance(campaign)
 
             return (
-              <div key={campaign.id} className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+              <div key={campaign.id} className="bg-surface-low shadow-sm rounded-lg border border-[rgba(65,71,84,0.15)] p-6 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4 flex-1">
-                    <div className={clsx('p-3 rounded-lg', campaign.type === 'email' ? 'bg-blue-100' : 'bg-green-100')}>
+                    <div className={clsx('p-3 rounded-lg', campaign.type === 'email' ? 'bg-brand-primary/10' : 'bg-emerald-500/10')}>
                       {campaign.type === 'email' ? (
-                        <EnvelopeIcon className="h-6 w-6 text-blue-600" />
+                        <EnvelopeIcon className="h-6 w-6 text-brand-primary" />
                       ) : (
-                        <PhoneIcon className="h-6 w-6 text-green-600" />
+                        <PhoneIcon className="h-6 w-6 text-emerald-500" />
                       )}
                     </div>
 
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-semibold text-gray-900">{campaign.name}</h3>
+                        <h3 className="text-lg font-semibold text-text-primary">{campaign.name}</h3>
                         {getStatusBadge(campaign.status)}
                       </div>
 
-                      <div className="mt-2 flex items-center gap-4 text-sm text-gray-600">
+                      <div className="mt-2 flex items-center gap-4 text-sm text-text-secondary">
                         <span>Segment: {campaign.targetSegment}</span>
                         <span>•</span>
                         <span>{campaign.targetCount} leads</span>
@@ -273,47 +273,47 @@ export default function CampaignsPage() {
                           {campaign.type === 'email' ? (
                             <>
                               <div>
-                                <p className="text-xs text-gray-500">Sent</p>
-                                <p className="text-lg font-semibold text-gray-900">{campaign.sentCount || 0}</p>
+                                <p className="text-xs text-text-secondary">Sent</p>
+                                <p className="text-lg font-semibold text-text-primary">{campaign.sentCount || 0}</p>
                               </div>
                               <div>
-                                <p className="text-xs text-gray-500">Opens</p>
-                                <p className="text-lg font-semibold text-blue-600">
-                                  {campaign.opens || 0} <span className="text-sm text-gray-500">({perf.openRate}%)</span>
+                                <p className="text-xs text-text-secondary">Opens</p>
+                                <p className="text-lg font-semibold text-brand-primary">
+                                  {campaign.opens || 0} <span className="text-sm text-text-secondary">({perf.openRate}%)</span>
                                 </p>
                               </div>
                               <div>
-                                <p className="text-xs text-gray-500">Clicks</p>
-                                <p className="text-lg font-semibold text-purple-600">
-                                  {campaign.clicks || 0} <span className="text-sm text-gray-500">({perf.clickRate}%)</span>
+                                <p className="text-xs text-text-secondary">Clicks</p>
+                                <p className="text-lg font-semibold text-purple-400">
+                                  {campaign.clicks || 0} <span className="text-sm text-text-secondary">({perf.clickRate}%)</span>
                                 </p>
                               </div>
                               <div>
-                                <p className="text-xs text-gray-500">Replies</p>
-                                <p className="text-lg font-semibold text-green-600">{campaign.replies || 0}</p>
+                                <p className="text-xs text-text-secondary">Replies</p>
+                                <p className="text-lg font-semibold text-emerald-500">{campaign.replies || 0}</p>
                               </div>
                             </>
                           ) : (
                             <>
                               <div>
-                                <p className="text-xs text-gray-500">Calls</p>
-                                <p className="text-lg font-semibold text-gray-900">{campaign.calls || 0}</p>
+                                <p className="text-xs text-text-secondary">Calls</p>
+                                <p className="text-lg font-semibold text-text-primary">{campaign.calls || 0}</p>
                               </div>
                               <div>
-                                <p className="text-xs text-gray-500">Connected</p>
-                                <p className="text-lg font-semibold text-blue-600">
-                                  {campaign.connected || 0} <span className="text-sm text-gray-500">({perf.connectionRate}%)</span>
+                                <p className="text-xs text-text-secondary">Connected</p>
+                                <p className="text-lg font-semibold text-brand-primary">
+                                  {campaign.connected || 0} <span className="text-sm text-text-secondary">({perf.connectionRate}%)</span>
                                 </p>
                               </div>
                               <div>
-                                <p className="text-xs text-gray-500">Booked</p>
-                                <p className="text-lg font-semibold text-green-600">
-                                  {campaign.booked || 0} <span className="text-sm text-gray-500">({perf.bookingRate}%)</span>
+                                <p className="text-xs text-text-secondary">Booked</p>
+                                <p className="text-lg font-semibold text-emerald-500">
+                                  {campaign.booked || 0} <span className="text-sm text-text-secondary">({perf.bookingRate}%)</span>
                                 </p>
                               </div>
                               <div>
-                                <p className="text-xs text-gray-500">Close Rate</p>
-                                <p className="text-lg font-semibold text-purple-600">{perf.bookingRate}%</p>
+                                <p className="text-xs text-text-secondary">Close Rate</p>
+                                <p className="text-lg font-semibold text-purple-400">{perf.bookingRate}%</p>
                               </div>
                             </>
                           )}
@@ -324,7 +324,7 @@ export default function CampaignsPage() {
 
                   <div className="flex gap-2">
                     {campaign.status === 'draft' && (
-                      <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                      <button className="px-4 py-2 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] transition-colors text-sm font-medium">
                         Approve & Launch
                       </button>
                     )}
@@ -334,7 +334,7 @@ export default function CampaignsPage() {
                       </button>
                     )}
                     {campaign.status === 'paused' && (
-                      <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
+                      <button className="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
                         Resume
                       </button>
                     )}
@@ -346,10 +346,10 @@ export default function CampaignsPage() {
         </div>
 
         {filteredCampaigns.length === 0 && (
-          <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-12 text-center">
-            <ChartBarIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-gray-500">No campaigns found</p>
-            <p className="text-sm text-gray-400 mt-1">Campaigns are auto-created when you request leads</p>
+          <div className="bg-surface-low shadow-sm rounded-lg border border-[rgba(65,71,84,0.15)] p-12 text-center">
+            <ChartBarIcon className="mx-auto h-12 w-12 text-text-muted" />
+            <p className="mt-2 text-text-secondary">No campaigns found</p>
+            <p className="text-sm text-text-muted mt-1">Campaigns are auto-created when you request leads</p>
           </div>
         )}
       </div>

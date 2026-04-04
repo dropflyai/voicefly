@@ -9,7 +9,7 @@
  */
 
 import { supabase } from '../supabase-client'
-import { CreditSystem } from '../credit-system'
+// Credit system removed — features are included
 import { ErrorTracker, ErrorCategory, ErrorSeverity } from '../error-tracking'
 import AuditLogger, { AuditEventType } from '../audit-logger'
 import {

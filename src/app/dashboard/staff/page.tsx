@@ -251,7 +251,7 @@ export default function StaffPage() {
       i < Math.floor(rating) ? (
         <StarIconSolid key={i} className="h-4 w-4 text-yellow-400" />
       ) : (
-        <StarIcon key={i} className="h-4 w-4 text-gray-300" />
+        <StarIcon key={i} className="h-4 w-4 text-text-muted" />
       )
     ))
   }
@@ -270,11 +270,11 @@ export default function StaffPage() {
         {/* Header */}
         <div className="sm:flex sm:items-center sm:justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-text-primary">
               {businessType === 'medical_practice' ? 'Medical Providers' :
                businessType === 'dental_practice' ? 'Dental Providers' : 'Staff Management'}
             </h1>
-            <p className="text-gray-600 mt-1">
+            <p className="text-text-secondary mt-1">
               {businessType === 'medical_practice' ? 'Manage your medical providers, schedules, and specialties' :
                businessType === 'dental_practice' ? 'Manage your dental team, schedules, and specialties' :
                'Manage your team, schedules, and performance'}
@@ -297,7 +297,7 @@ export default function StaffPage() {
           <div className="lg:col-span-1">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                <MagnifyingGlassIcon className="h-5 w-5 text-text-muted" />
               </div>
               <input
                 type="text"
@@ -313,27 +313,27 @@ export default function StaffPage() {
           <div className="lg:col-span-3 grid grid-cols-3 gap-4">
             <div className="stat-card">
               <div className="px-4 py-3">
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-text-secondary">
                   {businessType === 'medical_practice' ? 'Total Providers' :
                    businessType === 'dental_practice' ? 'Total Providers' : 'Total Staff'}
                 </div>
-                <div className="text-2xl font-bold text-gray-900">{staff.length}</div>
+                <div className="text-2xl font-bold text-text-primary">{staff.length}</div>
               </div>
             </div>
             <div className="stat-card">
               <div className="px-4 py-3">
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-text-secondary">
                   {businessType === 'medical_practice' ? 'Active Providers' :
                    businessType === 'dental_practice' ? 'Active Providers' : 'Active Staff'}
                 </div>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-emerald-500">
                   {staff.filter(s => s.isActive).length}
                 </div>
               </div>
             </div>
             <div className="stat-card">
               <div className="px-4 py-3">
-                <div className="text-sm text-gray-500">Avg. Rating</div>
+                <div className="text-sm text-text-secondary">Avg. Rating</div>
                 <div className="text-2xl font-bold text-yellow-600">
                   {(staff.reduce((sum, s) => sum + s.rating, 0) / staff.length).toFixed(1)}
                 </div>
@@ -354,10 +354,10 @@ export default function StaffPage() {
                     </span>
                   </div>
                   <div className="ml-3">
-                    <h3 className="text-lg font-medium text-gray-900">{member.name}</h3>
+                    <h3 className="text-lg font-medium text-text-primary">{member.name}</h3>
                     <div className="flex items-center mt-1">
                       {renderStars(member.rating)}
-                      <span className="ml-2 text-sm text-gray-500">
+                      <span className="ml-2 text-sm text-text-secondary">
                         ({member.totalAppointments} appointments)
                       </span>
                     </div>
@@ -369,7 +369,7 @@ export default function StaffPage() {
                       setSelectedStaff(member)
                       setShowModal(true)
                     }}
-                    className="p-2 text-gray-400 hover:text-gray-600"
+                    className="p-2 text-text-muted hover:text-text-secondary"
                   >
                     <PencilIcon className="h-4 w-4" />
                   </button>
@@ -377,27 +377,27 @@ export default function StaffPage() {
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center text-sm text-gray-500">
+                <div className="flex items-center text-sm text-text-secondary">
                   <EnvelopeIcon className="h-4 w-4 mr-2" />
                   {member.email}
                 </div>
-                <div className="flex items-center text-sm text-gray-500">
+                <div className="flex items-center text-sm text-text-secondary">
                   <PhoneIcon className="h-4 w-4 mr-2" />
                   {member.phone}
                 </div>
-                <div className="flex items-center text-sm text-gray-500">
+                <div className="flex items-center text-sm text-text-secondary">
                   <CalendarIcon className="h-4 w-4 mr-2" />
                   {getScheduleDisplay(member.schedule)}
                 </div>
               </div>
 
               <div className="mt-4">
-                <div className="text-sm text-gray-500 mb-2">Specialties:</div>
+                <div className="text-sm text-text-secondary mb-2">Specialties:</div>
                 <div className="flex flex-wrap gap-1">
                   {member.specialties.map((specialty, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                      className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-primary/10 text-blue-800"
                     >
                       {specialty}
                     </span>
@@ -405,13 +405,13 @@ export default function StaffPage() {
                 </div>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="mt-4 pt-4 border-t border-[rgba(65,71,84,0.15)]">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Hourly Rate:</span>
+                  <span className="text-text-secondary">Hourly Rate:</span>
                   <span className="font-medium">${member.hourlyRate}/hr</span>
                 </div>
                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-500">Commission:</span>
+                  <span className="text-text-secondary">Commission:</span>
                   <span className="font-medium">{member.commissionRate}%</span>
                 </div>
               </div>
@@ -420,8 +420,8 @@ export default function StaffPage() {
                 <div className={clsx(
                   'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium',
                   member.isActive 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-red-100 text-red-800'
+                    ? 'bg-emerald-500/10 text-green-800' 
+                    : 'bg-[#93000a]/10 text-red-800'
                 )}>
                   {member.isActive ? 'Active' : 'Inactive'}
                 </div>
@@ -434,10 +434,10 @@ export default function StaffPage() {
         {showModal && selectedStaff && (
           <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-              <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+              <div className="fixed inset-0 bg-surface0 bg-opacity-75 transition-opacity" />
 
-              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-                <div className="bg-white px-6 py-6">
+              <div className="inline-block align-bottom bg-surface-low rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                <div className="bg-surface-low px-6 py-6">
                   <div className="flex justify-between items-start mb-6">
                     <div className="flex items-center">
                       <div className="h-16 w-16 bg-gradient-to-br from-beauty-400 to-blue-500 rounded-full flex items-center justify-center">
@@ -446,10 +446,10 @@ export default function StaffPage() {
                         </span>
                       </div>
                       <div className="ml-4">
-                        <h3 className="text-xl font-medium text-gray-900">{selectedStaff.name}</h3>
+                        <h3 className="text-xl font-medium text-text-primary">{selectedStaff.name}</h3>
                         <div className="flex items-center mt-1">
                           {renderStars(selectedStaff.rating)}
-                          <span className="ml-2 text-sm text-gray-500">
+                          <span className="ml-2 text-sm text-text-secondary">
                             {selectedStaff.rating}/5 • {selectedStaff.totalAppointments} appointments
                           </span>
                         </div>
@@ -457,7 +457,7 @@ export default function StaffPage() {
                     </div>
                     <button
                       onClick={() => setShowModal(false)}
-                      className="text-gray-400 hover:text-gray-600"
+                      className="text-text-muted hover:text-text-secondary"
                     >
                       <XMarkIcon className="h-6 w-6" />
                     </button>
@@ -466,44 +466,44 @@ export default function StaffPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Contact & Basic Info */}
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900 mb-3">Contact Information</h4>
+                      <h4 className="text-sm font-medium text-text-primary mb-3">Contact Information</h4>
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center">
-                          <EnvelopeIcon className="h-4 w-4 text-gray-400 mr-2" />
+                          <EnvelopeIcon className="h-4 w-4 text-text-muted mr-2" />
                           {selectedStaff.email}
                         </div>
                         <div className="flex items-center">
-                          <PhoneIcon className="h-4 w-4 text-gray-400 mr-2" />
+                          <PhoneIcon className="h-4 w-4 text-text-muted mr-2" />
                           {selectedStaff.phone}
                         </div>
                         <div>
-                          <span className="text-gray-500">Hire Date: </span>
+                          <span className="text-text-secondary">Hire Date: </span>
                           {new Date(selectedStaff.hireDate).toLocaleDateString()}
                         </div>
                         <div>
-                          <span className="text-gray-500">Hourly Rate: </span>
+                          <span className="text-text-secondary">Hourly Rate: </span>
                           ${selectedStaff.hourlyRate}/hour
                         </div>
                         <div>
-                          <span className="text-gray-500">Commission: </span>
+                          <span className="text-text-secondary">Commission: </span>
                           {selectedStaff.commissionRate}%
                         </div>
                       </div>
 
                       {selectedStaff.bio && (
                         <div className="mt-4">
-                          <h4 className="text-sm font-medium text-gray-900 mb-2">Bio</h4>
-                          <p className="text-sm text-gray-600">{selectedStaff.bio}</p>
+                          <h4 className="text-sm font-medium text-text-primary mb-2">Bio</h4>
+                          <p className="text-sm text-text-secondary">{selectedStaff.bio}</p>
                         </div>
                       )}
 
                       <div className="mt-4">
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">Specialties</h4>
+                        <h4 className="text-sm font-medium text-text-primary mb-2">Specialties</h4>
                         <div className="flex flex-wrap gap-1">
                           {selectedStaff.specialties.map((specialty, index) => (
                             <span
                               key={index}
-                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-brand-primary/10 text-blue-800"
                             >
                               {specialty}
                             </span>
@@ -514,14 +514,14 @@ export default function StaffPage() {
 
                     {/* Schedule */}
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900 mb-3">Weekly Schedule</h4>
+                      <h4 className="text-sm font-medium text-text-primary mb-3">Weekly Schedule</h4>
                       <div className="space-y-2">
                         {daysOfWeek.map((day, index) => (
                           <div key={day} className="flex justify-between items-center text-sm">
                             <span className="font-medium capitalize w-16">{dayLabels[index]}</span>
-                            <span className="text-gray-600">
+                            <span className="text-text-secondary">
                               {selectedStaff.schedule[day] === 'off' ? (
-                                <span className="text-red-500">Off</span>
+                                <span className="text-[#ffb4ab]">Off</span>
                               ) : (
                                 <span className="flex items-center">
                                   <ClockIcon className="h-4 w-4 mr-1" />
@@ -536,7 +536,7 @@ export default function StaffPage() {
                   </div>
                 </div>
 
-                <div className="bg-gray-50 px-6 py-3 sm:flex sm:flex-row-reverse">
+                <div className="bg-surface px-6 py-3 sm:flex sm:flex-row-reverse">
                   <button
                     type="button"
                     className="btn-primary sm:ml-3"
@@ -667,17 +667,17 @@ function AddStaffModal({ isOpen, onClose, onSubmit }: AddStaffModalProps) {
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={onClose} />
+        <div className="fixed inset-0 bg-surface0 bg-opacity-75 transition-opacity" onClick={onClose} />
         
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+        <div className="inline-block align-bottom bg-surface-low rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
           <form onSubmit={handleSubmit}>
-            <div className="bg-white px-6 py-6">
+            <div className="bg-surface-low px-6 py-6">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-medium text-gray-900">Add Staff Member</h3>
+                <h3 className="text-lg font-medium text-text-primary">Add Staff Member</h3>
                 <button
                   type="button"
                   onClick={onClose}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-text-muted hover:text-text-secondary"
                 >
                   <XMarkIcon className="h-6 w-6" />
                 </button>
@@ -686,10 +686,10 @@ function AddStaffModal({ isOpen, onClose, onSubmit }: AddStaffModalProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Basic Information */}
                 <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-900">Basic Information</h4>
+                  <h4 className="text-sm font-medium text-text-primary">Basic Information</h4>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-text-primary mb-1">
                       Full Name *
                     </label>
                     <input
@@ -697,12 +697,12 @@ function AddStaffModal({ isOpen, onClose, onSubmit }: AddStaffModalProps) {
                       required
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-text-primary mb-1">
                       Email *
                     </label>
                     <input
@@ -710,41 +710,41 @@ function AddStaffModal({ isOpen, onClose, onSubmit }: AddStaffModalProps) {
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-text-primary mb-1">
                       Phone
                     </label>
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-text-primary mb-1">
                       Bio
                     </label>
                     <textarea
                       rows={3}
                       value={formData.bio}
                       onChange={(e) => setFormData({...formData, bio: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                     />
                   </div>
                 </div>
 
                 {/* Specialties and Compensation */}
                 <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-gray-900">Specialties & Compensation</h4>
+                  <h4 className="text-sm font-medium text-text-primary">Specialties & Compensation</h4>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-text-primary mb-1">
                       Specialties
                     </label>
                     <div className="space-y-2">
@@ -752,7 +752,7 @@ function AddStaffModal({ isOpen, onClose, onSubmit }: AddStaffModalProps) {
                         <select
                           value={newSpecialty}
                           onChange={(e) => setNewSpecialty(e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                          className="flex-1 px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                         >
                           <option value="">Select a specialty...</option>
                           {availableSpecialties
@@ -777,13 +777,13 @@ function AddStaffModal({ isOpen, onClose, onSubmit }: AddStaffModalProps) {
                         {formData.specialties.map(specialty => (
                           <span
                             key={specialty}
-                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                            className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-500/10 text-purple-800"
                           >
                             {specialty}
                             <button
                               type="button"
                               onClick={() => removeSpecialty(specialty)}
-                              className="ml-2 text-purple-600 hover:text-purple-800"
+                              className="ml-2 text-purple-400 hover:text-purple-800"
                             >
                               <XMarkIcon className="h-3 w-3" />
                             </button>
@@ -795,7 +795,7 @@ function AddStaffModal({ isOpen, onClose, onSubmit }: AddStaffModalProps) {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-text-primary mb-1">
                         Hourly Rate ($)
                       </label>
                       <input
@@ -804,12 +804,12 @@ function AddStaffModal({ isOpen, onClose, onSubmit }: AddStaffModalProps) {
                         step="0.01"
                         value={formData.hourlyRate}
                         onChange={(e) => setFormData({...formData, hourlyRate: parseFloat(e.target.value) || 0})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-text-primary mb-1">
                         Commission Rate (%)
                       </label>
                       <input
@@ -819,7 +819,7 @@ function AddStaffModal({ isOpen, onClose, onSubmit }: AddStaffModalProps) {
                         step="1"
                         value={formData.commissionRate}
                         onChange={(e) => setFormData({...formData, commissionRate: parseFloat(e.target.value) || 0})}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-md focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                       />
                     </div>
                   </div>
@@ -827,7 +827,7 @@ function AddStaffModal({ isOpen, onClose, onSubmit }: AddStaffModalProps) {
               </div>
             </div>
 
-            <div className="bg-gray-50 px-6 py-3 sm:flex sm:flex-row-reverse">
+            <div className="bg-surface px-6 py-3 sm:flex sm:flex-row-reverse">
               <button
                 type="submit"
                 disabled={isSubmitting || !formData.name || !formData.email}

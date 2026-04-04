@@ -1,177 +1,159 @@
 import Link from 'next/link'
+import { Phone } from 'lucide-react'
 
 export default function TermsOfService() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white rounded-lg shadow-sm p-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Terms of Service</h1>
-          <p className="text-sm text-gray-600 mb-8">Last Updated: March 3, 2026</p>
+    <div className="min-h-screen bg-surface font-[family-name:var(--font-inter)]">
+      {/* Header */}
+      <header className="glass sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <Phone className="h-5 w-5 text-brand-primary" />
+            <span className="text-lg font-bold text-text-primary font-[family-name:var(--font-manrope)]">VoiceFly</span>
+          </Link>
+          <Link href="/signup" className="text-sm font-medium text-brand-on bg-brand-primary px-4 py-2 rounded-md hover:bg-[#0060d0] transition-colors">
+            Start Free Trial
+          </Link>
+        </div>
+      </header>
 
-          <div className="prose prose-blue max-w-none">
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">1. Acceptance of Terms</h2>
-            <p className="text-gray-700 mb-6">
-              By accessing and using VoiceFly ("Service"), you accept and agree to be bound by these Terms of Service.
-              If you do not agree to these terms, please do not use the Service.
-            </p>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <h1 className="text-4xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight mb-2">Terms of Service</h1>
+        <p className="text-sm text-text-muted mb-12">Last Updated: March 3, 2026</p>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">2. Description of Service</h2>
-            <p className="text-gray-700 mb-6">
-              VoiceFly (the "Program") provides AI-powered voice communication, SMS messaging, lead generation, and business automation services.
-              We reserve the right to modify, suspend, or discontinue any aspect of the Service at any time.
-            </p>
+        <div className="space-y-10">
+          <Section title="1. Acceptance of Terms">
+            <p>By accessing and using VoiceFly (&ldquo;Service&rdquo;), you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.</p>
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">3. SMS Messaging Terms</h2>
-            <p className="text-gray-700 mb-4">
-              By interacting with VoiceFly via SMS, you agree to the following:
-            </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-4">
-              <li><strong>Program Name:</strong> VoiceFly AI Messaging</li>
-              <li><strong>Message Frequency:</strong> Message frequency varies based on your interactions. You may receive automated AI-powered replies each time you send an SMS to a VoiceFly-enabled business number.</li>
-              <li><strong>Message and Data Rates:</strong> Standard message and data rates may apply. Please contact your wireless carrier for details about your messaging plan.</li>
-              <li><strong>Opt-Out:</strong> You can opt out of receiving SMS messages at any time by replying <strong>STOP</strong> to any message. You will receive a one-time confirmation that you have been unsubscribed.</li>
-              <li><strong>Help:</strong> For support, reply <strong>HELP</strong> to any message or contact us at support@voiceflyai.com.</li>
-              <li><strong>Supported Carriers:</strong> VoiceFly messaging is supported on all major US carriers including AT&T, T-Mobile, Verizon, and others.</li>
-            </ul>
-            <p className="text-gray-700 mb-6">
-              VoiceFly and its service providers will not be liable for any delays or failures in the receipt of any SMS messages.
-              Consent to receive SMS messages is not a condition of purchase.
-            </p>
+          <Section title="2. Description of Service">
+            <p>VoiceFly (the &ldquo;Program&rdquo;) provides AI-powered voice communication, SMS messaging, lead generation, and business automation services. We reserve the right to modify, suspend, or discontinue any aspect of the Service at any time.</p>
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">4. Account Registration</h2>
-            <p className="text-gray-700 mb-4">
-              To use VoiceFly, you must:
-            </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-6">
-              <li>Provide accurate and complete registration information</li>
-              <li>Maintain the security of your account credentials</li>
-              <li>Be responsible for all activities under your account</li>
-              <li>Notify us immediately of any unauthorized access</li>
-              <li>Be at least 18 years old or have parental consent</li>
-            </ul>
+          <Section title="3. SMS Messaging Terms">
+            <p>By interacting with VoiceFly via SMS, you agree to the following:</p>
+            <List items={[
+              'Program Name: VoiceFly AI Messaging',
+              'Message Frequency: Message frequency varies based on your interactions. You may receive automated AI-powered replies each time you send an SMS to a VoiceFly-enabled business number.',
+              'Message and Data Rates: Standard message and data rates may apply. Please contact your wireless carrier for details about your messaging plan.',
+              'Opt-Out: You can opt out of receiving SMS messages at any time by replying STOP to any message. You will receive a one-time confirmation that you have been unsubscribed.',
+              'Help: For support, reply HELP to any message or contact us at tony@dropfly.io.',
+              'Supported Carriers: VoiceFly messaging is supported on all major US carriers including AT&T, T-Mobile, Verizon, and others.',
+            ]} />
+            <p className="mt-3">VoiceFly and its service providers will not be liable for any delays or failures in the receipt of any SMS messages. Consent to receive SMS messages is not a condition of purchase.</p>
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">5. Subscription and Billing</h2>
-            <p className="text-gray-700 mb-4">
-              <strong>5.1 Subscription Plans:</strong> VoiceFly offers various subscription tiers with different features and pricing.
-            </p>
-            <p className="text-gray-700 mb-4">
-              <strong>5.2 Billing:</strong> Subscriptions are billed monthly or annually in advance. All fees are non-refundable
-              except as required by law or as explicitly stated in these terms.
-            </p>
-            <p className="text-gray-700 mb-4">
-              <strong>5.3 Free Trial:</strong> We may offer a free trial period. You will be charged at the end of the trial
-              unless you cancel before the trial ends.
-            </p>
-            <p className="text-gray-700 mb-6">
-              <strong>5.4 Cancellation:</strong> You may cancel your subscription at any time. Your access will continue
-              until the end of your current billing period.
-            </p>
+          <Section title="4. Account Registration">
+            <p>To use VoiceFly, you must:</p>
+            <List items={[
+              'Provide accurate and complete registration information',
+              'Maintain the security of your account credentials',
+              'Be responsible for all activities under your account',
+              'Notify us immediately of any unauthorized access',
+              'Be at least 18 years old or have parental consent',
+            ]} />
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">6. Acceptable Use</h2>
-            <p className="text-gray-700 mb-4">
-              You agree NOT to:
-            </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-6">
-              <li>Use the Service for any illegal or unauthorized purpose</li>
-              <li>Violate any laws, including telemarketing and privacy regulations</li>
-              <li>Transmit spam, harassment, or offensive content</li>
-              <li>Attempt to gain unauthorized access to the Service</li>
-              <li>Reverse engineer or copy any part of the Service</li>
-              <li>Use the Service to harm, threaten, or harass others</li>
-            </ul>
+          <Section title="5. Subscription and Billing">
+            <p><span className="text-text-primary font-medium">5.1 Subscription Plans:</span> VoiceFly offers various subscription tiers with different features and pricing.</p>
+            <p><span className="text-text-primary font-medium">5.2 Billing:</span> Subscriptions are billed monthly or annually in advance. All fees are non-refundable except as required by law or as explicitly stated in these terms.</p>
+            <p><span className="text-text-primary font-medium">5.3 Free Trial:</span> We may offer a free trial period. You will be charged at the end of the trial unless you cancel before the trial ends.</p>
+            <p><span className="text-text-primary font-medium">5.4 Cancellation:</span> You may cancel your subscription at any time. Your access will continue until the end of your current billing period.</p>
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">7. Intellectual Property</h2>
-            <p className="text-gray-700 mb-6">
-              VoiceFly and its content are protected by copyright, trademark, and other intellectual property laws.
-              You retain ownership of your data, and we retain ownership of the Service and its underlying technology.
-            </p>
+          <Section title="6. Acceptable Use">
+            <p>You agree NOT to:</p>
+            <List items={[
+              'Use the Service for any illegal or unauthorized purpose',
+              'Violate any laws, including telemarketing and privacy regulations',
+              'Transmit spam, harassment, or offensive content',
+              'Attempt to gain unauthorized access to the Service',
+              'Reverse engineer or copy any part of the Service',
+              'Use the Service to harm, threaten, or harass others',
+            ]} />
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">8. Data and Privacy</h2>
-            <p className="text-gray-700 mb-6">
-              Your use of the Service is also governed by our Privacy Policy. We handle your data in accordance with
-              applicable data protection laws, including GDPR and CCPA where applicable.
-            </p>
+          <Section title="7. Intellectual Property">
+            <p>VoiceFly and its content are protected by copyright, trademark, and other intellectual property laws. You retain ownership of your data, and we retain ownership of the Service and its underlying technology.</p>
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">9. Service Level and Uptime</h2>
-            <p className="text-gray-700 mb-6">
-              We strive to maintain 99.9% uptime but do not guarantee uninterrupted access. We are not liable for
-              service interruptions caused by factors beyond our reasonable control.
-            </p>
+          <Section title="8. Data and Privacy">
+            <p>Your use of the Service is also governed by our <Link href="/privacy" className="text-brand-light hover:text-brand-primary transition-colors">Privacy Policy</Link>. We handle your data in accordance with applicable data protection laws, including GDPR and CCPA where applicable.</p>
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">10. Limitation of Liability</h2>
-            <p className="text-gray-700 mb-6">
-              TO THE MAXIMUM EXTENT PERMITTED BY LAW, VOICEFLY SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-              SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES, WHETHER INCURRED
-              DIRECTLY OR INDIRECTLY, OR ANY LOSS OF DATA, USE, OR GOODWILL.
-            </p>
+          <Section title="9. Service Level and Uptime">
+            <p>We strive to maintain 99.9% uptime but do not guarantee uninterrupted access. We are not liable for service interruptions caused by factors beyond our reasonable control.</p>
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">11. Indemnification</h2>
-            <p className="text-gray-700 mb-6">
-              You agree to indemnify and hold VoiceFly harmless from any claims, damages, or expenses arising from
-              your use of the Service or violation of these Terms.
-            </p>
+          <Section title="10. Limitation of Liability">
+            <p className="uppercase text-sm">To the maximum extent permitted by law, VoiceFly shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, or goodwill.</p>
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">12. Termination</h2>
-            <p className="text-gray-700 mb-6">
-              We may suspend or terminate your access to the Service at any time for violation of these Terms or
-              for any other reason. Upon termination, your right to use the Service will immediately cease.
-            </p>
+          <Section title="11. Indemnification">
+            <p>You agree to indemnify and hold VoiceFly harmless from any claims, damages, or expenses arising from your use of the Service or violation of these Terms.</p>
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">13. Governing Law</h2>
-            <p className="text-gray-700 mb-6">
-              These Terms are governed by the laws of the State of California, without regard to conflict of law principles.
-              Any disputes shall be resolved in the courts of Los Angeles County, California.
-            </p>
+          <Section title="12. Termination">
+            <p>We may suspend or terminate your access to the Service at any time for violation of these Terms or for any other reason. Upon termination, your right to use the Service will immediately cease.</p>
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">14. Changes to Terms</h2>
-            <p className="text-gray-700 mb-6">
-              We reserve the right to modify these Terms at any time. We will notify users of material changes via
-              email or through the Service. Continued use after changes constitutes acceptance of the new Terms.
-            </p>
+          <Section title="13. Governing Law">
+            <p>These Terms are governed by the laws of the State of California, without regard to conflict of law principles. Any disputes shall be resolved in the courts of Los Angeles County, California.</p>
+          </Section>
 
-            <h2 className="text-2xl font-bold text-gray-900 mt-8 mb-4">15. Contact Information</h2>
-            <p className="text-gray-700 mb-6">
-              For questions about these Terms, please contact us at:
-              <br />
-              <strong>Email:</strong> support@voiceflyai.com
-            </p>
-          </div>
+          <Section title="14. Changes to Terms">
+            <p>We reserve the right to modify these Terms at any time. We will notify users of material changes via email or through the Service. Continued use after changes constitutes acceptance of the new Terms.</p>
+          </Section>
 
-          <div className="mt-12 pt-6 border-t border-gray-200">
-            <Link href="/" className="text-blue-600 hover:text-blue-500 font-semibold">
-              ← Back to Home
-            </Link>
-          </div>
+          <Section title="15. Contact Information">
+            <p>For questions about these Terms, please contact us at:</p>
+            <p className="mt-2"><span className="text-text-primary font-medium">Email:</span> tony@dropfly.io</p>
+          </Section>
+        </div>
+
+        <div className="mt-14 pt-6 border-t border-[rgba(65,71,84,0.15)]">
+          <Link href="/" className="text-brand-light hover:text-brand-primary font-medium transition-colors">
+            &larr; Back to Home
+          </Link>
         </div>
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-8 mt-12">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <footer className="bg-surface-lowest py-10">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col items-center space-y-4">
             <nav className="flex flex-wrap justify-center gap-6 text-sm">
-              <Link href="/" className="text-gray-400 hover:text-white transition-colors">
-                Home
-              </Link>
-              <Link href="/features" className="text-gray-400 hover:text-white transition-colors">
-                Features
-              </Link>
-              <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">
-                Pricing
-              </Link>
-              <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
-                Privacy
-              </Link>
-              <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">
-                Terms
-              </Link>
+              <Link href="/" className="text-text-muted hover:text-text-primary transition-colors">Home</Link>
+              <Link href="/pricing" className="text-text-muted hover:text-text-primary transition-colors">Pricing</Link>
+              <Link href="/privacy" className="text-text-muted hover:text-text-primary transition-colors">Privacy</Link>
+              <Link href="/terms" className="text-text-muted hover:text-text-primary transition-colors">Terms</Link>
             </nav>
-            <p className="text-gray-400 text-sm">
-              © 2026 VoiceFly. All rights reserved.
-            </p>
+            <p className="text-text-muted text-sm">&copy; 2026 VoiceFly. All rights reserved.</p>
           </div>
         </div>
       </footer>
     </div>
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h2 className="text-xl font-semibold text-text-primary font-[family-name:var(--font-manrope)] mb-3">{title}</h2>
+      <div className="text-text-secondary leading-relaxed space-y-3">{children}</div>
+    </div>
+  )
+}
+
+function List({ items }: { items: string[] }) {
+  return (
+    <ul className="mt-2 space-y-2">
+      {items.map(item => (
+        <li key={item} className="flex items-start gap-2 text-text-secondary">
+          <span className="text-brand-primary mt-1.5 text-xs">&#9679;</span>
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
   )
 }

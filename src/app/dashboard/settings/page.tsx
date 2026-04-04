@@ -421,13 +421,11 @@ export default function SettingsPage() {
 
   return (
     <Layout business={business}>
-      <div className="p-8">
+      <div className="p-8 space-y-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600 mt-1">
-            Manage your business settings and preferences
-          </p>
+        <div>
+          <h1 className="text-3xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight">Settings</h1>
+          <p className="text-text-secondary mt-1">Manage your business settings and preferences</p>
         </div>
 
         <div className="flex">
@@ -441,8 +439,8 @@ export default function SettingsPage() {
                   className={clsx(
                     'w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
                     activeTab === tab.id
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-brand-primary/10 text-brand-primary'
+                      : 'text-text-secondary hover:bg-surface hover:text-text-primary'
                   )}
                 >
                   <tab.icon className="mr-3 h-5 w-5" />
@@ -458,7 +456,7 @@ export default function SettingsPage() {
               <div className="card">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900">Business Profile</h2>
+                    <h2 className="text-xl font-semibold text-text-primary">Business Profile</h2>
                     <button
                       onClick={() => setIsEditingProfile(!isEditingProfile)}
                       className="btn-secondary"
@@ -506,7 +504,7 @@ export default function SettingsPage() {
                     <div>
                       <label className="label">Phone Number</label>
                       <div className="flex">
-                        <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                        <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-[rgba(65,71,84,0.2)] bg-surface text-text-secondary">
                           <DevicePhoneMobileIcon className="h-4 w-4" />
                         </span>
                         <input
@@ -523,7 +521,7 @@ export default function SettingsPage() {
                     <div>
                       <label className="label">Email Address</label>
                       <div className="flex">
-                        <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                        <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-[rgba(65,71,84,0.2)] bg-surface text-text-secondary">
                           <EnvelopeIcon className="h-4 w-4" />
                         </span>
                         <input
@@ -540,7 +538,7 @@ export default function SettingsPage() {
                     <div className="md:col-span-2">
                       <label className="label">Business Address</label>
                       <div className="flex">
-                        <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                        <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-[rgba(65,71,84,0.2)] bg-surface text-text-secondary">
                           <MapPinIcon className="h-4 w-4" />
                         </span>
                         <input
@@ -587,7 +585,7 @@ export default function SettingsPage() {
                   {isEditingProfile && (
                     <div className="flex items-center justify-end space-x-3 mt-6 pt-6 border-t">
                       {profileSaved && (
-                        <span className="flex items-center gap-1 text-sm text-green-600">
+                        <span className="flex items-center gap-1 text-sm text-emerald-500">
                           <CheckIcon className="h-4 w-4" /> Saved
                         </span>
                       )}
@@ -611,37 +609,39 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'ai-context' && (
-              <div className="card">
-                <div className="p-6">
-                  <div className="mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900">AI Knowledge</h2>
-                    <p className="text-sm text-gray-500 mt-1">
-                      This information is automatically shared with Maya on every call so she can answer caller questions accurately.
-                    </p>
-                  </div>
+              <div className="space-y-6">
+                {/* Header */}
+                <div>
+                  <h2 className="text-xl font-semibold text-text-primary font-[family-name:var(--font-manrope)]">AI Knowledge</h2>
+                  <p className="text-sm text-text-secondary mt-1">
+                    This information is shared with your AI employees on every call so they can answer questions accurately.
+                  </p>
+                </div>
 
-                  {/* Quick Fill Section */}
-                  <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg">
+                {/* Quick Fill — Stitch recessed card */}
+                <div className="bg-surface-lowest rounded-2xl p-6 relative overflow-hidden">
+                  <div className="absolute -top-12 -right-12 w-32 h-32 bg-brand-primary/10 blur-[50px] rounded-full pointer-events-none" />
+                  <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2">
-                      <SparklesIcon className="h-5 w-5 text-blue-600" />
-                      <h3 className="text-sm font-semibold text-blue-900">Quick Fill with AI</h3>
+                      <SparklesIcon className="h-5 w-5 text-brand-primary" />
+                      <h3 className="text-sm font-bold text-text-primary">Quick Fill with AI</h3>
                     </div>
-                    <p className="text-xs text-blue-700 mb-3">
-                      Paste any text about your business (website copy, Google listing, Yelp description) or enter your website URL. AI will extract the relevant details and fill in the fields below.
+                    <p className="text-xs text-text-secondary mb-4">
+                      Paste any text about your business or enter your website URL. AI will extract the relevant details.
                     </p>
 
                     {!quickFillMode ? (
                       <div className="flex gap-2">
                         <button
                           onClick={() => setQuickFillMode('text')}
-                          className="flex items-center gap-2 px-3 py-2 bg-white border border-blue-300 rounded-md text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors"
+                          className="flex items-center gap-2 px-4 py-2 bg-surface-high rounded-lg text-sm font-medium text-text-primary hover:bg-surface-highest transition-colors"
                         >
                           <DocumentTextIcon className="h-4 w-4" />
                           Paste Text
                         </button>
                         <button
                           onClick={() => setQuickFillMode('url')}
-                          className="flex items-center gap-2 px-3 py-2 bg-white border border-blue-300 rounded-md text-sm font-medium text-blue-700 hover:bg-blue-50 transition-colors"
+                          className="flex items-center gap-2 px-4 py-2 bg-surface-high rounded-lg text-sm font-medium text-text-primary hover:bg-surface-highest transition-colors"
                         >
                           <GlobeAltIcon className="h-4 w-4" />
                           Import from Website
@@ -651,9 +651,9 @@ export default function SettingsPage() {
                       <div>
                         {quickFillMode === 'text' ? (
                           <textarea
-                            className="input-field mb-2"
+                            className="input-field mb-3"
                             rows={5}
-                            placeholder="Paste anything about your business here — website text, Google listing info, a description you've written, even just bullet points..."
+                            placeholder="Paste anything about your business here — website text, Google listing info, bullet points..."
                             value={quickFillInput}
                             onChange={e => setQuickFillInput(e.target.value)}
                             disabled={quickFillParsing}
@@ -661,7 +661,7 @@ export default function SettingsPage() {
                         ) : (
                           <input
                             type="url"
-                            className="input-field mb-2"
+                            className="input-field mb-3"
                             placeholder="https://yourbusiness.com"
                             value={quickFillInput}
                             onChange={e => setQuickFillInput(e.target.value)}
@@ -670,159 +670,112 @@ export default function SettingsPage() {
                         )}
 
                         <div className="flex items-center gap-2">
-                          <button
-                            onClick={handleQuickFill}
-                            disabled={quickFillParsing || !quickFillInput.trim()}
-                            className="btn-primary"
-                          >
+                          <button onClick={handleQuickFill} disabled={quickFillParsing || !quickFillInput.trim()} className="btn-primary">
                             {quickFillParsing ? (
-                              <>
-                                <span className="animate-spin inline-block h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                                Analyzing...
-                              </>
+                              <><span className="animate-spin inline-block h-4 w-4 border-2 border-surface border-t-transparent rounded-full mr-2" />Analyzing...</>
                             ) : (
-                              <>
-                                <SparklesIcon className="h-4 w-4 mr-1" />
-                                Extract & Fill
-                              </>
+                              <><SparklesIcon className="h-4 w-4 mr-1" />Extract & Fill</>
                             )}
                           </button>
                           <button
                             onClick={() => { setQuickFillMode(null); setQuickFillInput(''); setQuickFillError(''); setQuickFillResult(null) }}
-                            className="btn-secondary"
-                            disabled={quickFillParsing}
-                          >
-                            Cancel
-                          </button>
+                            className="btn-secondary" disabled={quickFillParsing}
+                          >Cancel</button>
                         </div>
 
-                        {quickFillError && (
-                          <p className="text-sm text-red-600 mt-2">{quickFillError}</p>
-                        )}
+                        {quickFillError && <p className="text-sm text-[#ffb4ab] mt-2">{quickFillError}</p>}
 
                         {quickFillResult && (
-                          <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
-                            <p className="text-sm font-medium text-green-800 mb-1">
+                          <div className="mt-3 p-3 bg-emerald-500/5 rounded-lg">
+                            <p className="text-sm font-medium text-emerald-500 mb-1">
                               Found {Object.keys(quickFillResult).length} field{Object.keys(quickFillResult).length !== 1 ? 's' : ''}! Empty fields have been filled in below.
                             </p>
-                            <p className="text-xs text-green-600">
-                              Fields that already had values were kept. You can review and edit everything below, then click &quot;Save AI Knowledge&quot;.
+                            <p className="text-xs text-text-muted">
+                              Fields that already had values were kept. Review below, then save.
                             </p>
                           </div>
                         )}
                       </div>
                     )}
                   </div>
+                </div>
 
-                  <div className="space-y-5">
+                {/* Contact & Location Card */}
+                <div className="bg-surface-low rounded-2xl p-6 space-y-5">
+                  <h3 className="text-sm font-bold text-text-primary font-[family-name:var(--font-manrope)]">Contact & Location</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                       <label className="label">Owner / Manager Name</label>
-                      <input
-                        type="text"
-                        className="input-field"
-                        placeholder="e.g. Dr. Sarah Johnson"
-                        value={businessContext.owner_name || ''}
-                        onChange={e => updateContext('owner_name', e.target.value)}
-                      />
-                      <p className="text-xs text-gray-400 mt-1">When a caller asks to speak with the owner or manager</p>
+                      <input type="text" className="input-field" placeholder="e.g. Dr. Sarah Johnson"
+                        value={businessContext.owner_name || ''} onChange={e => updateContext('owner_name', e.target.value)} />
+                      <p className="text-xs text-text-muted mt-1">When a caller asks for the owner</p>
                     </div>
-
-                    <div>
-                      <label className="label">Location / Address (as you want it spoken)</label>
-                      <input
-                        type="text"
-                        className="input-field"
-                        placeholder="e.g. 123 Main Street, Suite 200, downtown Los Angeles"
-                        value={businessContext.address_display || ''}
-                        onChange={e => updateContext('address_display', e.target.value)}
-                      />
-                      <p className="text-xs text-gray-400 mt-1">How Maya should describe your location to callers</p>
-                    </div>
-
-                    <div>
-                      <label className="label">Business Hours Summary</label>
-                      <input
-                        type="text"
-                        className="input-field"
-                        placeholder="e.g. Monday through Friday 9am to 5pm, Saturday 10am to 2pm, closed Sunday"
-                        value={businessContext.hours_summary || ''}
-                        onChange={e => updateContext('hours_summary', e.target.value)}
-                      />
-                      <p className="text-xs text-gray-400 mt-1">A natural-language summary Maya can read to callers</p>
-                    </div>
-
-                    <div>
-                      <label className="label">Payment Methods</label>
-                      <input
-                        type="text"
-                        className="input-field"
-                        placeholder="e.g. Cash, all major credit cards, Apple Pay, Venmo"
-                        value={businessContext.payment_methods || ''}
-                        onChange={e => updateContext('payment_methods', e.target.value)}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="label">Parking Information</label>
-                      <input
-                        type="text"
-                        className="input-field"
-                        placeholder="e.g. Free parking in the rear lot, street parking available"
-                        value={businessContext.parking_info || ''}
-                        onChange={e => updateContext('parking_info', e.target.value)}
-                      />
-                    </div>
-
                     <div>
                       <label className="label">Languages Spoken</label>
-                      <input
-                        type="text"
-                        className="input-field"
-                        placeholder="e.g. English, Spanish, Vietnamese"
-                        value={businessContext.languages || ''}
-                        onChange={e => updateContext('languages', e.target.value)}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="label">Policies</label>
-                      <textarea
-                        className="input-field"
-                        rows={3}
-                        placeholder="e.g. 24-hour cancellation policy. No refunds on completed services. Walk-ins welcome but appointments preferred."
-                        value={businessContext.policies || ''}
-                        onChange={e => updateContext('policies', e.target.value)}
-                      />
-                      <p className="text-xs text-gray-400 mt-1">Cancellation, refund, walk-in policies, etc.</p>
-                    </div>
-
-                    <div>
-                      <label className="label">Additional Notes for Maya</label>
-                      <textarea
-                        className="input-field"
-                        rows={3}
-                        placeholder="e.g. We're running a 20% off special this month. We're closed for renovation March 15-20."
-                        value={businessContext.special_notes || ''}
-                        onChange={e => updateContext('special_notes', e.target.value)}
-                      />
-                      <p className="text-xs text-gray-400 mt-1">Anything else Maya should know — promos, closures, special instructions</p>
+                      <input type="text" className="input-field" placeholder="e.g. English, Spanish, Vietnamese"
+                        value={businessContext.languages || ''} onChange={e => updateContext('languages', e.target.value)} />
                     </div>
                   </div>
-
-                  <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t">
-                    {contextSaved && (
-                      <span className="flex items-center gap-1 text-sm text-green-600">
-                        <CheckIcon className="h-4 w-4" /> Saved
-                      </span>
-                    )}
-                    <button
-                      onClick={saveBusinessContext}
-                      disabled={contextSaving}
-                      className="btn-primary"
-                    >
-                      {contextSaving ? 'Saving...' : 'Save AI Knowledge'}
-                    </button>
+                  <div>
+                    <label className="label">Location / Address</label>
+                    <input type="text" className="input-field" placeholder="e.g. 123 Main Street, Suite 200, downtown Los Angeles"
+                      value={businessContext.address_display || ''} onChange={e => updateContext('address_display', e.target.value)} />
+                    <p className="text-xs text-text-muted mt-1">How your AI should describe the location to callers</p>
                   </div>
+                  <div>
+                    <label className="label">Business Hours Summary</label>
+                    <input type="text" className="input-field" placeholder="e.g. Monday through Friday 9am to 5pm, Saturday 10am to 2pm"
+                      value={businessContext.hours_summary || ''} onChange={e => updateContext('hours_summary', e.target.value)} />
+                    <p className="text-xs text-text-muted mt-1">A natural-language summary your AI can read to callers</p>
+                  </div>
+                </div>
+
+                {/* Business Details Card */}
+                <div className="bg-surface-low rounded-2xl p-6 space-y-5">
+                  <h3 className="text-sm font-bold text-text-primary font-[family-name:var(--font-manrope)]">Business Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="label">Payment Methods</label>
+                      <input type="text" className="input-field" placeholder="e.g. Cash, credit cards, Apple Pay"
+                        value={businessContext.payment_methods || ''} onChange={e => updateContext('payment_methods', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="label">Parking Information</label>
+                      <input type="text" className="input-field" placeholder="e.g. Free parking in the rear lot"
+                        value={businessContext.parking_info || ''} onChange={e => updateContext('parking_info', e.target.value)} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Policies & Notes Card */}
+                <div className="bg-surface-low rounded-2xl p-6 space-y-5">
+                  <h3 className="text-sm font-bold text-text-primary font-[family-name:var(--font-manrope)]">Policies & Notes</h3>
+                  <div>
+                    <label className="label">Policies</label>
+                    <textarea className="input-field" rows={3}
+                      placeholder="e.g. 24-hour cancellation policy. No refunds on completed services. Walk-ins welcome."
+                      value={businessContext.policies || ''} onChange={e => updateContext('policies', e.target.value)} />
+                    <p className="text-xs text-text-muted mt-1">Cancellation, refund, walk-in policies</p>
+                  </div>
+                  <div>
+                    <label className="label">Additional Notes</label>
+                    <textarea className="input-field" rows={3}
+                      placeholder="e.g. Running a 20% off special this month. Closed for renovation March 15-20."
+                      value={businessContext.special_notes || ''} onChange={e => updateContext('special_notes', e.target.value)} />
+                    <p className="text-xs text-text-muted mt-1">Promos, closures, special instructions</p>
+                  </div>
+                </div>
+
+                {/* Save Bar */}
+                <div className="flex items-center justify-end gap-3">
+                  {contextSaved && (
+                    <span className="flex items-center gap-1 text-sm text-emerald-500">
+                      <CheckIcon className="h-4 w-4" /> Saved
+                    </span>
+                  )}
+                  <button onClick={saveBusinessContext} disabled={contextSaving} className="btn-primary">
+                    {contextSaving ? 'Saving...' : 'Save AI Knowledge'}
+                  </button>
                 </div>
               </div>
             )}
@@ -830,13 +783,13 @@ export default function SettingsPage() {
             {activeTab === 'hours' && (
               <div className="card">
                 <div className="p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-6">Business Hours</h2>
+                  <h2 className="text-xl font-semibold text-text-primary mb-6">Business Hours</h2>
                   
                   <div className="space-y-4">
                     {daysOfWeek.map(({ key, label }) => (
                       <div key={key} className="flex items-center space-x-4">
                         <div className="w-24">
-                          <span className="text-sm font-medium text-gray-700">{label}</span>
+                          <span className="text-sm font-medium text-text-primary">{label}</span>
                         </div>
                         
                         <div className="flex items-center space-x-2">
@@ -844,17 +797,17 @@ export default function SettingsPage() {
                             onClick={() => updateBusinessHours(key, 'isOpen', !businessHours[key].isOpen)}
                             className={clsx(
                               'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out',
-                              businessHours[key].isOpen ? 'bg-blue-600' : 'bg-gray-200'
+                              businessHours[key].isOpen ? 'bg-brand-primary' : 'bg-surface-highest'
                             )}
                           >
                             <span
                               className={clsx(
-                                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                                'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface-low shadow ring-0 transition duration-200 ease-in-out',
                                 businessHours[key].isOpen ? 'translate-x-5' : 'translate-x-0'
                               )}
                             />
                           </button>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-text-secondary">
                             {businessHours[key].isOpen ? 'Open' : 'Closed'}
                           </span>
                         </div>
@@ -867,7 +820,7 @@ export default function SettingsPage() {
                               onChange={(e) => updateBusinessHours(key, 'open', e.target.value)}
                               className="input-field w-32"
                             />
-                            <span className="text-gray-500">to</span>
+                            <span className="text-text-secondary">to</span>
                             <input
                               type="time"
                               value={businessHours[key].close}
@@ -881,13 +834,13 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="mt-6 pt-6 border-t">
-                    <h3 className="text-sm font-medium text-gray-900 mb-4">Quick Settings</h3>
+                    <h3 className="text-sm font-medium text-text-primary mb-4">Quick Settings</h3>
                     <div className="space-y-2">
-                      <button onClick={copyMondayToWeekdays} className="text-sm text-blue-600 hover:text-blue-700">
+                      <button onClick={copyMondayToWeekdays} className="text-sm text-brand-primary hover:text-brand-primary">
                         Copy Monday hours to all weekdays
                       </button>
                       <br />
-                      <button onClick={setWeekendHours} className="text-sm text-blue-600 hover:text-blue-700">
+                      <button onClick={setWeekendHours} className="text-sm text-brand-primary hover:text-brand-primary">
                         Set weekend hours (9 AM - 4 PM)
                       </button>
                     </div>
@@ -895,7 +848,7 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-end gap-3 mt-6">
                     {hoursSaved && (
-                      <span className="flex items-center gap-1 text-sm text-green-600">
+                      <span className="flex items-center gap-1 text-sm text-emerald-500">
                         <CheckIcon className="h-4 w-4" /> Saved
                       </span>
                     )}
@@ -914,18 +867,18 @@ export default function SettingsPage() {
             {activeTab === 'notifications' && (
               <div className="card">
                 <div className="p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-6">Notification Preferences</h2>
+                  <h2 className="text-xl font-semibold text-text-primary mb-6">Notification Preferences</h2>
 
                   <div className="space-y-6">
                     {/* Owner Notification Phone — functional, saves to DB */}
-                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="p-4 bg-brand-primary/5 border border-blue-200 rounded-lg">
                       <h3 className="text-sm font-semibold text-blue-900 mb-1">Owner Alert Phone Number</h3>
-                      <p className="text-xs text-blue-700 mb-3">
+                      <p className="text-xs text-brand-primary mb-3">
                         Your phone employees will send you a text here whenever a message is taken, a lead is captured, or an appointment is booked.
                       </p>
                       <div className="flex gap-2">
                         <div className="flex flex-1">
-                          <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-blue-300 bg-blue-100 text-blue-600">
+                          <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-blue-300 bg-brand-primary/10 text-brand-primary">
                             <DevicePhoneMobileIcon className="h-4 w-4" />
                           </span>
                           <input
@@ -947,7 +900,7 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-4">Appointment Notifications</h3>
+                      <h3 className="text-lg font-medium text-text-primary mb-4">Appointment Notifications</h3>
                       <div className="space-y-3">
                         {[
                           { key: 'emailBookings', label: 'Email notifications for new bookings', description: 'Get notified when customers book appointments' },
@@ -960,19 +913,19 @@ export default function SettingsPage() {
                               onClick={() => updateNotification(key, !notifications[key as keyof typeof notifications])}
                               className={clsx(
                                 'mt-1 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out',
-                                notifications[key as keyof typeof notifications] ? 'bg-blue-600' : 'bg-gray-200'
+                                notifications[key as keyof typeof notifications] ? 'bg-brand-primary' : 'bg-surface-highest'
                               )}
                             >
                               <span
                                 className={clsx(
-                                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface-low shadow ring-0 transition duration-200 ease-in-out',
                                   notifications[key as keyof typeof notifications] ? 'translate-x-5' : 'translate-x-0'
                                 )}
                               />
                             </button>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{label}</div>
-                              <div className="text-sm text-gray-500">{description}</div>
+                              <div className="text-sm font-medium text-text-primary">{label}</div>
+                              <div className="text-sm text-text-secondary">{description}</div>
                             </div>
                           </div>
                         ))}
@@ -980,7 +933,7 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-4">Business Reports</h3>
+                      <h3 className="text-lg font-medium text-text-primary mb-4">Business Reports</h3>
                       <div className="space-y-3">
                         {[
                           { key: 'dailyReports', label: 'Daily summary reports', description: 'Receive daily summaries of appointments and revenue' },
@@ -992,19 +945,19 @@ export default function SettingsPage() {
                               onClick={() => updateNotification(key, !notifications[key as keyof typeof notifications])}
                               className={clsx(
                                 'mt-1 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out',
-                                notifications[key as keyof typeof notifications] ? 'bg-blue-600' : 'bg-gray-200'
+                                notifications[key as keyof typeof notifications] ? 'bg-brand-primary' : 'bg-surface-highest'
                               )}
                             >
                               <span
                                 className={clsx(
-                                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface-low shadow ring-0 transition duration-200 ease-in-out',
                                   notifications[key as keyof typeof notifications] ? 'translate-x-5' : 'translate-x-0'
                                 )}
                               />
                             </button>
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{label}</div>
-                              <div className="text-sm text-gray-500">{description}</div>
+                              <div className="text-sm font-medium text-text-primary">{label}</div>
+                              <div className="text-sm text-text-secondary">{description}</div>
                             </div>
                           </div>
                         ))}
@@ -1014,7 +967,7 @@ export default function SettingsPage() {
 
                   <div className="flex items-center justify-end gap-3 mt-6 pt-6 border-t">
                     {notifSaved && (
-                      <span className="flex items-center gap-1 text-sm text-green-600">
+                      <span className="flex items-center gap-1 text-sm text-emerald-500">
                         <CheckIcon className="h-4 w-4" /> Saved
                       </span>
                     )}
@@ -1034,7 +987,7 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div className="card">
                   <div className="p-6">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-6">Change Password</h2>
+                    <h2 className="text-xl font-semibold text-text-primary mb-6">Change Password</h2>
 
                     <div className="space-y-4">
                       <div>
@@ -1061,10 +1014,10 @@ export default function SettingsPage() {
                     </div>
 
                     {passwordError && (
-                      <p className="text-sm text-red-600 mt-3">{passwordError}</p>
+                      <p className="text-sm text-[#ffb4ab] mt-3">{passwordError}</p>
                     )}
                     {passwordSuccess && (
-                      <p className="text-sm text-green-600 mt-3">Password updated successfully.</p>
+                      <p className="text-sm text-emerald-500 mt-3">Password updated successfully.</p>
                     )}
 
                     <div className="flex justify-end mt-6 pt-6 border-t">
@@ -1081,17 +1034,17 @@ export default function SettingsPage() {
 
                 <div className="card">
                   <div className="p-6">
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Two-Factor Authentication</h3>
-                    <p className="text-gray-600 mb-4">
+                    <h3 className="text-lg font-medium text-text-primary mb-4">Two-Factor Authentication</h3>
+                    <p className="text-text-secondary mb-4">
                       Two-factor authentication adds an extra layer of security. This feature is coming soon.
                     </p>
 
-                    <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between p-4 bg-surface rounded-lg">
                       <div>
-                        <div className="font-medium text-gray-900">SMS Authentication</div>
-                        <div className="text-sm text-gray-500">Receive codes via text message</div>
+                        <div className="font-medium text-text-primary">SMS Authentication</div>
+                        <div className="text-sm text-text-secondary">Receive codes via text message</div>
                       </div>
-                      <span className="text-sm text-gray-400 font-medium">Coming Soon</span>
+                      <span className="text-sm text-text-muted font-medium">Coming Soon</span>
                     </div>
                   </div>
                 </div>
@@ -1102,37 +1055,37 @@ export default function SettingsPage() {
               <div className="card">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-gray-900">Team Members</h2>
+                    <h2 className="text-xl font-semibold text-text-primary">Team Members</h2>
                   </div>
 
                   {teamMembers.length === 0 ? (
-                    <p className="text-gray-500 text-sm">No team members found.</p>
+                    <p className="text-text-secondary text-sm">No team members found.</p>
                   ) : (
                     <div className="space-y-3">
                       {teamMembers.map(member => {
                         const initials = member.email
                           ? member.email.slice(0, 2).toUpperCase()
                           : member.user_id.slice(0, 2).toUpperCase()
-                        const colors = ['bg-blue-600', 'bg-purple-600', 'bg-green-600', 'bg-orange-600', 'bg-pink-600']
+                        const colors = ['bg-brand-primary', 'bg-purple-600', 'bg-emerald-500', 'bg-orange-600', 'bg-pink-600']
                         const colorIndex = member.user_id.charCodeAt(0) % colors.length
                         return (
-                          <div key={member.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                          <div key={member.id} className="flex items-center justify-between p-4 bg-surface rounded-lg">
                             <div className="flex items-center space-x-3">
                               <div className={`h-10 w-10 ${colors[colorIndex]} rounded-full flex items-center justify-center`}>
                                 <span className="text-white font-medium text-sm">{initials}</span>
                               </div>
                               <div>
-                                <div className="font-medium text-gray-900">
+                                <div className="font-medium text-text-primary">
                                   {member.email || `User ${member.user_id.slice(0, 8)}...`}
                                 </div>
-                                <div className="text-sm text-gray-500">
+                                <div className="text-sm text-text-secondary">
                                   {member.role}
                                 </div>
                               </div>
                             </div>
                             <span className={clsx(
                               'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                              member.role === 'owner' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                              member.role === 'owner' ? 'bg-emerald-500/10 text-green-800' : 'bg-brand-primary/10 text-blue-800'
                             )}>
                               {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
                             </span>
@@ -1143,7 +1096,7 @@ export default function SettingsPage() {
                   )}
 
                   <div className="mt-6 pt-6 border-t">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-text-secondary">
                       Team invitations and role management are coming soon.
                     </p>
                   </div>

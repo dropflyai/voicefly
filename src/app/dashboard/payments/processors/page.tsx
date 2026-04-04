@@ -142,10 +142,10 @@ export default function PaymentProcessorsPage() {
       <Layout business={business}>
         <div className="p-8">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="h-8 bg-surface-highest rounded w-1/4 mb-6"></div>
             <div className="space-y-6">
-              <div className="h-64 bg-gray-200 rounded"></div>
-              <div className="h-64 bg-gray-200 rounded"></div>
+              <div className="h-64 bg-surface-highest rounded"></div>
+              <div className="h-64 bg-surface-highest rounded"></div>
             </div>
           </div>
         </div>
@@ -159,8 +159,8 @@ export default function PaymentProcessorsPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Payment Processors</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-text-primary">Payment Processors</h1>
+            <p className="text-text-secondary mt-1">
               Configure Square and Stripe payment processing for your locations
             </p>
           </div>
@@ -169,8 +169,8 @@ export default function PaymentProcessorsPage() {
         {/* Location Selector */}
         {locations.length > 1 && (
           <div className="mb-8">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Select Location</h3>
+            <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
+              <h3 className="text-lg font-medium text-text-primary mb-4">Select Location</h3>
               <div className="max-w-md">
                 <LocationSelector
                   locations={locations}
@@ -180,7 +180,7 @@ export default function PaymentProcessorsPage() {
                   includeAllOption={false}
                 />
               </div>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-text-secondary mt-2">
                 Payment processors are configured per location. Select a location to manage its payment settings.
               </p>
             </div>
@@ -189,11 +189,11 @@ export default function PaymentProcessorsPage() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-600 text-sm">{error}</p>
+          <div className="mb-6 p-4 bg-[#93000a]/5 border border-red-200 rounded-md">
+            <p className="text-[#ffb4ab] text-sm">{error}</p>
             <button 
               onClick={() => setError(null)} 
-              className="text-red-600 hover:text-red-700 underline text-sm mt-1"
+              className="text-[#ffb4ab] hover:text-[#ffb4ab] underline text-sm mt-1"
             >
               Dismiss
             </button>
@@ -202,23 +202,23 @@ export default function PaymentProcessorsPage() {
 
         {!selectedLocation ? (
           <div className="text-center py-12">
-            <CreditCardIcon className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">Select a location</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <CreditCardIcon className="mx-auto h-12 w-12 text-text-muted" />
+            <h3 className="mt-2 text-sm font-medium text-text-primary">Select a location</h3>
+            <p className="mt-1 text-sm text-text-secondary">
               Choose a location to configure payment processors.
             </p>
           </div>
         ) : (
           <div className="space-y-8">
             {/* Location Header */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-brand-primary/5 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center">
                 <CreditCardIcon className="h-5 w-5 text-blue-400" />
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-blue-800">
                     Configuring payment processors for: {selectedLocation.name}
                   </h3>
-                  <p className="text-xs text-blue-700 mt-1">
+                  <p className="text-xs text-brand-primary mt-1">
                     {selectedLocation.city}, {selectedLocation.state}
                   </p>
                 </div>
@@ -258,13 +258,13 @@ export default function PaymentProcessorsPage() {
             />
 
             {/* Integration Guide */}
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Integration Guide</h3>
+            <div className="bg-surface rounded-lg p-6">
+              <h3 className="text-lg font-medium text-text-primary mb-4">Integration Guide</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">Square Setup</h4>
-                  <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+                  <h4 className="text-sm font-medium text-text-primary mb-2">Square Setup</h4>
+                  <ol className="text-sm text-text-secondary space-y-1 list-decimal list-inside">
                     <li>Sign up for a Square account</li>
                     <li>Get your Application ID from Square Developer Dashboard</li>
                     <li>Generate an Access Token for your location</li>
@@ -274,8 +274,8 @@ export default function PaymentProcessorsPage() {
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-gray-900 mb-2">Stripe Setup</h4>
-                  <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+                  <h4 className="text-sm font-medium text-text-primary mb-2">Stripe Setup</h4>
+                  <ol className="text-sm text-text-secondary space-y-1 list-decimal list-inside">
                     <li>Create a Stripe account</li>
                     <li>Get your Publishable Key from the API keys section</li>
                     <li>Get your Secret Key (keep this secure)</li>
@@ -296,7 +296,7 @@ export default function PaymentProcessorsPage() {
                     <h3 className="text-sm font-medium text-yellow-800">
                       Security Notice
                     </h3>
-                    <div className="mt-2 text-sm text-yellow-700">
+                    <div className="mt-2 text-sm text-accent">
                       <p>
                         Always start with sandbox/test mode before switching to live payments. 
                         Keep your secret keys secure and never share them publicly.

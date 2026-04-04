@@ -34,18 +34,18 @@ interface PhoneMessage {
 }
 
 const urgencyColors: Record<string, string> = {
-  low: 'bg-gray-100 text-gray-600',
-  normal: 'bg-blue-100 text-blue-700',
-  high: 'bg-orange-100 text-orange-700',
-  urgent: 'bg-red-100 text-red-700',
+  low: 'bg-surface-high text-text-secondary',
+  normal: 'bg-brand-primary/10 text-brand-primary',
+  high: 'bg-accent/10 text-accent',
+  urgent: 'bg-[#93000a]/10 text-[#ffb4ab]',
 }
 
 const statusColors: Record<string, string> = {
-  new: 'bg-blue-100 text-blue-700',
-  read: 'bg-gray-100 text-gray-600',
-  in_progress: 'bg-yellow-100 text-yellow-700',
-  resolved: 'bg-green-100 text-green-700',
-  archived: 'bg-gray-100 text-gray-400',
+  new: 'bg-brand-primary/10 text-brand-primary',
+  read: 'bg-surface-high text-text-secondary',
+  in_progress: 'bg-accent/10 text-accent',
+  resolved: 'bg-emerald-500/10 text-emerald-500',
+  archived: 'bg-surface-high text-text-muted',
 }
 
 function PhoneMessagesPage() {
@@ -119,27 +119,24 @@ function PhoneMessagesPage() {
 
   return (
     <Layout business={business}>
-      <div className="p-8 max-w-5xl">
+      <div className="p-8 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <EnvelopeIcon className="h-7 w-7 text-purple-500" />
-              <h1 className="text-2xl font-bold text-gray-900">Phone Messages</h1>
-              {newCount > 0 && (
-                <span className="inline-flex items-center justify-center h-6 min-w-[24px] px-2 rounded-full bg-blue-600 text-white text-xs font-medium">
-                  {newCount} new
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-3xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight">Phone Messages</h1>
+            <p className="text-sm text-text-secondary mt-1">
               Messages taken by your AI employees during calls
             </p>
           </div>
+          {newCount > 0 && (
+            <span className="inline-flex items-center px-3 py-1.5 rounded-full bg-brand-primary/10 text-brand-light text-sm font-medium">
+              {newCount} new
+            </span>
+          )}
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2">
           {[
             { key: 'all', label: 'All' },
             { key: 'new', label: 'New' },
@@ -150,10 +147,10 @@ function PhoneMessagesPage() {
             <button
               key={f.key}
               onClick={() => setFilter(f.key)}
-              className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+              className={`px-4 py-1.5 text-sm rounded-full transition-colors ${
                 filter === f.key
-                  ? 'bg-purple-100 text-purple-700 font-medium'
-                  : 'text-gray-500 hover:bg-gray-100'
+                  ? 'bg-purple-500/10 text-purple-400 font-medium'
+                  : 'text-text-secondary hover:bg-surface-high'
               }`}
             >
               {f.label}
@@ -163,14 +160,14 @@ function PhoneMessagesPage() {
 
         {/* Messages List */}
         {loading ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <div className="animate-pulse text-gray-400">Loading messages...</div>
+          <div className="bg-surface-low rounded-2xl p-12 text-center">
+            <div className="animate-pulse text-text-muted">Loading messages...</div>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <EnvelopeIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-sm font-medium text-gray-900 mb-1">No messages</h3>
-            <p className="text-xs text-gray-500">
+          <div className="bg-surface-low rounded-2xl p-12 text-center">
+            <EnvelopeIcon className="h-12 w-12 text-text-muted mx-auto mb-3" />
+            <h3 className="text-sm font-medium text-text-primary mb-1">No messages</h3>
+            <p className="text-xs text-text-secondary">
               {filter === 'all'
                 ? 'Messages taken during calls will appear here.'
                 : 'No messages match this filter.'}
@@ -181,8 +178,12 @@ function PhoneMessagesPage() {
             {filtered.map(msg => (
               <div
                 key={msg.id}
-                className={`bg-white rounded-lg border transition-colors ${
-                  msg.status === 'new' ? 'border-blue-200 bg-blue-50/30' : 'border-gray-200'
+                className={`rounded-2xl overflow-hidden transition-all duration-300 ${
+                  msg.status === 'new'
+                    ? 'bg-surface-low ring-1 ring-brand-primary/20'
+                    : expandedId === msg.id
+                      ? 'bg-surface-med'
+                      : 'bg-surface-low hover:bg-surface-med'
                 }`}
               >
                 {/* Message Header */}
@@ -191,51 +192,57 @@ function PhoneMessagesPage() {
                     setExpandedId(expandedId === msg.id ? null : msg.id)
                     if (msg.status === 'new') updateStatus(msg.id, 'read')
                   }}
-                  className="w-full text-left p-4"
+                  className="w-full text-left p-5"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center mt-0.5">
-                        <PhoneIcon className="h-5 w-5 text-purple-600" />
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 h-10 w-10 rounded-xl bg-brand-primary/10 flex items-center justify-center mt-0.5">
+                      <PhoneIcon className="h-5 w-5 text-brand-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-bold text-text-primary">
+                          {msg.caller_name || msg.caller_phone}
+                        </span>
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${urgencyColors[msg.urgency] || urgencyColors.normal}`}>
+                          {msg.urgency}
+                        </span>
+                        <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${statusColors[msg.status] || statusColors.new}`}>
+                          {msg.status.replace('_', ' ')}
+                        </span>
+                        {msg.callback_requested && !msg.callback_completed && (
+                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-accent/10 text-accent flex items-center gap-1 font-medium">
+                            <ClockIcon className="h-3 w-3" /> callback
+                          </span>
+                        )}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-900">
-                            {msg.caller_name || msg.caller_phone}
-                          </span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${urgencyColors[msg.urgency] || urgencyColors.normal}`}>
-                            {msg.urgency}
-                          </span>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[msg.status] || statusColors.new}`}>
-                            {msg.status.replace('_', ' ')}
-                          </span>
-                          {msg.callback_requested && !msg.callback_completed && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">
-                              <ClockIcon className="h-3 w-3" /> callback needed
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-600 mt-0.5">{msg.reason}</p>
-                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
-                          <span>{formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}</span>
-                          {msg.for_person && <span>For: {msg.for_person}</span>}
-                          {msg.caller_phone && msg.caller_name && <span>{msg.caller_phone}</span>}
-                        </div>
+                      <p className="text-sm text-text-secondary mt-1">{msg.reason}</p>
+                      <div className="flex items-center gap-3 mt-1.5 text-xs text-text-muted">
+                        <span>{formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}</span>
+                        {msg.for_person && <span>For: {msg.for_person}</span>}
+                        {msg.caller_phone && msg.caller_name && <span className="font-mono">{msg.caller_phone}</span>}
                       </div>
+                    </div>
+                    {/* Expand indicator */}
+                    <div className={`flex-shrink-0 mt-1 transition-transform ${expandedId === msg.id ? 'rotate-180' : ''}`}>
+                      <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                      </svg>
                     </div>
                   </div>
                 </button>
 
                 {/* Expanded Content */}
                 {expandedId === msg.id && (
-                  <div className="px-4 pb-4 border-t border-gray-100 pt-3 ml-[52px]">
-                    <div className="bg-gray-50 rounded-lg p-3 mb-3">
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap">{msg.full_message}</p>
+                  <div className="px-5 pb-5 pt-0 ml-[52px] space-y-4">
+                    {/* Full message */}
+                    <div className="bg-surface-lowest rounded-xl p-4">
+                      <p className="text-sm text-text-primary whitespace-pre-wrap leading-relaxed">{msg.full_message}</p>
                     </div>
 
-                    <div className="flex flex-wrap gap-4 text-xs text-gray-500 mb-3">
+                    {/* Contact details */}
+                    <div className="flex flex-wrap gap-4 text-xs text-text-secondary">
                       {msg.caller_phone && (
-                        <a href={`tel:${msg.caller_phone}`} className="flex items-center gap-1 text-blue-600 hover:underline">
+                        <a href={`tel:${msg.caller_phone}`} className="flex items-center gap-1.5 text-brand-light hover:text-brand-primary transition-colors">
                           <PhoneIcon className="h-3.5 w-3.5" /> {msg.caller_phone}
                         </a>
                       )}
@@ -244,11 +251,12 @@ function PhoneMessagesPage() {
                       {msg.department && <span>Dept: {msg.department}</span>}
                     </div>
 
+                    {/* Action buttons */}
                     <div className="flex items-center gap-2">
                       {msg.status !== 'resolved' && (
                         <button
                           onClick={() => updateStatus(msg.id, 'resolved')}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-500 bg-emerald-500/5 rounded-lg hover:bg-emerald-500/10 transition-colors"
                         >
                           <CheckCircleIcon className="h-4 w-4" /> Mark Resolved
                         </button>
@@ -256,7 +264,7 @@ function PhoneMessagesPage() {
                       {msg.status !== 'in_progress' && msg.status !== 'resolved' && (
                         <button
                           onClick={() => updateStatus(msg.id, 'in_progress')}
-                          className="px-3 py-1.5 text-xs font-medium text-yellow-700 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium text-accent bg-accent/5 rounded-lg hover:bg-accent/10 transition-colors"
                         >
                           In Progress
                         </button>
@@ -264,7 +272,7 @@ function PhoneMessagesPage() {
                       {msg.callback_requested && !msg.callback_completed && (
                         <button
                           onClick={() => markCallbackComplete(msg.id)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors"
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-accent bg-accent/5 rounded-lg hover:bg-accent/10 transition-colors"
                         >
                           <PhoneIcon className="h-4 w-4" /> Callback Done
                         </button>
@@ -272,7 +280,7 @@ function PhoneMessagesPage() {
                       {msg.status === 'resolved' && (
                         <button
                           onClick={() => updateStatus(msg.id, 'archived')}
-                          className="px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium text-text-secondary bg-surface-high rounded-lg hover:bg-surface-highest transition-colors"
                         >
                           Archive
                         </button>

@@ -130,13 +130,13 @@ export default function RequestLeadsPage() {
         <div>
           <Link
             href="/dashboard/leads"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+            className="inline-flex items-center gap-2 text-text-secondary hover:text-text-primary mb-4"
           >
             <ArrowLeftIcon className="h-5 w-5" />
             Back to Leads
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Request New Leads</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-text-primary">Request New Leads</h1>
+          <p className="mt-1 text-sm text-text-secondary">
             Tell us what kind of leads you're looking for and we'll deliver AI-researched prospects with auto-generated campaigns
           </p>
         </div>
@@ -146,19 +146,19 @@ export default function RequestLeadsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-blue-900">Monthly Lead Quota</h3>
-              <p className="text-sm text-blue-700 mt-1">
+              <p className="text-sm text-brand-primary mt-1">
                 {quota.remaining} of {quota.monthly} leads remaining this month
               </p>
             </div>
             <div className="text-right">
               <div className="text-3xl font-bold text-blue-900">{quota.remaining}</div>
-              <div className="text-sm text-blue-600">available</div>
+              <div className="text-sm text-brand-primary">available</div>
             </div>
           </div>
           <div className="mt-4">
             <div className="w-full bg-blue-200 rounded-full h-2">
               <div
-                className="bg-blue-600 h-2 rounded-full transition-all"
+                className="bg-brand-primary h-2 rounded-full transition-all"
                 style={{ width: `${(quota.used / quota.monthly) * 100}%` }}
               />
             </div>
@@ -166,10 +166,10 @@ export default function RequestLeadsPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-white shadow-sm rounded-lg border border-gray-200 p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-surface-low shadow-sm rounded-lg border border-[rgba(65,71,84,0.15)] p-6 space-y-6">
           {/* Industry */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-primary mb-2">
               <BuildingOfficeIcon className="inline h-5 w-5 mr-1" />
               Industry *
             </label>
@@ -182,8 +182,8 @@ export default function RequestLeadsPage() {
                   className={clsx(
                     'px-4 py-2 rounded-lg border text-sm font-medium transition-colors',
                     formData.industry.includes(industry)
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500'
+                      ? 'bg-brand-primary text-white border-blue-600'
+                      : 'bg-surface-low text-text-primary border-[rgba(65,71,84,0.2)] hover:border-blue-500'
                   )}
                 >
                   {formData.industry.includes(industry) && (
@@ -197,13 +197,13 @@ export default function RequestLeadsPage() {
 
           {/* Location */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-primary mb-2">
               <MapPinIcon className="inline h-5 w-5 mr-1" />
               Location
             </label>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">City (optional)</label>
+                <label className="block text-xs text-text-secondary mb-1">City (optional)</label>
                 <input
                   type="text"
                   value={formData.location.city}
@@ -212,18 +212,18 @@ export default function RequestLeadsPage() {
                     location: { ...prev.location, city: e.target.value }
                   }))}
                   placeholder="Dallas, Austin, etc."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">State *</label>
+                <label className="block text-xs text-text-secondary mb-1">State *</label>
                 <select
                   value={formData.location.state}
                   onChange={(e) => setFormData(prev => ({
                     ...prev,
                     location: { ...prev.location, state: e.target.value }
                   }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 >
                   {US_STATES.map(state => (
                     <option key={state} value={state}>{state}</option>
@@ -235,13 +235,13 @@ export default function RequestLeadsPage() {
 
           {/* Company Size */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-primary mb-2">
               <UsersIcon className="inline h-5 w-5 mr-1" />
               Company Size (Employees)
             </label>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Minimum</label>
+                <label className="block text-xs text-text-secondary mb-1">Minimum</label>
                 <input
                   type="number"
                   value={formData.companySize.min}
@@ -250,11 +250,11 @@ export default function RequestLeadsPage() {
                     companySize: { ...prev.companySize, min: parseInt(e.target.value) }
                   }))}
                   min="1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Maximum</label>
+                <label className="block text-xs text-text-secondary mb-1">Maximum</label>
                 <input
                   type="number"
                   value={formData.companySize.max}
@@ -263,7 +263,7 @@ export default function RequestLeadsPage() {
                     companySize: { ...prev.companySize, max: parseInt(e.target.value) }
                   }))}
                   min="1"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary"
                 />
               </div>
             </div>
@@ -271,7 +271,7 @@ export default function RequestLeadsPage() {
 
           {/* Job Titles */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-primary mb-2">
               <BriefcaseIcon className="inline h-5 w-5 mr-1" />
               Target Job Titles *
             </label>
@@ -284,8 +284,8 @@ export default function RequestLeadsPage() {
                   className={clsx(
                     'px-4 py-2 rounded-lg border text-sm font-medium transition-colors',
                     formData.jobTitles.includes(title)
-                      ? 'bg-blue-600 text-white border-blue-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-blue-500'
+                      ? 'bg-brand-primary text-white border-blue-600'
+                      : 'bg-surface-low text-text-primary border-[rgba(65,71,84,0.2)] hover:border-blue-500'
                   )}
                 >
                   {formData.jobTitles.includes(title) && (
@@ -299,7 +299,7 @@ export default function RequestLeadsPage() {
 
           {/* Number of Leads */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-text-primary mb-2">
               <SparklesIcon className="inline h-5 w-5 mr-1" />
               How many leads do you need?
             </label>
@@ -317,35 +317,35 @@ export default function RequestLeadsPage() {
                 className="flex-1"
               />
               <div className="text-center min-w-[80px]">
-                <div className="text-3xl font-bold text-blue-600">{formData.limit}</div>
-                <div className="text-xs text-gray-500">leads</div>
+                <div className="text-3xl font-bold text-brand-primary">{formData.limit}</div>
+                <div className="text-xs text-text-secondary">leads</div>
               </div>
             </div>
-            <p className="mt-2 text-xs text-gray-500">
+            <p className="mt-2 text-xs text-text-secondary">
               Each lead will be researched by AI and segmented into cold/warm/hot with auto-generated campaigns
             </p>
           </div>
 
           {/* Error */}
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-              <XCircleIcon className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="p-4 bg-[#93000a]/5 border border-red-200 rounded-lg flex items-start gap-3">
+              <XCircleIcon className="h-5 w-5 text-[#ffb4ab] flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-red-800">Request Failed</p>
-                <p className="text-sm text-red-700 mt-1">{error}</p>
+                <p className="text-sm text-[#ffb4ab] mt-1">{error}</p>
               </div>
             </div>
           )}
 
           {/* Submit */}
           <div className="flex items-center justify-between pt-4 border-t">
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-text-secondary">
               Estimated processing time: 2-5 minutes
             </div>
             <button
               type="submit"
               disabled={isSubmitting || formData.industry.length === 0 || formData.jobTitles.length === 0}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className="px-6 py-3 bg-brand-primary text-white rounded-lg hover:bg-[#0060d0] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               {isSubmitting ? 'Processing...' : `Request ${formData.limit} Leads`}
             </button>
@@ -353,43 +353,43 @@ export default function RequestLeadsPage() {
         </form>
 
         {/* What Happens Next */}
-        <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-          <h3 className="font-semibold text-gray-900 mb-3">What happens next?</h3>
+        <div className="bg-surface p-6 rounded-lg border border-[rgba(65,71,84,0.15)]">
+          <h3 className="font-semibold text-text-primary mb-3">What happens next?</h3>
           <div className="space-y-3">
             <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+              <div className="flex-shrink-0 w-6 h-6 bg-brand-primary text-white rounded-full flex items-center justify-center text-sm font-semibold">
                 1
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">We search Apollo.io</p>
-                <p className="text-xs text-gray-600">Find {formData.limit} companies matching your criteria</p>
+                <p className="text-sm font-medium text-text-primary">We search Apollo.io</p>
+                <p className="text-xs text-text-secondary">Find {formData.limit} companies matching your criteria</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+              <div className="flex-shrink-0 w-6 h-6 bg-brand-primary text-white rounded-full flex items-center justify-center text-sm font-semibold">
                 2
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">DeepSeek-R1 AI researches each lead</p>
-                <p className="text-xs text-gray-600">Analyzes pain points, buying signals, competitors, news</p>
+                <p className="text-sm font-medium text-text-primary">DeepSeek-R1 AI researches each lead</p>
+                <p className="text-xs text-text-secondary">Analyzes pain points, buying signals, competitors, news</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+              <div className="flex-shrink-0 w-6 h-6 bg-brand-primary text-white rounded-full flex items-center justify-center text-sm font-semibold">
                 3
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Auto-segment & create campaigns</p>
-                <p className="text-xs text-gray-600">Cold → Email campaigns, Warm/Hot → Voice campaigns</p>
+                <p className="text-sm font-medium text-text-primary">Auto-segment & create campaigns</p>
+                <p className="text-xs text-text-secondary">Cold → Email campaigns, Warm/Hot → Voice campaigns</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <div className="flex-shrink-0 w-6 h-6 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+              <div className="flex-shrink-0 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center text-sm font-semibold">
                 ✓
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Ready to approve & launch!</p>
-                <p className="text-xs text-gray-600">Review campaigns and click approve to start nurturing</p>
+                <p className="text-sm font-medium text-text-primary">Ready to approve & launch!</p>
+                <p className="text-xs text-text-secondary">Review campaigns and click approve to start nurturing</p>
               </div>
             </div>
           </div>

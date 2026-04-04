@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/supabase'
 import Stripe from 'stripe'
-import CreditSystem, { CREDITS_PER_MINUTE } from '@/lib/credit-system'
+import { TIER_MINUTES } from '@/lib/minutes'
 import AuditLogger, { AuditEventType } from '@/lib/audit-logger'
 import { employeeProvisioning } from '@/lib/phone-employees'
 import { logger } from '@/lib/logger'
@@ -154,26 +154,33 @@ export async function POST(request: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session
         logger.info('Checkout session completed', { id: session.id, type: session.metadata?.type })
 
-        // Handle minute/credit pack purchase
+        // Handle minute pack purchase
         if (session.metadata?.type === 'minute_pack_purchase' || session.metadata?.type === 'credit_pack_purchase') {
           const businessId = session.metadata.business_id
           const packId = session.metadata.pack_id
-          const credits = parseInt(session.metadata.credits)
-          const minutes = session.metadata.minutes ? parseInt(session.metadata.minutes) : Math.floor(credits / CREDITS_PER_MINUTE)
+          const minutes = parseInt(session.metadata.minutes || session.metadata.credits || '0')
           const paymentIntentId = typeof session.payment_intent === 'string'
             ? session.payment_intent
             : session.payment_intent?.id
 
-          if (businessId && packId && credits) {
-            const result = await CreditSystem.addPurchasedCredits(
-              businessId,
-              credits,
-              packId,
-              paymentIntentId
-            )
+          if (businessId && packId && minutes) {
+            // Add purchased minutes directly
+            const { error: addErr } = await supabase.rpc('increment_purchased_credits', {
+              p_business_id: businessId,
+              p_amount: minutes,
+            }).catch(() => ({ error: 'rpc not found' })) as any
 
-            if (result.success) {
-              logger.info('Credits added', { businessId, minutes, credits })
+            // Fallback: direct update if RPC doesn't exist
+            if (addErr) {
+              const { data: biz } = await supabase.from('businesses').select('purchased_credits').eq('id', businessId).single()
+              await supabase.from('businesses').update({
+                purchased_credits: (biz?.purchased_credits || 0) + minutes,
+                updated_at: new Date().toISOString(),
+              }).eq('id', businessId)
+            }
+
+            {
+              logger.info('Minutes added', { businessId, minutes })
 
               await supabase
                 .from('credit_purchases')
@@ -219,7 +226,7 @@ export async function POST(request: NextRequest) {
 
           logger.info('Subscription checkout completed', { businessId, plan: targetPlan })
 
-          const monthlyCredits = targetPlan === 'pro' ? 5000 : 500
+          const monthlyCredits = TIER_MINUTES[targetPlan as keyof typeof TIER_MINUTES] || TIER_MINUTES.starter
           const nextResetDate = new Date()
           nextResetDate.setMonth(nextResetDate.getMonth() + 1)
 

@@ -136,27 +136,27 @@ Best regards,
         <div className="mb-8">
           <button
             onClick={() => router.push('/dashboard/marketing/campaigns')}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+            className="flex items-center text-text-secondary hover:text-text-primary mb-4"
           >
             <ArrowLeftIcon className="h-4 w-4 mr-1" />
             Back to Campaigns
           </button>
           
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Create Email Campaign</h1>
-            <p className="text-gray-600 mt-1">Design and send a campaign to your customers</p>
+            <h1 className="text-2xl font-semibold text-text-primary">Create Email Campaign</h1>
+            <p className="text-text-secondary mt-1">Design and send a campaign to your customers</p>
           </div>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Campaign Details Card */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Campaign Details</h2>
+          <div className="bg-surface-low rounded-lg shadow p-6">
+            <h2 className="text-lg font-medium text-text-primary mb-4">Campaign Details</h2>
             
             <div className="space-y-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="name" className="block text-sm font-medium text-text-primary mb-1">
                   Campaign Name
                 </label>
                 <input
@@ -166,13 +166,13 @@ Best regards,
                   value={campaignName}
                   onChange={(e) => setCampaignName(e.target.value)}
                   placeholder="e.g., Summer Special Promotion"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-brand-primary"
                 />
-                <p className="text-xs text-gray-500 mt-1">Internal name for your reference</p>
+                <p className="text-xs text-text-secondary mt-1">Internal name for your reference</p>
               </div>
 
               <div>
-                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="subject" className="block text-sm font-medium text-text-primary mb-1">
                   Email Subject Line
                 </label>
                 <input
@@ -182,16 +182,16 @@ Best regards,
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="e.g., 🌟 20% Off All Services This Week!"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-brand-primary"
                 />
-                <p className="text-xs text-gray-500 mt-1">This is what customers will see in their inbox</p>
+                <p className="text-xs text-text-secondary mt-1">This is what customers will see in their inbox</p>
               </div>
             </div>
           </div>
 
           {/* Audience Card */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
+          <div className="bg-surface-low rounded-lg shadow p-6">
+            <h2 className="text-lg font-medium text-text-primary mb-4">
               <UserGroupIcon className="h-5 w-5 inline mr-2" />
               Select Audience
             </h2>
@@ -203,18 +203,18 @@ Best regards,
                 { value: 'loyal', label: 'Loyal Customers', description: 'Customers with 5+ visits or Gold+ tier' },
                 { value: 'inactive', label: 'Inactive Customers', description: 'Haven\'t visited in 60+ days' }
               ].map(option => (
-                <label key={option.value} className="flex items-start p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                <label key={option.value} className="flex items-start p-3 border border-[rgba(65,71,84,0.15)] rounded-lg cursor-pointer hover:bg-surface">
                   <input
                     type="radio"
                     name="segment"
                     value={option.value}
                     checked={segment === option.value}
                     onChange={(e) => setSegment(e.target.value)}
-                    className="mt-1 text-purple-600 focus:ring-purple-500"
+                    className="mt-1 text-purple-400 focus:ring-purple-500"
                   />
                   <div className="ml-3">
-                    <div className="font-medium text-gray-900">{option.label}</div>
-                    <div className="text-sm text-gray-500">{option.description}</div>
+                    <div className="font-medium text-text-primary">{option.label}</div>
+                    <div className="text-sm text-text-secondary">{option.description}</div>
                   </div>
                 </label>
               ))}
@@ -222,13 +222,13 @@ Best regards,
           </div>
 
           {/* Email Content Card */}
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-surface-low rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-gray-900">Email Content</h2>
+              <h2 className="text-lg font-medium text-text-primary">Email Content</h2>
               <button
                 type="button"
                 onClick={() => setContent(getTemplateSuggestion())}
-                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                className="text-sm text-purple-400 hover:text-purple-400 font-medium"
               >
                 <SparklesIcon className="h-4 w-4 inline mr-1" />
                 Use Template
@@ -241,14 +241,14 @@ Best regards,
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Write your email content here..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-brand-primary"
             />
             
             <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
                 <strong>Pro Tips:</strong>
               </p>
-              <ul className="text-xs text-yellow-700 mt-1 space-y-1">
+              <ul className="text-xs text-accent mt-1 space-y-1">
                 <li>• Use [CUSTOMER_NAME] to personalize with customer's name</li>
                 <li>• Use [POINTS] to show loyalty points balance</li>
                 <li>• Keep it concise and include a clear call-to-action</li>
@@ -258,40 +258,40 @@ Best regards,
           </div>
 
           {/* Schedule Card */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">
+          <div className="bg-surface-low rounded-lg shadow p-6">
+            <h2 className="text-lg font-medium text-text-primary mb-4">
               <CalendarIcon className="h-5 w-5 inline mr-2" />
               Schedule Delivery
             </h2>
             
             <div className="space-y-3">
-              <label className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+              <label className="flex items-center p-3 border border-[rgba(65,71,84,0.15)] rounded-lg cursor-pointer hover:bg-surface">
                 <input
                   type="radio"
                   name="schedule"
                   value="now"
                   checked={scheduleType === 'now'}
                   onChange={(e) => setScheduleType(e.target.value)}
-                  className="text-purple-600 focus:ring-purple-500"
+                  className="text-purple-400 focus:ring-purple-500"
                 />
                 <div className="ml-3">
-                  <div className="font-medium text-gray-900">Send Now</div>
-                  <div className="text-sm text-gray-500">Campaign will be sent immediately</div>
+                  <div className="font-medium text-text-primary">Send Now</div>
+                  <div className="text-sm text-text-secondary">Campaign will be sent immediately</div>
                 </div>
               </label>
               
-              <label className="flex items-start p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+              <label className="flex items-start p-3 border border-[rgba(65,71,84,0.15)] rounded-lg cursor-pointer hover:bg-surface">
                 <input
                   type="radio"
                   name="schedule"
                   value="later"
                   checked={scheduleType === 'later'}
                   onChange={(e) => setScheduleType(e.target.value)}
-                  className="mt-1 text-purple-600 focus:ring-purple-500"
+                  className="mt-1 text-purple-400 focus:ring-purple-500"
                 />
                 <div className="ml-3 flex-1">
-                  <div className="font-medium text-gray-900">Schedule for Later</div>
-                  <div className="text-sm text-gray-500 mb-2">Choose a specific date and time</div>
+                  <div className="font-medium text-text-primary">Schedule for Later</div>
+                  <div className="text-sm text-text-secondary mb-2">Choose a specific date and time</div>
                   
                   {scheduleType === 'later' && (
                     <div className="grid grid-cols-2 gap-3 mt-3">
@@ -300,14 +300,14 @@ Best regards,
                         value={scheduleDate}
                         onChange={(e) => setScheduleDate(e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-purple-500"
                         required={scheduleType === 'later'}
                       />
                       <input
                         type="time"
                         value={scheduleTime}
                         onChange={(e) => setScheduleTime(e.target.value)}
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        className="px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-purple-500"
                         required={scheduleType === 'later'}
                       />
                     </div>
@@ -318,11 +318,11 @@ Best regards,
           </div>
 
           {/* Preview Card */}
-          <div className="bg-gray-50 rounded-lg p-6">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Campaign Summary</h3>
+          <div className="bg-surface rounded-lg p-6">
+            <h3 className="text-sm font-medium text-text-primary mb-3">Campaign Summary</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">Recipients:</span>
+                <span className="text-text-secondary">Recipients:</span>
                 <span className="font-medium">
                   {segment === 'all' ? 'All Customers' : 
                    segment === 'new' ? 'New Customers (30 days)' :
@@ -331,7 +331,7 @@ Best regards,
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Estimated reach:</span>
+                <span className="text-text-secondary">Estimated reach:</span>
                 <span className="font-medium">
                   {segment === 'all' ? '~250' : 
                    segment === 'new' ? '~45' :
@@ -340,7 +340,7 @@ Best regards,
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Delivery:</span>
+                <span className="text-text-secondary">Delivery:</span>
                 <span className="font-medium">
                   {scheduleType === 'now' ? 'Immediate' : `${scheduleDate} at ${scheduleTime}`}
                 </span>
@@ -353,7 +353,7 @@ Best regards,
             <button
               type="button"
               onClick={() => router.push('/dashboard/marketing/campaigns')}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition"
+              className="flex-1 px-6 py-3 border border-[rgba(65,71,84,0.2)] text-text-primary font-medium rounded-lg hover:bg-surface transition"
             >
               Cancel
             </button>

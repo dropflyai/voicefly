@@ -215,10 +215,10 @@ export default function WhiteLabelSettingsPage() {
     return (
       <div className="max-w-7xl mx-auto p-6">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-8 bg-surface-highest rounded w-1/4"></div>
           <div className="space-y-4">
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-32 bg-surface-highest rounded"></div>
+            <div className="h-32 bg-surface-highest rounded"></div>
           </div>
         </div>
       </div>
@@ -229,9 +229,9 @@ export default function WhiteLabelSettingsPage() {
     return (
       <div className="max-w-7xl mx-auto p-6">
         <div className="text-center py-12">
-          <GlobeAltIcon className="h-24 w-24 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">White-Label Features</h3>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+          <GlobeAltIcon className="h-24 w-24 text-text-muted mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-text-primary mb-2">White-Label Features</h3>
+          <p className="text-text-secondary mb-6 max-w-md mx-auto">
             White-label features with custom domains are available on Business and Enterprise plans.
           </p>
           
@@ -260,20 +260,20 @@ export default function WhiteLabelSettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">White-Label Configuration</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-text-primary">White-Label Configuration</h1>
+          <p className="text-text-secondary mt-2">
             Configure custom domains and complete platform rebranding for your business.
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+          <span className="px-3 py-1 bg-purple-500/10 text-purple-800 rounded-full text-sm font-medium">
             Business Plan
           </span>
         </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-200 mb-8">
+      <div className="border-b border-[rgba(65,71,84,0.15)] mb-8">
         <nav className="-mb-px flex space-x-8">
           {[
             { id: 'domains', name: 'Domains', icon: GlobeAltIcon },
@@ -286,8 +286,8 @@ export default function WhiteLabelSettingsPage() {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex items-center space-x-2 py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab.id
-                  ? 'border-purple-500 text-purple-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-purple-500 text-purple-400'
+                  : 'border-transparent text-text-secondary hover:text-text-primary hover:border-[rgba(65,71,84,0.2)]'
               }`}
             >
               <tab.icon className="h-5 w-5" />
@@ -302,11 +302,11 @@ export default function WhiteLabelSettingsPage() {
         <div className="space-y-6">
           {/* Add Domain Form */}
           {showDomainForm ? (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
+            <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
               <h2 className="text-xl font-semibold mb-4">Add Custom Domain</h2>
               <form onSubmit={handleCreateDomain} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-text-primary mb-2">
                     Custom Domain
                   </label>
                   <input
@@ -314,10 +314,10 @@ export default function WhiteLabelSettingsPage() {
                     value={newDomain}
                     onChange={(e) => setNewDomain(e.target.value)}
                     placeholder="yourbrand.com"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-purple-500 focus:border-purple-500"
                     required
                   />
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-text-secondary mt-1">
                     Enter your domain without https:// or www. (e.g., yourbrand.com)
                   </p>
                 </div>
@@ -336,7 +336,7 @@ export default function WhiteLabelSettingsPage() {
                       setShowDomainForm(false)
                       setNewDomain('')
                     }}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+                    className="px-4 py-2 bg-surface-high text-text-primary rounded-lg hover:bg-surface-highest"
                   >
                     Cancel
                   </button>
@@ -357,27 +357,27 @@ export default function WhiteLabelSettingsPage() {
 
           {/* Domains List */}
           {domains.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-              <GlobeAltIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No custom domains</h3>
-              <p className="text-gray-600 mb-6">
+            <div className="text-center py-12 bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)]">
+              <GlobeAltIcon className="h-16 w-16 text-text-muted mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-text-primary mb-2">No custom domains</h3>
+              <p className="text-text-secondary mb-6">
                 Add your first custom domain to enable white-label branding.
               </p>
             </div>
           ) : (
             <div className="grid gap-6">
               {domains.map(domain => (
-                <div key={domain.id} className="bg-white rounded-lg border border-gray-200 p-6">
+                <div key={domain.id} className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <GlobeAltIcon className="h-6 w-6 text-purple-600" />
+                      <GlobeAltIcon className="h-6 w-6 text-purple-400" />
                       <div>
                         <h3 className="text-lg font-semibold">{domain.domain}</h3>
                         <div className="flex items-center space-x-4 mt-1">
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             domain.is_active
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-yellow-100 text-yellow-800'
+                              ? 'bg-emerald-500/10 text-green-800'
+                              : 'bg-accent/10 text-yellow-800'
                           }`}>
                             {domain.is_active ? (
                               <>
@@ -393,8 +393,8 @@ export default function WhiteLabelSettingsPage() {
                           </span>
                           <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                             domain.ssl_enabled
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
+                              ? 'bg-emerald-500/10 text-green-800'
+                              : 'bg-surface-high text-text-primary'
                           }`}>
                             {domain.ssl_enabled ? (
                               <>
@@ -411,13 +411,13 @@ export default function WhiteLabelSettingsPage() {
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => setSelectedDomain(domain)}
-                        className="px-3 py-2 text-purple-600 hover:text-purple-700 text-sm font-medium"
+                        className="px-3 py-2 text-purple-400 hover:text-purple-400 text-sm font-medium"
                       >
                         Configure
                       </button>
                       <button
                         onClick={() => handleDeleteDomain(domain.id)}
-                        className="p-2 text-red-600 hover:text-red-700"
+                        className="p-2 text-[#ffb4ab] hover:text-[#ffb4ab]"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -430,12 +430,12 @@ export default function WhiteLabelSettingsPage() {
                       <div key={step.step} className="flex items-start space-x-3">
                         <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                           step.status === 'completed'
-                            ? 'bg-green-100 text-green-800'
+                            ? 'bg-emerald-500/10 text-green-800'
                             : step.status === 'in_progress'
-                            ? 'bg-blue-100 text-blue-800'
+                            ? 'bg-brand-primary/10 text-blue-800'
                             : step.status === 'error'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-600'
+                            ? 'bg-[#93000a]/10 text-red-800'
+                            : 'bg-surface-high text-text-secondary'
                         }`}>
                           {step.status === 'completed' ? (
                             <CheckCircleIcon className="h-4 w-4" />
@@ -445,9 +445,9 @@ export default function WhiteLabelSettingsPage() {
                         </div>
                         <div className="flex-1">
                           <p className="font-medium">{step.title}</p>
-                          <p className="text-sm text-gray-600">{step.description}</p>
+                          <p className="text-sm text-text-secondary">{step.description}</p>
                           {step.instructions && step.status === 'pending' && (
-                            <div className="mt-2 p-3 bg-gray-50 rounded text-sm">
+                            <div className="mt-2 p-3 bg-surface rounded text-sm">
                               <p className="font-medium mb-2">Setup Instructions:</p>
                               <ul className="space-y-1 text-xs">
                                 {step.instructions.map((instruction, i) => (
@@ -462,14 +462,14 @@ export default function WhiteLabelSettingsPage() {
                   </div>
 
                   {domain.is_active && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="mt-4 pt-4 border-t border-[rgba(65,71,84,0.15)]">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm text-gray-600">
-                          Domain is live at: <a href={`https://${domain.domain}`} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">https://{domain.domain}</a>
+                        <p className="text-sm text-text-secondary">
+                          Domain is live at: <a href={`https://${domain.domain}`} target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">https://{domain.domain}</a>
                         </p>
                         <button
                           onClick={handleTestWhiteLabelEmail}
-                          className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded hover:bg-purple-200"
+                          className="px-3 py-1 text-sm bg-purple-500/10 text-purple-400 rounded hover:bg-purple-200"
                         >
                           Test Email
                         </button>
@@ -484,41 +484,41 @@ export default function WhiteLabelSettingsPage() {
       )}
 
       {activeTab === 'branding' && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
           <h2 className="text-xl font-semibold mb-6">Platform Branding Configuration</h2>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Branding Form */}
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-text-primary mb-2">
                   Platform Name
                 </label>
                 <input
                   type="text"
                   value={whiteLabelConfig.platform_name}
                   onChange={(e) => setWhiteLabelConfig(prev => ({ ...prev, platform_name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-purple-500 focus:border-purple-500"
                   placeholder="Your Salon Booking"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-text-primary mb-2">
                   Platform Logo URL
                 </label>
                 <input
                   type="url"
                   value={whiteLabelConfig.logo_url}
                   onChange={(e) => setWhiteLabelConfig(prev => ({ ...prev, logo_url: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-purple-500 focus:border-purple-500"
                   placeholder="https://yourbrand.com/logo.png"
                 />
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-text-primary mb-2">
                     Primary Color
                   </label>
                   <input
@@ -528,11 +528,11 @@ export default function WhiteLabelSettingsPage() {
                       ...prev,
                       colors: { ...prev.colors, primary: e.target.value }
                     }))}
-                    className="w-full h-10 border border-gray-300 rounded cursor-pointer"
+                    className="w-full h-10 border border-[rgba(65,71,84,0.2)] rounded cursor-pointer"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-text-primary mb-2">
                     Secondary Color
                   </label>
                   <input
@@ -542,11 +542,11 @@ export default function WhiteLabelSettingsPage() {
                       ...prev,
                       colors: { ...prev.colors, secondary: e.target.value }
                     }))}
-                    className="w-full h-10 border border-gray-300 rounded cursor-pointer"
+                    className="w-full h-10 border border-[rgba(65,71,84,0.2)] rounded cursor-pointer"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-text-primary mb-2">
                     Accent Color
                   </label>
                   <input
@@ -556,20 +556,20 @@ export default function WhiteLabelSettingsPage() {
                       ...prev,
                       colors: { ...prev.colors, accent: e.target.value }
                     }))}
-                    className="w-full h-10 border border-gray-300 rounded cursor-pointer"
+                    className="w-full h-10 border border-[rgba(65,71,84,0.2)] rounded cursor-pointer"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-text-primary mb-2">
                   Custom Footer Text
                 </label>
                 <input
                   type="text"
                   value={whiteLabelConfig.custom_footer}
                   onChange={(e) => setWhiteLabelConfig(prev => ({ ...prev, custom_footer: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                  className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-purple-500 focus:border-purple-500"
                   placeholder="© 2025 Your Business. All rights reserved."
                 />
               </div>
@@ -580,16 +580,16 @@ export default function WhiteLabelSettingsPage() {
                   id="hide_powered_by"
                   checked={whiteLabelConfig.hide_powered_by}
                   onChange={(e) => setWhiteLabelConfig(prev => ({ ...prev, hide_powered_by: e.target.checked }))}
-                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-purple-400 focus:ring-purple-500 border-[rgba(65,71,84,0.2)] rounded"
                 />
-                <label htmlFor="hide_powered_by" className="ml-2 block text-sm text-gray-900">
+                <label htmlFor="hide_powered_by" className="ml-2 block text-sm text-text-primary">
                   Hide "Powered by DropFly" branding
                 </label>
               </div>
             </div>
 
             {/* Preview */}
-            <div className="border border-gray-200 rounded-lg p-4">
+            <div className="border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
               <h3 className="font-semibold mb-4">Live Preview</h3>
               <div 
                 className="border rounded-lg p-6 space-y-4"
@@ -611,9 +611,9 @@ export default function WhiteLabelSettingsPage() {
                   >
                     Book Appointment
                   </button>
-                  <p className="text-sm text-gray-600">{whiteLabelConfig.custom_footer}</p>
+                  <p className="text-sm text-text-secondary">{whiteLabelConfig.custom_footer}</p>
                   {!whiteLabelConfig.hide_powered_by && (
-                    <p className="text-xs text-gray-400">Powered by DropFly</p>
+                    <p className="text-xs text-text-muted">Powered by DropFly</p>
                   )}
                 </div>
               </div>
@@ -623,29 +623,29 @@ export default function WhiteLabelSettingsPage() {
       )}
 
       {activeTab === 'reports' && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
           <h2 className="text-xl font-semibold mb-6">Branded Report Templates</h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-text-secondary mb-6">
             Create custom report templates with your branding for automated reports.
           </p>
           
           <div className="text-center py-12">
-            <DocumentTextIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">Report template configuration coming soon.</p>
+            <DocumentTextIcon className="h-16 w-16 text-text-muted mx-auto mb-4" />
+            <p className="text-text-secondary">Report template configuration coming soon.</p>
           </div>
         </div>
       )}
 
       {activeTab === 'preview' && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-6">
           <h2 className="text-xl font-semibold mb-6">White-Label Preview</h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-text-secondary mb-6">
             Preview how your white-label platform will appear to customers.
           </p>
           
           <div className="text-center py-12">
-            <EyeIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">Interactive preview coming soon.</p>
+            <EyeIcon className="h-16 w-16 text-text-muted mx-auto mb-4" />
+            <p className="text-text-secondary">Interactive preview coming soon.</p>
           </div>
         </div>
       )}

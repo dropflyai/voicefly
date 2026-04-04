@@ -44,13 +44,13 @@ interface PhoneOrder {
 }
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  confirmed: 'bg-blue-100 text-blue-700',
-  preparing: 'bg-purple-100 text-purple-700',
-  ready: 'bg-green-100 text-green-700',
-  out_for_delivery: 'bg-indigo-100 text-indigo-700',
-  completed: 'bg-gray-100 text-gray-600',
-  cancelled: 'bg-red-100 text-red-600',
+  pending: 'bg-accent/10 text-accent',
+  confirmed: 'bg-brand-primary/10 text-brand-primary',
+  preparing: 'bg-purple-500/10 text-purple-400',
+  ready: 'bg-emerald-500/10 text-emerald-500',
+  out_for_delivery: 'bg-indigo-500/10 text-indigo-400',
+  completed: 'bg-surface-high text-text-secondary',
+  cancelled: 'bg-[#93000a]/10 text-[#ffb4ab]',
 }
 
 const statusFlow = ['pending', 'confirmed', 'preparing', 'ready', 'completed']
@@ -114,27 +114,35 @@ function OrdersPage() {
 
   return (
     <Layout business={business}>
-      <div className="p-8 max-w-5xl">
+      <div className="p-8 space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <div className="flex items-center gap-2.5 mb-1">
-              <ShoppingBagIcon className="h-7 w-7 text-orange-500" />
-              <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-              {activeCount > 0 && (
-                <span className="inline-flex items-center justify-center h-6 min-w-[24px] px-2 rounded-full bg-orange-600 text-white text-xs font-medium">
-                  {activeCount} active
-                </span>
-              )}
-            </div>
-            <p className="text-sm text-gray-500">
-              Orders taken by your AI employees over the phone
-            </p>
+        <div>
+          <h1 className="text-3xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight">Orders</h1>
+          <p className="text-text-secondary mt-1">Orders taken by your AI employees over the phone</p>
+        </div>
+
+        {/* Stats Bar */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-surface-low p-6 rounded-2xl">
+            <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Total Orders</p>
+            <p className="text-3xl font-extrabold text-text-primary font-[family-name:var(--font-manrope)]">{orders.length.toLocaleString()}</p>
+          </div>
+          <div className="bg-surface-low p-6 rounded-2xl">
+            <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Active</p>
+            <p className="text-3xl font-extrabold text-accent font-[family-name:var(--font-manrope)]">{activeCount}</p>
+          </div>
+          <div className="bg-surface-low p-6 rounded-2xl">
+            <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Completed</p>
+            <p className="text-3xl font-extrabold text-emerald-500 font-[family-name:var(--font-manrope)]">{orders.filter(o => o.status === 'completed').length}</p>
+          </div>
+          <div className="bg-surface-low p-6 rounded-2xl">
+            <p className="text-xs uppercase tracking-widest text-text-muted mb-1">Cancelled</p>
+            <p className="text-3xl font-extrabold text-[#ffb4ab] font-[family-name:var(--font-manrope)]">{orders.filter(o => o.status === 'cancelled').length}</p>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2">
           {[
             { key: 'active', label: `Active (${activeCount})` },
             { key: 'all', label: 'All' },
@@ -146,8 +154,8 @@ function OrdersPage() {
               onClick={() => setFilter(f.key)}
               className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                 filter === f.key
-                  ? 'bg-orange-100 text-orange-700 font-medium'
-                  : 'text-gray-500 hover:bg-gray-100'
+                  ? 'bg-accent/10 text-accent font-medium'
+                  : 'text-text-secondary hover:bg-surface-high'
               }`}
             >
               {f.label}
@@ -157,14 +165,14 @@ function OrdersPage() {
 
         {/* Orders List */}
         {loading ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <div className="animate-pulse text-gray-400">Loading orders...</div>
+          <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-12 text-center">
+            <div className="animate-pulse text-text-muted">Loading orders...</div>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <ShoppingBagIcon className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-            <h3 className="text-sm font-medium text-gray-900 mb-1">No orders</h3>
-            <p className="text-xs text-gray-500">
+          <div className="bg-surface-low rounded-lg border border-[rgba(65,71,84,0.15)] p-12 text-center">
+            <ShoppingBagIcon className="h-12 w-12 text-text-muted mx-auto mb-3" />
+            <h3 className="text-sm font-medium text-text-primary mb-1">No orders</h3>
+            <p className="text-xs text-text-secondary">
               {filter === 'active'
                 ? 'No active orders right now.'
                 : 'Orders taken during calls will appear here.'}
@@ -175,8 +183,8 @@ function OrdersPage() {
             {filtered.map(order => (
               <div
                 key={order.id}
-                className={`bg-white rounded-lg border transition-colors ${
-                  order.status === 'pending' ? 'border-yellow-200' : 'border-gray-200'
+                className={`bg-surface-low rounded-lg border transition-colors ${
+                  order.status === 'pending' ? 'border-yellow-200' : 'border-[rgba(65,71,84,0.15)]'
                 }`}
               >
                 {/* Order Header */}
@@ -187,29 +195,29 @@ function OrdersPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
                       <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center mt-0.5 ${
-                        order.order_type === 'delivery' ? 'bg-indigo-100' : 'bg-orange-100'
+                        order.order_type === 'delivery' ? 'bg-indigo-500/10' : 'bg-accent/10'
                       }`}>
                         {order.order_type === 'delivery'
-                          ? <TruckIcon className="h-5 w-5 text-indigo-600" />
+                          ? <TruckIcon className="h-5 w-5 text-indigo-400" />
                           : <ShoppingBagIcon className="h-5 w-5 text-orange-600" />
                         }
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-sm font-medium text-text-primary">
                             {order.customer_name}
                           </span>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${statusColors[order.status] || statusColors.pending}`}>
                             {order.status.replace('_', ' ')}
                           </span>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-surface-high text-text-secondary">
                             {order.order_type}
                           </span>
                         </div>
-                        <p className="text-sm text-gray-600 mt-0.5">
+                        <p className="text-sm text-text-secondary mt-0.5">
                           {order.items.length} item{order.items.length !== 1 ? 's' : ''} &middot; ${Number(order.total).toFixed(2)}
                         </p>
-                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
+                        <div className="flex items-center gap-3 mt-1 text-xs text-text-muted">
                           <span>{formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}</span>
                           {order.estimated_ready && (
                             <span>Ready: {format(new Date(order.estimated_ready), 'h:mm a')}</span>
@@ -217,7 +225,7 @@ function OrdersPage() {
                         </div>
                       </div>
                     </div>
-                    <span className="text-lg font-semibold text-gray-900">
+                    <span className="text-lg font-semibold text-text-primary">
                       ${Number(order.total).toFixed(2)}
                     </span>
                   </div>
@@ -225,53 +233,53 @@ function OrdersPage() {
 
                 {/* Expanded Content */}
                 {expandedId === order.id && (
-                  <div className="px-4 pb-4 border-t border-gray-100 pt-3 ml-[52px]">
+                  <div className="px-4 pb-4 border-t border-[rgba(65,71,84,0.1)] pt-3 ml-[52px]">
                     {/* Items */}
-                    <div className="bg-gray-50 rounded-lg p-3 mb-3">
+                    <div className="bg-surface rounded-lg p-3 mb-3">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="text-xs text-gray-500">
+                          <tr className="text-xs text-text-secondary">
                             <th className="text-left pb-2">Item</th>
                             <th className="text-center pb-2">Qty</th>
                             <th className="text-right pb-2">Price</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200">
+                        <tbody className="divide-y divide-[rgba(65,71,84,0.15)]">
                           {order.items.map((item, i) => (
                             <tr key={i}>
-                              <td className="py-1.5 text-gray-700">
+                              <td className="py-1.5 text-text-primary">
                                 {item.name}
                                 {item.modifiers?.length ? (
-                                  <span className="text-xs text-gray-400 ml-1">
+                                  <span className="text-xs text-text-muted ml-1">
                                     ({item.modifiers.join(', ')})
                                   </span>
                                 ) : null}
                                 {item.specialInstructions && (
-                                  <p className="text-xs text-gray-400 italic">{item.specialInstructions}</p>
+                                  <p className="text-xs text-text-muted italic">{item.specialInstructions}</p>
                                 )}
                               </td>
-                              <td className="py-1.5 text-center text-gray-600">{item.quantity}</td>
-                              <td className="py-1.5 text-right text-gray-600">${(item.price * item.quantity).toFixed(2)}</td>
+                              <td className="py-1.5 text-center text-text-secondary">{item.quantity}</td>
+                              <td className="py-1.5 text-right text-text-secondary">${(item.price * item.quantity).toFixed(2)}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
 
-                      <div className="border-t border-gray-200 mt-2 pt-2 text-xs text-gray-500 space-y-0.5">
+                      <div className="border-t border-[rgba(65,71,84,0.15)] mt-2 pt-2 text-xs text-text-secondary space-y-0.5">
                         <div className="flex justify-between"><span>Subtotal</span><span>${Number(order.subtotal).toFixed(2)}</span></div>
                         {Number(order.tax) > 0 && <div className="flex justify-between"><span>Tax</span><span>${Number(order.tax).toFixed(2)}</span></div>}
                         {Number(order.delivery_fee) > 0 && <div className="flex justify-between"><span>Delivery fee</span><span>${Number(order.delivery_fee).toFixed(2)}</span></div>}
                         {Number(order.tip) > 0 && <div className="flex justify-between"><span>Tip</span><span>${Number(order.tip).toFixed(2)}</span></div>}
-                        <div className="flex justify-between font-medium text-gray-900 text-sm pt-1 border-t border-gray-200">
+                        <div className="flex justify-between font-medium text-text-primary text-sm pt-1 border-t border-[rgba(65,71,84,0.15)]">
                           <span>Total</span><span>${Number(order.total).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Customer info */}
-                    <div className="flex flex-wrap gap-4 text-xs text-gray-500 mb-3">
+                    <div className="flex flex-wrap gap-4 text-xs text-text-secondary mb-3">
                       {order.customer_phone && (
-                        <a href={`tel:${order.customer_phone}`} className="flex items-center gap-1 text-blue-600 hover:underline">
+                        <a href={`tel:${order.customer_phone}`} className="flex items-center gap-1 text-brand-primary hover:underline">
                           <PhoneIcon className="h-3.5 w-3.5" /> {order.customer_phone}
                         </a>
                       )}
@@ -297,7 +305,7 @@ function OrdersPage() {
                           return (
                             <button
                               onClick={() => updateOrderStatus(order.id, nextStatus)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand-primary bg-brand-primary/5 rounded-lg hover:bg-brand-primary/10 transition-colors"
                             >
                               <CheckCircleIcon className="h-4 w-4" />
                               Mark {nextStatus.replace('_', ' ')}
@@ -306,7 +314,7 @@ function OrdersPage() {
                         })()}
                         <button
                           onClick={() => updateOrderStatus(order.id, 'cancelled')}
-                          className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium text-[#ffb4ab] bg-[#93000a]/5 rounded-lg hover:bg-[#93000a]/10 transition-colors"
                         >
                           Cancel Order
                         </button>

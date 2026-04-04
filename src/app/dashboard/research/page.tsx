@@ -214,22 +214,22 @@ export default function ResearchPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-surface-low border-b border-[rgba(65,71,84,0.15)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <SparklesIcon className="w-8 h-8 text-purple-600" />
+              <h1 className="text-3xl font-bold text-text-primary flex items-center gap-3">
+                <SparklesIcon className="w-8 h-8 text-purple-400" />
                 AI Research Hub
               </h1>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-text-secondary">
                 Deep research powered by multiple AI agents
               </p>
             </div>
             <div className="flex gap-2">
-              <button className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+              <button className="px-4 py-2 text-sm font-medium text-text-primary bg-surface-low border border-[rgba(65,71,84,0.2)] rounded-lg hover:bg-surface">
                 <BookmarkIcon className="w-4 h-4 inline mr-2" />
                 Saved ({savedResearch.length})
               </button>
@@ -248,87 +248,87 @@ export default function ResearchPage() {
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
             {/* Research Modes */}
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Research Mode</h3>
+            <div className="bg-surface-low rounded-lg shadow-sm p-4">
+              <h3 className="text-sm font-semibold text-text-primary mb-3">Research Mode</h3>
               <div className="space-y-2">
                 <button
                   onClick={() => setMode('deep')}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     mode === 'deep'
-                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-purple-50 text-purple-400 border border-purple-200'
+                      : 'text-text-primary hover:bg-surface'
                   }`}
                 >
                   <BeakerIcon className="w-4 h-4 inline mr-2" />
                   Deep Research
-                  <span className="block text-xs text-gray-500 mt-1">2-4 min, comprehensive</span>
+                  <span className="block text-xs text-text-secondary mt-1">2-4 min, comprehensive</span>
                 </button>
                 <button
                   onClick={() => setMode('quick')}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     mode === 'quick'
-                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-purple-50 text-purple-400 border border-purple-200'
+                      : 'text-text-primary hover:bg-surface'
                   }`}
                 >
                   <MagnifyingGlassIcon className="w-4 h-4 inline mr-2" />
                   Quick Answer
-                  <span className="block text-xs text-gray-500 mt-1">30 sec, concise</span>
+                  <span className="block text-xs text-text-secondary mt-1">30 sec, concise</span>
                 </button>
                 <button
                   onClick={() => setMode('prospect')}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     mode === 'prospect'
-                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-purple-50 text-purple-400 border border-purple-200'
+                      : 'text-text-primary hover:bg-surface'
                   }`}
                 >
                   <UserGroupIcon className="w-4 h-4 inline mr-2" />
                   Prospect Intel
-                  <span className="block text-xs text-gray-500 mt-1">Find & analyze prospects</span>
+                  <span className="block text-xs text-text-secondary mt-1">Find & analyze prospects</span>
                 </button>
                 <button
                   onClick={() => setMode('competitor')}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     mode === 'competitor'
-                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-purple-50 text-purple-400 border border-purple-200'
+                      : 'text-text-primary hover:bg-surface'
                   }`}
                 >
                   <BuildingOfficeIcon className="w-4 h-4 inline mr-2" />
                   Competitor Analysis
-                  <span className="block text-xs text-gray-500 mt-1">Features, pricing, reviews</span>
+                  <span className="block text-xs text-text-secondary mt-1">Features, pricing, reviews</span>
                 </button>
                 <button
                   onClick={() => setMode('market')}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     mode === 'market'
-                      ? 'bg-purple-50 text-purple-700 border border-purple-200'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-purple-50 text-purple-400 border border-purple-200'
+                      : 'text-text-primary hover:bg-surface'
                   }`}
                 >
                   <ChartBarIcon className="w-4 h-4 inline mr-2" />
                   Market Research
-                  <span className="block text-xs text-gray-500 mt-1">Trends, size, opportunities</span>
+                  <span className="block text-xs text-text-secondary mt-1">Trends, size, opportunities</span>
                 </button>
               </div>
             </div>
 
             {/* Recent Research */}
             {savedResearch.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Recent Research</h3>
+              <div className="bg-surface-low rounded-lg shadow-sm p-4">
+                <h3 className="text-sm font-semibold text-text-primary mb-3">Recent Research</h3>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {savedResearch.map((research) => (
                     <button
                       key={research.id}
                       onClick={() => loadSavedResearch(research)}
-                      className="w-full text-left p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                      className="w-full text-left p-2 rounded-lg hover:bg-surface transition-colors"
                     >
-                      <div className="text-sm font-medium text-gray-900 truncate">
+                      <div className="text-sm font-medium text-text-primary truncate">
                         {research.title}
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className="text-xs text-text-secondary mt-1">
                         {new Date(research.timestamp).toLocaleDateString()}
                       </div>
                     </button>
@@ -341,7 +341,7 @@ export default function ResearchPage() {
           {/* Main Content */}
           <div className="lg:col-span-3">
             {/* Search Input */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="bg-surface-low rounded-lg shadow-sm p-6 mb-6">
               <div className="relative">
                 <textarea
                   ref={textareaRef}
@@ -353,7 +353,7 @@ export default function ResearchPage() {
                     }
                   }}
                   placeholder="Ask anything... Try: 'Find all dental practices in Miami with 3+ locations'"
-                  className="w-full px-4 py-3 pr-24 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
+                  className="w-full px-4 py-3 pr-24 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-brand-primary resize-none"
                   rows={3}
                 />
                 <button
@@ -374,15 +374,15 @@ export default function ResearchPage() {
                   )}
                 </button>
               </div>
-              <div className="mt-2 text-xs text-gray-500">
+              <div className="mt-2 text-xs text-text-secondary">
                 Cmd/Ctrl + Enter to search • {mode === 'deep' ? '2-4 min' : '30 sec'} • Sources cited
               </div>
             </div>
 
             {/* Templates */}
             {showTemplates && (
-              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <h3 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="bg-surface-low rounded-lg shadow-sm p-6 mb-6">
+                <h3 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
                   <LightBulbIcon className="w-5 h-5 text-yellow-500" />
                   Research Templates
                 </h3>
@@ -391,9 +391,9 @@ export default function ResearchPage() {
                     <button
                       key={idx}
                       onClick={() => useTemplate(template)}
-                      className="w-full text-left px-4 py-3 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors group"
+                      className="w-full text-left px-4 py-3 border border-[rgba(65,71,84,0.15)] rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors group"
                     >
-                      <div className="text-sm text-gray-700 group-hover:text-purple-700">
+                      <div className="text-sm text-text-primary group-hover:text-purple-400">
                         {template}
                       </div>
                     </button>
@@ -404,23 +404,23 @@ export default function ResearchPage() {
 
             {/* Results */}
             {streamedContent && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="bg-surface-low rounded-lg shadow-sm p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     {status === 'searching' && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 text-sm text-text-secondary">
                         <ArrowPathIcon className="w-4 h-4 animate-spin" />
                         Searching sources...
                       </div>
                     )}
                     {status === 'analyzing' && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 text-sm text-text-secondary">
                         <BeakerIcon className="w-4 h-4 animate-pulse" />
                         Analyzing data...
                       </div>
                     )}
                     {status === 'complete' && (
-                      <div className="flex items-center gap-2 text-sm text-green-600">
+                      <div className="flex items-center gap-2 text-sm text-emerald-500">
                         <SparklesIcon className="w-4 h-4" />
                         Research complete
                       </div>
@@ -429,20 +429,20 @@ export default function ResearchPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={copyToClipboard}
-                      className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+                      className="p-2 text-text-secondary hover:text-text-primary hover:bg-surface-high rounded-lg"
                       title="Copy to clipboard"
                     >
                       <ClipboardDocumentIcon className="w-5 h-5" />
                     </button>
                     <button
                       onClick={saveAsNote}
-                      className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+                      className="p-2 text-text-secondary hover:text-text-primary hover:bg-surface-high rounded-lg"
                       title="Save as note"
                     >
                       <BookmarkIcon className="w-5 h-5" />
                     </button>
                     <button
-                      className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+                      className="p-2 text-text-secondary hover:text-text-primary hover:bg-surface-high rounded-lg"
                       title="Share research"
                     >
                       <LinkIcon className="w-5 h-5" />
@@ -452,7 +452,7 @@ export default function ResearchPage() {
 
                 <div className="prose prose-sm max-w-none">
                   <div
-                    className="whitespace-pre-wrap text-gray-700 leading-relaxed"
+                    className="whitespace-pre-wrap text-text-primary leading-relaxed"
                     dangerouslySetInnerHTML={{
                       __html: DOMPurify.sanitize(
                         streamedContent
@@ -461,8 +461,8 @@ export default function ResearchPage() {
                           .replace(/^### (.*)/gm, '<h3 class="text-lg font-medium mt-4 mb-2">$3</h3>')
                           .replace(/^\*\*(.*)\*\*/gm, '<strong>$1</strong>')
                           .replace(/^• (.*)/gm, '<li class="ml-4">$1</li>')
-                          .replace(/^✓ (.*)/gm, '<li class="ml-4 text-green-600">✓ $1</li>')
-                          .replace(/^❌ (.*)/gm, '<li class="ml-4 text-red-600">❌ $1</li>')
+                          .replace(/^✓ (.*)/gm, '<li class="ml-4 text-emerald-500">✓ $1</li>')
+                          .replace(/^❌ (.*)/gm, '<li class="ml-4 text-[#ffb4ab]">❌ $1</li>')
                       )
                     }}
                   />
@@ -472,12 +472,12 @@ export default function ResearchPage() {
 
             {/* Empty State */}
             {!streamedContent && !showTemplates && (
-              <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-                <GlobeAltIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <div className="bg-surface-low rounded-lg shadow-sm p-12 text-center">
+                <GlobeAltIcon className="w-16 h-16 text-text-muted mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-text-primary mb-2">
                   Start Your Research
                 </h3>
-                <p className="text-gray-500 mb-6">
+                <p className="text-text-secondary mb-6">
                   Enter a query above or select a template to begin
                 </p>
                 <button

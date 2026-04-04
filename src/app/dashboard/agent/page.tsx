@@ -158,10 +158,10 @@ export default function AgentConfigPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading agent configuration...</p>
+          <p className="mt-4 text-text-secondary">Loading agent configuration...</p>
         </div>
       </div>
     )
@@ -169,13 +169,13 @@ export default function AgentConfigPage() {
 
   if (!businessId) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Business Not Found</h2>
-          <p className="text-gray-600 mb-4">Unable to load agent configuration.</p>
+          <h2 className="text-xl font-semibold text-text-primary mb-2">Business Not Found</h2>
+          <p className="text-text-secondary mb-4">Unable to load agent configuration.</p>
           <button 
             onClick={() => router.push('/dashboard')}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-[#0060d0] transition-colors"
           >
             Return to Dashboard
           </button>
@@ -185,12 +185,12 @@ export default function AgentConfigPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface">
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Maya Agent Configuration</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-2xl font-bold text-text-primary">Maya Agent Configuration</h1>
+          <p className="mt-2 text-text-secondary">
             Manage your Maya AI assistant settings, role configuration, and Business tier customization options.
           </p>
         </div>
@@ -200,14 +200,14 @@ export default function AgentConfigPage() {
           <AgentCustomization businessId={businessId} />
           
           {/* Additional Agent Management Features */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Agent Management</h3>
+          <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
+            <h3 className="text-lg font-semibold text-text-primary mb-4">Agent Management</h3>
             <div className="grid md:grid-cols-2 gap-6">
               
               {/* Test Agent */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-2">Test Your Agent</h4>
-                <p className="text-sm text-gray-600 mb-4">
+              <div className="border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
+                <h4 className="font-medium text-text-primary mb-2">Test Your Agent</h4>
+                <p className="text-sm text-text-secondary mb-4">
                   Make a test call to verify your Maya AI agent is working correctly with your current configuration.
                 </p>
                 {!testCall.isOpen ? (
@@ -216,8 +216,8 @@ export default function AgentConfigPage() {
                     disabled={!businessData?.agent_id}
                     className={`px-4 py-2 rounded-lg transition-colors text-sm ${
                       businessData?.agent_id
-                        ? 'bg-green-600 text-white hover:bg-green-700'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        ? 'bg-emerald-500 text-white hover:bg-green-700'
+                        : 'bg-surface-highest text-text-secondary cursor-not-allowed'
                     }`}
                   >
                     {businessData?.agent_id ? 'Make Test Call' : 'Agent Not Configured'}
@@ -225,7 +225,7 @@ export default function AgentConfigPage() {
                 ) : (
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-text-primary mb-1">
                         Phone Number to Call
                       </label>
                       <input
@@ -233,23 +233,23 @@ export default function AgentConfigPage() {
                         value={testCall.phoneNumber}
                         onChange={(e) => setTestCall(prev => ({ ...prev, phoneNumber: e.target.value }))}
                         placeholder="+1 (555) 123-4567"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
+                        className="w-full px-3 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm"
                         disabled={testCall.loading}
                       />
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-text-secondary mt-1">
                         Your AI agent will call this number
                       </p>
                     </div>
 
                     {testCall.error && (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                        <p className="text-sm text-red-600">{testCall.error}</p>
+                      <div className="bg-[#93000a]/5 border border-red-200 rounded-lg p-3">
+                        <p className="text-sm text-[#ffb4ab]">{testCall.error}</p>
                       </div>
                     )}
 
                     {testCall.status && !testCall.error && (
                       <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                        <p className="text-sm text-green-700">{testCall.status}</p>
+                        <p className="text-sm text-emerald-500">{testCall.status}</p>
                       </div>
                     )}
 
@@ -259,8 +259,8 @@ export default function AgentConfigPage() {
                         disabled={testCall.loading || !testCall.phoneNumber}
                         className={`flex-1 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
                           testCall.loading || !testCall.phoneNumber
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : 'bg-green-600 text-white hover:bg-green-700'
+                            ? 'bg-surface-highest text-text-secondary cursor-not-allowed'
+                            : 'bg-emerald-500 text-white hover:bg-green-700'
                         }`}
                       >
                         {testCall.loading ? (
@@ -278,7 +278,7 @@ export default function AgentConfigPage() {
                       <button
                         onClick={() => setTestCall(prev => ({ ...prev, isOpen: false, status: null, error: null }))}
                         disabled={testCall.loading}
-                        className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+                        className="px-4 py-2 border border-[rgba(65,71,84,0.2)] rounded-lg text-text-primary hover:bg-surface transition-colors text-sm"
                       >
                         Cancel
                       </button>
@@ -288,23 +288,23 @@ export default function AgentConfigPage() {
               </div>
 
               {/* Performance Metrics */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-2">Performance Metrics</h4>
-                <p className="text-sm text-gray-600 mb-4">
+              <div className="border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
+                <h4 className="font-medium text-text-primary mb-2">Performance Metrics</h4>
+                <p className="text-sm text-text-secondary mb-4">
                   View detailed analytics about your Maya AI agent's performance and booking success rate.
                 </p>
                 <button 
                   onClick={() => router.push('/dashboard/analytics')}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                  className="bg-brand-primary text-white px-4 py-2 rounded-lg hover:bg-[#0060d0] transition-colors text-sm"
                 >
                   View Analytics
                 </button>
               </div>
 
               {/* Agent Training */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-2">Agent Training</h4>
-                <p className="text-sm text-gray-600 mb-4">
+              <div className="border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
+                <h4 className="font-medium text-text-primary mb-2">Agent Training</h4>
+                <p className="text-sm text-text-secondary mb-4">
                   Provide additional context and training to improve your Maya AI agent's responses.
                 </p>
                 <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm">
@@ -313,9 +313,9 @@ export default function AgentConfigPage() {
               </div>
 
               {/* Business Tier Upgrade */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium text-gray-900 mb-2">Custom Agent Features</h4>
-                <p className="text-sm text-gray-600 mb-4">
+              <div className="border border-[rgba(65,71,84,0.15)] rounded-lg p-4">
+                <h4 className="font-medium text-text-primary mb-2">Custom Agent Features</h4>
+                <p className="text-sm text-text-secondary mb-4">
                   Unlock custom branding, personality, and advanced agent configuration with Business tier.
                 </p>
                 <button 
@@ -330,62 +330,62 @@ export default function AgentConfigPage() {
           </div>
 
           {/* Integration Status */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Integration Status</h3>
+          <div className="bg-surface-low rounded-lg shadow-sm border border-[rgba(65,71,84,0.15)] p-6">
+            <h3 className="text-lg font-semibold text-text-primary mb-4">Integration Status</h3>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
+              <div className="flex items-center justify-between py-3 border-b border-[rgba(65,71,84,0.1)]">
                 <div className="flex items-center">
-                  <div className={`w-3 h-3 rounded-full mr-3 ${businessData?.agent_id ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                  <div className={`w-3 h-3 rounded-full mr-3 ${businessData?.agent_id ? 'bg-emerald-500' : 'bg-yellow-500'}`}></div>
                   <div>
-                    <p className="font-medium text-gray-900">VAPI Integration</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-text-primary">VAPI Integration</p>
+                    <p className="text-sm text-text-secondary">
                       {businessData?.agent_id ? 'AI agent connected and active' : 'AI agent not yet provisioned'}
                     </p>
                   </div>
                 </div>
-                <span className={`text-sm font-medium ${businessData?.agent_id ? 'text-green-600' : 'text-yellow-600'}`}>
+                <span className={`text-sm font-medium ${businessData?.agent_id ? 'text-emerald-500' : 'text-yellow-600'}`}>
                   {businessData?.agent_id ? 'Connected' : 'Pending'}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
+              <div className="flex items-center justify-between py-3 border-b border-[rgba(65,71,84,0.1)]">
                 <div className="flex items-center">
-                  <div className={`w-3 h-3 rounded-full mr-3 ${businessData?.phone_number ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                  <div className={`w-3 h-3 rounded-full mr-3 ${businessData?.phone_number ? 'bg-emerald-500' : 'bg-yellow-500'}`}></div>
                   <div>
-                    <p className="font-medium text-gray-900">Phone Number</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="font-medium text-text-primary">Phone Number</p>
+                    <p className="text-sm text-text-secondary">
                       {businessData?.phone_number
                         ? `Dedicated AI phone line: ${businessData.phone_number}`
                         : 'Phone line not yet provisioned'}
                     </p>
                   </div>
                 </div>
-                <span className={`text-sm font-medium ${businessData?.phone_number ? 'text-green-600' : 'text-yellow-600'}`}>
+                <span className={`text-sm font-medium ${businessData?.phone_number ? 'text-emerald-500' : 'text-yellow-600'}`}>
                   {businessData?.phone_number ? 'Active' : 'Pending'}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
+              <div className="flex items-center justify-between py-3 border-b border-[rgba(65,71,84,0.1)]">
                 <div className="flex items-center">
-                  <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                  <div className="w-3 h-3 bg-emerald-500 rounded-full mr-3"></div>
                   <div>
-                    <p className="font-medium text-gray-900">Webhook Configuration</p>
-                    <p className="text-sm text-gray-500">Multi-tenant routing configured</p>
+                    <p className="font-medium text-text-primary">Webhook Configuration</p>
+                    <p className="text-sm text-text-secondary">Multi-tenant routing configured</p>
                   </div>
                 </div>
-                <span className="text-sm text-green-600 font-medium">Configured</span>
+                <span className="text-sm text-emerald-500 font-medium">Configured</span>
               </div>
 
               <div className="flex items-center justify-between py-3">
                 <div className="flex items-center">
-                  <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                  <div className="w-3 h-3 bg-emerald-500 rounded-full mr-3"></div>
                   <div>
-                    <p className="font-medium text-gray-900">Database Integration</p>
-                    <p className="text-sm text-gray-500">Customer and appointment data synced</p>
+                    <p className="font-medium text-text-primary">Database Integration</p>
+                    <p className="text-sm text-text-secondary">Customer and appointment data synced</p>
                   </div>
                 </div>
-                <span className="text-sm text-green-600 font-medium">Synced</span>
+                <span className="text-sm text-emerald-500 font-medium">Synced</span>
               </div>
             </div>
 
@@ -396,7 +396,7 @@ export default function AgentConfigPage() {
                 </p>
                 <button
                   onClick={() => router.push('/onboarding')}
-                  className="mt-2 text-sm text-yellow-700 font-medium hover:text-yellow-800 underline"
+                  className="mt-2 text-sm text-accent font-medium hover:text-yellow-800 underline"
                 >
                   Complete Onboarding &rarr;
                 </button>
