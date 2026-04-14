@@ -15,8 +15,7 @@ import LocationSelector from '../../../components/LocationSelector'
 import { PaymentAPIImpl, BusinessAPI, LocationAPIImpl } from '../../../lib/supabase'
 import type { PaymentWithDetails, Business, Location } from '../../../lib/supabase-types-mvp'
 
-// Mock business ID - in real app, this would come from auth context
-const DEMO_BUSINESS_ID = '8424aa26-4fd5-4d4b-92aa-8a9c5ba77dad'
+import { getSecureBusinessId, redirectToLoginIfUnauthenticated } from '../../../lib/multi-tenant-auth'
 
 interface PaymentFilters {
   search: string
@@ -61,15 +60,19 @@ export default function PaymentsPage() {
       setIsPageLoading(true)
       setError(null)
 
+      if (redirectToLoginIfUnauthenticated()) return
+      const bid = getSecureBusinessId()
+      if (!bid) { setError('Authentication required.'); setIsPageLoading(false); return }
+
       // Load business info
-      const businessData = await BusinessAPI.getBusiness(DEMO_BUSINESS_ID)
+      const businessData = await BusinessAPI.getBusiness(bid)
       if (businessData) {
         setBusiness(businessData)
       }
 
       // Load locations for Business+ plans
       if (businessData && ['business', 'enterprise'].includes(businessData.subscription_tier)) {
-        const locationsData = await locationAPI.getLocations(DEMO_BUSINESS_ID)
+        const locationsData = await locationAPI.getLocations(bid)
         setLocations(locationsData)
       }
 
@@ -93,7 +96,9 @@ export default function PaymentsPage() {
         limit: 50
       }
 
-      const paymentsData = await paymentAPI.getPayments(DEMO_BUSINESS_ID, filterParams)
+      const bid = getSecureBusinessId()
+      if (!bid) return
+      const paymentsData = await paymentAPI.getPayments(bid, filterParams)
       
       // Apply client-side filters
       let filteredPayments = paymentsData

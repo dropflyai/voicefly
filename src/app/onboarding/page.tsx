@@ -1152,18 +1152,28 @@ export default function OnboardingPage() {
         )
       }
 
-      // ── Step 3: Get phone number ────────────────────────────────────────────
+      // ── Step 3: Connect your business phone ─────────────────────────────────
       case 3:
         return (
           <div className="max-w-lg mx-auto">
             <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Get {form.employeeName || 'your employee'} a phone number</h2>
-              <p className="text-gray-500">We'll provision a dedicated Twilio number — calls <strong>and</strong> SMS included</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Connect your business phone</h2>
+              <p className="text-gray-500">Keep your existing number — just forward calls to {form.employeeName || 'your AI employee'}. Your customers won&apos;t notice any change.</p>
+            </div>
+
+            <div className="bg-green-50 border border-green-200 rounded-xl p-5 mb-6">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-green-900 text-sm">Your number stays the same</p>
+                  <p className="text-sm text-green-800 mt-1">We set up a behind-the-scenes number for {form.employeeName || 'your AI employee'}. You forward your existing business line to it — your customers keep calling the number they already know. Forwarding is instant and takes under 2 minutes.</p>
+                </div>
+              </div>
             </div>
 
             <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-3">
-                Preferred area code <span className="text-gray-400 font-normal">(optional — we'll find the best match)</span>
+                Preferred area code <span className="text-gray-400 font-normal">(optional — we&apos;ll match your local area)</span>
               </label>
               <input
                 type="text"
@@ -1176,13 +1186,13 @@ export default function OnboardingPage() {
             </div>
 
             <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 space-y-3 text-sm">
-              <p className="font-semibold text-blue-900">What you get with this number:</p>
+              <p className="font-semibold text-blue-900">What&apos;s included:</p>
               <ul className="space-y-1.5 text-blue-800">
                 {[
-                  'Inbound voice calls handled by your AI employee 24/7',
+                  'AI answers your calls 24/7 — no hold music, no voicemail',
                   'SMS capability — confirmations, reminders, follow-ups',
-                  'Keep your existing number — just forward calls to this one',
                   'Full call recordings and transcripts in your dashboard',
+                  'We\'ll walk you through forwarding setup after this step',
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -1538,25 +1548,54 @@ export default function OnboardingPage() {
             {form.provisionedPhone ? (
               <>
                 <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl p-8 text-white mb-6">
-                  <p className="text-blue-200 text-sm mb-2">Your new phone number</p>
+                  <p className="text-blue-200 text-sm mb-2">Test {form.employeeName || 'your employee'} right now</p>
                   <p className="text-4xl font-bold font-mono tracking-wide mb-4">{form.provisionedPhone}</p>
                   <a
                     href={`tel:${form.provisionedPhone}`}
                     className="inline-block bg-white text-blue-700 font-semibold px-8 py-3 rounded-xl hover:bg-blue-50 transition-colors"
                   >
-                    Call now to test {form.employeeName}
+                    Call now to test
                   </a>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-800 text-left mb-6">
-                  <p className="font-semibold mb-2">Want to keep your existing number?</p>
-                  <p>Forward calls from your current number to <strong>{form.provisionedPhone}</strong>. Most carriers let you do this in your account settings — search "call forwarding" + your carrier name for instructions.</p>
+                <div className="bg-white border border-gray-200 rounded-xl p-6 text-left mb-6">
+                  <p className="font-semibold text-gray-900 mb-1">Forward your business phone to {form.employeeName || 'your AI'}</p>
+                  <p className="text-sm text-gray-500 mb-4">Your existing number stays the same. Just set up forwarding — it takes under 2 minutes and goes live instantly.</p>
+
+                  <div className="space-y-3 text-sm">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="font-medium text-gray-900 mb-2">iPhone / AT&T / T-Mobile / Most Carriers</p>
+                      <p className="text-gray-600 font-mono">Dial: <strong>*72{form.provisionedPhone.replace(/\D/g, '')}</strong></p>
+                      <p className="text-gray-500 text-xs mt-1">Press call and wait for confirmation tone. To undo later: dial *73</p>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="font-medium text-gray-900 mb-2">Verizon</p>
+                      <p className="text-gray-600 font-mono">Dial: <strong>*72</strong> then <strong>{form.provisionedPhone.replace(/\D/g, '')}</strong> when prompted</p>
+                      <p className="text-gray-500 text-xs mt-1">Wait for confirmation beep. To undo later: dial *73</p>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="font-medium text-gray-900 mb-2">Google Voice / VoIP</p>
+                      <p className="text-gray-600">Go to Settings &gt; Calls &gt; Call Forwarding &gt; add <strong>{form.provisionedPhone}</strong></p>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="font-medium text-gray-900 mb-2">Business / Landline / Other</p>
+                      <p className="text-gray-600">Check your provider&apos;s admin portal or call them and ask to forward all calls to <strong>{form.provisionedPhone}</strong></p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex items-start gap-2 text-xs text-gray-500">
+                    <HelpCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                    <p>Forwarding is NOT porting — your number stays with your carrier, nothing changes for your customers. You can turn it off anytime.</p>
+                  </div>
                 </div>
               </>
             ) : (
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-sm text-amber-800 mb-6">
-                <p className="font-semibold mb-1">Phone number provisioning is in progress</p>
-                <p>Check your dashboard in a moment — your number will appear there once it's ready.</p>
+                <p className="font-semibold mb-1">Setting up your AI line</p>
+                <p>Check your dashboard in a moment — your number will appear there once it&apos;s ready.</p>
               </div>
             )}
 

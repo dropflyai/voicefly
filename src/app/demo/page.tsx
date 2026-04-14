@@ -197,7 +197,7 @@ function DemoPageContent() {
             href="/signup"
             className="text-sm font-medium text-brand-on bg-brand-primary px-4 py-2 rounded-md hover:bg-[#0060d0] transition-colors"
           >
-            Get Started Free
+            Forward Your Calls
           </Link>
         </div>
       </header>
@@ -354,15 +354,14 @@ function DemoPageContent() {
           <div className="mt-6 max-w-2xl mx-auto bg-surface-med rounded-xl p-6 text-center">
             <div className="text-2xl text-text-primary font-[family-name:var(--font-manrope)] mb-2">That was {industry.persona}.</div>
             <p className="text-text-secondary mb-5 text-sm">
-              That exact experience — answering calls, scheduling, routing, qualifying leads —
-              is what your business gets from day one.
+              Imagine that answering your business line 24/7. Forward your calls and find out.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href="/signup"
                 className="px-6 py-3 bg-brand-primary text-brand-on rounded-lg font-semibold text-sm hover:bg-[#0060d0] transition-colors"
               >
-                Get my AI employee — free trial
+                Forward your calls to AI — free for 14 days
               </Link>
               <button
                 onClick={() => { setCallEnded(false); setStatus('idle'); setTranscript([]) }}
@@ -371,7 +370,7 @@ function DemoPageContent() {
                 Try another demo
               </button>
             </div>
-            <p className="mt-4 text-xs text-text-muted">No credit card. 5 minutes to set up.</p>
+            <p className="mt-4 text-xs text-text-muted">Keep your number. Live in 2 minutes. No credit card.</p>
           </div>
         )}
 
@@ -398,15 +397,15 @@ function DemoPageContent() {
         {/* Bottom CTA */}
         <div className="text-center mt-14 pb-8">
           <p className="text-sm text-text-muted mb-3">
-            Ready to put an AI employee to work for you?
+            Ready to forward your calls and see how AI does?
           </p>
           <Link
             href="/signup"
             className="inline-flex items-center gap-2 px-6 py-3 bg-brand-primary text-brand-on rounded-md font-semibold text-sm hover:bg-[#0060d0] transition-colors"
           >
-            Start free trial →
+            Forward your calls to AI →
           </Link>
-          <p className="mt-2 text-xs text-text-muted">14-day trial. No credit card required.</p>
+          <p className="mt-2 text-xs text-text-muted">Your number stays the same. Free for 14 days.</p>
         </div>
       </main>
     </div>

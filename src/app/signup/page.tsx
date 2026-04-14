@@ -97,15 +97,6 @@ export default function SignupPage() {
     } catch { alert('Google Sign-In not yet configured. Please use email/password.') }
   }
 
-  const handleAppleSignUp = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'apple',
-        options: { redirectTo: `${window.location.origin}/dashboard` }
-      })
-      if (error) alert('Apple Sign-In not yet configured. Please use email/password.')
-    } catch { alert('Apple Sign-In not yet configured. Please use email/password.') }
-  }
 
   return (
     <div className="min-h-screen bg-surface flex font-[family-name:var(--font-inter)]">
@@ -120,11 +111,11 @@ export default function SignupPage() {
 
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight mb-2">
-              Get Started with VoiceFly
+              Forward Your Calls to AI
             </h1>
-            <p className="text-text-secondary">Set up your AI phone employee in minutes</p>
+            <p className="text-text-secondary">Keep your number. Your AI picks up every call, 24/7.</p>
             <p className="text-sm text-brand-light font-medium mt-2">
-              Setup takes under 2 minutes - No credit card needed
+              Live in 2 minutes — no credit card needed
             </p>
           </div>
 
@@ -143,15 +134,6 @@ export default function SignupPage() {
               Continue with Google
             </button>
 
-            <button
-              onClick={handleAppleSignUp}
-              className="w-full flex items-center justify-center px-4 py-3 bg-surface-high rounded-lg text-text-primary hover:bg-surface-highest transition-colors"
-            >
-              <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-              </svg>
-              Continue with Apple
-            </button>
           </div>
 
           {/* Divider */}
@@ -277,7 +259,7 @@ export default function SignupPage() {
           {/* Trust Signals */}
           <div className="mt-8 pt-6 border-t border-[rgba(65,71,84,0.15)]">
             <div className="grid grid-cols-2 gap-2 text-xs text-text-muted">
-              {['14-day free trial', 'No credit card needed', 'Cancel anytime', 'Live in 10 minutes'].map(signal => (
+              {['14-day free trial', 'Keep your number', 'Live in 2 minutes', 'Undo anytime with *73'].map(signal => (
                 <div key={signal} className="flex items-center">
                   <CheckCircle className="h-3 w-3 mr-1 text-brand-primary" />
                   {signal}
@@ -293,10 +275,10 @@ export default function SignupPage() {
         <div className="max-w-md">
           <div className="mb-12">
             <h2 className="text-3xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight mb-4">
-              Stop Missing Client Calls
+              Your number. Your AI.
             </h2>
             <p className="text-text-secondary text-lg">
-              Your AI phone employee answers every call, books appointments, and keeps your schedule full
+              Forward your business line and let AI answer every call, book appointments, and keep your schedule full
             </p>
           </div>
 

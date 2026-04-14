@@ -10,8 +10,7 @@ import { BrandedSMSService } from '../../../lib/branded-sms-service'
 import { BrandedEmailService } from '../../../lib/branded-email-service'
 import type { Location, CreateLocationRequest, Business } from '../../../lib/supabase-types-mvp'
 
-// Mock business ID - in real app, this would come from auth context
-const DEMO_BUSINESS_ID = '8424aa26-4fd5-4d4b-92aa-8a9c5ba77dad'
+import { getSecureBusinessId, redirectToLoginIfUnauthenticated } from '../../../lib/multi-tenant-auth'
 
 export default function LocationsPage() {
   const [locations, setLocations] = useState<Location[]>([])
@@ -21,6 +20,7 @@ export default function LocationsPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isPageLoading, setIsPageLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [businessId, setBusinessId] = useState<string | null>(null)
 
   const locationAPI = new LocationAPIImpl()
 
@@ -34,14 +34,19 @@ export default function LocationsPage() {
       setIsPageLoading(true)
       setError(null)
 
+      if (redirectToLoginIfUnauthenticated()) return
+      const bid = getSecureBusinessId()
+      if (!bid) { setError('Authentication required.'); setIsPageLoading(false); return }
+      setBusinessId(bid)
+
       // Load business info
-      const businessData = await BusinessAPI.getBusiness(DEMO_BUSINESS_ID)
+      const businessData = await BusinessAPI.getBusiness(bid)
       if (businessData) {
         setBusiness(businessData)
       }
 
       // Load locations
-      const locationsData = await locationAPI.getLocations(DEMO_BUSINESS_ID)
+      const locationsData = await locationAPI.getLocations(bid)
       setLocations(locationsData)
 
     } catch (error) {
@@ -77,7 +82,7 @@ export default function LocationsPage() {
       // First, send notifications to customers about location closure
       if (business) {
         await BrandedSMSService.sendEmergencyLocationBroadcast(
-          DEMO_BUSINESS_ID,
+          businessId!,
           `Important: Our ${location.name} location is permanently closing. We will contact you personally to reschedule your appointments at our other locations. Thank you for your understanding.`,
           [locationId]
         )
@@ -122,7 +127,7 @@ export default function LocationsPage() {
         //   staffPhoneNumber,
         //   `Primary location has been changed to ${location.name}. Please update your schedules accordingly.`,
         //   locationId,
-        //   DEMO_BUSINESS_ID
+        //   businessId!
         // )
       }
       
@@ -148,7 +153,7 @@ export default function LocationsPage() {
         setError(`Successfully updated ${data.name} location details.`)
       } else {
         // Create new location
-        const newLocation = await locationAPI.createLocation(DEMO_BUSINESS_ID, data)
+        const newLocation = await locationAPI.createLocation(businessId!, data)
         setLocations(prev => [...prev, newLocation])
         
         // Send notification about new location opening
@@ -160,7 +165,7 @@ export default function LocationsPage() {
           // Example of promotional SMS for new location:
           // await BrandedSMSService.sendCrossLocationPromotion(
           //   customerPhone,
-          //   DEMO_BUSINESS_ID,
+          //   businessId!,
           //   `🎉 Exciting news! We've opened a new location at ${data.address_line1}, ${data.city}! Book your next appointment at any of our convenient locations.`,
           //   [newLocation.id]
           // )

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Phone, ArrowRight, CheckCircle, ChevronDown } from 'lucide-react'
 
@@ -144,6 +144,14 @@ export default function SolutionsPage() {
   const [selectedIndustry, setSelectedIndustry] = useState<Industry>(industries[0])
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '')
+    if (hash) {
+      const match = industries.find(i => i.id === hash)
+      if (match) setSelectedIndustry(match)
+    }
+  }, [])
+
   return (
     <div className="min-h-screen bg-surface font-[family-name:var(--font-inter)]">
       {/* Header */}
@@ -158,7 +166,7 @@ export default function SolutionsPage() {
               <Link href="/demo" className="text-text-secondary hover:text-text-primary text-sm font-medium transition-colors">Demo</Link>
               <Link href="/pricing" className="text-text-secondary hover:text-text-primary text-sm font-medium transition-colors">Pricing</Link>
               <Link href="/signup" className="bg-brand-primary text-brand-on px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0060d0] transition-colors">
-                Start Free Trial
+                Try It Free
               </Link>
             </div>
           </div>
@@ -273,7 +281,7 @@ export default function SolutionsPage() {
               href="/signup"
               className="inline-flex items-center bg-brand-primary hover:bg-[#0060d0] text-brand-on px-8 py-4 rounded-md font-semibold text-lg transition-all"
             >
-              Get Started for {selectedIndustry.name} <ArrowRight className="ml-2 h-5 w-5" />
+              Forward Your Calls — {selectedIndustry.name} <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </div>
         </div>

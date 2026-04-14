@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import DashboardAssistant from '@/components/DashboardAssistant'
+import MayaChat from '@/components/MayaChat'
 import { usePathname } from 'next/navigation'
 
 export default function DashboardLayout({
@@ -12,22 +12,14 @@ export default function DashboardLayout({
   const pathname = usePathname()
   const [shouldAutoOpen, setShouldAutoOpen] = useState(false)
 
-  // Check if we should auto-open on the main dashboard page for new users
   useEffect(() => {
-    // Only consider auto-opening on the main dashboard page
-    if (pathname === '/dashboard') {
-      // Let DashboardAssistant handle the logic based on onboarding step
-      // We just signal that it's allowed to auto-open
-      setShouldAutoOpen(true)
-    } else {
-      setShouldAutoOpen(false)
-    }
+    setShouldAutoOpen(pathname === '/dashboard')
   }, [pathname])
 
   return (
     <>
       {children}
-      <DashboardAssistant autoOpenForNewUser={shouldAutoOpen} />
+      <MayaChat mode="dashboard" autoOpenForNewUser={shouldAutoOpen} />
     </>
   )
 }

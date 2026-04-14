@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { Phone, PhoneCall, CheckCircle, ArrowRight, Clock, Calendar, Mic, Menu, X, MessageSquare, Brain, Zap, BarChart3, Shield, Headphones } from 'lucide-react'
-import { useState, useRef } from 'react'
-import AIChatbot, { AIChatbotRef } from '@/components/AIChatbot'
+import { useState } from 'react'
+import MayaChat from '@/components/MayaChat'
 
 const DEMO_PHONE = process.env.NEXT_PUBLIC_DEMO_PHONE || '+14248887754'
 const DEMO_PHONE_DISPLAY = DEMO_PHONE.replace(/^\+1(\d{3})(\d{3})(\d{4})$/, '($1) $2-$3')
@@ -13,7 +13,6 @@ const JORDAN_PHONE_DISPLAY = '(989) 299-7944'
 
 export default function HomePage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const chatbotRef = useRef<AIChatbotRef>(null)
 
   return (
     <div className="min-h-screen bg-surface font-[family-name:var(--font-inter)]">
@@ -84,22 +83,22 @@ export default function HomePage() {
             </h1>
 
             <p className="text-lg sm:text-xl text-text-secondary mb-10 max-w-2xl mx-auto leading-relaxed">
-              Automate your phone lines with AI agents that answer calls, book appointments,
-              take orders, and remember every customer — 24/7.
+              Forward your business calls to AI that answers 24/7, books appointments,
+              and remembers every customer. Your number stays the same — set up in 2 minutes.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
               <Link
-                href="/signup"
+                href="/demo"
                 className="bg-brand-primary hover:bg-[#0060d0] text-brand-on px-8 py-4 rounded-md font-semibold text-lg flex items-center justify-center transition-all hover:scale-[1.02]"
               >
-                Start 14-Day Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+                <Mic className="mr-2 h-5 w-5" /> Hear It For Yourself
               </Link>
               <Link
-                href="/demo"
+                href="/signup"
                 className="border border-[rgba(65,71,84,0.3)] text-text-secondary hover:text-text-primary hover:bg-surface-high px-8 py-4 rounded-md font-semibold text-lg transition-all flex items-center justify-center"
               >
-                See a Demo
+                Forward Your Calls to AI <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </div>
 
@@ -110,10 +109,10 @@ export default function HomePage() {
                 className="inline-flex items-center text-brand-light hover:text-brand-primary font-medium transition-colors"
               >
                 <PhoneCall className="h-4 w-4 mr-2" />
-                Or call our AI now: {JORDAN_PHONE_DISPLAY}
+                Or call our AI right now: {JORDAN_PHONE_DISPLAY}
               </a>
               <p className="text-text-muted text-xs mt-1">
-                Available 24/7
+                Try it — available 24/7. No signup needed.
               </p>
             </div>
 
@@ -121,15 +120,15 @@ export default function HomePage() {
             <div className="flex flex-wrap items-center justify-center gap-6 text-text-muted text-sm">
               <div className="flex items-center">
                 <CheckCircle className="h-4 w-4 mr-2 text-brand-primary flex-shrink-0" />
-                <span>No credit card needed</span>
+                <span>Keep your existing number</span>
               </div>
               <div className="flex items-center">
                 <CheckCircle className="h-4 w-4 mr-2 text-brand-primary flex-shrink-0" />
-                <span>Live in 10 minutes</span>
+                <span>Live in 2 minutes</span>
               </div>
               <div className="flex items-center">
                 <CheckCircle className="h-4 w-4 mr-2 text-brand-primary flex-shrink-0" />
-                <span>Starting at $49/mo</span>
+                <span>14-day free trial</span>
               </div>
             </div>
           </div>
@@ -147,6 +146,42 @@ export default function HomePage() {
             <span className="text-lg font-semibold font-[family-name:var(--font-manrope)] tracking-tight">Medical</span>
             <span className="text-lg font-semibold font-[family-name:var(--font-manrope)] tracking-tight">Legal</span>
             <span className="text-lg font-semibold font-[family-name:var(--font-manrope)] tracking-tight">Veterinary</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Try It Yourself — Demo CTA */}
+      <section className="py-16 bg-surface">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-surface-low rounded-xl p-8 sm:p-10 text-center relative overflow-hidden">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[400px] h-[200px] bg-brand-primary/8 rounded-full blur-[100px] pointer-events-none" />
+            <div className="relative z-10">
+              <div className="inline-flex items-center bg-brand-primary/10 text-brand-light px-4 py-2 rounded-full text-sm font-medium mb-4">
+                <Mic className="h-4 w-4 mr-2" />
+                Live AI Demo — No signup required
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight mb-3">
+                Hear it for yourself
+              </h2>
+              <p className="text-text-secondary mb-6 max-w-lg mx-auto">
+                Talk to a VoiceFly AI employee right in your browser. Pick your industry, have a real conversation, and imagine this answering your business line 24/7.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/demo"
+                  className="inline-flex items-center justify-center bg-brand-primary hover:bg-[#0060d0] text-brand-on px-8 py-4 rounded-md font-semibold text-lg transition-all hover:scale-[1.02]"
+                >
+                  <Mic className="mr-2 h-5 w-5" /> Try the Live Demo
+                </Link>
+                <a
+                  href={`tel:${JORDAN_PHONE}`}
+                  className="inline-flex items-center justify-center border border-[rgba(65,71,84,0.3)] text-text-secondary hover:text-text-primary hover:bg-surface-high px-8 py-4 rounded-md font-semibold text-lg transition-all"
+                >
+                  <Phone className="mr-2 h-5 w-5" /> Call {JORDAN_PHONE_DISPLAY}
+                </a>
+              </div>
+              <p className="text-text-muted text-xs mt-4">6 industry demos available: Dental, Salon, Auto Shop, Restaurant, Law Firm, Nonprofit</p>
+            </div>
           </div>
         </div>
       </section>
@@ -207,13 +242,13 @@ export default function HomePage() {
 
             <div className="text-center">
               <p className="text-text-secondary mb-6">
-                VoiceFly starts at $49/mo with 60 minutes included. That&apos;s a 32x return if it captures just 1 extra booking per week.
+                VoiceFly starts at just $49/mo. That&apos;s a 32x return if it captures just 1 extra booking per week.
               </p>
               <Link
                 href="/signup"
                 className="inline-flex items-center bg-brand-primary hover:bg-[#0060d0] text-brand-on px-8 py-3 rounded-md font-semibold transition-all"
               >
-                Start 14-Day Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+                Forward Your Calls to AI <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </div>
           </div>
@@ -225,15 +260,18 @@ export default function HomePage() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight mb-4">
-              Live in 3 Simple Steps
+              Forward your calls. That&apos;s it.
             </h2>
+            <p className="text-lg text-text-secondary max-w-2xl mx-auto">
+              Keep your number. Keep your carrier. Your customers won&apos;t know anything changed.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { step: '1', title: 'Sign Up & Choose Your Voice', desc: 'Pick from natural-sounding AI voices. Set your business greeting and hours.' },
-              { step: '2', title: 'Tell It About Your Business', desc: 'Add your services, prices, and availability. The AI learns your business in minutes.' },
-              { step: '3', title: 'Forward Your Calls', desc: 'Forward calls to your VoiceFly number. Your AI phone employee handles the rest.' },
+              { step: '1', title: 'Tell Us About Your Business', desc: 'Your services, hours, and how you want calls handled. Takes 2 minutes.' },
+              { step: '2', title: 'Pick Your AI Voice', desc: 'Choose from natural-sounding voices and customize your greeting.' },
+              { step: '3', title: 'Forward & Go Live', desc: 'Dial *72 + your VoiceFly number. Your AI picks up every call instantly — 24/7.' },
             ].map(({ step, title, desc }) => (
               <div key={step} className="text-center">
                 <div className="w-12 h-12 bg-brand-primary text-brand-on rounded-full flex items-center justify-center mx-auto mb-5 text-xl font-bold font-[family-name:var(--font-manrope)]">{step}</div>
@@ -257,7 +295,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-2 max-w-3xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-2 max-w-5xl mx-auto">
             {/* Starter */}
             <div className="bg-surface-low hover:bg-surface-med p-8 rounded-lg transition-all duration-300">
               <div className="text-text-muted text-sm uppercase tracking-wider mb-2">Starter</div>
@@ -265,9 +303,9 @@ export default function HomePage() {
                 <span className="text-4xl font-bold text-text-primary font-[family-name:var(--font-manrope)]">$49</span>
                 <span className="text-text-muted ml-2">/mo</span>
               </div>
-              <p className="text-text-secondary text-sm mb-6">Perfect for solo operators and small shops.</p>
+              <p className="text-text-secondary text-sm mb-6">For businesses getting started with AI.</p>
               <ul className="space-y-3 mb-8">
-                {['60 minutes included', '1 AI phone employee', 'Google Calendar sync', 'SMS confirmations', 'Call transcripts', 'Business hours routing'].map(f => (
+                {['60 AI voice minutes/month', '1 AI employee', '1 phone number', '24/7 call answering', 'Appointment booking', 'Lead capture', 'SMS confirmations', 'Call analytics dashboard'].map(f => (
                   <li key={f} className="flex items-start text-sm text-text-secondary">
                     <CheckCircle className="h-4 w-4 text-brand-primary mr-2 mt-0.5 flex-shrink-0" />
                     {f}
@@ -275,30 +313,56 @@ export default function HomePage() {
                 ))}
               </ul>
               <Link href="/signup" className="block text-center bg-surface-high hover:bg-surface-highest text-text-primary px-6 py-3 rounded-md font-medium transition-all">
-                Get Started
+                Try It Free for 14 Days
               </Link>
+              <p className="text-xs text-text-muted text-center mt-3">Additional minutes: $0.25/min</p>
             </div>
 
-            {/* Pro */}
-            <div className="bg-surface-low hover:bg-surface-med p-8 rounded-lg transition-all duration-300 relative">
-              <div className="absolute top-4 right-4 bg-brand-primary text-brand-on text-xs font-semibold px-3 py-1 rounded-full">Popular</div>
-              <div className="text-brand-light text-sm uppercase tracking-wider mb-2">Pro</div>
+            {/* Growth */}
+            <div className="bg-surface-low hover:bg-surface-med p-8 rounded-lg transition-all duration-300 relative ring-1 ring-brand-primary">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span className="bg-brand-primary text-brand-on px-4 py-1.5 rounded-full text-xs font-semibold">MOST POPULAR</span>
+              </div>
+              <div className="text-brand-light text-sm uppercase tracking-wider mb-2">Growth</div>
               <div className="flex items-baseline mb-4">
-                <span className="text-4xl font-bold text-text-primary font-[family-name:var(--font-manrope)]">$199</span>
+                <span className="text-4xl font-bold text-text-primary font-[family-name:var(--font-manrope)]">$129</span>
                 <span className="text-text-muted ml-2">/mo</span>
               </div>
-              <p className="text-text-secondary text-sm mb-6">For growing businesses with multiple needs.</p>
+              <p className="text-text-secondary text-sm mb-6">For growing businesses that need more.</p>
               <ul className="space-y-3 mb-8">
-                {['300 minutes included', 'Unlimited AI employees', 'All integrations (Calendar, CRM, Square)', 'SMS reminders & follow-ups', 'Customer memory & history', 'Priority support', 'Custom voice & personality'].map(f => (
+                {['250 AI voice minutes/month', '3 AI employees', '3 phone numbers', '24/7 call answering', 'Appointment booking', 'Custom greeting', 'Custom FAQ answers', 'Custom call routing', 'Advanced analytics'].map(f => (
                   <li key={f} className="flex items-start text-sm text-text-secondary">
                     <CheckCircle className="h-4 w-4 text-brand-primary mr-2 mt-0.5 flex-shrink-0" />
                     {f}
                   </li>
                 ))}
               </ul>
-              <Link href="/signup?plan=pro" className="block text-center bg-brand-primary hover:bg-[#0060d0] text-brand-on px-6 py-3 rounded-md font-medium transition-all">
-                Get Started
+              <Link href="/signup?plan=growth" className="block text-center bg-brand-primary hover:bg-[#0060d0] text-brand-on px-6 py-3 rounded-md font-medium transition-all">
+                Try It Free for 14 Days
               </Link>
+              <p className="text-xs text-text-muted text-center mt-3">Additional minutes: $0.20/min</p>
+            </div>
+
+            {/* Pro */}
+            <div className="bg-surface-low hover:bg-surface-med p-8 rounded-lg transition-all duration-300">
+              <div className="text-text-muted text-sm uppercase tracking-wider mb-2">Pro</div>
+              <div className="flex items-baseline mb-4">
+                <span className="text-4xl font-bold text-text-primary font-[family-name:var(--font-manrope)]">$249</span>
+                <span className="text-text-muted ml-2">/mo</span>
+              </div>
+              <p className="text-text-secondary text-sm mb-6">For busy businesses ready to scale.</p>
+              <ul className="space-y-3 mb-8">
+                {['750 AI voice minutes/month', '5 AI employees', '5 phone numbers', 'Fully custom AI agent', 'AI SMS conversations', 'Custom voice selection', 'CRM integration', 'API access', 'Priority support'].map(f => (
+                  <li key={f} className="flex items-start text-sm text-text-secondary">
+                    <CheckCircle className="h-4 w-4 text-brand-primary mr-2 mt-0.5 flex-shrink-0" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/signup?plan=pro" className="block text-center bg-surface-high hover:bg-surface-highest text-text-primary px-6 py-3 rounded-md font-medium transition-all">
+                Try It Free for 14 Days
+              </Link>
+              <p className="text-xs text-text-muted text-center mt-3">Additional minutes: $0.18/min</p>
             </div>
           </div>
         </div>
@@ -318,12 +382,12 @@ export default function HomePage() {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 max-w-5xl mx-auto">
             {[
-              { href: '/solutions', icon: '💇', title: 'Salons & Spas', desc: 'Never miss a booking while you\'re with a client.' },
-              { href: '/solutions', icon: '🦷', title: 'Dental Practices', desc: 'Handle scheduling, insurance, and new patient inquiries.' },
-              { href: '/solutions', icon: '🏠', title: 'Home Services', desc: 'Capture leads while you\'re on the job site.' },
-              { href: '/solutions', icon: '⚖️', title: 'Law Firms', desc: 'Screen potential clients and schedule consultations.' },
-              { href: '/solutions', icon: '🏥', title: 'Medical & Wellness', desc: 'Manage patient scheduling and reduce front desk workload.' },
-              { href: '/solutions', icon: '🐾', title: 'Veterinary Clinics', desc: 'Book pet appointments and triage urgent calls.' },
+              { href: '/beauty', icon: '💇', title: 'Salons & Spas', desc: 'Never miss a booking while you\'re with a client.' },
+              { href: '/solutions#dental', icon: '🦷', title: 'Dental Practices', desc: 'Handle scheduling, insurance, and new patient inquiries.' },
+              { href: '/solutions#home_services', icon: '🏠', title: 'Home Services', desc: 'Capture leads while you\'re on the job site.' },
+              { href: '/solutions#legal', icon: '⚖️', title: 'Law Firms', desc: 'Screen potential clients and schedule consultations.' },
+              { href: '/solutions#medical', icon: '🏥', title: 'Medical & Wellness', desc: 'Manage patient scheduling and reduce front desk workload.' },
+              { href: '/solutions#veterinary', icon: '🐾', title: 'Veterinary Clinics', desc: 'Book pet appointments and triage urgent calls.' },
             ].map(({ href, icon, title, desc }) => (
               <Link key={title} href={href} className="group bg-surface-med hover:bg-surface-high p-6 rounded-lg transition-all duration-300">
                 <div className="text-2xl mb-3">{icon}</div>
@@ -345,35 +409,39 @@ export default function HomePage() {
 
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <h2 className="text-4xl sm:text-5xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight mb-6 leading-tight">
-            Ready to automate your
-            <span className="text-brand-primary block mt-1">business phone lines?</span>
+            Forward your calls.
+            <span className="text-brand-primary block mt-1">See how AI does.</span>
           </h2>
           <p className="text-xl text-text-secondary mb-10">
-            Set up your AI phone employee in under 10 minutes. Free for 14 days.
+            Keep your number. Forward to AI. If it doesn&apos;t book you at least one extra appointment this week, turn it off with *73.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              href="/signup"
-              className="bg-brand-primary hover:bg-[#0060d0] text-brand-on px-8 py-4 rounded-md font-semibold text-lg transition-all hover:scale-[1.02]"
+              href="/demo"
+              className="bg-brand-primary hover:bg-[#0060d0] text-brand-on px-8 py-4 rounded-md font-semibold text-lg transition-all hover:scale-[1.02] flex items-center justify-center"
             >
-              Start Free Trial
+              <Mic className="mr-2 h-5 w-5" /> Hear It For Yourself
             </Link>
             <Link
-              href="/pricing"
+              href="/signup"
               className="border border-[rgba(65,71,84,0.3)] text-text-secondary hover:text-text-primary hover:bg-surface-high px-8 py-4 rounded-md font-semibold text-lg transition-all"
             >
-              See Pricing
+              Forward Your Calls to AI
             </Link>
           </div>
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-text-muted text-sm">
             <div className="flex items-center">
               <CheckCircle className="h-4 w-4 mr-2 text-brand-primary flex-shrink-0" />
-              <span>No credit card needed</span>
+              <span>Your number stays the same</span>
             </div>
             <div className="flex items-center">
               <CheckCircle className="h-4 w-4 mr-2 text-brand-primary flex-shrink-0" />
-              <span>Cancel anytime</span>
+              <span>Live in 2 minutes</span>
+            </div>
+            <div className="flex items-center">
+              <CheckCircle className="h-4 w-4 mr-2 text-brand-primary flex-shrink-0" />
+              <span>Undo anytime with *73</span>
             </div>
           </div>
         </div>
@@ -423,7 +491,7 @@ export default function HomePage() {
       </footer>
 
       {/* AI Chatbot */}
-      <AIChatbot ref={chatbotRef} />
+      <MayaChat mode="public" />
     </div>
   )
 }

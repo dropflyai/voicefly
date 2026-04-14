@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense, Fragment } from 'react'
 import Layout from '../../components/Layout'
 import ProtectedRoute from '../../components/ProtectedRoute'
+import OnboardingChecklist from '../../components/onboarding-checklist'
 import { BusinessAPI, type Business } from '../../lib/supabase'
 import { supabase } from '../../lib/supabase-client'
 import {
@@ -232,17 +233,17 @@ function DashboardPage() {
               Welcome to VoiceFly!
             </h1>
             <p className="text-xl text-text-secondary mb-8 max-w-2xl mx-auto">
-              Let&apos;s create your first AI employee and start capturing calls 24/7
+              Let&apos;s set up your AI employee so you can forward your calls and see how it does.
             </p>
             <a href="/dashboard/employees" className="inline-flex items-center px-8 py-4 text-lg font-semibold text-brand-on bg-brand-primary rounded-lg hover:bg-[#0060d0] transition-all">
-              Create Your First Employee <ArrowRightIcon className="ml-3 h-6 w-6" />
+              Create Your AI Employee <ArrowRightIcon className="ml-3 h-6 w-6" />
             </a>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-12 max-w-3xl mx-auto">
               {[
-                { step: '1', title: 'Pick a Type', desc: 'Receptionist, Order Taker, Customer Service, and more' },
-                { step: '2', title: 'Configure', desc: 'Set up name, voice, and capabilities in minutes' },
-                { step: '3', title: 'Go Live', desc: 'Get a phone number and start answering calls' },
+                { step: '1', title: 'Tell Us About Your Business', desc: 'Your services, hours, and how you want calls handled' },
+                { step: '2', title: 'Pick Your AI Voice', desc: 'Choose a natural voice and customize your greeting' },
+                { step: '3', title: 'Forward & Go Live', desc: 'Forward your existing number — live in 2 minutes' },
               ].map(s => (
                 <div key={s.step} className="bg-surface-low rounded-xl p-6 text-center">
                   <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-brand-primary/10 text-brand-primary font-bold text-xl mb-4 font-[family-name:var(--font-manrope)]">{s.step}</div>
@@ -286,6 +287,11 @@ function DashboardPage() {
             <span className="text-text-primary font-bold ml-1">{data.totalCalls} total calls</span> handled.
           </p>
         </section>
+
+        {/* Onboarding Checklist — shown until user completes or dismisses */}
+        {business && (
+          <OnboardingChecklist businessId={business.id} />
+        )}
 
         {/* Metric Cards — Bento Grid */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

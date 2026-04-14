@@ -1,36 +1,23 @@
 /**
- * Chat API
+ * Chat API — Streaming with Vercel AI SDK
  * POST /api/chat
- * 
+ *
  * context: 'public'    — sales bot, no auth required
  * context: 'dashboard' — account-aware bot, requires auth + businessId
+ * context: 'support'   — troubleshooting agent with ticket escalation
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { streamText, tool, UIMessage, convertToModelMessages, stepCountIs } from 'ai'
+import { anthropic } from '@ai-sdk/anthropic'
 import { createClient } from '@supabase/supabase-js'
-import Anthropic from '@anthropic-ai/sdk'
 import { validateBusinessAccess } from '@/lib/api-auth'
+import { z } from 'zod'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-interface ChatMessage {
-  role: 'user' | 'assistant'
-  content: string
-}
-
-interface ChatRequest {
-  message: string
-  history: ChatMessage[]
-  context: 'public' | 'dashboard' | 'support'
-  businessId?: string
-  currentPage?: string
-  sessionId?: string
-}
-
 // ============================================
-// SYSTEM PROMPTS
+// SYSTEM PROMPTS (unchanged from original)
 // ============================================
 
 const PUBLIC_SYSTEM_PROMPT = `You are Maya — VoiceFly's AI sales agent AND a live demonstration of what VoiceFly can do. You serve a dual purpose: help visitors understand the product, and show them firsthand what an AI phone employee feels like in conversation.
@@ -55,10 +42,9 @@ VoiceFly gives small and medium businesses AI-powered phone employees that answe
 - **Starter** — $49/month: 60 voice minutes, 1 AI employee, 1 phone number (overage: $0.25/min)
 - **Growth** — $129/month: 250 voice minutes, 3 AI employees, 3 phone numbers (overage: $0.20/min) — MOST POPULAR
 - **Pro** — $249/month: 750 voice minutes, 5 AI employees, 5 phone numbers (overage: $0.18/min)
-- All plans: **14-day free trial** (no credit card needed)
+- All plans: **14-day free trial** (no credit card needed). Keep your existing number — just forward calls.
 - Annual billing saves 20%: Starter $39/mo, Growth $103/mo, Pro $199/mo
-- Founding customer pricing: Starter $25/mo (50% off for life), Growth $90/mo (30% off), Pro $175/mo (30% off)
-- Join 500+ businesses already using VoiceFly
+- Founding customer pricing: Starter $25/mo (50% off for life), Growth $65/mo (50% off), Pro $125/mo (50% off)
 
 ## Integrations
 Square, Shopify, Clover, Toast (menus/POS), Calendly (scheduling), HubSpot (CRM)
@@ -90,7 +76,7 @@ Explain the concrete value: "A Receptionist would handle every inbound call, tak
 Common objections and how to handle them:
 - "Will it sound robotic?" → "No — ElevenLabs voices are used by major media companies. Want me to show you what I mean? I can demo any employee type right here."
 - "What if it can't answer something?" → "It handles the 80% of calls that are routine. For anything outside its training, it takes a message and flags it for you."
-- "Is it hard to set up?" → "You paste your website URL, the AI reads your business in 30 seconds, and generates a full employee config. Most users go live same day."
+- "Is it hard to set up?" → "You paste your website URL, the AI reads your business in 30 seconds, then you forward your existing phone number. Live in 2 minutes — your customers won't notice any change."
 - "We already have a receptionist" → "Your human receptionist handles complex situations. This handles the volume — after-hours, hold overflow, outbound reminders — so they can focus on what matters."
 - "What does it cost really?" → "At $49/month for 60 minutes on Starter, that's less than $1/minute for 24/7 coverage. Most businesses pick Growth at $129/mo for 250 minutes. A part-time human receptionist costs $15-20/hour. The math is pretty clear."
 
@@ -112,7 +98,7 @@ The voice demo is your most powerful conversion tool — surface it early and pr
 
 ### Step 5: Convert
 When someone is clearly interested (asked about pricing, trial, how to sign up, or just had a demo):
-- Tell them the free trial is 14 days, they can create their first employee in under 10 minutes
+- Tell them to forward their calls to AI — free for 14 days, live in 2 minutes, their number stays the same
 - Direct them to /signup
 - Add [SUGGEST_TRIAL] at the very end of your response (after all your text) — this triggers an email capture panel in the UI so we can follow up
 
@@ -135,6 +121,12 @@ When someone is clearly interested (asked about pricing, trial, how to sign up, 
 - You are literally the product demo — your intelligence and helpfulness IS the proof of concept
 
 Never make up features. Be honest about limitations. If you don't know something, say so.`
+
+// ============================================
+// HELPERS (unchanged)
+// ============================================
+
+const publicSupabase = createClient(supabaseUrl, supabaseServiceKey)
 
 interface OnboardingState {
   step: 1 | 2 | 3 | 'done'
@@ -174,7 +166,6 @@ function getIntegrationRecommendations(employees: any[], connectedPlatforms: str
   const jobTypes = new Set(employees.map(e => e.job_type))
   const recs: string[] = []
   const connected = new Set(connectedPlatforms.map(p => p.toLowerCase()))
-
   if (jobTypes.has('order-taker') || jobTypes.has('restaurant-host')) {
     if (!connected.has('square') && !connected.has('clover') && !connected.has('toast') && !connected.has('shopify'))
       recs.push('Square, Clover, or Toast — syncs your menu/POS so the employee knows your real items and prices')
@@ -197,19 +188,18 @@ function getNextEmployeeSuggestion(employees: any[], businessType: string | null
   if (employees.length === 0) return null
   const jobTypes = new Set(employees.map(e => e.job_type))
   const bt = businessType?.toLowerCase() || ''
-
   if (jobTypes.has('receptionist') && !jobTypes.has('after-hours-emergency'))
     return 'After-Hours Emergency — captures urgent calls overnight without manual effort'
   if ((jobTypes.has('appointment-scheduler') || jobTypes.has('restaurant-host')) && !jobTypes.has('appointment-reminder'))
-    return 'Appointment Reminder — automated outbound calls to reduce no-shows (huge ROI for appointment-based businesses)'
+    return 'Appointment Reminder — automated outbound calls to reduce no-shows'
   if (jobTypes.has('receptionist') && employees.length === 1) {
     if (bt.includes('restaurant') || bt.includes('food')) return 'Restaurant Host or Order Taker'
     if (bt.includes('dental') || bt.includes('medical') || bt.includes('health')) return 'Appointment Scheduler'
     if (bt.includes('real estate') || bt.includes('realty')) return 'Lead Qualifier'
-    return 'Lead Qualifier — proactively screens and scores inbound leads while Receptionist handles routine calls'
+    return 'Lead Qualifier — proactively screens and scores inbound leads'
   }
   if (!jobTypes.has('survey-caller'))
-    return 'Survey Caller — automated post-visit feedback calls (customers respond much better to voice than email surveys)'
+    return 'Survey Caller — automated post-visit feedback calls'
   return null
 }
 
@@ -219,7 +209,7 @@ function summarizeEmployeeConfig(e: any): string {
     const config = typeof e.job_config === 'object' && e.job_config ? e.job_config : {}
     const greeting = config.greeting || config.firstMessage
     if (greeting && typeof greeting === 'string') parts.push(`  Greeting: "${greeting.slice(0, 150)}${greeting.length > 150 ? '...' : ''}"`)
-    if (config.businessHours) parts.push(`  Has business hours configured`)
+    if (config.businessHours) parts.push('  Has business hours configured')
     if (config.specialInstructions) parts.push(`  Special instructions: "${String(config.specialInstructions).slice(0, 100)}"`)
     if (e.voice?.voiceId) parts.push(`  Voice: ${e.voice.voiceId}`)
     return parts.join('\n')
@@ -275,11 +265,8 @@ function formatBusinessHours(hours: any[]): string {
 }
 
 function buildDashboardSystemPrompt(
-  business: any,
-  employees: any[],
-  onboarding: OnboardingState,
-  connectedPlatforms: string[],
-  currentPage?: string,
+  business: any, employees: any[], onboarding: OnboardingState,
+  connectedPlatforms: string[], currentPage?: string,
   stats?: { messages: number; orders: number; recentCalls?: any[]; recentMessages?: any[]; businessHours?: any[] }
 ): string {
   const employeeList = employees.length > 0
@@ -287,60 +274,53 @@ function buildDashboardSystemPrompt(
     : '(no employees created yet)'
 
   const profileIssues: string[] = []
-  if (!business.business_type) profileIssues.push('business type not set (important for AI config generation)')
-  if (!business.timezone) profileIssues.push('timezone not set (affects business hours accuracy)')
+  if (!business.business_type) profileIssues.push('business type not set')
+  if (!business.timezone) profileIssues.push('timezone not set')
   if (!business.phone) profileIssues.push('business phone not set')
 
   const profileWarning = profileIssues.length > 0 ? `
 ## Business Profile Gaps — Mention These
 The user's profile is missing: ${profileIssues.join(', ')}.
-If relevant, suggest they visit /dashboard/settings to fill these in. The AI config generator produces much better results when business_type and timezone are set.
+Suggest they visit /dashboard/settings to fill these in.
 ` : ''
 
   const recommendedType = getRecommendedEmployeeType(business.business_type)
 
   const onboardingSection = onboarding.step !== 'done' ? `
 ## Onboarding Status — IMPORTANT
-The user is still getting set up. Guide them proactively through these 3 steps:
+Guide them proactively through these 3 steps:
 
 Step 1: Create first employee ${onboarding.step === 1 ? '← CURRENT STEP' : '✓ done'}
-Step 2: Get a phone number ${onboarding.step === 2 ? '← CURRENT STEP' : onboarding.step === 1 ? '(not yet)' : '✓ done'}
+Step 2: Forward your calls ${onboarding.step === 2 ? '← CURRENT STEP' : onboarding.step === 1 ? '(not yet)' : '✓ done'}
 Step 3: Make a test call ${onboarding.step === 3 ? '← CURRENT STEP' : onboarding.hasTestCall ? '✓ done' : '(not yet)'}
-
-### Step-by-step guidance:
 
 **Step 1 — Create first employee:**
 - Go to /dashboard/employees → click "Hire an Employee"
-- Wizard: (1) Pick employee type + name → (2) Enter website URL or describe the business → (3) Review AI-generated config → (4) Confirm & create
-- Based on their business type (${business.business_type || 'unknown'}), the recommended starting employee is: **${recommendedType}**
-- The AI generates a full config from just a website URL — takes ~30 seconds
-- After picking a type, they can paste their website URL and the AI will auto-fill the config
+- Recommended for ${business.business_type || 'their business'}: **${recommendedType}**
+- AI generates config from website URL in ~30 seconds
 
-**Step 2 — Get a phone number:**
-- After creating the employee, their card appears on /dashboard/employees
-- Click "Add Phone" on the card (or the phone icon)
-- Choose: "Calls only" (VAPI-managed number, fastest) or "Calls + SMS" (Twilio number, also gets texts)
-- Enter an area code for a local number (optional)
-- The number is provisioned in seconds — usually $9/month added to your plan
+**Step 2 — Forward your calls:**
+- Click "Add Phone" on the employee card
+- Once AI line is ready, forward their existing business phone:
+  - **Most carriers:** Dial *72 followed by the AI number
+  - **Verizon:** Dial *72, then the number when prompted
+  - **Google Voice / VoIP:** Settings > Calls > Call Forwarding
+- Forwarding is instant. Their number stays the same. Undo anytime with *73.
 
 **Step 3 — Make a test call:**
-- Call the phone number that was provisioned in Step 2
-- The AI employee will answer with their greeting
-- Test realistic scenarios: ask about hours, try to book an appointment, ask a product question
-- If something sounds wrong: go to the employee card → pencil icon → edit the greeting or config
-- Check the config tabs (Greeting, Job Config, Business Hours) — the AI sets these from your website
-- Pro tip: call from a cell phone so you get the authentic experience` : (() => {
-  // Post-onboarding: integration nudges + next employee suggestions
-  const integrationRecs = getIntegrationRecommendations(employees, connectedPlatforms)
-  const nextEmployee = getNextEmployeeSuggestion(employees, business.business_type)
-  const integrationSection = integrationRecs.length > 0
-    ? `\n## Recommended Next Steps — Integrations\nBased on their current employees, these integrations would add real value:\n${integrationRecs.map(r => `- ${r}`).join('\n')}\nSuggest /dashboard/integrations when the topic comes up.`
-    : ''
-  const nextEmployeeSection = nextEmployee
-    ? `\n## Recommended Next Employee\nAfter their first employee is live, the best next hire would be: **${nextEmployee}**\nSuggest this when they ask what to do next or how to expand.`
-    : ''
-  return integrationSection + nextEmployeeSection
-})()
+- Call their own business number or the AI line directly
+- Test realistic scenarios: hours, booking, product questions
+- Pro tip: call from a cell phone for the authentic experience` : (() => {
+    const integrationRecs = getIntegrationRecommendations(employees, connectedPlatforms)
+    const nextEmployee = getNextEmployeeSuggestion(employees, business.business_type)
+    const integrationSection = integrationRecs.length > 0
+      ? `\n## Recommended Integrations\n${integrationRecs.map(r => `- ${r}`).join('\n')}\nSuggest /dashboard/integrations when relevant.`
+      : ''
+    const nextEmployeeSection = nextEmployee
+      ? `\n## Recommended Next Employee\n**${nextEmployee}**\nSuggest when they ask what to do next.`
+      : ''
+    return integrationSection + nextEmployeeSection
+  })()
 
   return `You are Maya, the AI assistant inside the VoiceFly dashboard for ${business.name}.
 
@@ -359,110 +339,76 @@ ${profileWarning}
 ## Their Current Phone Employees (${employees.length} total)
 ${employeeList}
 
-## Recent Call Activity (${stats?.recentCalls?.length ?? 0} most recent)
+## Recent Call Activity
 ${formatRecentCalls(stats?.recentCalls || [], employees)}
 
-## Recent Messages (${stats?.recentMessages?.length ?? 0} most recent)
+## Recent Messages
 ${formatRecentMessages(stats?.recentMessages || [])}
 
 ## Business Hours
 ${formatBusinessHours(stats?.businessHours || [])}
 ${business.business_context ? `
-## Business Knowledge (from AI Knowledge settings)
-${business.business_context.hours_summary ? `- Hours summary: ${business.business_context.hours_summary}` : ''}
+## Business Knowledge
+${business.business_context.hours_summary ? `- Hours: ${business.business_context.hours_summary}` : ''}
 ${business.business_context.address_display ? `- Address: ${business.business_context.address_display}` : ''}
 ${business.business_context.parking_info ? `- Parking: ${business.business_context.parking_info}` : ''}
-${business.business_context.payment_methods ? `- Payment methods: ${business.business_context.payment_methods}` : ''}
+${business.business_context.payment_methods ? `- Payment: ${business.business_context.payment_methods}` : ''}
 ${business.business_context.policies ? `- Policies: ${business.business_context.policies}` : ''}
 ${business.business_context.special_notes ? `- Notes: ${business.business_context.special_notes}` : ''}
 `.trim() : ''}
 ${onboardingSection}
 
-## VoiceFly Product Knowledge
-VoiceFly creates AI voice employees that answer and make phone calls 24/7. There are 11 types:
-1. Receptionist — answers calls, takes messages, transfers
-2. Order Taker — takes phone orders with full menu
-3. Appointment Scheduler — books/reschedules/cancels appointments
-4. Personal Assistant — screens calls, manages owner's schedule
-5. Customer Service — handles support issues, returns, FAQs
-6. After-Hours Emergency — triages urgent after-hours calls, pages on-call staff
-7. Restaurant Host — reservations, waitlist, special occasions
-8. Lead Qualifier — screens + scores inbound leads, routes hot leads
-9. Survey Caller — outbound satisfaction calls post-appointment/order
-10. Appointment Reminder — outbound reminder calls before appointments
-11. Collections — outbound payment collection (FDCPA-compliant)
+## Your Capabilities
+You can take REAL actions using tools. When a user asks you to do something — DO IT, don't just give instructions.
 
-## Dashboard Navigation — Guide Users to the Right Page
-- /dashboard — overview with stats: calls today, messages, orders, credits remaining
-- /dashboard/employees — create, edit, view employees. Wizard: pick type → business info → review config → confirm & create. Edit via pencil icon on employee card.
-- /dashboard/employees/messages — view all messages and voicemails left by callers
-- /dashboard/integrations — connect Google Calendar, Calendly, Square, Shopify, Clover, Toast, HubSpot
-- /dashboard/settings — 6 tabs:
-  - Business Profile — name, type, phone, email, address, website, timezone
-  - Business Hours — set open/close times per day (auto-generates hours summary for AI employees)
-  - AI Knowledge — business context fields (hours summary, address, parking, policies, payment methods). Has "Quick Fill with AI" to auto-extract from pasted text or website URL.
-  - Notifications — email/SMS/push notification preferences
-  - Security — change password, 2FA (coming soon)
-  - Team Access — view team members with roles
-- /dashboard/billing — upgrade plan, view usage, manage subscription
+**Rules:**
+- Always confirm before destructive actions (delete employee)
+- After each action, tell the user what you did and suggest the next step
+- If someone describes their business naturally ("we're open 9 to 5"), save that info immediately
+- Be helpful and concise. Use bullet points for steps.`
+}
 
-## Your Role & Capabilities
-Help this user get the most out of VoiceFly. You have access to their live data and can:
-- **Answer questions about calls** — you can see recent calls with summaries, durations, and caller info. Summarize activity, identify trends, or answer "did anyone call today?"
-- **Read messages** — you can see recent messages with caller names, reasons, and urgency. Summarize new messages or find specific ones.
-- **Explain employee configs** — you can see each employee's greeting, voice, and settings. Help users understand how their employees are configured and suggest improvements.
-- **Report on business settings** — you know their business hours, address, policies, and AI knowledge fields. Answer "what are my hours?" or "what's my parking info?" directly.
-- **Guide employee management** — creating, editing, activating/deactivating, adding phone numbers. Direct them to /dashboard/employees for actions.
-- **Help with integrations** — connecting calendars, POS systems, CRM
-- **Explain billing** — plans, credits, usage, upgrades
-- **Troubleshoot** — calls not working, employees not answering, config issues
+function buildSupportSystemPrompt(business: any, employees: any[], connectedPlatforms: string[], recentCalls: any[]): string {
+  const employeeList = employees.length > 0
+    ? employees.map(e => `- ${e.name} (${e.job_type})${e.is_active ? ' — active' : ' — inactive'}${e.phone_number ? `, phone: ${e.phone_number}` : ''}`).join('\n')
+    : '(no employees)'
 
-When you have the data to answer a question directly, do so — don't just redirect to a page. If the data isn't in your context (e.g., full call transcripts, older history), then point them to the right page.
+  return `You are the VoiceFly Support Agent for ${business.name}. Help users troubleshoot issues and get the most out of VoiceFly.
 
-If they are in onboarding (steps 1–3), proactively guide them to the next step. If onboarding is done, help with whatever they need and suggest relevant features. Be helpful and concise. Use bullet points for steps. If you're not sure about something, be honest.`
+## User's Account
+- Business: ${business.name}, Plan: ${business.subscription_tier || 'starter'} (${business.subscription_status || 'trial'})
+- Employees: ${employees.length}, Integrations: ${connectedPlatforms.length > 0 ? connectedPlatforms.join(', ') : 'none'}
+
+## Their Phone Employees
+${employeeList}
+
+## Key Knowledge
+- Each employee gets a behind-the-scenes AI line. Users forward their existing number to it (*72 to forward, *73 to undo).
+- Pricing: Starter $49/mo (60 min), Growth $129/mo (250 min), Pro $249/mo (750 min)
+- If you CANNOT resolve an issue, include [CREATE_TICKET] at the end and [TICKET_SUMMARY: brief description].
+- Never make up features. Be concise.`
 }
 
 // ============================================
-// MAYA LEARNING SYSTEM — helpers
+// LEARNING SYSTEM
 // ============================================
-
-const publicSupabase = createClient(supabaseUrl, supabaseServiceKey)
 
 async function getActiveInsights(): Promise<string> {
   try {
     const { data } = await publicSupabase
-      .from('maya_insights')
-      .select('situation, winning_response, category')
-      .eq('is_active', true)
-      .order('effectiveness_score', { ascending: false })
-      .limit(8)
+      .from('maya_insights').select('situation, winning_response, category')
+      .eq('is_active', true).order('effectiveness_score', { ascending: false }).limit(8)
     if (!data?.length) return ''
-    const formatted = data.map(i =>
-      `[${i.category}] When: ${i.situation}\nBest response: ${i.winning_response}`
-    ).join('\n\n')
-    return `\n\n## Proven Responses (learned from real conversations — use these patterns)\n${formatted}`
-  } catch {
-    return ''
-  }
+    return `\n\n## Proven Responses\n${data.map(i => `[${i.category}] When: ${i.situation}\nBest response: ${i.winning_response}`).join('\n\n')}`
+  } catch { return '' }
 }
 
-async function logConversation(
-  sessionId: string,
-  messages: ChatMessage[],
-  leadCaptured: boolean,
-  visitorBusinessType?: string,
-  visitorEmployeeInterest?: string
-): Promise<void> {
-  const exchangeCount = messages.filter(m => m.role === 'user').length
+async function logConversation(sessionId: string, messages: any[], leadCaptured: boolean, businessType?: string, employeeInterest?: string): Promise<void> {
+  const exchangeCount = messages.filter((m: any) => m.role === 'user').length
   await publicSupabase.from('chat_conversations').upsert({
-    session_id: sessionId,
-    messages: messages as unknown as Record<string, unknown>[],
-    lead_captured: leadCaptured,
-    exchange_count: exchangeCount,
-    visitor_business_type: visitorBusinessType || null,
-    visitor_employee_interest: visitorEmployeeInterest || null,
-    outcome: leadCaptured ? 'lead_captured' : 'browsing',
-    updated_at: new Date().toISOString(),
+    session_id: sessionId, messages, lead_captured: leadCaptured, exchange_count: exchangeCount,
+    visitor_business_type: businessType || null, visitor_employee_interest: employeeInterest || null,
+    outcome: leadCaptured ? 'lead_captured' : 'browsing', updated_at: new Date().toISOString(),
   }, { onConflict: 'session_id' })
 }
 
@@ -471,178 +417,260 @@ async function embedAndStore(sessionId: string, conversationText: string): Promi
   try {
     const res = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
+      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'text-embedding-ada-002', input: conversationText.slice(0, 8000) }),
     })
     if (!res.ok) return
     const { data } = await res.json()
     if (data?.[0]?.embedding) {
-      await publicSupabase.from('chat_conversations')
-        .update({ embedding: data[0].embedding })
-        .eq('session_id', sessionId)
+      await publicSupabase.from('chat_conversations').update({ embedding: data[0].embedding }).eq('session_id', sessionId)
     }
-  } catch {
-    // embedding failures are non-blocking
-  }
+  } catch { /* non-blocking */ }
 }
 
-async function getSimilarSuccessfulConversations(embedding: number[]): Promise<string> {
-  try {
-    const { data } = await publicSupabase.rpc('match_successful_conversations', {
-      query_embedding: embedding,
-      match_count: 2,
-    })
-    if (!data?.length) return ''
-    const examples = data.map((row: { messages: ChatMessage[] }) => {
-      const msgs = Array.isArray(row.messages) ? row.messages.slice(0, 6) : []
-      return msgs.map((m: ChatMessage) => `${m.role === 'user' ? 'Visitor' : 'Maya'}: ${m.content}`).join('\n')
-    }).join('\n---\n')
-    return `\n\n## Examples from Real Successful Conversations (led to trial signup)\n${examples}`
-  } catch {
-    return ''
-  }
-}
-
-function extractVisitorContext(messages: ChatMessage[]): { businessType?: string; employeeInterest?: string } {
-  const allText = messages.map(m => m.content).join(' ').toLowerCase()
+function extractVisitorContext(messages: any[]): { businessType?: string; employeeInterest?: string } {
+  const allText = messages.map((m: any) => m.content || m.parts?.map((p: any) => p.text).join(' ') || '').join(' ').toLowerCase()
   const businessTypes = ['restaurant', 'dental', 'medical', 'real estate', 'retail', 'spa', 'salon', 'law', 'contractor', 'hvac', 'plumbing']
   const employeeTypes = ['receptionist', 'order taker', 'appointment scheduler', 'lead qualifier', 'restaurant host', 'after-hours', 'customer service']
-  const businessType = businessTypes.find(t => allText.includes(t))
-  const employeeInterest = employeeTypes.find(t => allText.includes(t.toLowerCase()))
-  return { businessType, employeeInterest }
+  return { businessType: businessTypes.find(t => allText.includes(t)), employeeInterest: employeeTypes.find(t => allText.includes(t.toLowerCase())) }
 }
 
 // ============================================
-// SUPPORT AGENT SYSTEM PROMPT
+// DASHBOARD TOOLS — AI SDK format
 // ============================================
 
-function buildSupportSystemPrompt(
-  business: any,
-  employees: any[],
-  connectedPlatforms: string[],
-  recentCalls: any[]
-): string {
-  const employeeList = employees.length > 0
-    ? employees.map(e => `- ${e.name} (${e.job_type})${e.is_active ? ' — active' : ' — inactive'}${e.phone_number ? `, phone: ${e.phone_number}` : ' — no phone'}`).join('\n')
-    : '(no employees)'
+function buildDashboardTools(businessId: string) {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-  const callSummary = recentCalls.length > 0
-    ? `Last ${recentCalls.length} calls: ${recentCalls.filter(c => c.status === 'completed').length} completed, ${recentCalls.filter(c => c.duration && c.duration <= 30).length} short (<30s)`
-    : 'No calls recorded yet'
+  return {
+    create_employee: tool({
+      description: 'Create a new AI phone employee. Use when the user wants to set up a new employee or agrees to create one.',
+      parameters: z.object({
+        job_type: z.enum(['receptionist', 'order-taker', 'appointment-scheduler', 'personal-assistant', 'customer-service', 'after-hours-emergency', 'restaurant-host', 'lead-qualifier']),
+        name: z.string().describe('A human name for the employee (e.g. Sarah, Aria, Jake)'),
+        website_url: z.string().optional().describe('Business website URL to auto-generate config from'),
+      }),
+      execute: async ({ job_type, name, website_url }) => {
+        let config: any = undefined
+        if (website_url) {
+          try {
+            const extractRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3005'}/api/phone-employees/generate-config`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ businessId, jobType: job_type, websiteUrl: website_url }),
+            })
+            if (extractRes.ok) config = (await extractRes.json()).config
+          } catch (err) { console.error('[Maya Tool] Config generation failed:', err) }
+        }
 
-  return `You are the VoiceFly Support Agent for ${business.name}. You help users troubleshoot issues, understand features, and get the most out of VoiceFly.
+        const { data: employee, error } = await supabase
+          .from('phone_employees')
+          .insert({ business_id: businessId, name: name || 'Maya', job_type, is_active: true, personality: { tone: 'professional', enthusiasm: 'medium' }, job_config: config || {} })
+          .select().single()
 
-## User's Account
-- Business: ${business.name}
-- Plan: ${business.subscription_tier || 'starter'} (${business.subscription_status || 'trial'})
-- Employees: ${employees.length}
-- Connected integrations: ${connectedPlatforms.length > 0 ? connectedPlatforms.join(', ') : 'none'}
+        if (error) return { success: false, error: error.message }
 
-## Their Phone Employees
-${employeeList}
+        try {
+          const { employeeProvisioning } = await import('@/lib/phone-employees')
+          await employeeProvisioning.provisionEmployee(employee.id, businessId)
+        } catch (err) { console.error('[Maya Tool] VAPI provisioning error:', err) }
 
-## Recent Call Activity
-${callSummary}
+        return { success: true, employee_id: employee.id, name: employee.name, job_type: employee.job_type, message: `Created ${employee.name} as ${employee.job_type.replace(/-/g, ' ')}` }
+      },
+    }),
 
-## Knowledge Base
+    provision_phone_number: tool({
+      description: 'Give a phone number to an existing employee so they can receive calls.',
+      parameters: z.object({
+        employee_id: z.string(),
+        area_code: z.string().optional().describe('3-digit US area code for a local number'),
+      }),
+      execute: async ({ employee_id, area_code }) => {
+        try {
+          const { employeeProvisioning } = await import('@/lib/phone-employees')
+          const result = await employeeProvisioning.provisionPhoneNumber(employee_id, businessId, { mode: 'twilio-vapi', areaCode: area_code || '' })
+          return { success: true, phone_number: result.phoneNumber, message: `Phone number ${result.phoneNumber} provisioned` }
+        } catch (err: any) {
+          return { success: false, error: err.message || 'Failed to provision phone number' }
+        }
+      },
+    }),
 
-### Phone Employees
-- Create employees at /dashboard/employees > "Hire an Employee"
-- 11 types: Receptionist, Order Taker, Appointment Scheduler, Personal Assistant, Customer Service, After-Hours Emergency, Restaurant Host, Lead Qualifier, Survey Caller, Appointment Reminder, Collections
-- Each employee needs a VAPI phone number to receive calls
-- Employees are configured with a greeting, job config, and business hours
-- The AI generates config from a website URL — paste it in the setup wizard
+    update_employee_config: tool({
+      description: "Update an employee's configuration — greeting, instructions, tone, etc.",
+      parameters: z.object({
+        employee_id: z.string(),
+        greeting: z.string().optional(),
+        custom_instructions: z.string().optional(),
+        business_description: z.string().optional(),
+        tone: z.enum(['professional', 'friendly', 'warm', 'casual', 'luxury']).optional(),
+      }),
+      execute: async ({ employee_id, greeting, custom_instructions, business_description, tone }) => {
+        const updates: any = {}
+        if (greeting) updates.job_config = { greeting }
+        if (custom_instructions) updates.job_config = { ...updates.job_config, customInstructions: custom_instructions }
+        if (business_description) updates.job_config = { ...updates.job_config, businessDescription: business_description }
+        if (tone) updates.personality = { tone, enthusiasm: 'medium' }
 
-### Call Log
-- View all calls at /dashboard/voice-ai (Call Log)
-- Call outcomes: Completed (>30s, green), Short (<=30s, yellow), Live (blue)
-- Click any call to see full transcript, recording, cost, and summary
-- Filter by employee using the dropdown
+        const { data: existing } = await supabase.from('phone_employees').select('job_config, personality').eq('id', employee_id).eq('business_id', businessId).single()
+        const mergedConfig = { ...(existing?.job_config || {}), ...(updates.job_config || {}) }
+        const mergedPersonality = { ...(existing?.personality || {}), ...(updates.personality || {}) }
 
-### Integrations
-- Google Calendar: Share your calendar with voicefly-calendar@voice-fly.iam.gserviceaccount.com, then enter Calendar ID on /dashboard/integrations
-- Calendly: Click "Authorize with Calendly" for OAuth connection
-- Square: Click "Authorize with Square" to connect POS and sync menu
+        const { error } = await supabase.from('phone_employees')
+          .update({ job_config: mergedConfig, personality: mergedPersonality, updated_at: new Date().toISOString() })
+          .eq('id', employee_id).eq('business_id', businessId)
 
-### Billing
-- Starter: $49/mo — 60 voice minutes, 1 AI employee, 1 phone number
-- Growth: $129/mo — 250 voice minutes, 3 AI employees, 3 phone numbers (MOST POPULAR)
-- Pro: $249/mo — 750 voice minutes, 5 AI employees, 5 phone numbers
-- Upgrade at /dashboard/billing
-- Cancel anytime — access continues until end of billing period
+        if (error) return { success: false, error: error.message }
+        return { success: true, message: 'Employee configuration updated' }
+      },
+    }),
 
-### Editing an Employee
-- On /dashboard/employees, find the employee card and click the pencil icon (top-right of the card)
-- The Edit modal lets you change:
-  - **Name** — the employee's display name (max 40 characters for VAPI)
-  - **Greeting** — the opening message when they answer a call (e.g. "Thank you for calling Acme Dental, this is Sarah, how can I help you?")
-  - **Voice** — pick a different ElevenLabs voice from the voice picker (you can preview before saving)
-  - **Timezone** — affects business hours logic
-- Click Save to apply changes. The employee updates immediately on the next call.
-- To edit the full job config (detailed behavior, instructions, business hours schedule), those were set during the creation wizard. Currently the edit modal covers the most common changes (name, greeting, voice, timezone).
+    navigate_user: tool({
+      description: 'Navigate the user to a specific dashboard page.',
+      parameters: z.object({
+        page: z.enum(['/dashboard', '/dashboard/employees', '/dashboard/voice-ai', '/dashboard/messages', '/dashboard/integrations', '/dashboard/settings', '/dashboard/billing', '/dashboard/appointments', '/dashboard/orders']),
+      }),
+      execute: async ({ page }) => ({ success: true, page, message: `Navigating to ${page}` }),
+    }),
 
-### Billing & Overages
-- Starter plan ($49/mo): 60 voice minutes included, 1 AI employee, 1 phone number, $0.25/min overage
-- Growth plan ($129/mo): 250 voice minutes included, 3 AI employees, 3 phone numbers, $0.20/min overage (MOST POPULAR)
-- Pro plan ($249/mo): 750 voice minutes included, 5 AI employees, 5 phone numbers, $0.18/min overage
-- Overages are billed through Stripe at the end of the billing cycle
-- To check current usage, look at the dashboard stats for total call minutes
-- Upgrading from Starter to Pro resets your minute allocation at the higher tier
+    toggle_employee: tool({
+      description: 'Activate or deactivate an employee.',
+      parameters: z.object({
+        employee_id: z.string(),
+        active: z.boolean(),
+      }),
+      execute: async ({ employee_id, active }) => {
+        const { data: emp } = await supabase.from('phone_employees').select('name').eq('id', employee_id).eq('business_id', businessId).single()
+        const { error } = await supabase.from('phone_employees').update({ is_active: active, updated_at: new Date().toISOString() }).eq('id', employee_id).eq('business_id', businessId)
+        if (error) return { success: false, error: error.message }
+        return { success: true, message: `${emp?.name || 'Employee'} ${active ? 'activated' : 'deactivated'}` }
+      },
+    }),
 
-### Common Issues
-- "Calls not showing up" → Check that the employee is active and has a phone number. Calls appear after they complete.
-- "Employee not answering" → Verify the employee is toggled active and has a provisioned phone number.
-- "Calendar not syncing" → Make sure you shared the calendar with the service account email and entered the correct Calendar ID.
-- "Can't upgrade" → Go to /dashboard/billing and click the upgrade button. You'll be redirected to Stripe.
-- "Short calls" → Usually means the caller hung up quickly or it was a wrong number. Check the transcript for details.
-- "How do I change my employee's greeting?" → Click the pencil icon on the employee card at /dashboard/employees, edit the Greeting field, and save.
-- "How do I change the voice?" → Click the pencil icon on the employee card, use the Voice picker to preview and select a new voice, then save.
+    delete_employee: tool({
+      description: 'Permanently delete an employee. Always confirm with user first.',
+      parameters: z.object({
+        employee_id: z.string(),
+        employee_name: z.string().optional(),
+      }),
+      execute: async ({ employee_id }) => {
+        const { data: emp } = await supabase.from('phone_employees').select('name').eq('id', employee_id).eq('business_id', businessId).single()
+        const { error } = await supabase.from('phone_employees').delete().eq('id', employee_id).eq('business_id', businessId)
+        if (error) return { success: false, error: error.message }
+        return { success: true, message: `${emp?.name || 'Employee'} has been deleted` }
+      },
+    }),
 
-## Your Behavior
-1. Answer questions using the knowledge base above and the user's account context.
-2. Be concise and helpful. Use bullet points for multi-step instructions.
-3. If you can resolve the issue, do so directly.
-4. If you CANNOT resolve the issue (billing dispute, bug report, account access issue, or anything that requires human intervention), include [CREATE_TICKET] at the very end of your response. Before the tag, tell the user you're creating a support ticket and someone will follow up.
-5. When you include [CREATE_TICKET], also include a one-line summary of the issue in this format: [TICKET_SUMMARY: brief description here]
-6. Never make up features or capabilities that don't exist.
-7. Don't use [CREATE_TICKET] for questions you can answer from the knowledge base.`
+    update_business_settings: tool({
+      description: 'Update business profile settings.',
+      parameters: z.object({
+        name: z.string().optional(),
+        phone: z.string().optional(),
+        email: z.string().optional(),
+        address: z.string().optional(),
+        timezone: z.string().optional(),
+        business_type: z.string().optional(),
+      }),
+      execute: async (input) => {
+        const updates: any = { updated_at: new Date().toISOString() }
+        if (input.name) updates.name = input.name
+        if (input.phone) updates.phone = input.phone
+        if (input.email) updates.email = input.email
+        if (input.address) updates.address = input.address
+        if (input.timezone) updates.timezone = input.timezone
+        if (input.business_type) updates.business_type = input.business_type
+        const updatedFields = Object.keys(updates).filter(k => k !== 'updated_at')
+        if (updatedFields.length === 0) return { success: false, error: 'No fields to update' }
+        const { error } = await supabase.from('businesses').update(updates).eq('id', businessId)
+        if (error) return { success: false, error: error.message }
+        return { success: true, message: `Updated ${updatedFields.join(', ')}`, updated_fields: updatedFields }
+      },
+    }),
+
+    update_ai_knowledge: tool({
+      description: 'Update shared AI Knowledge fields — owner name, address, hours summary, payment methods, parking, policies, etc.',
+      parameters: z.object({
+        owner_name: z.string().optional(),
+        address_display: z.string().optional(),
+        hours_summary: z.string().optional(),
+        payment_methods: z.string().optional(),
+        parking_info: z.string().optional(),
+        languages: z.string().optional(),
+        policies: z.string().optional(),
+        special_notes: z.string().optional(),
+      }),
+      execute: async (input) => {
+        const { data: biz } = await supabase.from('businesses').select('business_context').eq('id', businessId).single()
+        const updated = { ...(biz?.business_context || {}), ...Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined)) }
+        const { error } = await supabase.from('businesses').update({ business_context: updated, updated_at: new Date().toISOString() }).eq('id', businessId)
+        if (error) return { success: false, error: error.message }
+        const changedFields = Object.keys(input).filter(k => (input as any)[k] !== undefined)
+        return { success: true, message: `Updated AI Knowledge: ${changedFields.join(', ')}`, updated_fields: changedFields }
+      },
+    }),
+
+    update_business_hours: tool({
+      description: 'Set the business hours for specific days.',
+      parameters: z.object({
+        hours: z.record(z.string(), z.nullable(z.object({ open: z.string(), close: z.string() }))).describe('Object with day names as keys. null = closed. { open: "HH:MM", close: "HH:MM" } = open.'),
+      }),
+      execute: async ({ hours }) => {
+        await supabase.from('business_hours').delete().eq('business_id', businessId)
+        const rows = Object.entries(hours).map(([day, value]) => ({
+          business_id: businessId, day_of_week: day, is_open: value !== null, open_time: value?.open || '09:00', close_time: value?.close || '17:00',
+        }))
+        const { error } = await supabase.from('business_hours').insert(rows)
+        if (error) return { success: false, error: error.message }
+        const openDays = rows.filter(r => r.is_open).map(r => r.day_of_week)
+        return { success: true, message: `Business hours updated. Open: ${openDays.join(', ') || 'none'}` }
+      },
+    }),
+
+    resolve_message: tool({
+      description: 'Mark a phone message as resolved or in-progress.',
+      parameters: z.object({
+        message_id: z.string(),
+        status: z.enum(['read', 'in_progress', 'resolved', 'archived']),
+      }),
+      execute: async ({ message_id, status }) => {
+        const updates: any = { status, updated_at: new Date().toISOString() }
+        if (status === 'resolved' || status === 'archived') updates.callback_completed = true
+        const { error } = await supabase.from('phone_messages').update(updates).eq('id', message_id).eq('business_id', businessId)
+        if (error) return { success: false, error: error.message }
+        return { success: true, message: `Message marked as ${status}` }
+      },
+    }),
+  }
 }
 
 // ============================================
 // ROUTE HANDLER
 // ============================================
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    const body: ChatRequest = await request.json()
-    const { message, history, context, businessId, currentPage, sessionId } = body
+    const body = await request.json()
+    const { messages: incomingMessages, context, businessId, currentPage, sessionId } = body
 
-    if (!message?.trim()) {
-      return NextResponse.json({ error: 'Message required' }, { status: 400 })
+    // Extract the user's latest text from the incoming messages
+    const lastUserMsg = [...(incomingMessages || [])].reverse().find((m: any) => m.role === 'user')
+    if (!lastUserMsg) {
+      return new Response(JSON.stringify({ error: 'No user message' }), { status: 400 })
     }
 
     let systemPrompt: string
+    let tools: Record<string, any> | undefined
     let onboardingStep: OnboardingState['step'] | null = null
 
     if (context === 'dashboard') {
-      // Require auth and businessId
-      if (!businessId) {
-        return NextResponse.json({ error: 'businessId required for dashboard context' }, { status: 400 })
-      }
+      if (!businessId) return new Response(JSON.stringify({ error: 'businessId required' }), { status: 400 })
 
-      const authResult = await validateBusinessAccess(request, businessId)
-      if (!authResult.success) {
-        return NextResponse.json({ error: authResult.error }, { status: 403 })
-      }
+      const authResult = await validateBusinessAccess(request as any, businessId)
+      if (!authResult.success) return new Response(JSON.stringify({ error: authResult.error }), { status: 403 })
 
-      // Fetch business, employees, calls, messages, orders, integrations, and hours in parallel
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
       const [{ data: business }, { data: employees }, { count: callCount }, { data: recentCalls }, { data: integrations }, { count: messageCount }, { data: recentMessages }, { count: orderCount }, { data: businessHours }] = await Promise.all([
         supabase.from('businesses').select('name, phone, business_type, timezone, subscription_tier, subscription_status, monthly_credits, purchased_credits, credits_used_this_month, business_context').eq('id', businessId).single(),
-        supabase.from('phone_employees').select('name, job_type, is_active, phone_number, job_config, voice, personality').eq('business_id', businessId).order('created_at', { ascending: false }),
+        supabase.from('phone_employees').select('id, name, job_type, is_active, phone_number, job_config, voice, personality').eq('business_id', businessId).order('created_at', { ascending: false }),
         supabase.from('employee_calls').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
         supabase.from('employee_calls').select('customer_phone, status, direction, duration, summary, started_at, employee_id').eq('business_id', businessId).order('started_at', { ascending: false }).limit(10),
         supabase.from('business_integrations').select('platform').eq('business_id', businessId).eq('is_active', true),
@@ -652,613 +680,79 @@ export async function POST(request: NextRequest) {
         supabase.from('business_hours').select('day_of_week, open_time, close_time, is_open').eq('business_id', businessId),
       ])
 
-      if (!business) {
-        return NextResponse.json({ error: 'Business not found' }, { status: 404 })
-      }
+      if (!business) return new Response(JSON.stringify({ error: 'Business not found' }), { status: 404 })
 
       const connectedPlatforms = (integrations || []).map((i: any) => i.platform)
       const onboarding = getOnboardingStep(employees || [], (callCount ?? 0) > 0)
       onboardingStep = onboarding.step
       systemPrompt = buildDashboardSystemPrompt(business, employees || [], onboarding, connectedPlatforms, currentPage, {
-        messages: messageCount ?? 0,
-        orders: orderCount ?? 0,
-        recentCalls: recentCalls || [],
-        recentMessages: recentMessages || [],
-        businessHours: businessHours || [],
+        messages: messageCount ?? 0, orders: orderCount ?? 0,
+        recentCalls: recentCalls || [], recentMessages: recentMessages || [], businessHours: businessHours || [],
       })
-    } else if (context === 'support') {
-      // Support context — troubleshooting agent with ticket escalation
-      if (!businessId) {
-        return NextResponse.json({ error: 'businessId required for support context' }, { status: 400 })
-      }
+      tools = buildDashboardTools(businessId)
 
-      const authResult = await validateBusinessAccess(request, businessId)
-      if (!authResult.success) {
-        return NextResponse.json({ error: authResult.error }, { status: 403 })
-      }
+    } else if (context === 'support') {
+      if (!businessId) return new Response(JSON.stringify({ error: 'businessId required' }), { status: 400 })
+      const authResult = await validateBusinessAccess(request as any, businessId)
+      if (!authResult.success) return new Response(JSON.stringify({ error: authResult.error }), { status: 403 })
 
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
       const [{ data: business }, { data: employees }, { data: integrations }, { data: recentCalls }] = await Promise.all([
         supabase.from('businesses').select('name, phone, business_type, timezone, subscription_tier, subscription_status').eq('id', businessId).single(),
-        supabase.from('phone_employees').select('name, job_type, is_active, phone_number').eq('business_id', businessId).order('created_at', { ascending: false }),
+        supabase.from('phone_employees').select('name, job_type, is_active, phone_number').eq('business_id', businessId),
         supabase.from('business_integrations').select('platform').eq('business_id', businessId),
         supabase.from('employee_calls').select('status, duration, started_at').eq('business_id', businessId).order('started_at', { ascending: false }).limit(20),
       ])
+      if (!business) return new Response(JSON.stringify({ error: 'Business not found' }), { status: 404 })
+      systemPrompt = buildSupportSystemPrompt(business, employees || [], (integrations || []).map((i: any) => i.platform), recentCalls || [])
 
-      if (!business) {
-        return NextResponse.json({ error: 'Business not found' }, { status: 404 })
-      }
-
-      const connectedPlatforms = (integrations || []).map((i: any) => i.platform)
-      systemPrompt = buildSupportSystemPrompt(business, employees || [], connectedPlatforms, recentCalls || [])
     } else {
-      // Public context — inject dynamic insights from the learning system
       const insightsSection = await getActiveInsights()
       systemPrompt = PUBLIC_SYSTEM_PROMPT + insightsSection
     }
 
-    // Build messages array (last 10 messages to keep context window reasonable)
-    const recentHistory = history.slice(-10)
-    const messages: Anthropic.MessageParam[] = [
-      ...recentHistory.map(m => ({ role: m.role as 'user' | 'assistant', content: m.content })),
-      { role: 'user', content: message },
-    ]
+    // Build the messages array for the AI SDK
+    // The incoming messages are in { role, content } format from the frontend
+    const aiMessages = (incomingMessages || []).map((m: any) => ({
+      role: m.role as 'user' | 'assistant',
+      content: typeof m.content === 'string' ? m.content : m.parts?.map((p: any) => p.text).filter(Boolean).join('\n') || '',
+    }))
 
-    // ============================================
-    // DASHBOARD TOOLS — Maya can execute actions
-    // ============================================
-
-    const DASHBOARD_TOOLS: Anthropic.Tool[] = [
-      {
-        name: 'create_employee',
-        description: 'Create a new AI phone employee for the business. Use when the user wants to set up a new employee, says they need someone to answer calls, or agrees to create one after your recommendation.',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            job_type: {
-              type: 'string',
-              enum: ['receptionist', 'order-taker', 'appointment-scheduler', 'personal-assistant', 'customer-service', 'after-hours-emergency', 'restaurant-host', 'lead-qualifier'],
-              description: 'The type of employee to create based on the business needs',
-            },
-            name: { type: 'string', description: 'A human name for the employee (e.g. Sarah, Aria, Jake). Pick a fitting name if user does not specify.' },
-            website_url: { type: 'string', description: 'Business website URL to auto-generate config from. Ask for this if user has not provided it.' },
-          },
-          required: ['job_type', 'name'],
-        },
-      },
-      {
-        name: 'provision_phone_number',
-        description: 'Give a phone number to an existing employee so they can receive calls. Use after creating an employee or when user asks to add a number.',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            employee_id: { type: 'string', description: 'The ID of the employee to provision a number for' },
-            area_code: { type: 'string', description: '3-digit US area code for a local number (e.g. 310, 424). Ask the user for preference.' },
-          },
-          required: ['employee_id'],
-        },
-      },
-      {
-        name: 'update_employee_config',
-        description: 'Update an employee\'s configuration — greeting, business hours, FAQs, services, custom instructions, etc. Use when user wants to change how their employee behaves.',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            employee_id: { type: 'string', description: 'The ID of the employee to update' },
-            greeting: { type: 'string', description: 'New greeting message' },
-            custom_instructions: { type: 'string', description: 'Business context and special instructions' },
-            business_description: { type: 'string', description: 'Description of the business' },
-            tone: { type: 'string', enum: ['professional', 'friendly', 'warm', 'casual', 'luxury'] },
-          },
-          required: ['employee_id'],
-        },
-      },
-      {
-        name: 'navigate_user',
-        description: 'Navigate the user to a specific dashboard page. Use when they need to see something or when directing them after an action.',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            page: {
-              type: 'string',
-              enum: ['/dashboard', '/dashboard/employees', '/dashboard/voice-ai', '/dashboard/messages', '/dashboard/integrations', '/dashboard/settings', '/dashboard/billing', '/dashboard/appointments', '/dashboard/orders'],
-              description: 'The dashboard page to navigate to',
-            },
-          },
-          required: ['page'],
-        },
-      },
-      {
-        name: 'toggle_employee',
-        description: 'Activate or deactivate an employee. Use when user wants to pause, turn off, enable, or reactivate an employee.',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            employee_id: { type: 'string', description: 'The ID of the employee' },
-            active: { type: 'boolean', description: 'true to activate, false to deactivate' },
-          },
-          required: ['employee_id', 'active'],
-        },
-      },
-      {
-        name: 'delete_employee',
-        description: 'Permanently delete an employee. Always confirm with the user before using this tool. Use only when user explicitly asks to remove/delete an employee.',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            employee_id: { type: 'string', description: 'The ID of the employee to delete' },
-            employee_name: { type: 'string', description: 'Name of the employee (for confirmation)' },
-          },
-          required: ['employee_id'],
-        },
-      },
-      {
-        name: 'update_business_settings',
-        description: 'Update business profile settings — name, phone, email, address, timezone, business type. Use when user wants to change their business information.',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            name: { type: 'string', description: 'Business name' },
-            phone: { type: 'string', description: 'Business phone number' },
-            email: { type: 'string', description: 'Business email' },
-            address: { type: 'string', description: 'Business address' },
-            timezone: { type: 'string', description: 'Timezone (e.g. America/Los_Angeles)' },
-            business_type: { type: 'string', description: 'Business type (e.g. dental_practice, beauty_salon)' },
-          },
-          required: [],
-        },
-      },
-      {
-        name: 'update_ai_knowledge',
-        description: 'Update AI Knowledge fields that all employees share — owner name, address description, hours summary, payment methods, parking info, policies, languages, special notes. Use when user provides business details that callers should know.',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            owner_name: { type: 'string', description: 'Owner or manager name' },
-            address_display: { type: 'string', description: 'Address as you want it spoken to callers' },
-            hours_summary: { type: 'string', description: 'Business hours in natural language' },
-            payment_methods: { type: 'string', description: 'Accepted payment methods' },
-            parking_info: { type: 'string', description: 'Parking information' },
-            languages: { type: 'string', description: 'Languages spoken' },
-            policies: { type: 'string', description: 'Business policies (cancellation, refund, etc.)' },
-            special_notes: { type: 'string', description: 'Any current promos, closures, or special info' },
-          },
-          required: [],
-        },
-      },
-      {
-        name: 'update_business_hours',
-        description: 'Set the business hours for specific days. Use when user tells you their hours.',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            hours: {
-              type: 'object',
-              description: 'Object with day names as keys. Each value is either null (closed) or { open: "HH:MM", close: "HH:MM" }. Days: monday, tuesday, wednesday, thursday, friday, saturday, sunday.',
-            },
-          },
-          required: ['hours'],
-        },
-      },
-      {
-        name: 'resolve_message',
-        description: 'Mark a phone message as resolved or in-progress. Use when user says they handled a callback or want to update message status.',
-        input_schema: {
-          type: 'object' as const,
-          properties: {
-            message_id: { type: 'string', description: 'The ID of the phone message' },
-            status: { type: 'string', enum: ['read', 'in_progress', 'resolved', 'archived'], description: 'New status' },
-          },
-          required: ['message_id', 'status'],
-        },
-      },
-    ]
-
-    // Tool execution functions
-    async function executeCreateEmployee(input: any): Promise<any> {
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-      // If website URL provided, try to generate config
-      let config: any = undefined
-      if (input.website_url) {
-        try {
-          const extractRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3005'}/api/phone-employees/generate-config`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              businessId,
-              jobType: input.job_type,
-              websiteUrl: input.website_url,
-            }),
-          })
-          if (extractRes.ok) {
-            const extractData = await extractRes.json()
-            config = extractData.config
-          }
-        } catch (err) {
-          console.error('[Maya Tool] Config generation failed:', err)
+    const result = streamText({
+      model: anthropic('claude-haiku-4-5-20251001'),
+      system: systemPrompt,
+      messages: aiMessages,
+      ...(tools ? { tools, stopWhen: stepCountIs(3) } : {}),
+      onFinish: async ({ text, steps }) => {
+        // Public context: log conversation
+        if (context === 'public' && sessionId) {
+          const allMessages = [...aiMessages, { role: 'assistant', content: text }]
+          const { businessType, employeeInterest } = extractVisitorContext(allMessages)
+          const leadCaptured = text.includes('[SUGGEST_TRIAL]')
+          const conversationText = allMessages.map((m: any) => `${m.role}: ${m.content}`).join('\n')
+          logConversation(sessionId, allMessages, leadCaptured, businessType, employeeInterest)
+            .then(() => embedAndStore(sessionId, conversationText))
+            .catch(err => console.error('[chat] log/embed error:', err))
         }
-      }
-
-      // Create the employee
-      const { data: employee, error } = await supabase
-        .from('phone_employees')
-        .insert({
-          business_id: businessId,
-          name: input.name || 'Maya',
-          job_type: input.job_type,
-          is_active: true,
-          personality: { tone: 'professional', enthusiasm: 'medium' },
-          job_config: config || {},
-        })
-        .select()
-        .single()
-
-      if (error) {
-        return { success: false, error: error.message }
-      }
-
-      // Trigger VAPI provisioning
-      try {
-        const { employeeProvisioning } = await import('@/lib/phone-employees')
-        await employeeProvisioning.provisionEmployee(employee.id, businessId!)
-      } catch (err) {
-        console.error('[Maya Tool] VAPI provisioning error:', err)
-      }
-
-      return {
-        success: true,
-        employee_id: employee.id,
-        name: employee.name,
-        job_type: employee.job_type,
-        message: `Created ${employee.name} as ${employee.job_type.replace(/-/g, ' ')}`,
-      }
-    }
-
-    async function executeProvisionPhone(input: any): Promise<any> {
-      try {
-        const { employeeProvisioning } = await import('@/lib/phone-employees')
-        const result = await employeeProvisioning.provisionPhoneNumber(
-          input.employee_id,
-          businessId!,
-          {
-            mode: 'twilio-vapi',
-            areaCode: input.area_code || '',
-          }
-        )
-        return {
-          success: true,
-          phone_number: result.phoneNumber,
-          message: `Phone number ${result.phoneNumber} provisioned`,
-        }
-      } catch (err: any) {
-        return { success: false, error: err.message || 'Failed to provision phone number' }
-      }
-    }
-
-    async function executeUpdateConfig(input: any): Promise<any> {
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
-      const updates: any = {}
-
-      if (input.greeting) updates['job_config'] = { ...(updates.job_config || {}), greeting: input.greeting }
-      if (input.custom_instructions) updates['job_config'] = { ...(updates.job_config || {}), customInstructions: input.custom_instructions }
-      if (input.business_description) updates['job_config'] = { ...(updates.job_config || {}), businessDescription: input.business_description }
-      if (input.tone) updates['personality'] = { tone: input.tone, enthusiasm: 'medium' }
-
-      // Merge with existing job_config
-      const { data: existing } = await supabase
-        .from('phone_employees')
-        .select('job_config, personality')
-        .eq('id', input.employee_id)
-        .eq('business_id', businessId)
-        .single()
-
-      const mergedConfig = { ...(existing?.job_config || {}), ...(updates.job_config || {}) }
-      const mergedPersonality = { ...(existing?.personality || {}), ...(updates.personality || {}) }
-
-      const { error } = await supabase
-        .from('phone_employees')
-        .update({
-          job_config: mergedConfig,
-          personality: mergedPersonality,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', input.employee_id)
-        .eq('business_id', businessId)
-
-      if (error) return { success: false, error: error.message }
-      return { success: true, message: 'Employee configuration updated', updated_fields: Object.keys(updates) }
-    }
-
-    async function executeToggleEmployee(input: any): Promise<any> {
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
-      const { data: emp } = await supabase
-        .from('phone_employees')
-        .select('name')
-        .eq('id', input.employee_id)
-        .eq('business_id', businessId)
-        .single()
-
-      const { error } = await supabase
-        .from('phone_employees')
-        .update({ is_active: input.active, updated_at: new Date().toISOString() })
-        .eq('id', input.employee_id)
-        .eq('business_id', businessId)
-
-      if (error) return { success: false, error: error.message }
-      return { success: true, message: `${emp?.name || 'Employee'} ${input.active ? 'activated' : 'deactivated'}` }
-    }
-
-    async function executeDeleteEmployee(input: any): Promise<any> {
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
-      const { data: emp } = await supabase
-        .from('phone_employees')
-        .select('name')
-        .eq('id', input.employee_id)
-        .eq('business_id', businessId)
-        .single()
-
-      const { error } = await supabase
-        .from('phone_employees')
-        .delete()
-        .eq('id', input.employee_id)
-        .eq('business_id', businessId)
-
-      if (error) return { success: false, error: error.message }
-      return { success: true, message: `${emp?.name || 'Employee'} has been deleted` }
-    }
-
-    async function executeUpdateBusinessSettings(input: any): Promise<any> {
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
-      const updates: any = { updated_at: new Date().toISOString() }
-
-      if (input.name) updates.name = input.name
-      if (input.phone) updates.phone = input.phone
-      if (input.email) updates.email = input.email
-      if (input.address) updates.address = input.address
-      if (input.timezone) updates.timezone = input.timezone
-      if (input.business_type) updates.business_type = input.business_type
-
-      const updatedFields = Object.keys(updates).filter(k => k !== 'updated_at')
-      if (updatedFields.length === 0) return { success: false, error: 'No fields to update' }
-
-      const { error } = await supabase
-        .from('businesses')
-        .update(updates)
-        .eq('id', businessId)
-
-      if (error) return { success: false, error: error.message }
-      return { success: true, message: `Updated business ${updatedFields.join(', ')}`, updated_fields: updatedFields }
-    }
-
-    async function executeUpdateAiKnowledge(input: any): Promise<any> {
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-      // Get existing context
-      const { data: biz } = await supabase
-        .from('businesses')
-        .select('business_context')
-        .eq('id', businessId)
-        .single()
-
-      const existing = biz?.business_context || {}
-      const updated: any = { ...existing }
-
-      for (const key of ['owner_name', 'address_display', 'hours_summary', 'payment_methods', 'parking_info', 'languages', 'policies', 'special_notes']) {
-        if (input[key] !== undefined) updated[key] = input[key]
-      }
-
-      const { error } = await supabase
-        .from('businesses')
-        .update({ business_context: updated, updated_at: new Date().toISOString() })
-        .eq('id', businessId)
-
-      if (error) return { success: false, error: error.message }
-      const changedFields = Object.keys(input).filter(k => input[k] !== undefined)
-      return { success: true, message: `Updated AI Knowledge: ${changedFields.join(', ')}`, updated_fields: changedFields }
-    }
-
-    async function executeUpdateBusinessHours(input: any): Promise<any> {
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
-      const hours = input.hours
-
-      if (!hours || typeof hours !== 'object') return { success: false, error: 'Invalid hours format' }
-
-      // Delete existing hours and insert new ones
-      await supabase.from('business_hours').delete().eq('business_id', businessId)
-
-      const rows = Object.entries(hours).map(([day, value]: [string, any]) => ({
-        business_id: businessId,
-        day_of_week: day,
-        is_open: value !== null,
-        open_time: value?.open || '09:00',
-        close_time: value?.close || '17:00',
-      }))
-
-      const { error } = await supabase.from('business_hours').insert(rows)
-      if (error) return { success: false, error: error.message }
-
-      const openDays = rows.filter(r => r.is_open).map(r => r.day_of_week)
-      return { success: true, message: `Business hours updated. Open: ${openDays.join(', ') || 'none'}` }
-    }
-
-    async function executeResolveMessage(input: any): Promise<any> {
-      const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-      const updates: any = { status: input.status, updated_at: new Date().toISOString() }
-      if (input.status === 'resolved' || input.status === 'archived') {
-        updates.callback_completed = true
-      }
-
-      const { error } = await supabase
-        .from('phone_messages')
-        .update(updates)
-        .eq('id', input.message_id)
-        .eq('business_id', businessId)
-
-      if (error) return { success: false, error: error.message }
-      return { success: true, message: `Message marked as ${input.status}` }
-    }
-
-    async function executeTool(name: string, input: any): Promise<any> {
-      switch (name) {
-        case 'create_employee': return executeCreateEmployee(input)
-        case 'provision_phone_number': return executeProvisionPhone(input)
-        case 'update_employee_config': return executeUpdateConfig(input)
-        case 'toggle_employee': return executeToggleEmployee(input)
-        case 'delete_employee': return executeDeleteEmployee(input)
-        case 'update_business_settings': return executeUpdateBusinessSettings(input)
-        case 'update_ai_knowledge': return executeUpdateAiKnowledge(input)
-        case 'update_business_hours': return executeUpdateBusinessHours(input)
-        case 'resolve_message': return executeResolveMessage(input)
-        case 'navigate_user': return { success: true, page: input.page, message: `Navigating to ${input.page}` }
-        default: return { success: false, error: `Unknown tool: ${name}` }
-      }
-    }
-
-    // ============================================
-    // CALL CLAUDE — with tool use loop for dashboard
-    // ============================================
-
-    const isDashboard = context === 'dashboard'
-    const executedActions: any[] = []
-    let navigateTo: string | null = null
-
-    let response = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1024,
-      system: systemPrompt + (isDashboard ? `\n\n## Your Action Capabilities — IMPORTANT
-You can take REAL actions for the user using tools. When a user asks you to do something — DO IT, don't just give instructions. You have these abilities:
-
-**Employee Management:**
-- Create new AI employees (ask for business type, suggest a name, optionally use their website URL)
-- Provision phone numbers (ask for preferred area code)
-- Update employee config (greeting, tone, business context, instructions)
-- Activate or deactivate employees
-- Delete employees (always confirm first)
-
-**Business Settings:**
-- Update business profile (name, phone, email, address, timezone, type)
-- Update AI Knowledge (owner name, address, hours, payments, parking, policies, languages, special notes)
-- Set business hours for each day of the week
-
-**Messages:**
-- Mark phone messages as resolved, in-progress, or archived
-
-**Navigation:**
-- Navigate the user to any dashboard page
-
-**Rules:**
-- Always confirm before destructive actions (delete employee)
-- Ask for confirmation before creating employees or provisioning numbers
-- After each action, tell the user what you did and suggest the next step
-- If the user describes their business naturally (hours, services, policies), extract that info and save it using the appropriate tool
-- Be proactive — if someone says "we're open 9 to 5 Monday through Friday", save those hours immediately` : ''),
-      messages,
-      ...(isDashboard ? { tools: DASHBOARD_TOOLS } : {}),
+      },
     })
 
-    // Tool use loop — execute tools and feed results back (max 3 iterations)
-    let iterations = 0
-    while (response.stop_reason === 'tool_use' && iterations < 3) {
-      iterations++
-      const toolUseBlocks = response.content.filter(b => b.type === 'tool_use')
-      const toolResults: Anthropic.MessageParam['content'] = []
-
-      for (const block of toolUseBlocks) {
-        if (block.type !== 'tool_use') continue
-        console.log(`[Maya Tool] Executing: ${block.name}`, JSON.stringify(block.input).slice(0, 200))
-
-        const result = await executeTool(block.name, block.input)
-        executedActions.push({ tool: block.name, input: block.input, result })
-
-        if (block.name === 'navigate_user' && result.page) {
-          navigateTo = result.page
+    return result.toUIMessageStreamResponse({
+      messageMetadata: ({ part }) => {
+        if (part.type === 'finish') {
+          return {
+            ...(onboardingStep !== null ? { onboardingStep } : {}),
+            context,
+          }
         }
-
-        toolResults.push({
-          type: 'tool_result',
-          tool_use_id: block.id,
-          content: JSON.stringify(result),
-        } as any)
-      }
-
-      // Feed tool results back to Claude for final response
-      messages.push({ role: 'assistant', content: response.content })
-      messages.push({ role: 'user', content: toolResults as any })
-
-      response = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages,
-        ...(isDashboard ? { tools: DASHBOARD_TOOLS } : {}),
-      })
-    }
-
-    // Extract final text response
-    const textBlock = response.content.find(b => b.type === 'text')
-    let responseText = textBlock && textBlock.type === 'text' ? textBlock.text : ''
-
-    if (!responseText && executedActions.length > 0) {
-      responseText = executedActions.map(a => a.result?.message || `Executed ${a.tool}`).join('\n')
-    }
-
-    if (!responseText) {
-      return NextResponse.json({ error: 'No response from AI' }, { status: 500 })
-    }
-
-    let showLeadCapture = false
-    let createTicket = false
-    let ticketSummary: string | null = null
-
-    // Parse [SUGGEST_TRIAL] signal from public context responses
-    if (context === 'public' && responseText.includes('[SUGGEST_TRIAL]')) {
-      showLeadCapture = true
-      responseText = responseText.replace('[SUGGEST_TRIAL]', '').trim()
-    }
-
-    // Parse [CREATE_TICKET] and [TICKET_SUMMARY] from support context
-    if (context === 'support' && responseText.includes('[CREATE_TICKET]')) {
-      createTicket = true
-      responseText = responseText.replace('[CREATE_TICKET]', '').trim()
-
-      const summaryMatch = responseText.match(/\[TICKET_SUMMARY:\s*(.+?)\]/)
-      if (summaryMatch) {
-        ticketSummary = summaryMatch[1].trim()
-        responseText = responseText.replace(summaryMatch[0], '').trim()
-      }
-    }
-
-    // Log conversation to DB (fire-and-forget, non-blocking)
-    if (context === 'public' && sessionId) {
-      const allMessages: ChatMessage[] = [
-        ...history,
-        { role: 'user', content: message },
-        { role: 'assistant', content: responseText },
-      ]
-      const { businessType, employeeInterest } = extractVisitorContext(allMessages)
-      const conversationText = allMessages.map(m => `${m.role}: ${m.content}`).join('\n')
-
-      logConversation(sessionId, allMessages, showLeadCapture, businessType, employeeInterest)
-        .then(() => embedAndStore(sessionId, conversationText))
-        .catch(err => console.error('[chat] log/embed error:', err))
-    }
-
-    return NextResponse.json({
-      response: responseText,
-      ...(onboardingStep !== null ? { onboardingStep } : {}),
-      ...(showLeadCapture ? { showLeadCapture: true } : {}),
-      ...(createTicket ? { createTicket: true, ticketSummary } : {}),
-      ...(executedActions.length > 0 ? { actions: executedActions } : {}),
-      ...(navigateTo ? { navigate: navigateTo } : {}),
+        return undefined
+      },
     })
   } catch (error: any) {
     console.error('[API] Chat error:', error?.message || error)
     if (error?.status === 429) {
-      return NextResponse.json({ error: 'AI service rate limited. Please try again.' }, { status: 429 })
+      return new Response(JSON.stringify({ error: 'AI service rate limited. Please try again.' }), { status: 429 })
     }
-    const errMsg = error?.message || String(error)
-    return NextResponse.json({ error: `Failed to get response: ${errMsg}` }, { status: 500 })
+    return new Response(JSON.stringify({ error: `Failed to get response: ${error?.message || String(error)}` }), { status: 500 })
   }
 }

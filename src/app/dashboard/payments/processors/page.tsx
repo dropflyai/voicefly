@@ -8,8 +8,7 @@ import LocationSelector from '../../../../components/LocationSelector'
 import { PaymentAPIImpl, BusinessAPI, LocationAPIImpl } from '../../../../lib/supabase'
 import type { PaymentProcessor, Business, Location } from '../../../../lib/supabase-types-mvp'
 
-// Mock business ID - in real app, this would come from auth context
-const DEMO_BUSINESS_ID = '8424aa26-4fd5-4d4b-92aa-8a9c5ba77dad'
+import { getSecureBusinessId, redirectToLoginIfUnauthenticated } from '../../../../lib/multi-tenant-auth'
 
 export default function PaymentProcessorsPage() {
   const [processors, setProcessors] = useState<PaymentProcessor[]>([])
@@ -32,16 +31,20 @@ export default function PaymentProcessorsPage() {
       setIsPageLoading(true)
       setError(null)
 
+      if (redirectToLoginIfUnauthenticated()) return
+      const bid = getSecureBusinessId()
+      if (!bid) { setError('Authentication required.'); setIsPageLoading(false); return }
+
       // Load business info
-      const businessData = await BusinessAPI.getBusiness(DEMO_BUSINESS_ID)
+      const businessData = await BusinessAPI.getBusiness(bid)
       if (businessData) {
         setBusiness(businessData)
       }
 
       // Load locations
-      const locationsData = await locationAPI.getLocations(DEMO_BUSINESS_ID)
+      const locationsData = await locationAPI.getLocations(bid)
       setLocations(locationsData)
-      
+
       // Set primary location as default
       const primaryLocation = locationsData.find(loc => loc.is_primary)
       if (primaryLocation) {
@@ -49,7 +52,7 @@ export default function PaymentProcessorsPage() {
       }
 
       // Load payment processors
-      const processorsData = await paymentAPI.getPaymentProcessors(DEMO_BUSINESS_ID)
+      const processorsData = await paymentAPI.getPaymentProcessors(bid)
       setProcessors(processorsData)
 
     } catch (error) {
@@ -69,7 +72,7 @@ export default function PaymentProcessorsPage() {
       setIsLoading(true)
       
       const savedProcessor = await paymentAPI.configureProcessor(
-        DEMO_BUSINESS_ID,
+        getSecureBusinessId()!,
         selectedLocation.id,
         processorData
       )
@@ -122,7 +125,7 @@ export default function PaymentProcessorsPage() {
   const createDefaultProcessor = (processorType: 'square' | 'stripe', locationId: string): Partial<PaymentProcessor> => {
     return {
       processor_type: processorType,
-      business_id: DEMO_BUSINESS_ID,
+      business_id: getSecureBusinessId()!,
       location_id: locationId,
       is_active: false,
       is_live_mode: false,

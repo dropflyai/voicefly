@@ -19,8 +19,7 @@ import LocationForm from '../../../../components/LocationForm'
 import { LocationAPIImpl, BusinessAPI } from '../../../../lib/supabase'
 import type { Location, CreateLocationRequest, Business } from '../../../../lib/supabase-types-mvp'
 
-// Mock business ID - in real app, this would come from auth context
-const DEMO_BUSINESS_ID = '8424aa26-4fd5-4d4b-92aa-8a9c5ba77dad'
+import { getSecureBusinessId, redirectToLoginIfUnauthenticated } from '../../../../lib/multi-tenant-auth'
 
 interface LocationPageProps {
   params: {
@@ -48,14 +47,18 @@ export default function LocationPage({ params }: LocationPageProps) {
       setIsPageLoading(true)
       setError(null)
 
+      if (redirectToLoginIfUnauthenticated()) return
+      const bid = getSecureBusinessId()
+      if (!bid) { setError('Authentication required.'); setIsPageLoading(false); return }
+
       // Load business info
-      const businessData = await BusinessAPI.getBusiness(DEMO_BUSINESS_ID)
+      const businessData = await BusinessAPI.getBusiness(bid)
       if (businessData) {
         setBusiness(businessData)
       }
 
       // Load all locations to find the specific one
-      const locations = await locationAPI.getLocations(DEMO_BUSINESS_ID)
+      const locations = await locationAPI.getLocations(bid)
       const targetLocation = locations.find(loc => loc.id === params.id)
       
       if (!targetLocation) {

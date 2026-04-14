@@ -106,7 +106,7 @@ export default function PricingPage() {
             <div className="flex items-center space-x-4">
               <Link href="/login" className="text-text-secondary hover:text-text-primary text-sm font-medium transition-colors">Login</Link>
               <Link href="/signup" className="bg-brand-primary text-brand-on px-4 py-2 rounded-md text-sm font-medium hover:bg-[#0060d0] transition-colors">
-                Start Free Trial
+                Try It Free
               </Link>
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function PricingPage() {
             Predictable pricing for growing teams.
           </h1>
           <p className="text-xl text-text-secondary mb-8">
-            Stop missing calls. Start with a 14-day free trial. No credit card needed.
+            Forward your calls to AI. Keep your number. Free for 14 days.
           </p>
 
           {/* Billing Toggle */}
@@ -196,7 +196,7 @@ export default function PricingPage() {
                       : 'bg-surface-high text-text-primary hover:bg-surface-highest'
                   }`}
                 >
-                  Start 14-Day Trial
+                  Try It Free for 14 Days
                 </Link>
 
                 <div className="mt-4 text-center">
@@ -258,18 +258,18 @@ export default function PricingPage() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-brand-primary/8 rounded-full blur-[120px] pointer-events-none" />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <h2 className="text-3xl font-bold text-text-primary font-[family-name:var(--font-manrope)] tracking-tight mb-4">
-            Never Miss a Client Call Again
+            Forward your calls. See how AI does.
           </h2>
           <p className="text-xl text-text-secondary mb-8">
-            Start your 14-day trial today. Set up in under 10 minutes.
+            Keep your number. Set up in 2 minutes. Free for 14 days.
           </p>
           <Link href="/signup" className="inline-flex items-center bg-brand-primary hover:bg-[#0060d0] text-brand-on px-8 py-4 rounded-md text-lg font-semibold transition-all">
-            Start Free Trial <ArrowRight className="ml-2 h-5 w-5" />
+            Forward Your Calls to AI <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
           <div className="flex items-center justify-center space-x-6 text-text-muted text-sm mt-6">
-            <span className="flex items-center"><CheckCircle className="h-4 w-4 mr-1 text-brand-primary" />14-day trial</span>
-            <span className="flex items-center"><CheckCircle className="h-4 w-4 mr-1 text-brand-primary" />No credit card</span>
-            <span className="flex items-center"><CheckCircle className="h-4 w-4 mr-1 text-brand-primary" />Cancel anytime</span>
+            <span className="flex items-center"><CheckCircle className="h-4 w-4 mr-1 text-brand-primary" />Your number stays the same</span>
+            <span className="flex items-center"><CheckCircle className="h-4 w-4 mr-1 text-brand-primary" />Live in 2 minutes</span>
+            <span className="flex items-center"><CheckCircle className="h-4 w-4 mr-1 text-brand-primary" />Undo anytime with *73</span>
           </div>
         </div>
       </section>
