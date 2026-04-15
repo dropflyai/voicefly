@@ -202,7 +202,7 @@ export default function HomePage() {
             {[
               { icon: Phone, title: '24/7 Call Handling', desc: 'Natural-sounding AI picks up instantly. No hold music, no voicemail, no missed opportunities.' },
               { icon: Calendar, title: 'Appointment Booking', desc: 'Checks your real availability and books clients directly into Google Calendar or Calendly.' },
-              { icon: MessageSquare, title: 'SMS Follow-ups (add-on)', desc: 'Confirmation texts and appointment reminders — available once your business is A2P registered (2-3 weeks, we handle it).' },
+              { icon: MessageSquare, title: 'SMS Follow-ups', desc: 'Automatic confirmation texts and appointment reminders. A2P registration handled for you at no extra cost.' },
               { icon: Brain, title: 'Customer Memory', desc: 'Remembers every caller — their name, preferences, past appointments, and conversation history.' },
               { icon: Headphones, title: 'Order Taking', desc: 'Takes orders, processes requests, and captures details with structured data collection.' },
               { icon: Zap, title: 'CRM Integration', desc: 'Connects to HubSpot, Square, and your existing tools. Data flows automatically.' },
@@ -305,7 +305,7 @@ export default function HomePage() {
               </div>
               <p className="text-text-secondary text-sm mb-6">For businesses getting started with AI.</p>
               <ul className="space-y-3 mb-8">
-                {['60 AI voice minutes/month', '1 AI employee', '1 phone number', '24/7 call answering', 'Appointment booking', 'Lead capture', 'Call analytics dashboard'].map(f => (
+                {['60 AI voice minutes/month', '100 SMS segments/month', '1 AI employee', '1 phone number', '24/7 call answering', 'Appointment booking', 'A2P registration handled for you'].map(f => (
                   <li key={f} className="flex items-start text-sm text-text-secondary">
                     <CheckCircle className="h-4 w-4 text-brand-primary mr-2 mt-0.5 flex-shrink-0" />
                     {f}
@@ -315,7 +315,7 @@ export default function HomePage() {
               <Link href="/signup" className="block text-center bg-surface-high hover:bg-surface-highest text-text-primary px-6 py-3 rounded-md font-medium transition-all">
                 Try It Free for 14 Days
               </Link>
-              <p className="text-xs text-text-muted text-center mt-3">Additional minutes: $0.25/min</p>
+              <p className="text-xs text-text-muted text-center mt-3">$0.25/min · $0.04/SMS over 100</p>
             </div>
 
             {/* Growth */}
@@ -330,7 +330,7 @@ export default function HomePage() {
               </div>
               <p className="text-text-secondary text-sm mb-6">For growing businesses that need more.</p>
               <ul className="space-y-3 mb-8">
-                {['250 AI voice minutes/month', '3 AI employees', '3 phone numbers', '24/7 call answering', 'Appointment booking', 'Custom greeting', 'Custom FAQ answers', 'Custom call routing', 'Advanced analytics'].map(f => (
+                {['250 AI voice minutes/month', '400 SMS segments/month', '3 AI employees', '3 phone numbers', 'Custom greeting & FAQ', 'Custom call routing', 'Advanced analytics', 'A2P registration handled for you'].map(f => (
                   <li key={f} className="flex items-start text-sm text-text-secondary">
                     <CheckCircle className="h-4 w-4 text-brand-primary mr-2 mt-0.5 flex-shrink-0" />
                     {f}
@@ -340,7 +340,7 @@ export default function HomePage() {
               <Link href="/signup?plan=growth" className="block text-center bg-brand-primary hover:bg-[#0060d0] text-brand-on px-6 py-3 rounded-md font-medium transition-all">
                 Try It Free for 14 Days
               </Link>
-              <p className="text-xs text-text-muted text-center mt-3">Additional minutes: $0.20/min</p>
+              <p className="text-xs text-text-muted text-center mt-3">$0.20/min · $0.04/SMS over 400</p>
             </div>
 
             {/* Pro */}
@@ -352,7 +352,7 @@ export default function HomePage() {
               </div>
               <p className="text-text-secondary text-sm mb-6">For busy businesses ready to scale.</p>
               <ul className="space-y-3 mb-8">
-                {['750 AI voice minutes/month', '5 AI employees', '5 phone numbers', 'Fully custom AI agent', 'Custom voice selection', 'CRM integration', 'API access', 'Priority support'].map(f => (
+                {['750 AI voice minutes/month', '1,000 SMS segments/month', '5 AI employees', '5 phone numbers', 'Fully custom AI agent', 'Custom voice selection', 'CRM integration', 'API access'].map(f => (
                   <li key={f} className="flex items-start text-sm text-text-secondary">
                     <CheckCircle className="h-4 w-4 text-brand-primary mr-2 mt-0.5 flex-shrink-0" />
                     {f}
@@ -362,7 +362,7 @@ export default function HomePage() {
               <Link href="/signup?plan=pro" className="block text-center bg-surface-high hover:bg-surface-highest text-text-primary px-6 py-3 rounded-md font-medium transition-all">
                 Try It Free for 14 Days
               </Link>
-              <p className="text-xs text-text-muted text-center mt-3">Additional minutes: $0.18/min</p>
+              <p className="text-xs text-text-muted text-center mt-3">$0.18/min · $0.03/SMS over 1,000</p>
             </div>
           </div>
         </div>

@@ -17,17 +17,19 @@ export default function PricingPage() {
       yearlySavings: 120,
       features: [
         '60 AI voice minutes/month',
+        '100 SMS segments/month',
         '1 AI employee',
         '1 phone number',
         '24/7 call answering',
         'Appointment booking',
         'Lead capture',
         'Call analytics dashboard',
+        'A2P 10DLC registration ($15/mo value) — we handle it',
         'Email support',
       ],
-      limitations: ['Custom greeting', 'Custom call routing', 'SMS notifications (add-on)', 'CRM integration'],
+      limitations: ['Custom greeting', 'Custom call routing', 'CRM integration'],
       popular: false,
-      overage: '$0.25/additional minute',
+      overage: '$0.25/minute · $0.04/SMS over 100',
     },
     {
       id: 'growth',
@@ -38,6 +40,7 @@ export default function PricingPage() {
       yearlySavings: 312,
       features: [
         '250 AI voice minutes/month',
+        '400 SMS segments/month',
         '3 AI employees',
         '3 phone numbers',
         '24/7 call answering',
@@ -47,11 +50,12 @@ export default function PricingPage() {
         'Custom FAQ answers',
         'Custom call routing',
         'Advanced analytics',
+        'A2P 10DLC registration ($15/mo value) — we handle it',
         'Chat support',
       ],
-      limitations: ['SMS conversations (add-on)', 'Custom voice selection', 'API access'],
+      limitations: ['Custom voice selection', 'API access'],
       popular: true,
-      overage: '$0.20/additional minute',
+      overage: '$0.20/minute · $0.04/SMS over 400',
     },
     {
       id: 'pro',
@@ -62,6 +66,7 @@ export default function PricingPage() {
       yearlySavings: 600,
       features: [
         '750 AI voice minutes/month',
+        '1,000 SMS segments/month',
         '5 AI employees',
         '5 phone numbers',
         '24/7 call answering',
@@ -71,11 +76,12 @@ export default function PricingPage() {
         'API access',
         'CRM integration',
         'Advanced analytics',
+        'A2P 10DLC registration ($15/mo value) — we handle it',
         'Priority support',
       ],
-      limitations: ['SMS conversations (add-on)'],
+      limitations: [],
       popular: false,
-      overage: '$0.18/additional minute',
+      overage: '$0.18/minute · $0.03/SMS over 1,000',
     },
   ]
 
@@ -86,7 +92,8 @@ export default function PricingPage() {
     { question: "How quickly can I get set up?", answer: "Most businesses are up and running in under 10 minutes. Choose your AI voice, set your greeting, and your phone employee starts answering calls immediately." },
     { question: "Will clients know they're talking to AI?", answer: "Our AI voices sound natural and conversational. Many clients won't notice the difference. The AI handles bookings, answers questions, and takes messages just like a human." },
     { question: "Can I cancel anytime?", answer: "Yes, cancel your subscription at any time. No cancellation fees. You'll retain access until the end of your billing period." },
-    { question: "Is SMS included?", answer: "Voice calling is included in every plan and works on day one. SMS (appointment reminders and text replies from your AI) is available as an add-on after your business is A2P 10DLC registered with US carriers. Registration takes 2–3 weeks and we handle it for you. Reach out to enable SMS for your account." },
+    { question: "Is SMS included?", answer: "Yes. Every plan includes business texting — 100 / 400 / 1,000 SMS segments per month on Starter / Growth / Pro, with overage at $0.04/segment ($0.03 on Pro). Voice works on day one. SMS activates once your business is A2P 10DLC registered with US carriers; we handle that registration for you (typically 2-3 weeks, no fees to you)." },
+    { question: "What's A2P 10DLC and why does it take time?", answer: "A2P 10DLC is the US carrier registration system (AT&T, T-Mobile, Verizon) required for any business to send SMS from a dedicated phone number. Without it, messages get filtered as spam. We collect your business info during onboarding and programmatically register your brand and campaign via Twilio. Registration costs ~$15/mo, which is included in your plan at no extra cost." },
   ]
 
   const getPrice = (plan: typeof plans[0]) => billingPeriod === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice
@@ -198,7 +205,7 @@ export default function PricingPage() {
                 </Link>
 
                 <div className="mt-4 text-center">
-                  <p className="text-xs text-text-muted">Additional minutes: {plan.overage}</p>
+                  <p className="text-xs text-text-muted">{plan.overage}</p>
                 </div>
               </div>
             ))}

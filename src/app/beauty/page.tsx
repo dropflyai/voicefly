@@ -277,18 +277,18 @@ export default function BeautyLandingPage() {
             {[
               {
                 name: 'Starter', price: 49, desc: 'For salons getting started',
-                features: ['60 AI voice minutes/month', '1 AI receptionist', '1 phone number', '24/7 call answering', 'Appointment booking', 'Lead capture'],
-                popular: false, overage: '$0.25/min',
+                features: ['60 AI voice minutes/month', '100 SMS segments/month', '1 AI receptionist', '1 phone number', 'Appointment booking', 'A2P registration handled for you'],
+                popular: false, overage: '$0.25/min · $0.04/SMS over 100',
               },
               {
                 name: 'Growth', price: 129, desc: 'For growing salons that need more',
-                features: ['250 AI voice minutes/month', '3 AI receptionists', '3 phone numbers', 'Custom greeting', 'Custom FAQ answers', 'Custom call routing', 'Advanced analytics'],
-                popular: true, overage: '$0.20/min',
+                features: ['250 AI voice minutes/month', '400 SMS segments/month', '3 AI receptionists', '3 phone numbers', 'Custom greeting & FAQ', 'Custom call routing', 'Advanced analytics'],
+                popular: true, overage: '$0.20/min · $0.04/SMS over 400',
               },
               {
                 name: 'Pro', price: 249, desc: 'For busy salons ready to scale',
-                features: ['750 AI voice minutes/month', '5 AI receptionists', '5 phone numbers', 'Fully custom AI agent', 'Custom voice selection', 'CRM integration', 'API access', 'Priority support'],
-                popular: false, overage: '$0.18/min',
+                features: ['750 AI voice minutes/month', '1,000 SMS segments/month', '5 AI receptionists', '5 phone numbers', 'Fully custom AI agent', 'Custom voice selection', 'CRM integration', 'Priority support'],
+                popular: false, overage: '$0.18/min · $0.03/SMS over 1,000',
               },
             ].map(plan => (
               <div
@@ -326,7 +326,7 @@ export default function BeautyLandingPage() {
                 >
                   Try It Free for 14 Days
                 </Link>
-                <p className="text-xs text-text-muted text-center mt-3">Additional minutes: {plan.overage}</p>
+                <p className="text-xs text-text-muted text-center mt-3">{plan.overage}</p>
               </div>
             ))}
           </div>
