@@ -14,6 +14,7 @@ export interface SignupData {
   companyName: string
   businessType: string
   phone?: string
+  smsOptIn?: boolean
 }
 
 export interface LoginData {
@@ -51,7 +52,11 @@ export class AuthService {
       options: {
         data: {
           first_name: data.firstName,
-          last_name: data.lastName
+          last_name: data.lastName,
+          phone: data.phone || '',
+          sms_opt_in: data.smsOptIn === true,
+          sms_opt_in_at: data.smsOptIn === true ? new Date().toISOString() : null,
+          sms_opt_in_source: data.smsOptIn === true ? 'signup_form' : null,
         }
       }
     })
@@ -94,14 +99,18 @@ export class AuthService {
 
     // Signup complete
 
-    // Audit log - signup success
+    // Audit log - signup success (includes SMS consent record for A2P compliance)
     await AuditLogger.log({
       event_type: AuditEventType.SIGNUP,
       user_id: userId,
       business_id: business.id,
       metadata: {
         email: data.email,
-        business_name: business.name
+        business_name: business.name,
+        phone: data.phone || null,
+        sms_opt_in: data.smsOptIn === true,
+        sms_opt_in_at: data.smsOptIn === true ? new Date().toISOString() : null,
+        sms_opt_in_source: data.smsOptIn === true ? 'signup_form' : null,
       },
       severity: 'low'
     })

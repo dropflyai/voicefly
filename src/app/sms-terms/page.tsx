@@ -3,7 +3,7 @@ import { Phone } from 'lucide-react'
 
 export const metadata = {
   title: 'SMS Messaging Terms | VoiceFly',
-  description: 'SMS program details for VoiceFly AI phone assistant messaging — opt-in, opt-out, message frequency, and help information.',
+  description: 'SMS program details for VoiceFly account notifications — opt-in, opt-out, message frequency, and help information.',
 }
 
 export default function SmsTerms() {
@@ -28,70 +28,65 @@ export default function SmsTerms() {
 
         <div className="space-y-10">
           <Section title="Program Name">
-            <p>VoiceFly AI Phone Assistant — Appointment &amp; Transactional SMS</p>
+            <p>VoiceFly Account Notifications</p>
           </Section>
 
           <Section title="Program Description">
-            <p>VoiceFly provides businesses with an AI-powered phone assistant that answers inbound calls 24/7. When a customer calls a VoiceFly-enabled business phone number, the AI assistant can send a follow-up SMS to confirm an appointment, deliver an appointment reminder, confirm an order, or send other transactional information related to the call.</p>
+            <p>VoiceFly sends transactional SMS messages to account holders (business owners who have signed up at voiceflyai.com). Messages are limited to account-related notifications: onboarding progress, trial expiration warnings, billing updates, and replies to inbound messages sent to our business line at <span className="text-text-primary font-medium">(424) 888-7754</span>.</p>
+            <p>This program does <strong>not</strong> send marketing or promotional messages, and does <strong>not</strong> send SMS to end customers of our users&apos; businesses. Those flows are handled under separate per-business registrations.</p>
           </Section>
 
-          <Section title="How Customers Opt In">
-            <p>Customers provide express written consent to receive SMS messages during an inbound phone call with the AI assistant. Consent is collected verbally as follows:</p>
+          <Section title="How Users Opt In">
+            <p>Users opt in to receive SMS by:</p>
             <List items={[
-              'The customer calls the business phone number. The call is answered by the VoiceFly AI assistant.',
-              'During the conversation, the AI asks whether the customer would like to receive a text message (for example, "Would you like me to text you a confirmation?").',
-              'If the customer verbally agrees, the AI confirms the mobile number and records the opt-in consent (phone number, timestamp, and call ID) in VoiceFly\'s database.',
-              'Only after explicit verbal consent does the system send SMS to that customer.',
+              'Creating a VoiceFly account at voiceflyai.com/signup, providing a mobile phone number, and checking the "Send me account notifications by SMS" checkbox before submitting the signup form.',
+              'Sending an inbound SMS to (424) 888-7754 (for example, to test their configuration or respond to an onboarding prompt). Sending a message first is treated as express consent to receive replies.',
             ]} />
-            <p className="mt-3">This is a phone-based opt-in, not a web form or marketing list. No SMS is sent to a customer who has not verbally opted in during a call.</p>
+            <p className="mt-3">Consent, phone number, timestamp, and source are recorded in VoiceFly&apos;s audit log at the moment of opt-in.</p>
           </Section>
 
-          <Section title="Types of Messages Customers May Receive">
+          <Section title="Message Types and Samples">
+            <p>All messages fall into one of the following categories:</p>
             <List items={[
-              'Appointment confirmations (e.g., "Your appointment at [business] is confirmed for [date/time]")',
-              'Appointment reminders (e.g., "Reminder: you have an appointment tomorrow at [time]")',
-              'Order confirmations and updates',
-              'Responses to the customer\'s own inbound SMS to the business number',
-            ]} />
-            <p className="mt-3">All messages are transactional and tied to the customer&apos;s prior interaction with the business. VoiceFly does not send marketing or promotional SMS.</p>
-          </Section>
-
-          <Section title="Sample Messages">
-            <List items={[
-              '"Hi Sarah, your appointment at Acme Dental is confirmed for Thursday, April 16 at 2:00 PM. Reply STOP to opt out, HELP for help."',
-              '"Reminder: You have an appointment at Acme Dental tomorrow at 2:00 PM. Reply C to confirm, R to reschedule, STOP to opt out."',
+              'Onboarding: "Welcome to VoiceFly! Your AI employee is being set up. Reply STOP to opt out."',
+              'Trial status: "Your VoiceFly trial ends in 3 days. Log in to keep your AI employee active. Reply STOP to opt out."',
+              'Billing: "Your VoiceFly payment failed. Please update your card at voiceflyai.com/dashboard/billing. Reply STOP to opt out."',
+              'Replies: conversational responses when a user texts (424) 888-7754 for support or testing.',
             ]} />
           </Section>
 
           <Section title="Message Frequency">
-            <p>Message frequency varies based on the customer&apos;s interactions with the business. A typical customer may receive 1 to 3 messages per appointment or order (for example, a confirmation at the time of booking and a reminder the day before). VoiceFly does not send scheduled bulk campaigns — each message is triggered by a specific event associated with that customer.</p>
+            <p>Message frequency is transactional and event-driven — messages are sent only when an event on the user&apos;s account warrants a notification. A typical user receives 1–4 messages per month.</p>
           </Section>
 
           <Section title="Message and Data Rates">
-            <p>Standard message and data rates may apply. Please contact your wireless carrier for details about your messaging plan. VoiceFly does not charge for SMS messages; however, carrier fees still apply to the recipient as with any text message.</p>
+            <p>Standard message and data rates may apply. Contact your wireless carrier for details about your messaging plan. VoiceFly does not charge for SMS messages.</p>
           </Section>
 
           <Section title="Opt-Out">
-            <p>Customers can opt out of SMS messages at any time by replying any of the following keywords to any VoiceFly message:</p>
+            <p>You can opt out at any time by replying any of the following keywords to any VoiceFly message:</p>
             <p className="mt-2 font-mono text-sm text-text-primary">STOP, STOPALL, UNSUBSCRIBE, CANCEL, END, QUIT, OPTOUT, REVOKE</p>
-            <p className="mt-3">After opting out, the customer will receive a one-time confirmation and will not receive any further messages. To resubscribe, the customer can reply <span className="font-mono">START</span> to the same number, or ask the AI assistant to re-enable SMS during a future call.</p>
+            <p className="mt-3">You will receive a one-time confirmation and will not receive further messages. To resubscribe, reply <span className="font-mono">START</span> to the same number.</p>
           </Section>
 
           <Section title="Help">
-            <p>Customers can reply <span className="font-mono">HELP</span> or <span className="font-mono">INFO</span> to any message to receive help information. The help response includes instructions to opt out and a contact phone number for support.</p>
-            <p className="mt-3">For additional support, customers can call <span className="text-text-primary font-medium">(424) 888-7754</span> or email <span className="text-text-primary font-medium">tony@dropfly.io</span>.</p>
+            <p>Reply <span className="font-mono">HELP</span> or <span className="font-mono">INFO</span> to any message for assistance. For additional support, contact <span className="text-text-primary font-medium">tony@dropfly.io</span> or call <span className="text-text-primary font-medium">(424) 888-7754</span>.</p>
           </Section>
 
           <Section title="Supported Carriers">
-            <p>VoiceFly SMS is supported on all major US wireless carriers including AT&amp;T, T-Mobile, Verizon, and their respective MVNOs. VoiceFly and its service providers are not liable for delays or failures in delivery caused by carrier networks.</p>
+            <p>VoiceFly SMS is supported on all major US wireless carriers including AT&amp;T, T-Mobile, Verizon, and their respective MVNOs. VoiceFly is not liable for delays or failures in delivery caused by carrier networks.</p>
           </Section>
 
           <Section title="Privacy">
-            <p>VoiceFly handles customer phone numbers and message content in accordance with our <Link href="/privacy" className="text-brand-light hover:text-brand-primary transition-colors">Privacy Policy</Link>. Phone numbers collected for SMS opt-in are never sold, rented, or shared with third parties for marketing purposes.</p>
+            <p>Phone numbers and message content are handled in accordance with our <Link href="/privacy" className="text-brand-light hover:text-brand-primary transition-colors">Privacy Policy</Link>. Phone numbers collected for SMS opt-in are never sold, rented, or shared with third parties for marketing purposes.</p>
           </Section>
 
-          <Section title="Consent Is Not a Condition of Purchase">
-            <p>Agreeing to receive SMS messages from VoiceFly is not a condition of purchasing any product or service. Customers can use VoiceFly-enabled business phone numbers for voice calls without opting in to SMS.</p>
+          <Section title="Consent Is Not a Condition of Service">
+            <p>Agreeing to receive SMS notifications is optional. You can use VoiceFly without opting in to SMS; account notifications will still be sent by email.</p>
+          </Section>
+
+          <Section title="Customers of VoiceFly Users">
+            <p>If you are a customer of a business that uses VoiceFly&apos;s AI phone assistant (for example, you called a salon and received an appointment reminder text), that SMS was sent under a separate A2P 10DLC registration owned by that business, not this program. Your opt-in, opt-out, and help keywords still apply.</p>
           </Section>
 
           <Section title="Contact">

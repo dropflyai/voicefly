@@ -12,10 +12,12 @@ export default function SignupPage() {
     firstName: '',
     lastName: '',
     email: '',
+    phone: '',
     company: '',
     businessType: 'general_business',
     password: '',
-    agreeToTerms: false
+    agreeToTerms: false,
+    smsOptIn: false,
   })
 
   useEffect(() => {
@@ -50,7 +52,9 @@ export default function SignupPage() {
         firstName: formData.firstName,
         lastName: formData.lastName,
         companyName: formData.company,
-        businessType: formData.businessType
+        businessType: formData.businessType,
+        phone: formData.phone,
+        smsOptIn: formData.smsOptIn,
       })
 
       localStorage.setItem('authenticated_business_id', primaryBusinessId)
@@ -85,7 +89,7 @@ export default function SignupPage() {
     if (name === 'password') checkPasswordStrength(value)
   }
 
-  const isFormValid = formData.firstName && formData.lastName && formData.email && formData.company && formData.password && formData.agreeToTerms
+  const isFormValid = formData.firstName && formData.lastName && formData.email && formData.phone && formData.company && formData.password && formData.agreeToTerms
 
   const handleGoogleSignUp = async () => {
     try {
@@ -171,6 +175,14 @@ export default function SignupPage() {
             </div>
 
             <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-text-secondary mb-1">Mobile phone</label>
+              <input id="phone" name="phone" type="tel" required value={formData.phone} onChange={handleInputChange}
+                className="w-full px-3 py-3 bg-surface-highest text-text-primary placeholder-text-muted rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-primary/50 border-none"
+                placeholder="(555) 123-4567" />
+              <p className="text-xs text-text-muted mt-1">Used for account security and optional SMS notifications.</p>
+            </div>
+
+            <div>
               <label htmlFor="company" className="block text-sm font-medium text-text-secondary mb-1">Company name</label>
               <input id="company" name="company" type="text" required value={formData.company} onChange={handleInputChange}
                 className="w-full px-3 py-3 bg-surface-highest text-text-primary placeholder-text-muted rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-primary/50 border-none"
@@ -234,6 +246,16 @@ export default function SignupPage() {
                 <Link href="/terms" className="text-brand-light hover:text-brand-primary">Terms of Service</Link>
                 {' '}and{' '}
                 <Link href="/privacy" className="text-brand-light hover:text-brand-primary">Privacy Policy</Link>
+              </label>
+            </div>
+
+            <div className="flex items-start">
+              <input id="smsOptIn" name="smsOptIn" type="checkbox" checked={formData.smsOptIn} onChange={handleInputChange}
+                className="mt-1 w-4 h-4 rounded bg-surface-highest border-none focus:ring-brand-primary text-brand-primary" />
+              <label htmlFor="smsOptIn" className="ml-3 text-sm text-text-secondary">
+                Send me account notifications by SMS (onboarding updates, trial status, billing).
+                Message frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out. See{' '}
+                <Link href="/sms-terms" className="text-brand-light hover:text-brand-primary">SMS Terms</Link>.
               </label>
             </div>
 
