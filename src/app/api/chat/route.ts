@@ -7,11 +7,24 @@
  * context: 'support'   — troubleshooting agent with ticket escalation
  */
 
-import { streamText, tool, UIMessage, convertToModelMessages, stepCountIs } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { streamText, tool, UIMessage, convertToModelMessages, stepCountIs, embed } from 'ai'
 import { createClient } from '@supabase/supabase-js'
 import { validateBusinessAccess } from '@/lib/api-auth'
 import { z } from 'zod'
+
+/**
+ * All model access is routed through the Vercel AI Gateway.
+ * Auth: AI_GATEWAY_API_KEY env var locally, OIDC on Vercel deployments.
+ * Model strings use provider/model format, e.g. 'anthropic/claude-haiku-4.5'.
+ *
+ * Benefits over direct provider SDKs:
+ *   - Single API key (no ANTHROPIC_API_KEY + OPENAI_API_KEY separately)
+ *   - Automatic failover if a provider is down
+ *   - Unified cost + usage visibility in Vercel dashboard
+ *   - Model-agnostic code — swap providers with one string change
+ */
+const MAYA_CHAT_MODEL = 'anthropic/claude-haiku-4.5'
+const MAYA_EMBED_MODEL = 'openai/text-embedding-3-small'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -440,19 +453,19 @@ async function logConversation(sessionId: string, messages: any[], leadCaptured:
 }
 
 async function embedAndStore(sessionId: string, conversationText: string): Promise<void> {
-  if (!process.env.OPENAI_API_KEY) return
+  // Routed through AI Gateway — uses AI_GATEWAY_API_KEY (or OIDC on Vercel)
+  if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL) return
   try {
-    const res = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'text-embedding-ada-002', input: conversationText.slice(0, 8000) }),
+    const { embedding } = await embed({
+      model: MAYA_EMBED_MODEL,
+      value: conversationText.slice(0, 8000),
     })
-    if (!res.ok) return
-    const { data } = await res.json()
-    if (data?.[0]?.embedding) {
-      await publicSupabase.from('chat_conversations').update({ embedding: data[0].embedding }).eq('session_id', sessionId)
+    if (embedding?.length) {
+      await publicSupabase.from('chat_conversations').update({ embedding }).eq('session_id', sessionId)
     }
-  } catch { /* non-blocking */ }
+  } catch {
+    // Non-blocking — embedding failures shouldn't break the chat response
+  }
 }
 
 function extractVisitorContext(messages: any[]): { businessType?: string; employeeInterest?: string } {
@@ -746,7 +759,7 @@ export async function POST(request: Request) {
     }))
 
     const result = streamText({
-      model: anthropic('claude-haiku-4-5-20251001'),
+      model: MAYA_CHAT_MODEL,
       system: systemPrompt,
       messages: aiMessages,
       ...(tools ? { tools, stopWhen: stepCountIs(3) } : {}),
