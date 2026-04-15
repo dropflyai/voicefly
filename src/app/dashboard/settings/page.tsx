@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import Layout from '../../../components/Layout'
 import { supabase } from '../../../lib/supabase-client'
 import {
@@ -125,6 +126,7 @@ export default function SettingsPage() {
     { id: 'business', name: 'Business Profile', icon: BuildingOfficeIcon },
     { id: 'ai-context', name: 'AI Knowledge', icon: ChatBubbleLeftRightIcon },
     { id: 'hours', name: 'Business Hours', icon: ClockIcon },
+    { id: 'sms-registration', name: 'SMS Registration', icon: DevicePhoneMobileIcon, href: '/dashboard/settings/sms' },
     { id: 'notifications', name: 'Notifications', icon: BellIcon },
     { id: 'security', name: 'Security', icon: ShieldCheckIcon },
     { id: 'team', name: 'Team Access', icon: UserGroupIcon },
@@ -432,21 +434,32 @@ export default function SettingsPage() {
           {/* Sidebar */}
           <div className="w-64 flex-shrink-0 mr-8">
             <nav className="space-y-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={clsx(
-                    'w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                    activeTab === tab.id
-                      ? 'bg-brand-primary/10 text-brand-primary'
-                      : 'text-text-secondary hover:bg-surface hover:text-text-primary'
-                  )}
-                >
-                  <tab.icon className="mr-3 h-5 w-5" />
-                  {tab.name}
-                </button>
-              ))}
+              {tabs.map((tab) => {
+                const classes = clsx(
+                  'w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors',
+                  activeTab === tab.id
+                    ? 'bg-brand-primary/10 text-brand-primary'
+                    : 'text-text-secondary hover:bg-surface hover:text-text-primary'
+                )
+                if ((tab as any).href) {
+                  return (
+                    <Link key={tab.id} href={(tab as any).href} className={classes}>
+                      <tab.icon className="mr-3 h-5 w-5" />
+                      {tab.name}
+                    </Link>
+                  )
+                }
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={classes}
+                  >
+                    <tab.icon className="mr-3 h-5 w-5" />
+                    {tab.name}
+                  </button>
+                )
+              })}
             </nav>
           </div>
 

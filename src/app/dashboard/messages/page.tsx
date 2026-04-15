@@ -330,6 +330,24 @@ function MessagesPage() {
   return (
     <Layout business={business}>
       <div className="p-8 space-y-6">
+        {/* SMS registration banner — shown when SMS isn't active yet */}
+        {business && !(business as any).sms_enabled && (
+          <div className="bg-brand-primary/10 border border-brand-primary/30 rounded-xl p-4 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-text-primary">SMS isn&apos;t active for your business yet</p>
+              <p className="text-xs text-text-secondary mt-0.5">
+                Register your business with US carriers so your AI can send SMS. Takes 2-3 weeks — we handle the registration for you at no extra cost.
+              </p>
+            </div>
+            <a
+              href="/dashboard/settings/sms"
+              className="flex-shrink-0 px-4 py-2 bg-brand-primary hover:bg-[#0060d0] text-brand-on text-sm font-semibold rounded-lg transition-colors whitespace-nowrap"
+            >
+              Start registration
+            </a>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
