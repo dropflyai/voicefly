@@ -152,7 +152,7 @@ export default function BeautyLandingPage() {
           <div className="grid md:grid-cols-3 gap-2 max-w-5xl mx-auto">
             {[
               { emoji: '✂️', title: "You're With a Client", desc: "The phone rings while you're mid-color or mid-cut. You can't stop what you're doing. The call goes to voicemail. That potential client calls the next salon." },
-              { emoji: '📅', title: 'No-Shows Happen', desc: "Without reminders, 15-30% of appointments are no-shows. That's empty chair time you can't get back. Manual reminder calls eat up your breaks." },
+              { emoji: '📅', title: 'Booking Is a Back-and-Forth', desc: "Clients leave voicemails, you call back, they're busy, they call back. Booking one appointment takes half a day of phone tag — if you catch them at all." },
               { emoji: '🌙', title: 'Closed After 7pm', desc: "Most people browse and want to book in the evening. If your phone isn't answered, they book with someone whose is — or they forget entirely." },
             ].map(({ emoji, title, desc }) => (
               <div key={title} className="bg-surface-med p-8 rounded-lg text-center">
@@ -277,7 +277,7 @@ export default function BeautyLandingPage() {
             {[
               {
                 name: 'Starter', price: 49, desc: 'For salons getting started',
-                features: ['60 AI voice minutes/month', '1 AI receptionist', '1 phone number', '24/7 call answering', 'Appointment booking', 'SMS confirmations'],
+                features: ['60 AI voice minutes/month', '1 AI receptionist', '1 phone number', '24/7 call answering', 'Appointment booking', 'Lead capture'],
                 popular: false, overage: '$0.25/min',
               },
               {
@@ -287,7 +287,7 @@ export default function BeautyLandingPage() {
               },
               {
                 name: 'Pro', price: 249, desc: 'For busy salons ready to scale',
-                features: ['750 AI voice minutes/month', '5 AI receptionists', '5 phone numbers', 'Fully custom AI agent', 'AI SMS conversations', 'Custom voice selection', 'CRM integration', 'Priority support'],
+                features: ['750 AI voice minutes/month', '5 AI receptionists', '5 phone numbers', 'Fully custom AI agent', 'Custom voice selection', 'CRM integration', 'API access', 'Priority support'],
                 popular: false, overage: '$0.18/min',
               },
             ].map(plan => (

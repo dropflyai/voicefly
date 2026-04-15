@@ -2383,12 +2383,12 @@ function WizardStep4({
   const Icon = jobInfo.icon
   const config = wizardData.generatedConfig
 
-  // Force vapi-only during trial
+  // Force vapi-only until per-tenant A2P SMS registration flow is built
   useEffect(() => {
-    if (isTrial && phoneStep.phoneMode !== 'vapi-only') {
+    if (phoneStep.phoneMode !== 'vapi-only') {
       setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'vapi-only' }))
     }
-  }, [isTrial, phoneStep.phoneMode, setPhoneStep])
+  }, [phoneStep.phoneMode, setPhoneStep])
 
   if (createSuccess) {
     return (
@@ -2520,42 +2520,10 @@ function WizardStep4({
 
         {phoneStep.wantsPhone && (
           <div className="space-y-3">
-            {isTrial ? (
-              <div className="p-3 rounded-lg border border-blue-400 bg-brand-primary/5">
-                <p className="text-sm font-medium text-text-primary">Calls only (Trial)</p>
-                <p className="text-xs text-text-secondary mt-0.5">Voice calls included during trial. Upgrade to add SMS conversations.</p>
-              </div>
-            ) : (
-              <div>
-                <p className="text-xs font-medium text-text-primary mb-2">Phone type</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'twilio-vapi' }))}
-                    className={`p-3 rounded-lg border text-left transition-all ${
-                      phoneStep.phoneMode === 'twilio-vapi'
-                        ? 'border-blue-400 bg-brand-primary/5'
-                        : 'border-[rgba(65,71,84,0.15)] hover:border-[rgba(65,71,84,0.2)]'
-                    }`}
-                  >
-                    <p className="text-sm font-medium text-text-primary">Calls + SMS (Recommended)</p>
-                    <p className="text-xs text-text-secondary mt-0.5">AI answers calls and texts customers</p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'vapi-only' }))}
-                    className={`p-3 rounded-lg border text-left transition-all ${
-                      phoneStep.phoneMode === 'vapi-only'
-                        ? 'border-blue-400 bg-brand-primary/5'
-                        : 'border-[rgba(65,71,84,0.15)] hover:border-[rgba(65,71,84,0.2)]'
-                    }`}
-                  >
-                    <p className="text-sm font-medium text-text-primary">Calls only</p>
-                    <p className="text-xs text-text-secondary mt-0.5">Voice calls only, no SMS</p>
-                  </button>
-                </div>
-              </div>
-            )}
+            <div className="p-3 rounded-lg border border-blue-400 bg-brand-primary/5">
+              <p className="text-sm font-medium text-text-primary">Voice calls</p>
+              <p className="text-xs text-text-secondary mt-0.5">AI answers every call 24/7. SMS is available as a separate add-on once your business is A2P-registered (coming soon).</p>
+            </div>
 
             <div>
               <label className="text-xs font-medium text-text-primary">Area code (optional)</label>
@@ -3215,7 +3183,7 @@ function EmployeesDashboard() {
     areaCode: string
     provisionedNumber: string | null
     error: string | null
-  }>({ status: 'idle', wantsPhone: false, phoneMode: 'twilio-vapi', areaCode: '', provisionedNumber: null, error: null })
+  }>({ status: 'idle', wantsPhone: false, phoneMode: 'vapi-only', areaCode: '', provisionedNumber: null, error: null })
 
 
   useEffect(() => {
@@ -3247,7 +3215,7 @@ function EmployeesDashboard() {
     setCreating(false)
     setCreateError(null)
     setCreateSuccess(false)
-    setPhoneStep({ status: 'idle', wantsPhone: false, phoneMode: 'twilio-vapi', areaCode: '', provisionedNumber: null, error: null })
+    setPhoneStep({ status: 'idle', wantsPhone: false, phoneMode: 'vapi-only', areaCode: '', provisionedNumber: null, error: null })
     setCreatedEmployeeId(null)
   }
 

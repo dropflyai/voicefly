@@ -1190,8 +1190,8 @@ export default function OnboardingPage() {
               <ul className="space-y-1.5 text-blue-800">
                 {[
                   'AI answers your calls 24/7 — no hold music, no voicemail',
-                  'SMS capability — confirmations, reminders, follow-ups',
                   'Full call recordings and transcripts in your dashboard',
+                  'SMS (reminders, confirmations) available as an add-on after A2P registration',
                   'We\'ll walk you through forwarding setup after this step',
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-2">

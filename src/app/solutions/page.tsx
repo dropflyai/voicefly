@@ -43,7 +43,7 @@ const industries: Industry[] = [
       'Answers 100% of calls immediately — no more voicemail',
       'Books appointments while verifying insurance in real-time',
       'Handles after-hours triage — books urgent vs routine appointments',
-      'Sends appointment confirmations & reminders via SMS',
+      'Appointment confirmations & reminders via SMS (add-on, 2-3 week A2P registration)',
     ],
     stats: { missedCalls: '40%', lostRevenue: '$50K+/year', afterHours: '35%' },
     roi: '15-20x within 3 months', avgTransaction: '$200-500', conversionRate: '80%',
@@ -59,7 +59,7 @@ const industries: Industry[] = [
     ],
     solutions: [
       'Answers every call while your team focuses on patients',
-      'Sends automated reminders — reduces no-shows by 60%',
+      'Automated reminders via SMS (add-on) — typically reduces no-shows 60%',
       'Handles emergency calls 24/7 — books urgent vs routine',
       'Manages high-volume periods without adding staff',
     ],
@@ -79,7 +79,7 @@ const industries: Industry[] = [
       'Handles intake 24/7 — collects case details before attorney review',
       'Qualifies leads automatically — case type, urgency, budget, timeline',
       'Books consultations directly on attorney calendars',
-      'Sends retainer agreements & case intake forms via SMS/email instantly',
+      'Sends intake forms & retainer agreements via email (SMS available as add-on)',
     ],
     stats: { missedCalls: '50%', lostRevenue: '$100K+/year', afterHours: '50%' },
     roi: '10-15x within 2 months', avgTransaction: '$1000-5000', conversionRate: '75%',
@@ -96,7 +96,7 @@ const industries: Industry[] = [
     solutions: [
       'Answers emergencies 24/7 — books same-day service instantly',
       'Triages urgent vs routine — sends techs to high-priority calls first',
-      'Collects photos/videos of problem via SMS for accurate diagnosis',
+      'Collects problem details during the call for accurate diagnosis (photo/video via SMS available as add-on)',
       'Handles seasonal spikes without hiring seasonal staff',
     ],
     stats: { missedCalls: '60%', lostRevenue: '$80K+/year', afterHours: '60%' },
@@ -113,7 +113,7 @@ const industries: Industry[] = [
     ],
     solutions: [
       'Answers calls while stylists focus on clients',
-      'Sends automated reminders — reduces no-shows by 65%',
+      'Automated reminders via SMS (add-on) — typically reduces no-shows 65%',
       'Handles group bookings — coordinates multiple stylists',
       'Captures after-hours bookings when shop is closed',
     ],
@@ -132,7 +132,7 @@ const industries: Industry[] = [
     solutions: [
       'Handles after-hours emergencies with empathy — triages urgent vs routine',
       'Books wellness visits & vaccine appointments automatically',
-      'Sends pet health reminders based on vaccination schedules',
+      'Tracks pet health schedules and flags vaccinations due (SMS reminders available as add-on)',
       'Provides 24/7 support for worried pet owners',
     ],
     stats: { missedCalls: '40%', lostRevenue: '$55K+/year', afterHours: '40%' },

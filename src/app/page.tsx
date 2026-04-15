@@ -202,7 +202,7 @@ export default function HomePage() {
             {[
               { icon: Phone, title: '24/7 Call Handling', desc: 'Natural-sounding AI picks up instantly. No hold music, no voicemail, no missed opportunities.' },
               { icon: Calendar, title: 'Appointment Booking', desc: 'Checks your real availability and books clients directly into Google Calendar or Calendly.' },
-              { icon: MessageSquare, title: 'SMS Follow-ups', desc: 'Automatic confirmation texts, appointment reminders, and post-call follow-ups.' },
+              { icon: MessageSquare, title: 'SMS Follow-ups (add-on)', desc: 'Confirmation texts and appointment reminders — available once your business is A2P registered (2-3 weeks, we handle it).' },
               { icon: Brain, title: 'Customer Memory', desc: 'Remembers every caller — their name, preferences, past appointments, and conversation history.' },
               { icon: Headphones, title: 'Order Taking', desc: 'Takes orders, processes requests, and captures details with structured data collection.' },
               { icon: Zap, title: 'CRM Integration', desc: 'Connects to HubSpot, Square, and your existing tools. Data flows automatically.' },
@@ -305,7 +305,7 @@ export default function HomePage() {
               </div>
               <p className="text-text-secondary text-sm mb-6">For businesses getting started with AI.</p>
               <ul className="space-y-3 mb-8">
-                {['60 AI voice minutes/month', '1 AI employee', '1 phone number', '24/7 call answering', 'Appointment booking', 'Lead capture', 'SMS confirmations', 'Call analytics dashboard'].map(f => (
+                {['60 AI voice minutes/month', '1 AI employee', '1 phone number', '24/7 call answering', 'Appointment booking', 'Lead capture', 'Call analytics dashboard'].map(f => (
                   <li key={f} className="flex items-start text-sm text-text-secondary">
                     <CheckCircle className="h-4 w-4 text-brand-primary mr-2 mt-0.5 flex-shrink-0" />
                     {f}
@@ -352,7 +352,7 @@ export default function HomePage() {
               </div>
               <p className="text-text-secondary text-sm mb-6">For busy businesses ready to scale.</p>
               <ul className="space-y-3 mb-8">
-                {['750 AI voice minutes/month', '5 AI employees', '5 phone numbers', 'Fully custom AI agent', 'AI SMS conversations', 'Custom voice selection', 'CRM integration', 'API access', 'Priority support'].map(f => (
+                {['750 AI voice minutes/month', '5 AI employees', '5 phone numbers', 'Fully custom AI agent', 'Custom voice selection', 'CRM integration', 'API access', 'Priority support'].map(f => (
                   <li key={f} className="flex items-start text-sm text-text-secondary">
                     <CheckCircle className="h-4 w-4 text-brand-primary mr-2 mt-0.5 flex-shrink-0" />
                     {f}
