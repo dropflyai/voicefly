@@ -120,11 +120,15 @@ export interface CampaignRegistrationResult {
 /**
  * Step 1: Create an empty Customer Profile bundle for the tenant.
  * Returns the customer profile SID (starts with BU).
+ *
+ * Pass statusCallback to receive webhooks when approval status changes.
+ * (BrandRegistrations don't support callbacks — poll those via cron.)
  */
 export async function createCustomerProfile(params: {
   friendlyName: string
   email: string
   policySid?: string // use Twilio's secondary customer profile policy
+  statusCallback?: string
 }): Promise<CustomerProfileResult> {
   const POLICY_SID = params.policySid || 'RNdfbf3fae0e1107f8aded0e7cead80bf5' // "Secondary Customer Profile Policy"
 
@@ -134,6 +138,7 @@ export async function createCustomerProfile(params: {
       FriendlyName: params.friendlyName,
       Email: params.email,
       PolicySid: POLICY_SID,
+      StatusCallback: params.statusCallback,
     },
   })
 

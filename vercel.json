@@ -77,5 +77,11 @@
       "source": "/book/:path*",
       "destination": "/booking/:path*"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/a2p-advance",
+      "schedule": "0 14 * * *"
+    }
   ]
 }

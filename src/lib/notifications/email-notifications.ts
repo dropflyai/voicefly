@@ -396,6 +396,53 @@ export async function sendEmployeeReadyEmail(opts: {
 }
 
 // ============================================
+// SMS REGISTRATION APPROVED EMAIL
+// ============================================
+
+export async function sendSmsApprovedEmail(opts: {
+  ownerEmail: string
+  businessName: string
+  smsPhoneNumber?: string | null
+}) {
+  return sendNotification(
+    opts.ownerEmail,
+    `SMS is live for ${opts.businessName} — your AI can now text customers`,
+    `
+    <div style="font-family:Inter,system-ui,sans-serif;max-width:480px;margin:0 auto;">
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:32px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+          <span style="background:#2563eb;color:#fff;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;letter-spacing:0.5px;">APPROVED</span>
+          <span style="color:#1e40af;font-size:14px;font-weight:600;">${opts.businessName}</span>
+        </div>
+        <h2 style="margin:0 0 12px;color:#1e40af;font-size:22px;font-weight:700;">SMS is live.</h2>
+        <p style="margin:0 0 20px;color:#334155;font-size:15px;line-height:1.6;">
+          Your A2P 10DLC registration was approved by US wireless carriers. Your AI phone employee can now send appointment confirmations, reminders, and follow-ups by text.
+        </p>
+        ${opts.smsPhoneNumber ? `
+        <div style="background:#fff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;margin:20px 0;">
+          <p style="margin:0 0 4px;font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">SMS Number</p>
+          <p style="margin:0;font-size:24px;font-weight:700;color:#1e40af;letter-spacing:1px;">${opts.smsPhoneNumber}</p>
+        </div>
+        ` : ''}
+        <p style="margin:0 0 20px;color:#334155;font-size:15px;line-height:1.6;">
+          Nothing else to do on your end — SMS will automatically fire on calls that need follow-ups going forward.
+        </p>
+        <div style="text-align:center;margin:24px 0;">
+          <a href="https://www.voiceflyai.com/dashboard/messages"
+             style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
+            Open SMS Dashboard
+          </a>
+        </div>
+        <p style="margin:20px 0 0;font-size:13px;color:#6b7280;text-align:center;">
+          Your plan includes a monthly SMS allowance. You can check usage anytime in your dashboard.
+        </p>
+      </div>
+    </div>
+  `
+  )
+}
+
+// ============================================
 // LOW CREDIT WARNING EMAIL
 // ============================================
 

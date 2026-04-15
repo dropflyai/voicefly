@@ -29,6 +29,7 @@
 import { createClient } from '@supabase/supabase-js'
 import * as twilioApi from './twilio-api'
 import type { BusinessLegalInfo } from './twilio-api'
+import { sendSmsApprovedEmail } from '@/lib/notifications/email-notifications'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -150,6 +151,7 @@ export async function startRegistration(
   const profile = await twilioApi.createCustomerProfile({
     friendlyName: `${info.legal_name} - ${businessId.slice(0, 8)}`,
     email: info.contact_email,
+    statusCallback: `${APP_URL}/api/webhooks/twilio-a2p`,
   })
 
   // 2. Attach business info, address, representative
@@ -295,6 +297,11 @@ async function advanceCampaign(reg: Registration): Promise<Registration> {
       .update({ sms_enabled: true, updated_at: new Date().toISOString() })
       .eq('id', reg.business_id)
 
+    // Send celebration email (non-blocking — don't fail the state transition
+    // if email service is down)
+    notifySmsApproved(reg.business_id, reg.twilio_phone_number)
+      .catch(err => console.error('[a2p/service] Failed to send approval email:', err))
+
     return updateRegistration(reg.id, {
       status: 'active',
       campaign_approved_at: new Date().toISOString(),
@@ -328,4 +335,23 @@ export async function isSmsEnabled(businessId: string): Promise<boolean> {
 
 export async function getRegistrationForBusiness(businessId: string): Promise<Registration | null> {
   return getActiveRegistration(businessId)
+}
+
+// ─── Internal: notification on approval ────────────────────────────────────
+
+async function notifySmsApproved(businessId: string, smsPhoneNumber: string | null): Promise<void> {
+  // Look up business name + owner email
+  const { data: biz } = await supabase
+    .from('businesses')
+    .select('name, email')
+    .eq('id', businessId)
+    .maybeSingle()
+
+  if (!biz?.email) return // nothing to send to
+
+  await sendSmsApprovedEmail({
+    ownerEmail: biz.email,
+    businessName: biz.name || 'your business',
+    smsPhoneNumber,
+  })
 }
