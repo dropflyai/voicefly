@@ -213,17 +213,21 @@ export default function SmsSettingsPage() {
         </p>
 
         {isActive && (
-          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-6 mb-8">
-            <div className="flex items-start gap-3">
-              <CheckCircleIcon className="h-6 w-6 text-green-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-green-500">SMS is live</p>
-                <p className="text-sm text-text-secondary mt-1">
-                  Your business is registered and your AI can send SMS to customers. Approved {registration.campaign_approved_at && new Date(registration.campaign_approved_at).toLocaleDateString()}.
-                </p>
+          <>
+            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-6 mb-6">
+              <div className="flex items-start gap-3">
+                <CheckCircleIcon className="h-6 w-6 text-green-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-green-500">SMS is live</p>
+                  <p className="text-sm text-text-secondary mt-1">
+                    Your business is registered and your AI can send SMS to customers. Approved {registration.campaign_approved_at && new Date(registration.campaign_approved_at).toLocaleDateString()}.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+
+            <TestSendCard businessId={getSecureBusinessId() || ''} />
+          </>
         )}
 
         {isInReview && (
@@ -463,5 +467,71 @@ function SelectField({
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
     </label>
+  )
+}
+
+// ─── Test Send Card ─────────────────────────────────────────────────────────
+
+function TestSendCard({ businessId }: { businessId: string }) {
+  const [toPhone, setToPhone] = useState('')
+  const [sending, setSending] = useState(false)
+  const [result, setResult] = useState<{ ok: boolean; message: string; from?: string } | null>(null)
+
+  const send = async () => {
+    if (!toPhone.trim() || !businessId) return
+    setSending(true)
+    setResult(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+      }
+      const res = await fetch('/api/sms-registration/test-send', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ businessId, toPhone }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setResult({ ok: true, message: `Sent from ${data.from} to ${data.to}. Check your phone.`, from: data.from })
+      } else {
+        setResult({ ok: false, message: data.error || 'Send failed' })
+      }
+    } catch (err: any) {
+      setResult({ ok: false, message: err.message || 'Send failed' })
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="bg-surface-low rounded-xl p-6 mb-6">
+      <h3 className="font-semibold text-text-primary mb-1">Send a test SMS</h3>
+      <p className="text-sm text-text-muted mb-4">
+        Verify SMS is working by sending a one-time test to your phone. Counts against your monthly quota.
+      </p>
+      <div className="flex gap-2">
+        <input
+          type="tel"
+          value={toPhone}
+          onChange={e => setToPhone(e.target.value)}
+          placeholder="+14155551234"
+          className="flex-1 px-3 py-2 bg-surface-highest text-text-primary rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-primary/50 border-none text-sm"
+        />
+        <button
+          onClick={send}
+          disabled={!toPhone.trim() || sending}
+          className="bg-brand-primary hover:bg-[#0060d0] text-brand-on font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50 text-sm"
+        >
+          {sending ? 'Sending…' : 'Send test'}
+        </button>
+      </div>
+      {result && (
+        <p className={`text-sm mt-3 ${result.ok ? 'text-green-500' : 'text-accent'}`}>
+          {result.message}
+        </p>
+      )}
+    </div>
   )
 }

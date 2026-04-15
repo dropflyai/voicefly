@@ -258,6 +258,32 @@ async function advanceToCampaign(reg: Registration): Promise<Registration> {
     inboundRequestUrl: `${APP_URL}/api/webhooks/sms`,
   })
 
+  // Attach the tenant's existing Twilio phone numbers (from their phone
+  // employees) to this messaging service. Required so SMS sent from those
+  // numbers is covered by the tenant's own A2P campaign, not ours.
+  try {
+    const { data: employees } = await supabase
+      .from('phone_employees')
+      .select('twilio_phone_sid, phone_number')
+      .eq('business_id', reg.business_id)
+      .eq('phone_provider', 'twilio-vapi')
+      .not('twilio_phone_sid', 'is', null)
+
+    for (const emp of employees || []) {
+      if (!emp.twilio_phone_sid) continue
+      try {
+        await twilioApi.attachPhoneNumberToService(service.sid, emp.twilio_phone_sid)
+        console.log(`[a2p/service] Attached ${emp.phone_number} to messaging service ${service.sid}`)
+      } catch (err: any) {
+        // Common case: number is already attached to another service.
+        // Log and continue — campaign submission is what matters for this step.
+        console.warn(`[a2p/service] Could not attach ${emp.phone_number}:`, err.message)
+      }
+    }
+  } catch (err: any) {
+    console.error('[a2p/service] Phone number attachment pass failed:', err.message)
+  }
+
   // Register the campaign
   const campaign = await twilioApi.registerCampaign({
     brandSid: reg.twilio_brand_sid,
@@ -276,10 +302,24 @@ async function advanceToCampaign(reg: Registration): Promise<Registration> {
     helpMessage: `${info.legal_name} appointments. Reply STOP to opt out. Powered by VoiceFly. See ${APP_URL}/sms-terms`,
   })
 
+  // Stash the first attached phone number on the registration row so the
+  // UI can surface it and later test-send logic has a default "from".
+  const { data: firstEmp } = await supabase
+    .from('phone_employees')
+    .select('phone_number, twilio_phone_sid')
+    .eq('business_id', reg.business_id)
+    .eq('phone_provider', 'twilio-vapi')
+    .not('twilio_phone_sid', 'is', null)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
   return updateRegistration(reg.id, {
     status: 'campaign_pending',
     twilio_messaging_service_sid: service.sid,
     twilio_campaign_sid: campaign.sid,
+    twilio_phone_number: firstEmp?.phone_number || null,
+    twilio_phone_number_sid: firstEmp?.twilio_phone_sid || null,
   })
 }
 

@@ -2383,10 +2383,12 @@ function WizardStep4({
   const Icon = jobInfo.icon
   const config = wizardData.generatedConfig
 
-  // Force vapi-only until per-tenant A2P SMS registration flow is built
+  // Default to twilio-vapi for every new employee (Option A): the number is
+  // Twilio-owned from day 1 so SMS can flip on in-place once the tenant
+  // completes A2P registration — no number migration, no re-forwarding.
   useEffect(() => {
-    if (phoneStep.phoneMode !== 'vapi-only') {
-      setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'vapi-only' }))
+    if (phoneStep.phoneMode !== 'twilio-vapi') {
+      setPhoneStep((prev: any) => ({ ...prev, phoneMode: 'twilio-vapi' }))
     }
   }, [phoneStep.phoneMode, setPhoneStep])
 
@@ -2521,8 +2523,10 @@ function WizardStep4({
         {phoneStep.wantsPhone && (
           <div className="space-y-3">
             <div className="p-3 rounded-lg border border-blue-400 bg-brand-primary/5">
-              <p className="text-sm font-medium text-text-primary">Voice calls</p>
-              <p className="text-xs text-text-secondary mt-0.5">AI answers every call 24/7. SMS is available as a separate add-on once your business is A2P-registered (coming soon).</p>
+              <p className="text-sm font-medium text-text-primary">Voice + SMS ready</p>
+              <p className="text-xs text-text-secondary mt-0.5">
+                Your number is Twilio-owned from day 1. Voice works immediately. SMS activates on the same number once you complete A2P registration — no re-forwarding needed later.
+              </p>
             </div>
 
             <div>
@@ -3183,7 +3187,7 @@ function EmployeesDashboard() {
     areaCode: string
     provisionedNumber: string | null
     error: string | null
-  }>({ status: 'idle', wantsPhone: false, phoneMode: 'vapi-only', areaCode: '', provisionedNumber: null, error: null })
+  }>({ status: 'idle', wantsPhone: false, phoneMode: 'twilio-vapi', areaCode: '', provisionedNumber: null, error: null })
 
 
   useEffect(() => {
@@ -3215,7 +3219,7 @@ function EmployeesDashboard() {
     setCreating(false)
     setCreateError(null)
     setCreateSuccess(false)
-    setPhoneStep({ status: 'idle', wantsPhone: false, phoneMode: 'vapi-only', areaCode: '', provisionedNumber: null, error: null })
+    setPhoneStep({ status: 'idle', wantsPhone: false, phoneMode: 'twilio-vapi', areaCode: '', provisionedNumber: null, error: null })
     setCreatedEmployeeId(null)
   }
 
