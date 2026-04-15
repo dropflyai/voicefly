@@ -97,6 +97,12 @@ export class AuthService {
     // Initialize minutes for new business (trial = 10 minutes)
     await initializeMinutes(business.id, 'trial')
 
+    // Initialize SMS segment limit based on trial tier (20 segments)
+    // Actual sending is still gated on sms_enabled which only flips after
+    // the tenant completes A2P registration — this just seeds the limit.
+    const { syncSmsLimitFromTier } = await import('./a2p/sms-guard')
+    await syncSmsLimitFromTier(business.id)
+
     // Signup complete
 
     // Audit log - signup success (includes SMS consent record for A2P compliance)

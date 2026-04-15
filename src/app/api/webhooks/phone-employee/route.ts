@@ -36,6 +36,7 @@ import {
   handleCancelAppointment,
 } from '@/lib/phone-employees/appointment-handlers'
 import { sendSms } from '@/lib/sms/twilio-client'
+import { sendSmsForBusiness } from '@/lib/a2p/sms-guard'
 import {
   sendMessageNotification,
   sendAppointmentNotification,
@@ -3439,14 +3440,21 @@ async function sendPostCallSMS(callerPhone: string, employee: any, businessId: s
     const businessName = business?.name || 'us'
     const message = `Thanks for calling ${businessName}! If you need anything else, just call or text us back.`
 
-    const result = await sendSms({
+    const result = await sendSmsForBusiness({
+      businessId,
       to: callerPhone,
       from: employee.phone_number,
       body: message,
     })
 
     if (!result.success) {
-      console.error(`[PostCallSMS] Send failed:`, result.error)
+      if (result.blocked === 'sms_not_enabled') {
+        console.warn(`[PostCallSMS] SMS not yet enabled for business ${businessId}; skipping follow-up`)
+      } else if (result.blocked === 'quota_exceeded') {
+        console.warn(`[PostCallSMS] SMS quota exceeded for business ${businessId} (${result.segmentsUsed}/${result.segmentsLimit})`)
+      } else {
+        console.error(`[PostCallSMS] Send failed:`, result.error)
+      }
       return
     }
 

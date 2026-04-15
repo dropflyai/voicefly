@@ -225,6 +225,10 @@ export async function POST(request: NextRequest) {
           const nextResetDate = new Date()
           nextResetDate.setMonth(nextResetDate.getMonth() + 1)
 
+          // Import within handler to avoid top-level circular import risk
+          const { SMS_LIMITS_BY_TIER } = await import('@/lib/a2p/sms-guard')
+          const smsLimit = SMS_LIMITS_BY_TIER[(targetPlan || 'starter').toLowerCase()] || SMS_LIMITS_BY_TIER.starter
+
           await supabase
             .from('businesses')
             .update({
@@ -234,6 +238,9 @@ export async function POST(request: NextRequest) {
               monthly_credits: monthlyCredits,
               credits_used_this_month: 0,
               credits_reset_date: nextResetDate.toISOString(),
+              sms_segments_limit: smsLimit,
+              sms_segments_used: 0,
+              sms_segments_reset_at: nextResetDate.toISOString(),
               updated_at: new Date().toISOString()
             })
             .eq('id', businessId)

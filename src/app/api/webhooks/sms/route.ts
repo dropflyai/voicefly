@@ -17,6 +17,7 @@ import { createClient } from '@supabase/supabase-js'
 import twilio from 'twilio'
 import { generateSmsResponse } from '@/lib/sms/ai-responder'
 import { sendSms } from '@/lib/sms/twilio-client'
+import { sendSmsForBusiness } from '@/lib/a2p/sms-guard'
 // Credit system removed — SMS is an included feature
 
 const supabase = createClient(
@@ -187,14 +188,21 @@ async function sendAndLog(
   customerPhone: string,
   employeePhone: string
 ) {
-  const result = await sendSms({
+  const result = await sendSmsForBusiness({
+    businessId: employee.business_id,
     to: customerPhone,
     from: employeePhone,
     body: reply,
   })
 
   if (!result.success) {
-    console.error(`[SMS Webhook] Failed to send reply to ${customerPhone}:`, result.error)
+    if (result.blocked === 'sms_not_enabled') {
+      console.warn(`[SMS Webhook] SMS not enabled for business ${employee.business_id}; reply dropped`)
+    } else if (result.blocked === 'quota_exceeded') {
+      console.warn(`[SMS Webhook] SMS quota exceeded for business ${employee.business_id} (${result.segmentsUsed}/${result.segmentsLimit})`)
+    } else {
+      console.error(`[SMS Webhook] Failed to send reply to ${customerPhone}:`, result.error)
+    }
     return
   }
 

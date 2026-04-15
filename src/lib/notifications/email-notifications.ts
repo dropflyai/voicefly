@@ -443,6 +443,55 @@ export async function sendSmsApprovedEmail(opts: {
 }
 
 // ============================================
+// SMS USAGE WARNING EMAIL (80% of monthly limit)
+// ============================================
+
+export async function sendSmsUsageWarningEmail(opts: {
+  ownerEmail: string
+  businessName: string
+  segmentsUsed: number
+  segmentsLimit: number
+}) {
+  const percentUsed = Math.round((opts.segmentsUsed / opts.segmentsLimit) * 100)
+  const remaining = Math.max(0, opts.segmentsLimit - opts.segmentsUsed)
+
+  return sendNotification(
+    opts.ownerEmail,
+    `${opts.businessName}: You've used ${percentUsed}% of your SMS allowance this month`,
+    `
+    <div style="font-family:Inter,system-ui,sans-serif;max-width:480px;margin:0 auto;">
+      <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:12px;padding:32px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+          <span style="background:#f59e0b;color:#fff;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;letter-spacing:0.5px;">SMS USAGE</span>
+          <span style="color:#92400e;font-size:14px;font-weight:600;">${opts.businessName}</span>
+        </div>
+        <h2 style="margin:0 0 12px;color:#92400e;font-size:22px;font-weight:700;">${percentUsed}% of your SMS allowance used</h2>
+        <div style="background:#fff;border:1px solid #fcd34d;border-radius:8px;padding:16px;margin:20px 0;">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+            <span style="color:#6b7280;font-size:13px;">Used this month</span>
+            <span style="color:#111827;font-weight:600;">${opts.segmentsUsed.toLocaleString()} / ${opts.segmentsLimit.toLocaleString()} segments</span>
+          </div>
+          <div style="height:8px;background:#fef3c7;border-radius:4px;overflow:hidden;">
+            <div style="height:100%;width:${Math.min(100, percentUsed)}%;background:#f59e0b;"></div>
+          </div>
+          <p style="margin:12px 0 0;font-size:13px;color:#6b7280;">${remaining.toLocaleString()} segments remaining until next billing cycle.</p>
+        </div>
+        <p style="margin:0 0 20px;color:#334155;font-size:15px;line-height:1.6;">
+          When you exceed your allowance, additional messages are billed at your plan's overage rate. Upgrade to a higher tier for more included segments and a lower per-segment rate.
+        </p>
+        <div style="text-align:center;margin:24px 0;">
+          <a href="https://www.voiceflyai.com/dashboard/billing"
+             style="display:inline-block;background:#f59e0b;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
+            Manage Plan
+          </a>
+        </div>
+      </div>
+    </div>
+  `
+  )
+}
+
+// ============================================
 // LOW CREDIT WARNING EMAIL
 // ============================================
 
