@@ -123,12 +123,17 @@ export default function SmsSettingsPage() {
       const biz = await BusinessAPI.getBusiness(bid)
       setBusiness(biz)
 
-      // Prefill form with what we know about the business
+      // Prefill form with what we know about the business (from signup + onboarding)
+      const b = biz as any
       setForm(f => ({
         ...f,
         legal_name: f.legal_name || biz?.name || '',
         phone: f.phone || biz?.phone || '',
-        website: f.website || (biz as any)?.website || '',
+        website: f.website || b?.website || '',
+        address_street: f.address_street || b?.address_line1 || '',
+        address_city: f.address_city || b?.city || '',
+        address_state: f.address_state || b?.state || '',
+        address_zip: f.address_zip || b?.postal_code || '',
       }))
 
       await loadStatus(bid)

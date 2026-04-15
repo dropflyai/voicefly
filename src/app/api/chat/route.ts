@@ -39,12 +39,19 @@ VoiceFly gives small and medium businesses AI-powered phone employees that answe
 11. **Collections** — Outbound payment collection (FDCPA-compliant)
 
 ## Pricing
-- **Starter** — $49/month: 60 voice minutes, 1 AI employee, 1 phone number (overage: $0.25/min)
-- **Growth** — $129/month: 250 voice minutes, 3 AI employees, 3 phone numbers (overage: $0.20/min) — MOST POPULAR
-- **Pro** — $249/month: 750 voice minutes, 5 AI employees, 5 phone numbers (overage: $0.18/min)
+- **Starter** — $49/month: 60 voice minutes, 100 SMS segments, 1 AI employee, 1 phone number (overage: $0.25/min, $0.04/SMS)
+- **Growth** — $129/month: 250 voice minutes, 400 SMS segments, 3 AI employees, 3 phone numbers (overage: $0.20/min, $0.04/SMS) — MOST POPULAR
+- **Pro** — $249/month: 750 voice minutes, 1000 SMS segments, 5 AI employees, 5 phone numbers (overage: $0.18/min, $0.03/SMS)
 - All plans: **14-day free trial** (no credit card needed). Keep your existing number — just forward calls.
 - Annual billing saves 20%: Starter $39/mo, Growth $103/mo, Pro $199/mo
 - Founding customer pricing: Starter $25/mo (50% off for life), Growth $65/mo (50% off), Pro $125/mo (50% off)
+
+## How SMS works (important — different timeline than voice)
+- Voice answers calls day 1. SMS requires US carrier registration (A2P 10DLC) before any reply texts or reminders can go out.
+- We handle the A2P registration programmatically on behalf of each business — the tenant fills a short form (legal name, EIN, address, authorized rep) on /dashboard/settings/sms, and we submit everything to Twilio and the carriers.
+- **Timeline**: customer profile verification 1-2 business days → brand registration a few days → campaign approval 2-3 weeks. Total: typically 2-3 weeks from submission to active SMS.
+- Registration cost (~$15/month per tenant to Twilio/TCR) is included in every plan — we eat it. No extra fees to the business.
+- Until SMS activates, AI handles calls voice-only. Once approved, SMS fires automatically for appointment confirmations and reminders.
 
 ## Integrations
 Square, Shopify, Clover, Toast (menus/POS), Calendly (scheduling), HubSpot (CRM)
@@ -358,6 +365,17 @@ ${business.business_context.special_notes ? `- Notes: ${business.business_contex
 `.trim() : ''}
 ${onboardingSection}
 
+## SMS Feature State
+- SMS is included in every plan (Starter 100 / Growth 400 / Pro 1000 segments per month).
+- SMS enabled on this account: ${business.sms_enabled ? 'YES — active' : 'NO — requires A2P 10DLC registration first'}
+${business.sms_enabled ? `- Usage this month: ${business.sms_segments_used ?? 0}/${business.sms_segments_limit ?? 0} segments` : ''}
+- To enable SMS, the tenant fills a short form at /dashboard/settings/sms with their legal business name, EIN, business address, and an authorized representative. We submit that to Twilio and US carriers automatically. Typical approval: 2-3 weeks total (customer profile 1-2 days → brand registration few days → campaign 2-3 weeks).
+- Registration fee (~$15/month) is included — no cost to the tenant.
+- If they ask about SMS, reminders, confirmations, or "can my AI text customers?":
+  - If sms_enabled is NO → direct them to /dashboard/settings/sms using the navigate_user tool. Explain the 2-3 week timeline and what info is required.
+  - If sms_enabled is YES → they're good, usage is visible on the main dashboard card.
+- Never claim SMS is active when sms_enabled is NO. Never attempt to send test SMS on their behalf until approved.
+
 ## Your Capabilities
 You can take REAL actions using tools. When a user asks you to do something — DO IT, don't just give instructions.
 
@@ -365,6 +383,7 @@ You can take REAL actions using tools. When a user asks you to do something — 
 - Always confirm before destructive actions (delete employee)
 - After each action, tell the user what you did and suggest the next step
 - If someone describes their business naturally ("we're open 9 to 5"), save that info immediately
+- For SMS-related requests, check the sms_enabled state before responding
 - Be helpful and concise. Use bullet points for steps.`
 }
 
@@ -378,15 +397,23 @@ function buildSupportSystemPrompt(business: any, employees: any[], connectedPlat
 ## User's Account
 - Business: ${business.name}, Plan: ${business.subscription_tier || 'starter'} (${business.subscription_status || 'trial'})
 - Employees: ${employees.length}, Integrations: ${connectedPlatforms.length > 0 ? connectedPlatforms.join(', ') : 'none'}
+- SMS enabled: ${business.sms_enabled ? 'YES' : 'NO (A2P registration required)'}
 
 ## Their Phone Employees
 ${employeeList}
 
 ## Key Knowledge
 - Each employee gets a behind-the-scenes AI line. Users forward their existing number to it (*72 to forward, *73 to undo).
-- Pricing: Starter $49/mo (60 min), Growth $129/mo (250 min), Pro $249/mo (750 min)
+- Pricing: Starter $49/mo (60 min, 100 SMS), Growth $129/mo (250 min, 400 SMS), Pro $249/mo (750 min, 1000 SMS)
+- SMS requires per-tenant A2P 10DLC registration — tenant visits /dashboard/settings/sms, submits legal business info + EIN + authorized rep, we auto-submit to Twilio. Approval takes 2-3 weeks. Registration fee is included in plan.
+- Common SMS troubleshooting:
+  - "Why isn't SMS working?" → Check sms_enabled. If NO, registration isn't complete; direct them to /dashboard/settings/sms.
+  - "How long does SMS take to activate?" → 2-3 weeks after they submit the intake form.
+  - "Do I pay extra for SMS registration?" → No, included in every plan.
+  - "I got an SMS from a number I don't recognize" → Their AI uses a Twilio-owned number, but messages identify the business in the body.
+  - "Can I port my existing number to Twilio?" → Yes but adds 2-14 business days. For now, forwarding is the fast path.
 - If you CANNOT resolve an issue, include [CREATE_TICKET] at the end and [TICKET_SUMMARY: brief description].
-- Never make up features. Be concise.`
+- Never make up features. Be concise. Don't promise SMS works if sms_enabled is false.`
 }
 
 // ============================================
@@ -669,7 +696,7 @@ export async function POST(request: Request) {
 
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
       const [{ data: business }, { data: employees }, { count: callCount }, { data: recentCalls }, { data: integrations }, { count: messageCount }, { data: recentMessages }, { count: orderCount }, { data: businessHours }] = await Promise.all([
-        supabase.from('businesses').select('name, phone, business_type, timezone, subscription_tier, subscription_status, monthly_credits, purchased_credits, credits_used_this_month, business_context').eq('id', businessId).single(),
+        supabase.from('businesses').select('name, phone, business_type, timezone, subscription_tier, subscription_status, monthly_credits, purchased_credits, credits_used_this_month, business_context, sms_enabled, sms_segments_used, sms_segments_limit').eq('id', businessId).single(),
         supabase.from('phone_employees').select('id, name, job_type, is_active, phone_number, job_config, voice, personality').eq('business_id', businessId).order('created_at', { ascending: false }),
         supabase.from('employee_calls').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
         supabase.from('employee_calls').select('customer_phone, status, direction, duration, summary, started_at, employee_id').eq('business_id', businessId).order('started_at', { ascending: false }).limit(10),

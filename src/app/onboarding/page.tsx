@@ -15,7 +15,12 @@ import { supabase } from '@/lib/supabase-client'
 interface FormData {
   // Step 1 — Business
   industry: string
-  address: string
+  website: string
+  addressStreet: string
+  addressCity: string
+  addressState: string
+  addressZip: string
+  address: string    // legacy combined — kept so downstream API/AI config still receives it
   hoursNote: string  // e.g. "Mon-Fri 9am-5pm"
 
   // Step 2 — Employee type
@@ -325,6 +330,11 @@ export default function OnboardingPage() {
 
   const [form, setForm] = useState<FormData>({
     industry: '',
+    website: '',
+    addressStreet: '',
+    addressCity: '',
+    addressState: '',
+    addressZip: '',
     address: '',
     hoursNote: '',
     employeeType: '',
@@ -745,7 +755,12 @@ export default function OnboardingPage() {
         body: JSON.stringify({
           businessId,
           industry: form.industry,
+          website: form.website || undefined,
           address: form.address,
+          addressStreet: form.addressStreet || undefined,
+          addressCity: form.addressCity || undefined,
+          addressState: form.addressState || undefined,
+          addressZip: form.addressZip || undefined,
           hoursNote: form.hoursNote,
           employeeType: form.employeeType,
           employeeName: form.employeeName,
@@ -876,16 +891,77 @@ export default function OnboardingPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Business Address <span className="text-gray-400 font-normal">(optional)</span>
+                  Website <span className="text-gray-400 font-normal">(optional — helps the AI learn your business)</span>
                 </label>
                 <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="url"
+                    value={form.website}
+                    onChange={e => set('website', e.target.value)}
+                    placeholder="https://yourbusiness.com"
+                    className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Business Address <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <div className="relative mb-2">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <input
                     type="text"
-                    value={form.address}
-                    onChange={e => set('address', e.target.value)}
-                    placeholder="123 Main St, City, State"
+                    value={form.addressStreet}
+                    onChange={e => {
+                      const street = e.target.value
+                      set('addressStreet', street)
+                      // Keep combined `address` field in sync for downstream API/AI
+                      const combined = [street, form.addressCity, form.addressState, form.addressZip].filter(Boolean).join(', ')
+                      set('address', combined)
+                    }}
+                    placeholder="Street address"
                     className="pl-9 w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div className="grid grid-cols-[1fr_80px_100px] gap-2">
+                  <input
+                    type="text"
+                    value={form.addressCity}
+                    onChange={e => {
+                      const city = e.target.value
+                      set('addressCity', city)
+                      const combined = [form.addressStreet, city, form.addressState, form.addressZip].filter(Boolean).join(', ')
+                      set('address', combined)
+                    }}
+                    placeholder="City"
+                    className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <input
+                    type="text"
+                    value={form.addressState}
+                    onChange={e => {
+                      const state = e.target.value.toUpperCase().slice(0, 2)
+                      set('addressState', state)
+                      const combined = [form.addressStreet, form.addressCity, state, form.addressZip].filter(Boolean).join(', ')
+                      set('address', combined)
+                    }}
+                    placeholder="ST"
+                    maxLength={2}
+                    className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+                  />
+                  <input
+                    type="text"
+                    value={form.addressZip}
+                    onChange={e => {
+                      const zip = e.target.value.replace(/[^\d-]/g, '').slice(0, 10)
+                      set('addressZip', zip)
+                      const combined = [form.addressStreet, form.addressCity, form.addressState, zip].filter(Boolean).join(', ')
+                      set('address', combined)
+                    }}
+                    placeholder="ZIP"
+                    className="border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 bg-white placeholder:text-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -1598,6 +1674,14 @@ export default function OnboardingPage() {
                 <p>Check your dashboard in a moment — your number will appear there once it&apos;s ready.</p>
               </div>
             )}
+
+            {/* SMS teaser — primes the tenant for the dashboard nudge */}
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 text-left mb-6">
+              <p className="font-semibold text-blue-900 text-sm mb-1">Coming up next: SMS reminders</p>
+              <p className="text-sm text-blue-800">
+                Your plan includes business texting. Once you&apos;re ready, enable SMS from your dashboard and we&apos;ll handle the A2P 10DLC registration with US carriers for you — no extra cost. Works well for appointment confirmations, reminders, and follow-ups.
+              </p>
+            </div>
 
             <button
               onClick={() => {

@@ -184,7 +184,12 @@ export async function POST(request: NextRequest) {
 
     const {
       industry,
+      website,
       address = '',
+      addressStreet,
+      addressCity,
+      addressState,
+      addressZip,
       hoursNote = '',
       employeeType,
       employeeName,
@@ -245,14 +250,22 @@ export async function POST(request: NextRequest) {
       areaCode: areaCode || undefined,
     })
 
-    // Mark onboarding complete
+    // Mark onboarding complete + persist structured business fields for
+    // downstream reuse (AI config, A2P SMS registration form prefill, etc.)
+    const businessUpdates: Record<string, any> = {
+      onboarding_completed: true,
+      business_type: industry,
+      updated_at: new Date().toISOString(),
+    }
+    if (website) businessUpdates.website = website
+    if (addressStreet) businessUpdates.address_line1 = addressStreet
+    if (addressCity) businessUpdates.city = addressCity
+    if (addressState) businessUpdates.state = addressState
+    if (addressZip) businessUpdates.postal_code = addressZip
+
     await supabase
       .from('businesses')
-      .update({
-        onboarding_completed: true,
-        business_type: industry,
-        updated_at: new Date().toISOString(),
-      })
+      .update(businessUpdates)
       .eq('id', businessId)
 
     console.log(`[Onboarding] Complete — employee: ${employee.id}, phone: ${employee.phoneNumber}`)
