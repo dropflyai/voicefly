@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense, Fragment } from 'react'
 import Layout from '../../components/Layout'
 import ProtectedRoute from '../../components/ProtectedRoute'
 import OnboardingChecklist from '../../components/onboarding-checklist'
+import SmsStatusCard from '../../components/SmsStatusCard'
 import { BusinessAPI, type Business } from '../../lib/supabase'
 import { supabase } from '../../lib/supabase-client'
 import {
@@ -291,6 +292,13 @@ function DashboardPage() {
         {/* Onboarding Checklist — shown until user completes or dismisses */}
         {business && (
           <OnboardingChecklist businessId={business.id} />
+        )}
+
+        {/* SMS Status / Usage / Enable prompt — state-dependent.
+            Pass total calls so the "not started" nudge becomes emphatic
+            once the tenant has seen real call volume. */}
+        {business && (
+          <SmsStatusCard businessId={business.id} callCount={data.totalCalls} />
         )}
 
         {/* Metric Cards — Bento Grid */}

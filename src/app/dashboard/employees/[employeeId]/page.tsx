@@ -6,6 +6,7 @@ import Layout from '../../../../components/Layout'
 import ProtectedRoute from '../../../../components/ProtectedRoute'
 import VoicePicker from '../../../../components/VoicePicker'
 import { getSecureBusinessId, redirectToLoginIfUnauthenticated } from '../../../../lib/multi-tenant-auth'
+import SmsStatusCard from '../../../../components/SmsStatusCard'
 import { supabase } from '../../../../lib/supabase-client'
 import {
   ArrowLeftIcon,
@@ -885,6 +886,12 @@ export default function EmployeeEditPage() {
               )}
             </div>
           </div>
+
+          {/* SMS nudge — shown contextually when viewing an employee */}
+          {(() => {
+            const bid = getSecureBusinessId()
+            return bid ? <div className="mb-6"><SmsStatusCard businessId={bid} /></div> : null
+          })()}
 
           {/* Two-Column Layout */}
           <div className="flex gap-8">
