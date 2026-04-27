@@ -288,8 +288,63 @@ When a dental tenant pushes for "tell me my copay during the call":
 
 ---
 
+## Resolved Decisions (2026-04-16)
+
+1. **Med spas — skip insurance.** Med spa procedures are ~90% cash/credit/HSA/FSA. Capture payment method + HSA/FSA eligibility instead. Revisit if a specific med spa tenant pushes for insurance.
+2. **SMS confirmation back to patient after verification — YES, build it.** When staff marks a record as `verified` (or `denied` / `needs_more_info`), auto-send SMS to the patient with status + estimated patient responsibility. Routes through `sendSmsForBusiness()` so it respects the tenant's A2P state and SMS quota. See "SMS Back to Patient" section below.
+3. **Verify-by deadline in queue UI — YES, build it.** Each pending record gets a red/yellow/green urgency badge based on days until the linked appointment. Staff works red ones first.
+
+## SMS Back to Patient — Implementation
+
+When the PATCH route updates a record's status to `verified` or `denied`:
+
+1. Look up the linked appointment (if any) and the patient's phone
+2. Build a tenant-branded SMS body:
+   - Verified: `"Hi {customer_name}, your {carrier_name} coverage is confirmed for your appointment {appointment_date} at {appointment_time}. Estimated cost: ${estimated_patient_responsibility} out of pocket. Reply STOP to opt out. — {business_name}"`
+   - Denied: `"Hi {customer_name}, we weren't able to verify your {carrier_name} coverage for {appointment_date}. Please call us at {business_phone} so we can help. — {business_name}"`
+   - Needs more info: `"Hi {customer_name}, we need a bit more info to verify your {carrier_name} coverage. Please call us at {business_phone} when you have a moment. — {business_name}"`
+3. Call `sendSmsForBusiness({ businessId, to: customer_phone, from: tenant_phone, body })`
+4. If `result.blocked === 'sms_not_enabled'`, log + show toast in dashboard: "SMS not active — staff will need to call patient manually"
+5. If `result.blocked === 'quota_exceeded'`, same as above
+6. Set new column `insurance_records.patient_notified_at` on success
+
+Schema addition:
+```sql
+ALTER TABLE insurance_records
+  ADD COLUMN IF NOT EXISTS patient_notified_at timestamptz,
+  ADD COLUMN IF NOT EXISTS patient_notification_status text; -- 'sent' | 'blocked_no_sms' | 'blocked_quota' | 'failed'
+```
+
+Dashboard UI: show "✓ Patient notified" or "⚠️ SMS blocked — call manually" next to verified records.
+
+Edge case: tenant doesn't have SMS enabled (A2P not yet approved) — just show the manual-call warning. Don't block verification.
+
+## Verify-By Deadline — Implementation
+
+In the queue UI, compute urgency from the linked appointment (if present):
+
+```ts
+function computeUrgency(record: InsuranceRecord, appointment?: Appointment): 'red' | 'yellow' | 'green' | 'no_appointment' {
+  if (!appointment) return 'no_appointment'
+  const daysUntil = differenceInDays(parseISO(appointment.appointment_date), new Date())
+  if (daysUntil <= 1) return 'red'      // appointment is today or tomorrow
+  if (daysUntil <= 5) return 'yellow'   // within next 5 days
+  return 'green'                         // 6+ days out
+}
+```
+
+Default queue sort: red → yellow → green → no_appointment, then by `created_at` descending within each tier.
+
+Visual treatment in the queue:
+- 🔴 Red border + "Verify today" badge for records with appointment ≤ 1 day
+- 🟡 Yellow border + "Verify by [date]" badge for records with appointment 2-5 days out
+- 🟢 Green border + "Not urgent" subtext for records with appointment > 5 days
+- ⚫ Gray "No appointment linked" badge if `appointment_id` is null (rare — usually means AI captured insurance for a question, not a booking)
+
+Staff visual scan = "what do I do first" answered in 2 seconds.
+
+Optional: daily morning email digest — "You have 3 records to verify TODAY: Sarah Johnson (2pm), Michael Chen (4pm), Lisa Park (6pm)."
+
 ## Open Questions for Erik
 
-1. **Should we capture insurance for med spas too?** Most med spa procedures are out-of-pocket; some accept HSA/FSA. Probably skip for v1.
-2. **SMS confirmation back to patient after verification?** "Your Delta Dental coverage is confirmed for your Thursday cleaning." Nice touch but adds complexity.
-3. **What's the "verify by" timeline?** Most dental practices verify within 24h of the call. Any later and the appointment date is too close. Worth surfacing this in the queue UI.
+(All previous open questions resolved. Add new ones here as they come up during implementation.)
