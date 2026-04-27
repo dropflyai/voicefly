@@ -36,11 +36,13 @@ type Status = 'pending' | 'verified' | 'denied' | 'needs_more_info' | 'archived'
 
 interface AppointmentLink {
   id: string
-  customer_name: string
   appointment_date: string
-  appointment_time?: string
-  service?: string
+  start_time?: string
+  end_time?: string
   status?: string
+  // Joined via PostgREST embedded relationships
+  customer?: { first_name?: string; last_name?: string } | null
+  service?: { name?: string } | null
 }
 
 interface InsuranceRecord {
@@ -263,14 +265,14 @@ export default function InsuranceVerificationsPage() {
                         <p className="text-xs text-text-muted mt-1">
                           For: {record.procedure_inquired}
                           {apt && (
-                            <span> · Appt: {formatShortDate(apt.appointment_date)}{apt.appointment_time && ` at ${formatTime(apt.appointment_time)}`}</span>
+                            <span> · Appt: {formatShortDate(apt.appointment_date)}{apt.start_time && ` at ${formatTime(apt.start_time)}`}</span>
                           )}
                         </p>
                       )}
                       {!record.procedure_inquired && apt && (
                         <p className="text-xs text-text-muted mt-1">
-                          Appt: {formatShortDate(apt.appointment_date)}{apt.appointment_time && ` at ${formatTime(apt.appointment_time)}`}
-                          {apt.service && ` · ${apt.service}`}
+                          Appt: {formatShortDate(apt.appointment_date)}{apt.start_time && ` at ${formatTime(apt.start_time)}`}
+                          {apt.service?.name && ` · ${apt.service.name}`}
                         </p>
                       )}
                       {record.status !== 'pending' && record.patient_notification_status && (
@@ -407,7 +409,7 @@ function VerifyModal({
               {record.customer_dob && <Field label="DOB" value={record.customer_dob} />}
               {record.procedure_inquired && <Field label="Procedure" value={record.procedure_inquired} />}
               {record.appointment && (
-                <Field label="Appointment" value={`${formatShortDate(record.appointment.appointment_date)}${record.appointment.appointment_time ? ` at ${formatTime(record.appointment.appointment_time)}` : ''}`} />
+                <Field label="Appointment" value={`${formatShortDate(record.appointment.appointment_date)}${record.appointment.start_time ? ` at ${formatTime(record.appointment.start_time)}` : ''}`} />
               )}
             </div>
           </div>
@@ -554,7 +556,7 @@ function smsPreview(status: Status, record: InsuranceRecord, patientCost: string
   const customerFirst = (record.customer_name || '').split(' ')[0] || 'there'
   const apt = record.appointment
   const apptInfo = apt
-    ? ` for your appointment ${formatShortDate(apt.appointment_date)}${apt.appointment_time ? ` at ${formatTime(apt.appointment_time)}` : ''}`
+    ? ` for your appointment ${formatShortDate(apt.appointment_date)}${apt.start_time ? ` at ${formatTime(apt.start_time)}` : ''}`
     : ''
   const costInfo = patientCost ? ` Estimated cost: $${patientCost} out of pocket.` : ''
 

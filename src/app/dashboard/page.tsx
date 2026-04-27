@@ -67,12 +67,13 @@ interface PhoneMessage {
 
 interface TodayAppointment {
   id: string
-  customer_name: string
-  service?: string
   appointment_date: string
-  appointment_time?: string
   start_time?: string
+  end_time?: string
   status?: string
+  // Joined via PostgREST embedded relationships
+  customer?: { first_name?: string; last_name?: string } | null
+  service?: { name?: string } | null
 }
 
 interface DashboardData {
@@ -181,7 +182,7 @@ function DashboardPage() {
         supabase.from('phone_messages').select('*', { count: 'exact', head: true }).eq('business_id', businessId).gte('created_at', todayISO),
         supabase.from('phone_orders').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
         supabase.from('phone_orders').select('*', { count: 'exact', head: true }).eq('business_id', businessId).gte('created_at', todayISO),
-        supabase.from('appointments').select('id, customer_name, service, appointment_date, appointment_time, start_time, status').eq('business_id', businessId).eq('appointment_date', todayDateStr).order('appointment_time', { ascending: true }).limit(5),
+        supabase.from('appointments').select('id, appointment_date, start_time, end_time, status, customer:customers(first_name, last_name), service:services(name)').eq('business_id', businessId).eq('appointment_date', todayDateStr).order('start_time', { ascending: true }).limit(5),
       ])
 
       const creditData = businessData
@@ -349,15 +350,18 @@ function DashboardPage() {
               ) : (
                 <ul className="space-y-2">
                   {data.todayAppointments.map(apt => {
-                    const time = apt.appointment_time || apt.start_time
+                    const time = apt.start_time
+                    const customerName = apt.customer
+                      ? `${apt.customer.first_name || ''} ${apt.customer.last_name || ''}`.trim()
+                      : ''
                     return (
                       <li key={apt.id} className="flex items-start gap-3 py-2 border-b border-[rgba(65,71,84,0.08)] last:border-0">
                         <div className="text-xs font-mono text-text-muted w-14 flex-shrink-0 mt-0.5">
                           {time ? time.slice(0, 5) : '—'}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-text-primary truncate">{apt.customer_name || 'Unknown'}</p>
-                          {apt.service && <p className="text-xs text-text-muted truncate">{apt.service}</p>}
+                          <p className="text-sm font-medium text-text-primary truncate">{customerName || 'Unknown'}</p>
+                          {apt.service?.name && <p className="text-xs text-text-muted truncate">{apt.service.name}</p>}
                         </div>
                         {apt.status && (
                           <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${

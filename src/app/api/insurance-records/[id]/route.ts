@@ -33,7 +33,11 @@ export async function GET(request: NextRequest, ctx: RouteContext) {
       .from('insurance_records')
       .select(`
         *,
-        appointment:appointments(id, customer_name, appointment_date, appointment_time, service, status)
+        appointment:appointments(
+          id, appointment_date, start_time, end_time, status,
+          customer:customers(first_name, last_name),
+          service:services(name)
+        )
       `)
       .eq('id', id)
       .maybeSingle()
@@ -230,11 +234,10 @@ async function notifyPatient(
 function formatAppointment(appt: any): string {
   if (!appt?.appointment_date) return ''
   try {
-    const date = new Date(`${appt.appointment_date}T${appt.appointment_time || '12:00'}`)
+    const time = appt.start_time || appt.appointment_time
+    const date = new Date(`${appt.appointment_date}T${time || '12:00'}`)
     const dayPart = date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
-    const timePart = appt.appointment_time
-      ? ` at ${appt.appointment_time.slice(0, 5)}`
-      : ''
+    const timePart = time ? ` at ${time.slice(0, 5)}` : ''
     return `${dayPart}${timePart}`
   } catch {
     return appt.appointment_date

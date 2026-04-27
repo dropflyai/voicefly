@@ -101,7 +101,11 @@ export async function GET(request: NextRequest) {
       .from('insurance_records')
       .select(`
         *,
-        appointment:appointments(id, customer_name, appointment_date, appointment_time, service)
+        appointment:appointments(
+          id, appointment_date, start_time, end_time, status,
+          customer:customers(first_name, last_name),
+          service:services(name)
+        )
       `)
       .eq('business_id', businessId)
       .order('created_at', { ascending: false })
