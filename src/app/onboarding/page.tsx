@@ -113,6 +113,23 @@ const INDUSTRIES = [
   'Retail', 'General Business',
 ]
 
+// What the AI suggests as the best-fit employee for each vertical.
+// Drives the "Recommended for [industry]" badge in Step 1 of the wizard.
+// If a vertical isn't listed, the global default (`receptionist`, marked
+// `popular: true` on EMPLOYEE_TYPES) is used.
+const RECOMMENDED_EMPLOYEE_BY_INDUSTRY: Record<string, string> = {
+  'Beauty / Salon / Spa': 'appointment-scheduler',
+  'Med Spa / Aesthetic Clinic': 'lead-qualifier',
+  'Dental': 'appointment-scheduler',
+  'Medical / Healthcare': 'appointment-scheduler',
+  'Law Firm': 'lead-qualifier',
+  'Real Estate': 'lead-qualifier',
+  'Home Services': 'after-hours-emergency',
+  'Restaurant / Food': 'order-taker',
+  'Retail': 'order-taker',
+  'Fitness & Wellness': 'appointment-scheduler',
+}
+
 // Expanded service suggestions per industry (for chip selection)
 const INDUSTRY_SERVICES: Record<string, string[]> = {
   'Beauty / Salon / Spa': ['Haircut', 'Color & Highlights', 'Blowout', 'Balayage', 'Manicure', 'Pedicure', 'Gel Nails', 'Facial', 'Waxing', 'Massage', 'Lash Extensions', 'Brow Tint', 'Keratin Treatment', 'Bridal Package'],
@@ -1035,7 +1052,20 @@ export default function OnboardingPage() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
-              {EMPLOYEE_TYPES.map(type => (
+              {(() => {
+                // Determine which employee type to recommend for this user's vertical.
+                // Falls back to the type marked `popular: true` if no industry match.
+                const industryRecommendation = form.industry
+                  ? RECOMMENDED_EMPLOYEE_BY_INDUSTRY[form.industry]
+                  : undefined
+                return EMPLOYEE_TYPES.map(type => {
+                  const isRecommended = industryRecommendation
+                    ? type.id === industryRecommendation
+                    : type.popular
+                  const recommendationLabel = industryRecommendation
+                    ? `Recommended for ${form.industry.split(' / ')[0]}`
+                    : 'Most popular'
+                  return (
                 <button
                   key={type.id}
                   onClick={() => !type.comingSoon && set('employeeType', type.id)}
@@ -1053,9 +1083,9 @@ export default function OnboardingPage() {
                       Coming soon
                     </span>
                   )}
-                  {type.popular && !type.comingSoon && (
-                    <span className="absolute top-4 right-4 text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">
-                      Most popular
+                  {isRecommended && !type.comingSoon && (
+                    <span className="absolute top-4 right-4 text-xs bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+                      {recommendationLabel}
                     </span>
                   )}
                   <div className={`p-3 rounded-lg w-fit mb-4 ${
@@ -1067,7 +1097,9 @@ export default function OnboardingPage() {
                   <h3 className={`font-semibold mb-1 ${type.comingSoon ? 'text-gray-400' : 'text-gray-900'}`}>{type.label}</h3>
                   <p className={`text-sm ${type.comingSoon ? 'text-gray-400' : 'text-gray-500'}`}>{type.description}</p>
                 </button>
-              ))}
+                  )
+                })
+              })()}
             </div>
           </div>
         )

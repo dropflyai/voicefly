@@ -65,10 +65,22 @@ interface PhoneMessage {
   created_at: string
 }
 
+interface TodayAppointment {
+  id: string
+  customer_name: string
+  service?: string
+  appointment_date: string
+  appointment_time?: string
+  start_time?: string
+  status?: string
+}
+
 interface DashboardData {
   employees: PhoneEmployee[]
   recentCalls: EmployeeCall[]
   recentMessages: PhoneMessage[]
+  todayCalls: EmployeeCall[]
+  todayAppointments: TodayAppointment[]
   totalCalls: number
   totalMessages: number
   callsToday: number
@@ -109,6 +121,7 @@ function DashboardPage() {
   const [business, setBusiness] = useState<Business | null>(null)
   const [data, setData] = useState<DashboardData>({
     employees: [], recentCalls: [], recentMessages: [],
+    todayCalls: [], todayAppointments: [],
     totalCalls: 0, totalMessages: 0, callsToday: 0, messagesToday: 0,
     avgCallDuration: 0, totalOrders: 0, ordersToday: 0,
     creditsRemaining: 0, creditsUsed: 0, isTrial: false,
@@ -151,21 +164,24 @@ function DashboardPage() {
       const todayStart = new Date()
       todayStart.setHours(0, 0, 0, 0)
       const todayISO = todayStart.toISOString()
+      const todayDateStr = todayStart.toISOString().slice(0, 10) // YYYY-MM-DD for appointment_date
 
       const [
         { data: callsData, count: callsCount },
-        { count: callsTodayCount },
+        { data: todayCallsData, count: callsTodayCount },
         { data: messagesData, count: messagesCount },
         { count: messagesTodayCount },
         { count: ordersCount },
         { count: ordersTodayCount },
+        { data: todayApptsData },
       ] = await Promise.all([
         supabase.from('employee_calls').select('*', { count: 'exact' }).eq('business_id', businessId).order('started_at', { ascending: false }).limit(10),
-        supabase.from('employee_calls').select('*', { count: 'exact', head: true }).eq('business_id', businessId).gte('started_at', todayISO),
+        supabase.from('employee_calls').select('*', { count: 'exact' }).eq('business_id', businessId).gte('started_at', todayISO).order('started_at', { ascending: false }).limit(5),
         supabase.from('phone_messages').select('*', { count: 'exact' }).eq('business_id', businessId).order('created_at', { ascending: false }).limit(10),
         supabase.from('phone_messages').select('*', { count: 'exact', head: true }).eq('business_id', businessId).gte('created_at', todayISO),
         supabase.from('phone_orders').select('*', { count: 'exact', head: true }).eq('business_id', businessId),
         supabase.from('phone_orders').select('*', { count: 'exact', head: true }).eq('business_id', businessId).gte('created_at', todayISO),
+        supabase.from('appointments').select('id, customer_name, service, appointment_date, appointment_time, start_time, status').eq('business_id', businessId).eq('appointment_date', todayDateStr).order('appointment_time', { ascending: true }).limit(5),
       ])
 
       const creditData = businessData
@@ -178,6 +194,7 @@ function DashboardPage() {
 
       setData({
         employees, recentCalls: callsData || [], recentMessages: messagesData || [],
+        todayCalls: todayCallsData || [], todayAppointments: (todayApptsData || []) as TodayAppointment[],
         totalCalls: callsCount || 0, totalMessages: messagesCount || 0,
         callsToday: callsTodayCount || 0, messagesToday: messagesTodayCount || 0,
         avgCallDuration: avgDuration, totalOrders: ordersCount || 0, ordersToday: ordersTodayCount || 0,
@@ -309,29 +326,89 @@ function DashboardPage() {
           <MetricCard icon={StarIcon} label="Avg Duration" value={formatDuration(data.avgCallDuration)} trend="per completed call" />
         </section>
 
-        {/* Sonic Health Overview */}
-        <section className="bg-surface-lowest rounded-3xl p-10 relative overflow-hidden">
-          <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
-            <div className="space-y-4 max-w-lg">
-              <h4 className="text-2xl font-[family-name:var(--font-manrope)] font-bold text-text-primary">Sonic Health Overview</h4>
-              <p className="text-text-secondary">
-                {activeEmployees.length > 0
-                  ? `Your AI employees are operating normally. ${data.callsToday > 0 ? `${data.callsToday} calls handled today so far.` : 'Waiting for incoming calls.'}`
-                  : 'No active employees. Create one to get started.'}
-              </p>
-              <div className="flex gap-4">
-                <a href="/dashboard/voice-ai" className="px-6 py-2 bg-text-primary text-surface font-bold rounded-lg hover:bg-text-secondary transition-colors text-sm">View Deep Insights</a>
-                <a href="/dashboard/employees" className="px-6 py-2 border border-[rgba(65,71,84,0.3)] text-text-primary font-bold rounded-lg hover:bg-surface-low transition-colors text-sm">Manage Employees</a>
+        {/* Today — appointments + call activity for the day at-a-glance */}
+        <section>
+          <div className="flex items-baseline justify-between mb-4">
+            <h3 className="text-2xl font-[family-name:var(--font-manrope)] font-bold text-text-primary">Today</h3>
+            <p className="text-text-muted text-sm">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Today's appointments */}
+            <div className="bg-surface-low rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-text-primary">Appointments</h4>
+                <a href="/dashboard/appointments" className="text-xs text-brand-light hover:text-brand-primary">View calendar →</a>
               </div>
+              {data.todayAppointments.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-text-muted text-sm">No appointments today.</p>
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {data.todayAppointments.map(apt => {
+                    const time = apt.appointment_time || apt.start_time
+                    return (
+                      <li key={apt.id} className="flex items-start gap-3 py-2 border-b border-[rgba(65,71,84,0.08)] last:border-0">
+                        <div className="text-xs font-mono text-text-muted w-14 flex-shrink-0 mt-0.5">
+                          {time ? time.slice(0, 5) : '—'}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-text-primary truncate">{apt.customer_name || 'Unknown'}</p>
+                          {apt.service && <p className="text-xs text-text-muted truncate">{apt.service}</p>}
+                        </div>
+                        {apt.status && (
+                          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${
+                            apt.status === 'confirmed' || apt.status === 'scheduled'
+                              ? 'bg-emerald-500/10 text-emerald-500'
+                              : 'bg-surface-high text-text-secondary'
+                          }`}>
+                            {apt.status}
+                          </span>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
             </div>
-            {/* Waveform visualization */}
-            <div className="w-full md:w-1/2 h-32 flex items-center justify-center gap-1">
-              {[8, 16, 24, 32, 20, 28, 12, 24, 32, 16, 8, 20].map((h, i) => (
-                <div key={i} className="w-1 bg-brand-primary rounded-full" style={{ height: `${h * 4}px`, opacity: 0.3 + (h / 32) * 0.7 }} />
-              ))}
+
+            {/* Today's call activity */}
+            <div className="bg-surface-low rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-semibold text-text-primary">Calls today</h4>
+                <a href="/dashboard/voice-ai" className="text-xs text-brand-light hover:text-brand-primary">View all →</a>
+              </div>
+              {data.todayCalls.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-text-muted text-sm">
+                    {activeEmployees.length > 0 ? 'Quiet so far. Your AI is ready.' : 'No active employees yet.'}
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {data.todayCalls.map(call => {
+                    const time = call.started_at ? new Date(call.started_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : '—'
+                    const outcome = getCallOutcome(call)
+                    return (
+                      <li key={call.call_id} className="flex items-start gap-3 py-2 border-b border-[rgba(65,71,84,0.08)] last:border-0">
+                        <div className="text-xs font-mono text-text-muted w-14 flex-shrink-0 mt-0.5">{time}</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-text-primary truncate">{call.customer_phone || 'Unknown'}</p>
+                          {call.summary && <p className="text-xs text-text-muted truncate">{call.summary}</p>}
+                        </div>
+                        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full flex-shrink-0 ${outcome.color}`}>
+                          {outcome.label}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
             </div>
           </div>
-          <div className="absolute -top-24 -right-24 w-64 h-64 bg-brand-primary/20 blur-[100px] rounded-full" />
         </section>
 
         {/* Recent Conversations Table */}
