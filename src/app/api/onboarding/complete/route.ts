@@ -9,6 +9,8 @@ import { sendEmployeeReadyEmail, getOwnerEmail } from '@/lib/notifications/email
 const JOB_TYPE_MAP: Record<string, string> = {
   'receptionist': 'receptionist',
   'appointment-scheduler': 'appointment-scheduler',
+  'lead-qualifier': 'lead-qualifier',
+  'after-hours-emergency': 'after-hours-emergency',
   'order-taker': 'order-taker',
   'customer-service': 'customer-service',
 }

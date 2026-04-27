@@ -6,7 +6,7 @@ import {
   ArrowRight, ArrowLeft, CheckCircle, Mic, Phone, Calendar,
   ShoppingBag, Headphones, Play, Loader2, MapPin, Clock, User,
   Link2, ExternalLink, Globe, Sparkles, RotateCw, Copy, Check,
-  Volume2, Square, HelpCircle, X, Plus
+  Volume2, Square, HelpCircle, X, Plus, Target, AlertTriangle,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase-client'
 
@@ -60,6 +60,22 @@ const EMPLOYEE_TYPES = [
     comingSoon: false,
   },
   {
+    id: 'lead-qualifier',
+    label: 'Lead Qualifier',
+    icon: <Target className="h-7 w-7" />,
+    description: 'Screens inbound leads, asks the right questions, routes hot ones to your team',
+    popular: false,
+    comingSoon: false,
+  },
+  {
+    id: 'after-hours-emergency',
+    label: 'After-Hours Emergency',
+    icon: <AlertTriangle className="h-7 w-7" />,
+    description: 'Triages urgent calls when you\'re closed and dispatches the on-call team',
+    popular: false,
+    comingSoon: false,
+  },
+  {
     id: 'order-taker',
     label: 'Order Taker',
     icon: <ShoppingBag className="h-7 w-7" />,
@@ -91,14 +107,16 @@ const VOICES = [
 const SERVICE_ACCOUNT_EMAIL = 'voicefly-calendar@voice-fly.iam.gserviceaccount.com'
 
 const INDUSTRIES = [
-  'Medical / Healthcare', 'Dental', 'Law Firm', 'Real Estate',
-  'Beauty / Salon / Spa', 'Fitness & Wellness', 'Home Services',
-  'Restaurant / Food', 'Retail', 'General Business',
+  'Medical / Healthcare', 'Dental', 'Med Spa / Aesthetic Clinic',
+  'Law Firm', 'Real Estate', 'Beauty / Salon / Spa',
+  'Fitness & Wellness', 'Home Services', 'Restaurant / Food',
+  'Retail', 'General Business',
 ]
 
 // Expanded service suggestions per industry (for chip selection)
 const INDUSTRY_SERVICES: Record<string, string[]> = {
   'Beauty / Salon / Spa': ['Haircut', 'Color & Highlights', 'Blowout', 'Balayage', 'Manicure', 'Pedicure', 'Gel Nails', 'Facial', 'Waxing', 'Massage', 'Lash Extensions', 'Brow Tint', 'Keratin Treatment', 'Bridal Package'],
+  'Med Spa / Aesthetic Clinic': ['Botox', 'Dermal Fillers', 'Lip Filler', 'Laser Hair Removal', 'HydraFacial', 'Microneedling', 'Chemical Peel', 'CoolSculpting', 'Body Contouring', 'IV Therapy', 'Consultation', 'Membership Inquiry'],
   'Medical / Healthcare': ['New Patient Visit', 'Follow-up Appointment', 'Annual Physical', 'Lab Work', 'Vaccinations', 'Referral', 'Telehealth Visit', 'Urgent Care', 'Prescription Refill'],
   'Dental': ['Cleaning', 'Exam & X-rays', 'Filling', 'Crown', 'Whitening', 'Root Canal', 'Extraction', 'Emergency Visit', 'Invisalign Consult', 'Pediatric Dentistry'],
   'Law Firm': ['Free Consultation', 'Case Review', 'Document Preparation', 'Court Representation', 'Contract Review', 'Estate Planning', 'Mediation', 'Notarization'],
@@ -146,6 +164,20 @@ const INDUSTRY_DEFAULTS: Record<string, Record<string, { services: string; greet
       greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}, and I'd love to help you book an appointment. What service are you looking for?`,
     },
   },
+  'Med Spa / Aesthetic Clinic': {
+    'receptionist': {
+      services: 'Botox, Dermal Fillers, Lip Filler, Laser Hair Removal, HydraFacial, Microneedling, Chemical Peel, Body Contouring, Consultation',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}, your aesthetic concierge. How can I help you today — are you exploring treatments or following up on a visit?`,
+    },
+    'appointment-scheduler': {
+      services: 'Consultation, Botox, Dermal Filler, Laser Hair Removal, HydraFacial, Microneedling, Chemical Peel, Body Contouring, Membership Visit',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}. I'd love to help you book your next visit. Are you a new client or returning?`,
+    },
+    'lead-qualifier': {
+      services: 'Botox, Dermal Fillers, Laser Hair Removal, HydraFacial, Microneedling, Body Contouring, Consultation, Membership',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}. To get you the right information, may I ask what treatment you're interested in and how soon you're looking to book?`,
+    },
+  },
   'Medical / Healthcare': {
     'receptionist': {
       services: 'New Patient Visit, Follow-up Appointment, Lab Work, Physical Exam, Vaccinations, Referral',
@@ -185,6 +217,10 @@ const INDUSTRY_DEFAULTS: Record<string, Record<string, { services: string; greet
       services: 'Property Showing, Buyer Consultation, Listing Appointment, Home Valuation',
       greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}. I can help you schedule a showing or consultation. What are you looking for?`,
     },
+    'lead-qualifier': {
+      services: 'Buyer Consultation, Listing Appointment, Property Showing, Pre-Approval Referral',
+      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}! I'm ${name}. To connect you with the right agent, may I ask: are you buying, selling, or just exploring? And what's your timeline?`,
+    },
   },
   'Fitness & Wellness': {
     'receptionist': {
@@ -199,11 +235,15 @@ const INDUSTRY_DEFAULTS: Record<string, Record<string, { services: string; greet
   'Home Services': {
     'receptionist': {
       services: 'Plumbing, Electrical, HVAC, Roofing, Painting, General Repair, Emergency Service',
-      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}. I'm ${name}. How can we help you today?`,
+      greetingTemplate: (name: string, biz: string) => `Thanks for calling ${biz}. This is ${name}. What can we help you fix today?`,
     },
     'appointment-scheduler': {
       services: 'Service Call, Estimate, Repair Appointment, Installation, Emergency Visit, Inspection',
-      greetingTemplate: (name: string, biz: string) => `Thank you for calling ${biz}. I'm ${name}. I can help you schedule a service appointment. What do you need help with?`,
+      greetingTemplate: (name: string, biz: string) => `Thanks for calling ${biz}. This is ${name}. I can get a tech out to you — what's going on?`,
+    },
+    'after-hours-emergency': {
+      services: 'Emergency Service Call, Same-Day Repair, On-Call Tech Dispatch, Urgent Estimate',
+      greetingTemplate: (name: string, biz: string) => `Thanks for calling ${biz} after hours. This is ${name}. If this is an emergency, I can dispatch a tech right now — can you tell me what's happening?`,
     },
   },
   'Restaurant / Food': {

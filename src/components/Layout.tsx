@@ -22,13 +22,28 @@ import { clsx } from 'clsx'
 import MobileNavigation from './MobileNavigation'
 import { getAuthenticatedUser, logout } from '../lib/auth-utils'
 
-const navigation = [
+// Business types that benefit from the Orders page (phone/walk-in order taking).
+// Other verticals (salons, dental, med spas, home services) don't take phone
+// orders, so showing "Orders" is just visual noise.
+const ORDER_RELEVANT_BUSINESS_TYPES = new Set([
+  'restaurant_food', 'restaurant', 'food', 'retail', 'general_business',
+  'Restaurant / Food', 'Retail',
+])
+
+interface NavItem {
+  name: string
+  href: string
+  icon: any
+  requiresOrderRelevant?: boolean
+}
+
+const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
   { name: 'Phone Employees', href: '/dashboard/employees', icon: PhoneIcon },
   { name: 'Call Log', href: '/dashboard/voice-ai', icon: PhoneIcon },
   { name: 'SMS', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon },
   { name: 'Phone Messages', href: '/dashboard/phone-messages', icon: EnvelopeIcon },
-  { name: 'Orders', href: '/dashboard/orders', icon: ShoppingBagIcon },
+  { name: 'Orders', href: '/dashboard/orders', icon: ShoppingBagIcon, requiresOrderRelevant: true },
   { name: 'Calendar', href: '/dashboard/appointments', icon: CalendarIcon },
   { name: 'Integrations', href: '/dashboard/integrations', icon: PuzzlePieceIcon },
   { name: 'Settings', href: '/dashboard/settings', icon: CogIcon },
@@ -40,6 +55,7 @@ interface LayoutProps {
   business?: {
     name: string
     subscription_tier: string
+    business_type?: string
   } | null
 }
 
@@ -220,6 +236,12 @@ function UserMenu({ businessName }: { businessName?: string }) {
 function SidebarContent({ business }: { business?: LayoutProps['business'] }) {
   const pathname = usePathname()
 
+  // Hide vertical-irrelevant nav items (e.g. "Orders" only matters for
+  // restaurants/retail; salons/dental/med spas/home services don't take
+  // phone orders so the link is just visual noise for them).
+  const orderRelevant = !!business?.business_type && ORDER_RELEVANT_BUSINESS_TYPES.has(business.business_type)
+  const visibleNav = navigation.filter(item => !item.requiresOrderRelevant || orderRelevant)
+
   return (
     <>
       {/* Logo and business info */}
@@ -247,7 +269,7 @@ function SidebarContent({ business }: { business?: LayoutProps['business'] }) {
 
       {/* Navigation */}
       <nav className="mt-6 flex-1 px-3 space-y-1">
-        {navigation.map((item) => {
+        {visibleNav.map((item) => {
           const isActive = pathname === item.href
 
           return (
