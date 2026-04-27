@@ -443,6 +443,66 @@ export async function sendSmsApprovedEmail(opts: {
 }
 
 // ============================================
+// INSURANCE VERIFICATION NEEDED EMAIL
+// ============================================
+
+export async function sendInsuranceVerificationNeededEmail(opts: {
+  ownerEmail: string
+  businessName: string
+  customerName: string
+  customerPhone: string
+  carrier: string
+  memberId: string
+  procedureInquired: string | null
+  recordId: string
+}) {
+  const dashboardUrl = `https://www.voiceflyai.com/dashboard/insurance-verifications`
+  const procedureLine = opts.procedureInquired
+    ? `<p style="margin:0 0 4px;color:#6b7280;font-size:13px;">For: ${opts.procedureInquired}</p>`
+    : ''
+
+  return sendNotification(
+    opts.ownerEmail,
+    `New insurance to verify: ${opts.customerName} (${opts.carrier})`,
+    `
+    <div style="font-family:Inter,system-ui,sans-serif;max-width:480px;margin:0 auto;">
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:12px;padding:32px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+          <span style="background:#0284c7;color:#fff;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;letter-spacing:0.5px;">VERIFY</span>
+          <span style="color:#0c4a6e;font-size:14px;font-weight:600;">${opts.businessName}</span>
+        </div>
+        <h2 style="margin:0 0 12px;color:#0c4a6e;font-size:22px;font-weight:700;">${opts.customerName}</h2>
+        ${procedureLine}
+        <div style="background:#fff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:20px 0;">
+          <div style="margin-bottom:8px;">
+            <p style="margin:0;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Carrier</p>
+            <p style="margin:0;font-size:16px;font-weight:600;color:#0c4a6e;">${opts.carrier}</p>
+          </div>
+          <div style="margin-bottom:8px;">
+            <p style="margin:0;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Member ID</p>
+            <p style="margin:0;font-size:14px;font-family:'SF Mono',Monaco,monospace;color:#0c4a6e;">${opts.memberId}</p>
+          </div>
+          <div>
+            <p style="margin:0;font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;">Callback</p>
+            <p style="margin:0;font-size:14px;color:#0c4a6e;">${opts.customerPhone}</p>
+          </div>
+        </div>
+        <p style="margin:0 0 20px;color:#334155;font-size:15px;line-height:1.6;">
+          Verify coverage with the carrier, then update the record. The patient will get an SMS confirmation automatically once you mark it verified.
+        </p>
+        <div style="text-align:center;margin:24px 0;">
+          <a href="${dashboardUrl}"
+             style="display:inline-block;background:#0284c7;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;">
+            Open Verification Queue
+          </a>
+        </div>
+      </div>
+    </div>
+  `
+  )
+}
+
+// ============================================
 // SMS USAGE WARNING EMAIL (80% of monthly limit)
 // ============================================
 

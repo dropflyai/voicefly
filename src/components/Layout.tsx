@@ -15,6 +15,7 @@ import {
   CalendarIcon,
   EnvelopeIcon,
   ShoppingBagIcon,
+  ShieldCheckIcon,
 } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -30,11 +31,19 @@ const ORDER_RELEVANT_BUSINESS_TYPES = new Set([
   'Restaurant / Food', 'Retail',
 ])
 
+// Business types that accept insurance — Insurance Verifications nav item
+// only shows for these (dental, medical, optometry, etc.)
+const INSURANCE_RELEVANT_BUSINESS_TYPES = new Set([
+  'dental', 'medical_practice', 'medical', 'optometry', 'veterinary',
+  'Dental', 'Medical / Healthcare',
+])
+
 interface NavItem {
   name: string
   href: string
   icon: any
   requiresOrderRelevant?: boolean
+  requiresInsuranceRelevant?: boolean
 }
 
 const navigation: NavItem[] = [
@@ -43,6 +52,7 @@ const navigation: NavItem[] = [
   { name: 'Call Log', href: '/dashboard/voice-ai', icon: PhoneIcon },
   { name: 'SMS', href: '/dashboard/messages', icon: ChatBubbleLeftRightIcon },
   { name: 'Phone Messages', href: '/dashboard/phone-messages', icon: EnvelopeIcon },
+  { name: 'Insurance', href: '/dashboard/insurance-verifications', icon: ShieldCheckIcon, requiresInsuranceRelevant: true },
   { name: 'Orders', href: '/dashboard/orders', icon: ShoppingBagIcon, requiresOrderRelevant: true },
   { name: 'Calendar', href: '/dashboard/appointments', icon: CalendarIcon },
   { name: 'Integrations', href: '/dashboard/integrations', icon: PuzzlePieceIcon },
@@ -236,11 +246,16 @@ function UserMenu({ businessName }: { businessName?: string }) {
 function SidebarContent({ business }: { business?: LayoutProps['business'] }) {
   const pathname = usePathname()
 
-  // Hide vertical-irrelevant nav items (e.g. "Orders" only matters for
-  // restaurants/retail; salons/dental/med spas/home services don't take
-  // phone orders so the link is just visual noise for them).
+  // Hide vertical-irrelevant nav items.
+  // - Orders → only restaurants/retail take phone orders
+  // - Insurance → only dental/medical/optometry handle insurance verification
   const orderRelevant = !!business?.business_type && ORDER_RELEVANT_BUSINESS_TYPES.has(business.business_type)
-  const visibleNav = navigation.filter(item => !item.requiresOrderRelevant || orderRelevant)
+  const insuranceRelevant = !!business?.business_type && INSURANCE_RELEVANT_BUSINESS_TYPES.has(business.business_type)
+  const visibleNav = navigation.filter(item => {
+    if (item.requiresOrderRelevant && !orderRelevant) return false
+    if (item.requiresInsuranceRelevant && !insuranceRelevant) return false
+    return true
+  })
 
   return (
     <>

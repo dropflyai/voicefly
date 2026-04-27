@@ -389,6 +389,15 @@ ${business.sms_enabled ? `- Usage this month: ${business.sms_segments_used ?? 0}
   - If sms_enabled is YES → they're good, usage is visible on the main dashboard card.
 - Never claim SMS is active when sms_enabled is NO. Never attempt to send test SMS on their behalf until approved.
 
+## Insurance Verification (Dental, Medical, Optometry only)
+${['dental', 'medical_practice', 'medical', 'optometry'].includes((business.business_type || '').toLowerCase()) ? `
+- This business accepts insurance. Pending verifications appear at /dashboard/insurance-verifications.
+- When the AI takes a call and a patient provides insurance info, it auto-creates a pending verification record.
+- Staff verifies coverage with the carrier, then marks the record as verified/denied/needs_more_info.
+- Marking a record as verified auto-sends an SMS to the patient with their estimated cost (only if sms_enabled is true).
+- If the user asks "do I have any insurance to verify?" or similar, navigate them to /dashboard/insurance-verifications.
+` : '- Not applicable to this business type.'}
+
 ## Your Capabilities
 You can take REAL actions using tools. When a user asks you to do something — DO IT, don't just give instructions.
 
@@ -567,9 +576,54 @@ function buildDashboardTools(businessId: string) {
     navigate_user: tool({
       description: 'Navigate the user to a specific dashboard page.',
       parameters: z.object({
-        page: z.enum(['/dashboard', '/dashboard/employees', '/dashboard/voice-ai', '/dashboard/messages', '/dashboard/integrations', '/dashboard/settings', '/dashboard/billing', '/dashboard/appointments', '/dashboard/orders']),
+        page: z.enum(['/dashboard', '/dashboard/employees', '/dashboard/voice-ai', '/dashboard/messages', '/dashboard/integrations', '/dashboard/settings', '/dashboard/settings/sms', '/dashboard/billing', '/dashboard/appointments', '/dashboard/orders', '/dashboard/insurance-verifications']),
       }),
       execute: async ({ page }) => ({ success: true, page, message: `Navigating to ${page}` }),
+    }),
+
+    capture_insurance_info: tool({
+      description: 'Save a caller\'s insurance details to a verification queue. Use during a call when the caller provides insurance info OR asks about coverage. Creates a record for staff to verify with the carrier later. Only relevant for dental, medical, and similar insurance-accepting verticals. NEVER promise specific coverage amounts to the caller — say "we\'ll verify and confirm".',
+      parameters: z.object({
+        carrier_name: z.string().describe('Insurance carrier (e.g. "Delta Dental", "Aetna", "Blue Cross Blue Shield")'),
+        member_id: z.string().describe('Member ID number from the insurance card'),
+        customer_name: z.string().optional().describe('Caller\'s full name'),
+        customer_phone: z.string().optional().describe('Caller\'s phone number in E.164 format if known'),
+        customer_dob: z.string().optional().describe('Caller date of birth in YYYY-MM-DD format'),
+        group_number: z.string().optional().describe('Group number if provided'),
+        subscriber_name: z.string().optional().describe('Subscriber name if different from caller'),
+        subscriber_relationship: z.enum(['self','spouse','parent','child','other']).optional(),
+        subscriber_dob: z.string().optional().describe('Subscriber date of birth in YYYY-MM-DD format'),
+        procedure_inquired: z.string().optional().describe('What procedure the caller asked about (e.g. "cleaning", "root canal")'),
+        appointment_id: z.string().optional().describe('Linked appointment ID if one was just booked'),
+      }),
+      execute: async (input) => {
+        const { data, error } = await supabase
+          .from('insurance_records')
+          .insert({
+            business_id: businessId,
+            status: 'pending',
+            carrier_name: input.carrier_name,
+            member_id: input.member_id,
+            customer_name: input.customer_name || null,
+            customer_phone: input.customer_phone || null,
+            customer_dob: input.customer_dob || null,
+            group_number: input.group_number || null,
+            subscriber_name: input.subscriber_name || null,
+            subscriber_relationship: input.subscriber_relationship || null,
+            subscriber_dob: input.subscriber_dob || null,
+            procedure_inquired: input.procedure_inquired || null,
+            appointment_id: input.appointment_id || null,
+          })
+          .select()
+          .single()
+
+        if (error) return { success: false, error: error.message }
+        return {
+          success: true,
+          record_id: data.id,
+          message: `Captured insurance info for ${input.carrier_name} (member ${input.member_id}). Staff will verify and follow up.`,
+        }
+      },
     }),
 
     toggle_employee: tool({
